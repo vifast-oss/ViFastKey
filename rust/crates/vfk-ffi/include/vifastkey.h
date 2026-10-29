@@ -93,6 +93,9 @@ const char *vfk_display_text(VfkSession *s);
 /* Đổi offset char (codepoint) sang UTF-16 code unit; UINT32_MAX nếu sai. */
 uint32_t vfk_char_to_utf16_offset(const char *text, uint32_t chars);
 
+/* Có phải ký tự thuộc từ (chữ/số/underscore/combining mark) không. */
+bool vfk_is_word_codepoint(uint32_t codepoint);
+
 /* Lập kế hoạch thi hành Action bằng logic adapter dùng chung.
  * - before_display: vfk_display_text() trước khi xử lý phím (nullable).
  * - surrounding_text: snapshot đầy đủ (nullable), offset UTF-16.

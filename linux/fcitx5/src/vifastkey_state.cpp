@@ -201,7 +201,7 @@ void VifastkeyState::refreshSurrounding() {
         fcitx::utf8::getNextChar(
             text.begin() + static_cast<std::ptrdiff_t>(byteOffset), text.end(),
             &nextCodepoint);
-        if (isWordCodepoint(nextCodepoint)) {
+        if (vfk_is_word_codepoint(nextCodepoint)) {
             vfk_set_surrounding_text(session_, nullptr);
             return;
         }

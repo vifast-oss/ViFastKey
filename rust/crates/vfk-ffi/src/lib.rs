@@ -20,7 +20,7 @@ use std::rc::Rc;
 use std::sync::{Arc, OnceLock};
 
 use vfk_adapter_core::{
-    char_to_utf16_offset, plan_action, AdapterAction, DeleteAmount, PlanContext, PlanKind,
+    char_to_utf16_offset, is_word_codepoint, plan_action, AdapterAction, DeleteAmount, PlanContext, PlanKind,
     SurroundingSnapshot,
 };
 use vfk_core::charset;
@@ -413,6 +413,12 @@ pub unsafe extern "C" fn vfk_display_text(h: *mut VfkSession) -> *const c_char {
 pub unsafe extern "C" fn vfk_char_to_utf16_offset(text: *const c_char, chars: u32) -> u32 {
     let Some(text) = opt_str(text) else { return u32::MAX };
     char_to_utf16_offset(&text, chars).unwrap_or(u32::MAX)
+}
+
+/// Có phải ký tự thuộc từ (chữ/số/underscore/combining mark) không.
+#[no_mangle]
+pub extern "C" fn vfk_is_word_codepoint(codepoint: u32) -> bool {
+    char::from_u32(codepoint).is_some_and(is_word_codepoint)
 }
 
 /// Lập kế hoạch thi hành Action bằng logic adapter dùng chung.
