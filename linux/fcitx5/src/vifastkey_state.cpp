@@ -5,7 +5,6 @@
 #include <utility>
 
 #include <fcitx-utils/capabilityflags.h>
-#include <fcitx-utils/eventloopinterface.h>
 #include <fcitx-utils/keysym.h>
 #include <fcitx-utils/log.h>
 #include <fcitx-utils/utf8.h>

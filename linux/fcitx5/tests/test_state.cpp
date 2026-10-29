@@ -5,7 +5,6 @@
 // password pass-through, surrounding guard và transaction Replace.
 
 #include <fcitx-utils/event.h>
-#include <fcitx-utils/eventloopinterface.h>
 #include <fcitx-utils/keysym.h>
 #include <fcitx/event.h>
 #include <fcitx/inputcontext.h>
