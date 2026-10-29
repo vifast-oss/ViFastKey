@@ -24,8 +24,14 @@ Thêm **ViFastKey** trong Fcitx5 Configuration → Input Method.
 
 ## Kiểm thử
 
-CI Ubuntu cài `libfcitx5core-dev`, build Rust staticlib và biên dịch addon.
-Chưa chạy GUI Fcitx5 trong CI; cần test runtime trên desktop Linux thật.
+- CI Ubuntu cài `libfcitx5core-dev`, build Rust staticlib và biên dịch addon.
+- Đã test runtime trên Ubuntu 26.04 + Fcitx5 5.1.19 trong Xvfb/Openbox:
+  addon load `vifastkey`, gõ `tieengs` → `tiếng` qua GTK entry.
+- Fcitx5 5.1.19 cần C++20; addon cài vào multiarch `lib/x86_64-linux-gnu/fcitx5`.
+- Trên CI dùng Fcitx5 5.1.7, vẫn build được với C++20.
+
+Test runtime trên desktop Wayland thật vẫn cần thiết; test trên X11/Xvfb không đại diện
+cho mọi frontend Wayland.
 
 ## Giới hạn
 

@@ -4,8 +4,8 @@
 |---|---|---|---|
 | macOS | `macos/` IMK + `package.sh` universal2 | macOS 12+, Swift/Xcode, đã build arm64/x86_64 + self-test | ✅ dùng được; cần logout/login để đăng ký input source; Developer ID/notarize cần chứng chỉ |
 | Windows | `rust/apps/vfk-windows` low-level hook + SendInput | cross-check MSVC + CI Windows build | 🟡 prototype; chưa test runtime, chưa TSF/tray/signing |
-| Linux (IBus) | `linux/ibus/` engine Python | core test trên macOS/CI; cần Linux + PyGObject/IBus để chạy | 🟡 adapter có mã + install; chưa test runtime |
-| Linux (Fcitx5) | `linux/fcitx5/` C++ addon | CI Ubuntu cài Fcitx5 dev, build Rust staticlib + addon ✅ | 🟡 build pass; chưa test GUI Fcitx5 |
+| Linux (IBus) | `linux/ibus/` engine Python | core test trên macOS/CI; component đăng ký được trong Xvfb | 🟡 runtime key event chưa xác nhận; Fcitx5 là đường đã test |
+| Linux (Fcitx5) | `linux/fcitx5/` C++ addon | CI build ✅; runtime test Ubuntu 26.04/Fcitx5 5.1.19 trong Xvfb: `tieengs` → `tiếng` | ✅ chạy được trên X11; 🟡 cần test Wayland desktop thật |
 | Android | `android/` IME Java + JNI | SDK/NDK + Gradle, APK arm64/x86_64; CI build + đã test emulator | ✅ gõ được; 🟡 bàn phím tối giản, chưa Play Store |
 | iOS | `ios/` host + keyboard extension | Xcode 27.1, simulator; CI build + engine unit test | ✅ build/test; 🟡 chưa test bật extension/device signing |
 

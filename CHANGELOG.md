@@ -65,6 +65,7 @@
 ### Linux Fcitx5 adapter
 
 - Thêm `linux/fcitx5/`: addon C++ + CMake dùng C ABI Rust; CI Ubuntu build.
+- Sửa C++20 + multiarch; đã test runtime Xvfb/Fcitx5 5.1.19 (`tieengs` → `tiếng`).
 
 ### Linux IBus adapter
 
