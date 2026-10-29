@@ -35,6 +35,29 @@ Adapter chỉ cần:
 3. gọi `vfk_plan_action(...)` sau khi engine trả `VfkAction`;
 4. thi hành `VfkPlan`.
 
+```c
+VfkPlan plan = {0};
+if (!vfk_plan_action(session, &action, field_kind,
+                     before_display, surrounding_text,
+                     cursor_utf16, anchor_utf16,
+                     /*allow_unverified_replace=*/false, &plan)) {
+    /* fail-safe: reset engine, để phím gốc đi tiếp */
+    return;
+}
+switch (plan.kind) {
+case VFK_PLAN_PREEDIT:  set_preedit(plan.text, plan.cursor_utf16); break;
+case VFK_PLAN_COMMIT:   commit(plan.text); break;
+case VFK_PLAN_REPLACE:  delete_codepoints(plan.delete_chars);
+                        commit(plan.text); break;
+case VFK_PLAN_FAIL_SAFE: reset_engine(); break;
+case VFK_PLAN_PASS:     break;
+}
+```
+
+`plan.wait_ms` là gợi ý chờ trước commit. `plan.delete_chars` dùng cho API
+codepoint (Fcitx5/IBus); `plan.delete_utf16` dùng cho API UTF-16
+(macOS/Android/Windows).
+
 Scenario dùng chung nằm ở [`adapter-conformance/`](../adapter-conformance/README.md).
 Port không nên tự quyết định xoá bao nhiêu ký tự hoặc có được xoá không.
 
