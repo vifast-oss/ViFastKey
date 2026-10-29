@@ -113,6 +113,57 @@ jobs:
           cmake --build linux/fcitx5/build -j2
           test -f linux/fcitx5/build/libvifastkey.so
 
+  android-adapter:
+    name: Android IME (build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "9.8.2"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,x86_64-linux-android
+      - name: Cài NDK + cargo-ndk
+        run: |
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager "platforms;android-36" "build-tools;36.0.0" "ndk;28.2.13676358"
+          cargo install cargo-ndk --locked
+      - name: Build APK
+        run: ./android/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ViFastKey-android-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+  ios-adapter:
+    name: iOS keyboard extension (build + engine test)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Cài XcodeGen + Rust target
+        run: |
+          brew install xcodegen
+          rustup target add aarch64-apple-ios-sim
+      - name: Build app + extension
+        run: ./ios/build.sh
+      - name: Engine unit tests
+        run: |
+          DEVICE=$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ {print $2; exit}')
+          xcodebuild -project ios/ViFastKey.xcodeproj -scheme ViFastKeyHost             -sdk iphonesimulator -destination "id=$DEVICE"             -derivedDataPath ios/build ARCHS=arm64 ONLY_ACTIVE_ARCH=YES             CODE_SIGNING_ALLOWED=NO -only-testing:ViFastKeyHostTests test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ViFastKey-ios-simulator
+          path: ios/build/Build/Products/Debug-iphonesimulator/ViFastKeyHost.app
+          if-no-files-found: error
+
   macos-adapter:
     name: macOS IMK adapter
     runs-on: macos-15

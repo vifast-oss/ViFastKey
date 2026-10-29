@@ -1,0 +1,16 @@
+[package]
+name = "vfk-jni"
+description = "JNI bridge cho bàn phím Android ViFastKey."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+name = "vifastkey_jni"
+crate-type = ["cdylib"]
+
+[dependencies]
+jni = "0.21"
+vfk-engine = { workspace = true }
+serde_json = { workspace = true }

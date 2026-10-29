@@ -54,6 +54,8 @@ ViFastKey/
 ├── linux/
 │   ├── ibus/                   # adapter IBus (engine Python)
 │   └── fcitx5/                 # adapter Fcitx5 (C++ + C ABI)
+├── android/                    # IME Android (Java + JNI/Rust)
+├── ios/                        # host app + keyboard extension (Swift + C ABI)
 │   ├── crates/vfk-suggest/     # lexicon gợi ý
 │   ├── conformance/            # bản sao dữ liệu oracle
 │   ├── testdata/               # golden + corpus

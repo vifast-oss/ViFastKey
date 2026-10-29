@@ -6,8 +6,8 @@
 | Windows | `rust/apps/vfk-windows` low-level hook + SendInput | `cargo check --target x86_64-pc-windows-msvc` trên macOS; build native trên Windows | 🟡 prototype; chưa test runtime, chưa TSF/tray/signing |
 | Linux (IBus) | `linux/ibus/` engine Python | core test trên macOS/CI; cần Linux + PyGObject/IBus để chạy | 🟡 adapter có mã + install; chưa test runtime |
 | Linux (Fcitx5) | `linux/fcitx5/` C++ addon | CI Ubuntu cài Fcitx5 dev, build Rust staticlib + addon | 🟡 có mã/build; chưa test GUI Fcitx5 |
-| Android | chưa có | cần Android SDK/JNI + bàn phím native | ⏳ dùng C ABI/UniFFI |
-| iOS | chưa có | cần Xcode + keyboard extension | ⏳ dùng C ABI/UniFFI |
+| Android | `android/` IME Java + JNI | SDK/NDK + Gradle, APK arm64/x86_64; đã test emulator | 🟡 bàn phím tối giản, chưa Play Store |
+| iOS | `ios/` host + keyboard extension | Xcode 27.1, simulator; build + engine test | 🟡 extension build; chưa test bật bàn phím/device signing |
 
 ## Vì sao chưa có Fcitx5/Android/iOS?
 

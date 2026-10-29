@@ -1,0 +1,69 @@
+name: ViFastKey
+options:
+  bundleIdPrefix: app.vifastkey
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "16.0"
+    CODE_SIGNING_ALLOWED: "NO"
+targets:
+  ViFastKeyHost:
+    type: application
+    platform: iOS
+    sources:
+      - ViFastKeyHost
+      - Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.vifastkey.ios
+        INFOPLIST_FILE: ViFastKeyHost/Info.plist
+        SWIFT_OBJC_BRIDGING_HEADER: Shared/Bridging.h
+        HEADER_SEARCH_PATHS: "$(SRCROOT)/../rust/crates/vfk-ffi/include"
+        LIBRARY_SEARCH_PATHS: "$(SRCROOT)/../rust/target/aarch64-apple-ios-sim/release"
+        OTHER_LDFLAGS: "$(inherited) -lvifastkey"
+    dependencies:
+      - target: ViFastKeyKeyboard
+        embed: true
+  ViFastKeyHostTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - ViFastKeyHostTests
+    dependencies:
+      - target: ViFastKeyHost
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.vifastkey.ios.tests
+        SWIFT_OBJC_BRIDGING_HEADER: Shared/Bridging.h
+        HEADER_SEARCH_PATHS: "$(SRCROOT)/../rust/crates/vfk-ffi/include"
+        LIBRARY_SEARCH_PATHS: "$(SRCROOT)/../rust/target/aarch64-apple-ios-sim/release"
+        OTHER_LDFLAGS: "$(inherited) -lvifastkey"
+  ViFastKeyKeyboard:
+    type: app-extension
+    platform: iOS
+    sources:
+      - ViFastKeyKeyboard
+      - Shared
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.vifastkey.ios.keyboard
+        INFOPLIST_FILE: ViFastKeyKeyboard/Info.plist
+        SWIFT_OBJC_BRIDGING_HEADER: Shared/Bridging.h
+        HEADER_SEARCH_PATHS: "$(SRCROOT)/../rust/crates/vfk-ffi/include"
+        LIBRARY_SEARCH_PATHS: "$(SRCROOT)/../rust/target/aarch64-apple-ios-sim/release"
+        OTHER_LDFLAGS: "$(inherited) -lvifastkey"
+schemes:
+  ViFastKeyHost:
+    build:
+      targets:
+        ViFastKeyHost: all
+        ViFastKeyKeyboard: all
+        ViFastKeyHostTests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - ViFastKeyHostTests

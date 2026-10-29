@@ -11,6 +11,7 @@ members = [
     "apps/vfk-charset",
     "apps/vfk-suggest",
     "apps/vfk-windows",
+    "apps/vfk-jni",
 ]
 
 [workspace.package]

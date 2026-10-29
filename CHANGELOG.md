@@ -56,6 +56,12 @@
 - Ad-hoc signing để test local; `package.sh` build universal2 + hook ký/notarize;
   cần Developer ID/chứng chỉ thật khi phát hành.
 
+### Android / iOS
+
+- Android: IME Java + JNI Rust, bàn phím QWERTY, build APK và test end-to-end
+  trên emulator (`tieengs` → `tiếng`).
+- iOS: host app + keyboard extension Swift, Rust staticlib, build simulator + unit test engine.
+
 ### Linux Fcitx5 adapter
 
 - Thêm `linux/fcitx5/`: addon C++ + CMake dùng C ABI Rust; CI Ubuntu build.
