@@ -230,6 +230,39 @@ void testReplaceUsesSurroundingAndCommits() {
     }
 }
 
+void testEditPreviousWordUsesRefreshedSurrounding() {
+    fcitx::EventLoop loop;
+    fcitx::InputContextManager manager;
+    TestInputContext context(manager);
+    context.setCapabilityFlags(fcitx::CapabilityFlags{
+        fcitx::CapabilityFlag::Preedit,
+        fcitx::CapabilityFlag::SurroundingText});
+    context.surroundingText().setText("tiếng", 5, 5);
+
+    auto config = makeConfig();
+    fcitx::VifastkeyState state(loop, &context, config);
+    state.activate("test");
+
+    // Không gõ lại "tiếng": engine phải adopt từ đang có trước caret rồi
+    // đổi tone f -> huyền, tạo Replace "tiếng" -> "tiềng".
+    auto event = keyEvent(context, FcitxKey_f);
+    state.keyEvent(event);
+    CHECK(event.filtered());
+    CHECK(context.deletes.size() == 1);
+    if (context.deletes.size() == 1) {
+        CHECK(context.deletes.front().offset == -5);
+        CHECK(context.deletes.front().size == 5);
+    }
+    CHECK(state.busy());
+
+    runLoop(loop);
+    CHECK(!state.busy());
+    CHECK(context.commits.size() == 1);
+    if (context.commits.size() == 1) {
+        CHECK(context.commits.front() == "tiềng");
+    }
+}
+
 void testReplaceRejectsStaleSurrounding() {
     fcitx::EventLoop loop;
     fcitx::InputContextManager manager;
@@ -343,6 +376,7 @@ int main() {
     testFocusOutDoesNotDoubleCommitClientPreedit();
     testPasswordPassThrough();
     testReplaceUsesSurroundingAndCommits();
+    testEditPreviousWordUsesRefreshedSurrounding();
     testReplaceRejectsStaleSurrounding();
     testReplaceRejectsSelection();
     testReplaceCountsCodepointsForAstralCharacters();

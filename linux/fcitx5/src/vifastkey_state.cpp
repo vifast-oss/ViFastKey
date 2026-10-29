@@ -437,6 +437,8 @@ void VifastkeyState::processKey(const std::string &key, bool ctrl, bool alt,
         return;
     }
 
+    refreshSurrounding();
+
     if (rawKey && ctrl && !alt && !meta &&
         rawKey->states().test(KeyState::Shift) &&
         rawKey->sym() == FcitxKey_F) {
