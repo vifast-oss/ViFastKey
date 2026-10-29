@@ -9,7 +9,7 @@ theo app/field.
 ```bash
 sudo apt install cmake pkg-config libfcitx5core-dev libfcitx5utils-dev
 ./linux/fcitx5/build.sh
-sudo cmake --install linux/fcitx5/build
+sudo cmake --install linux/fcitx5/build --prefix /usr
 fcitx5 -r
 ```
 
