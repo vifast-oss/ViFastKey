@@ -20,11 +20,11 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
 
-from adapters import FakeTextField, MemoryConfigStore, StaticAppContext, WordListDictionary  # noqa: E402
 from typing_variants import variants  # noqa: E402
+
+from adapters import FakeTextField, MemoryConfigStore, StaticAppContext, WordListDictionary  # noqa: E402
 from vfk_core import INPUT_METHODS, TransformOptions, transform  # noqa: E402
-from vfk_engine import (Commit, Config, ImeSession, KeyEvent, OutputMode, PassThrough, Ports,  # noqa: E402
-                        Preedit, Replace)
+from vfk_engine import Commit, Config, ImeSession, KeyEvent, OutputMode, PassThrough, Ports, Preedit, Replace  # noqa: E402
 from vi_syllable import ToneStyle  # noqa: E402
 
 OUT = ROOT / "conformance"
@@ -46,7 +46,8 @@ def core_cases():
             spec, keys, _ = line.split("\t")[:3]
             parts = spec.split(",")
             o = TransformOptions(ToneStyle.NEW if "new" in parts else ToneStyle.OLD,
-                                 "nospell" not in parts, True, "bracket" in parts, "quick" in parts)
+                                 "nospell" not in parts, True, "bracket" in parts, "quick" in parts,
+                                 "coda_k" in parts)
             yield parts[0], o, "final" in parts, keys
     # 2) corpus, mọi thứ tự gõ
     words = sorted(set(re.findall(r"[^\W\d_]+", (ROOT / "tests/data/corpus_vi.txt").read_text("utf-8"))))
@@ -62,14 +63,14 @@ def core_cases():
     for _ in range(6000):
         im = rnd.choice(list(alpha))
         o = TransformOptions(rnd.choice(list(ToneStyle)), rnd.random() < .85, rnd.random() < .8,
-                             rnd.random() < .2, rnd.random() < .2)
+                             rnd.random() < .2, rnd.random() < .2, rnd.random() < .2)
         keys = "".join(rnd.choice(alpha[im]) for _ in range(rnd.randint(1, 12)))
         if im == "vni" and keys[0].isdigit():
             keys = "a" + keys
         yield im, o, rnd.random() < .5, keys
 
 
-KEYS = list("aeiouydwsfrxjzngthcAWSD ,.?") + ["Backspace"] * 3 + ["Escape", "Enter", "Left", "Shift"]
+KEYS = list("aeiouydwsfrxjzngthcklmpbvAWSD ,.?") + ["Backspace"] * 3 + ["Escape", "Enter", "Left", "Shift"]
 
 
 def action_dict(a) -> dict:
@@ -98,14 +99,16 @@ def engine_cases():
             input_method=rnd.choice(["telex", "telex", "vni", "simple_telex"]),
             tone_style=rnd.choice(list(ToneStyle)),
             auto_capitalize=rnd.random() < .3, smart_caps=rnd.random() < .2,
-            macros={"ko": "không", "vn": "Việt Nam"}, quick_telex=rnd.random() < .15,
+            macros={"ko": "không", "vn": "Việt Nam", "mp3": "máy nghe nhạc"},
+            quick_telex=rnd.random() < .15,
             unicode_form=rnd.choice(["NFC", "NFC", "NFD"]),
             restore_after_space=rnd.random() < .7, edit_previous_word=rnd.random() < .5,
+            allow_coda_k=rnd.random() < .2, macro_digits=rnd.random() < .2,
         )
         mode = rnd.choice(list(OutputMode))
         prefix = rnd.choice(["", "", "tôi học tiêng", "Việt", "hello "])
-        keys = [rnd.choice(KEYS + (list("1234567890") if c.input_method == "vni" else []))
-                for _ in range(rnd.randint(1, 30))]
+        extra = list("1234567890") if (c.input_method == "vni" or c.macro_digits) else []
+        keys = [rnd.choice(KEYS + extra) for _ in range(rnd.randint(1, 30))]
         field = FakeTextField(prefix)
         s = ImeSession(Ports(MemoryConfigStore(c), StaticAppContext("app"), field, dic), mode)
         acts = []

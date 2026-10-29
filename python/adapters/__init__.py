@@ -7,11 +7,19 @@ from __future__ import annotations
 
 import copy
 import json
-from dataclasses import asdict
 from pathlib import Path
 
-from vfk_engine import (AppProfile, Commit, Config, ImeSession, KeyEvent, PassThrough, Preedit, Replace)
-from vi_syllable import ToneStyle
+from vfk_engine import (
+    Commit,
+    Config,
+    ImeSession,
+    KeyEvent,
+    PassThrough,
+    Preedit,
+    Replace,
+    config_from_dict,
+    config_to_dict,
+)
 
 
 # ---------------------------------------------------------------- port ra
@@ -31,18 +39,14 @@ class JsonFileConfigStore:
         self.path = Path(path)
 
     def load(self) -> Config:
-        if not self.path.exists():
-            return Config()
-        d = json.loads(self.path.read_text(encoding="utf-8"))
-        d["tone_style"] = ToneStyle(d.get("tone_style", "old"))
-        if "app_profiles" in d:
-            d["app_profiles"] = {k: AppProfile(**v) for k, v in d["app_profiles"].items()}
-        return Config(**d)
+        try:
+            return config_from_dict(json.loads(self.path.read_text(encoding="utf-8")))
+        except (OSError, ValueError, TypeError, KeyError):
+            return Config()             # file hỏng/không đọc được: dùng mặc định như bản Rust
 
     def save(self, config: Config) -> None:
-        d = asdict(config)
-        d["tone_style"] = config.tone_style.value
-        self.path.write_text(json.dumps(d, ensure_ascii=False, indent=2), encoding="utf-8")
+        self.path.write_text(json.dumps(config_to_dict(config), ensure_ascii=False, indent=2),
+                             encoding="utf-8")
 
 
 class StaticAppContext:

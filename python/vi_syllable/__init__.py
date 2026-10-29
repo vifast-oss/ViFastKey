@@ -24,6 +24,10 @@ ONSET_PREFIXES = {o[:i] for o in ALL_ONSETS for i in range(1, len(o) + 1)}
 
 CODAS = {"c", "ch", "m", "n", "ng", "nh", "p", "t"}
 STOP_CODAS = {"c", "ch", "p", "t"}          # chỉ đi với thanh sắc / nặng
+# Âm cuối k chỉ dùng cho tên riêng/địa danh (Đắk Lắk). Bật bằng tuỳ chọn allow_coda_k.
+CODA_K = "k"
+CODAS_WITH_K = CODAS | {CODA_K}
+STOP_CODAS_WITH_K = STOP_CODAS | {CODA_K}
 CH_NH_CLUSTERS = {"a", "ê", "i", "oa", "uê", "uy"}
 
 # Cụm nguyên âm đứng cuối âm tiết (không có phụ âm cuối)
@@ -153,6 +157,11 @@ for _coda in CODAS:
         for _p in _prefixes(_coda):
             _RELAXED_FOR_CODA.setdefault(_p, set()).update(_relax(_cl))
 
+# Bảng thêm cho âm cuối k (tuỳ chọn tên riêng). k đi được với mọi cụm đóng.
+_RELAXED_FOR_CODA_K = {k: set(v) for k, v in _RELAXED_FOR_CODA.items()}
+for _cl in CLOSED_CLUSTERS:
+    _RELAXED_FOR_CODA_K.setdefault(CODA_K, set()).update(_relax(_cl))
+
 
 def _onset_ok(onset: str, first: str) -> bool:
     if onset in ("k", "gh", "ngh") and first not in FRONT_VOWELS:
@@ -166,13 +175,16 @@ def _onset_ok(onset: str, first: str) -> bool:
     return True
 
 
-def check(s: str, tone: int = 0) -> Status:
+def check(s: str, tone: int = 0, allow_coda_k: bool = False) -> Status:
     """Kiểm tra chính tả 1 âm tiết (chuỗi thường, không thanh).
 
     VALID   : âm tiết hoàn chỉnh.
     PARTIAL : chưa hoàn chỉnh nhưng có thể thành hợp lệ bằng cách gõ thêm chữ và/hoặc thêm dấu phụ
               (cho phép gõ dấu tự do: 'chuyenj' + 'e' -> 'chuyện').
     INVALID : không thể thành âm tiết tiếng Việt.
+
+    allow_coda_k: cho phép âm cuối k cho tên riêng/địa danh (Đắk Lắk). k là âm cuối tắc
+    nên chỉ đi với thanh sắc/nặng, giống c/ch/p/t.
     """
     if not s:
         return Status.PARTIAL
@@ -191,30 +203,34 @@ def check(s: str, tone: int = 0) -> Status:
     if not _onset_ok(syl.onset, syl.cluster[0]):
         return Status.INVALID
     stop_bad = tone in (2, 3, 4)
+    codas = CODAS_WITH_K if allow_coda_k else CODAS
+    stop_codas = STOP_CODAS_WITH_K if allow_coda_k else STOP_CODAS
+    relaxed_for_coda = _RELAXED_FOR_CODA_K if allow_coda_k else _RELAXED_FOR_CODA
     coda = syl.coda
     # --- hợp lệ hoàn chỉnh
     if not coda:
         if cluster in OPEN_CLUSTERS:
             return Status.VALID
-    elif (coda in CODAS and cluster in CLOSED_CLUSTERS
+    elif (coda in codas and cluster in CLOSED_CLUSTERS
           and not (coda in ("ch", "nh") and cluster not in CH_NH_CLUSTERS)):
-        if coda in STOP_CODAS and stop_bad:
+        if coda in stop_codas and stop_bad:
             return Status.INVALID
         return Status.VALID
     # --- còn có thể hoàn thiện
     if not coda:
         return Status.PARTIAL if cluster in _RELAXED_ANY else Status.INVALID
-    if cluster in _RELAXED_FOR_CODA.get(coda, ()):
-        if stop_bad and coda in ("c", "p", "t", "ch"):
+    if cluster in relaxed_for_coda.get(coda, ()):
+        if stop_bad and coda in stop_codas:
             return Status.INVALID
         return Status.PARTIAL
     return Status.INVALID
 
 
-def tone_allowed(s: str, tone: int) -> bool:
-    """Âm cuối tắc (c, ch, p, t) chỉ đi với thanh sắc / nặng."""
+def tone_allowed(s: str, tone: int, allow_coda_k: bool = False) -> bool:
+    """Âm cuối tắc (c, ch, p, t, và k khi bật tên riêng) chỉ đi với thanh sắc / nặng."""
     syl = parse(s)
-    return not (syl.coda in STOP_CODAS and tone in (2, 3, 4))
+    stop_codas = STOP_CODAS_WITH_K if allow_coda_k else STOP_CODAS
+    return not (syl.coda in stop_codas and tone in (2, 3, 4))
 
 
 def tone_index(s: str, style: ToneStyle = ToneStyle.OLD) -> int | None:

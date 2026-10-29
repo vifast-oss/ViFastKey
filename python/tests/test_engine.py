@@ -6,8 +6,16 @@ import pytest
 
 from adapters import FakeTextField, MemoryConfigStore, StaticAppContext, WordListDictionary
 from vfk_core import TELEX, transform
-from vfk_engine import (Commit, Config, FieldKind, ImeSession, KeyEvent, OutputMode, PassThrough, Ports,
-                        Preedit, Replace)
+from vfk_engine import (
+    Commit,
+    Config,
+    FieldKind,
+    ImeSession,
+    KeyEvent,
+    OutputMode,
+    PassThrough,
+    Ports,
+)
 from vfk_ffi import utf16_len, vfk_process_key, vfk_session_new
 from vi_syllable import ToneStyle
 
@@ -144,6 +152,28 @@ def test_auto_capitalize(mode):
 
 
 @pytest.mark.parametrize("mode", MODES)
+def test_auto_capitalize_extended_boundaries(mode):
+    s, f, _ = make(mode, Config(auto_capitalize=True))
+    f.type(s, "xin chaof… ddi. ”ddaay? ")
+    assert f.text == "xin chào… Đi. ”Đây? "
+    f.type(s, ["\n"] + list("oong"))
+    assert f.text.endswith("\nÔng")
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_auto_capitalize_newline_without_punctuation(mode):
+    s, f, _ = make(mode, Config(auto_capitalize=True))
+    f.type(s, "xin chaof\noong")
+    assert f.text == "xin chào\nÔng"
+
+
+def test_decimal_is_not_a_sentence_boundary():
+    s, f, _ = make(OutputMode.REPLACE, Config(auto_capitalize=True))
+    f.type(s, "1.5 met")
+    assert f.text == "1.5 met"
+
+
+@pytest.mark.parametrize("mode", MODES)
 def test_ctrl_and_navigation_break_word(mode):
     s, f, _ = make(mode, Config(edit_previous_word=False))
     f.type(s, list("tieeng") + ["Left"] + list("s"))
@@ -258,7 +288,8 @@ def test_property_type_then_backspace_all():
         for mode in MODES:
             s, f, _ = make(mode, Config(edit_previous_word=False))
             f.type(s, word)
-            assert f.text == transform(word, TELEX).text
+            expected = transform(word, TELEX).text
+            assert f.text == (word if s.literal else expected), word
             n = len(s.display)
             f.type(s, [BS] * n)
             assert f.text == "", (mode, word)
@@ -289,10 +320,21 @@ def test_soft_reset_add_tone_after_space():
     assert f.text == "tiếng "
 
 
-def test_soft_reset_not_after_macro():
-    s, f, _ = make(OutputMode.REPLACE, Config(macros={"ko": "không"}, edit_previous_word=False))
+def test_soft_reset_not_after_macro_when_undo_disabled():
+    c = Config(macros={"ko": "không"}, edit_previous_word=False, macro_undo=False)
+    s, f, _ = make(OutputMode.REPLACE, c)
     f.type(s, list("ko ") + [BS] + list("s"))
     assert f.text == "khôngs"
+
+
+def test_macro_undo_restores_trigger_and_separator():
+    s, f, _ = make(OutputMode.REPLACE, Config(macros={"ko": "không"}, edit_previous_word=False))
+    f.type(s, "ko ")
+    assert f.text == "không "
+    f.type(s, [BS])
+    assert f.text == "ko "
+    f.type(s, [BS])
+    assert f.text == "ko"
 
 
 @pytest.mark.parametrize("mode", MODES)
@@ -351,6 +393,20 @@ def test_edit_previous_word_nfd_screen():
     assert f.text == unicodedata.normalize("NFD", "tiếng")
 
 
+def test_app_profile_overrides_method_tone_and_spell():
+    from vfk_engine import AppProfile
+    c = Config(app_profiles={
+        "notepad": AppProfile(input_method="vni", tone_style=ToneStyle.NEW, spell_check=False),
+    })
+    s, f, _ = make(OutputMode.REPLACE, c, app="notepad")
+    f.type(s, "hoa2 ")
+    assert f.text == "hoà "
+    # app khác dùng cấu hình gốc (telex)
+    s.focus_changed("other")
+    f.type(s, "tieengs ")
+    assert f.text == "hoà tiếng "
+
+
 def test_app_profiles():
     from vfk_engine import resolve_profile
     c = Config()
@@ -374,3 +430,84 @@ def test_json_config_roundtrip(tmp_path):
     c = Config(tone_style=ToneStyle.NEW, macros={"ko": "không"})
     st.save(c)
     assert st.load() == c
+
+
+def test_unknown_input_method_falls_back_to_telex():
+    s, f, _ = make(OutputMode.REPLACE, Config(input_method="khong_ton_tai"))
+    f.type(s, "tieengs ")
+    assert f.text == "tiếng "
+
+
+def test_config_schema_version_default_and_forward_compatible():
+    from vfk_engine import CONFIG_SCHEMA_VERSION
+    from vfk_engine.ports import config_from_dict
+    assert config_from_dict({}).schema_version == CONFIG_SCHEMA_VERSION
+    assert config_from_dict({"schema_version": 99}).schema_version == 99
+
+
+def test_example_config_is_valid():
+    from pathlib import Path as P
+
+    from adapters import JsonFileConfigStore
+    c = JsonFileConfigStore(P(__file__).parent.parent / "config.example.json").load()
+    assert c.input_method == "telex" and c.macros["ko"] == "không"
+
+
+def test_json_config_broken_file_falls_back(tmp_path):
+    from adapters import JsonFileConfigStore
+    path = tmp_path / "c.json"
+    path.write_text("{nope", encoding="utf-8")
+    assert JsonFileConfigStore(path).load() == Config()
+
+
+def test_json_config_ignores_unknown_future_fields(tmp_path):
+    """Config của bản mới hơn không được làm hỏng bản cũ."""
+    from adapters import JsonFileConfigStore
+    path = tmp_path / "c.json"
+    path.write_text(json.dumps({"tone_style": "new", "unknown_future_key": 1}), encoding="utf-8")
+    c = JsonFileConfigStore(path).load()
+    assert c.tone_style is ToneStyle.NEW
+
+
+# ---------------------------------------------------------------- tuỳ chọn mới
+@pytest.mark.parametrize("mode", MODES)
+def test_proper_name_coda_k(mode):
+    s, f, _ = make(mode, Config(allow_coda_k=True), text="")
+    f.type(s, "Ddawsk Lawsk ")
+    assert f.text == "Đắk Lắk "
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_proper_name_coda_k_off_restores(mode):
+    s, f, _ = make(mode)
+    f.type(s, "Ddawsk Lawsk ")
+    assert f.text == "Ddawsk Lawsk "
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_macro_digits(mode):
+    s, f, _ = make(mode, Config(macro_digits=True,
+                               macros={"mp3": "máy nghe nhạc", "k8s": "kubernetes"}))
+    f.type(s, "mp3 k8s MP3 123 ")
+    assert f.text == "máy nghe nhạc kubernetes MÁY NGHE NHẠC 123 "
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_macro_digits_off_does_not_expand(mode):
+    s, f, _ = make(mode, Config(macros={"mp3": "máy nghe nhạc"}))
+    f.type(s, "mp3 ")
+    assert f.text == "mp3 "
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_macro_digits_do_not_start_a_word(mode):
+    s, f, _ = make(mode, Config(macro_digits=True, macros={"123": "một hai ba"}))
+    f.type(s, "123 ")
+    assert f.text == "123 "
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_macro_digits_does_not_change_vni(mode):
+    s, f, _ = make(mode, Config(input_method="vni", macro_digits=True))
+    f.type(s, "a1 ")
+    assert f.text == "á "

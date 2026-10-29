@@ -1,5 +1,5 @@
 //! Golden test dùng chung file TSV với bản Python: testdata/golden/*.tsv
-//! Định dạng: `tuỳ_chọn<TAB>phím<TAB>kết_quả` ; tuỳ chọn: telex|vni|simple_telex,old,new,final,quick,bracket,nospell
+//! Định dạng: `tuỳ_chọn<TAB>phím<TAB>kết_quả` ; tuỳ chọn: telex|vni|simple_telex,old,new,final,quick,bracket,nospell,coda_k
 
 use std::path::PathBuf;
 
@@ -18,6 +18,7 @@ fn parse_spec(spec: &str) -> (&'static InputMethodSpec, TransformOptions, bool) 
         w_as_u: true,
         bracket_keys: parts.contains(&"bracket"),
         quick_telex: parts.contains(&"quick"),
+        allow_coda_k: parts.contains(&"coda_k"),
     };
     (im, o, parts.contains(&"final"))
 }
@@ -59,11 +60,20 @@ fn max_raw_is_literal() {
 
 #[test]
 fn to_raw_roundtrip() {
-    for w in ["tiếng", "người", "Việt", "đường", "hòa", "quyết", "giữ", "ĐI", "khuỷu", "xoong"] {
+    for w in ["tiếng", "người", "Việt", "đường", "hòa", "quyết", "giữ", "ĐI", "khuỷu", "xoong"]
+    {
         for im in [&TELEX, &VNI] {
             let raw = to_raw(w, im).unwrap_or_else(|| panic!("to_raw({w})"));
             assert_eq!(transform_str(&raw, im, &TransformOptions::default(), false).text, w, "{w} qua {raw}");
         }
+    }
+}
+
+#[test]
+fn coda_k_rebuild() {
+    let o = TransformOptions { allow_coda_k: true, ..TransformOptions::default() };
+    for im in [&TELEX, &VNI] {
+        assert!(rebuild("đắk", im, &o).is_some(), "{}", im.name);
     }
 }
 

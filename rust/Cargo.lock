@@ -132,6 +132,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "vfk-charset"
+version = "0.4.0"
+dependencies = [
+ "vfk-core",
+]
+
+[[package]]
 name = "vfk-cli"
 version = "0.4.0"
 dependencies = [
@@ -144,6 +151,7 @@ name = "vfk-core"
 version = "0.4.0"
 dependencies = [
  "serde_json",
+ "unicode-normalization",
  "vi-syllable",
 ]
 
@@ -163,6 +171,7 @@ name = "vfk-ffi"
 version = "0.4.0"
 dependencies = [
  "serde_json",
+ "vfk-core",
  "vfk-engine",
 ]
 
@@ -172,6 +181,7 @@ version = "0.4.0"
 dependencies = [
  "serde",
  "serde_json",
+ "vfk-core",
  "vfk-engine",
  "wasm-bindgen",
 ]

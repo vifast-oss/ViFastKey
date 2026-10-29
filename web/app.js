@@ -1,5 +1,14 @@
-// ViFastKey web demo: engine Rust → WASM, ô nhập mô phỏng chế độ REPLACE.
-import init, { WasmSession } from "./pkg/vfk_wasm.js";
+// ViFastKey web demo: engine Rust → WASM.
+// Hỗ trợ cả hai mô hình đầu ra:
+//   REPLACE — áp từng Action lên văn bản, kiểu UniKey/OpenKey.
+//   PREEDIT — giữ vùng preedit gạch chân, commit nguyên tử khi kết thúc từ (TSF/IMK/Fcitx5).
+import init, {
+  WasmSession,
+  charset_decode,
+  charset_encode,
+  charset_encode_bytes,
+  charset_list,
+} from "./pkg/vfk_wasm.js";
 
 const STORAGE_KEY = "vifastkey.demo.config.v1";
 const METHODS = {
@@ -15,7 +24,13 @@ const BOOL_KEYS = [
   "auto_restore_english",
   "auto_capitalize",
   "smart_caps",
+  "macro_enabled",
+  "macro_digits",
+  "allow_coda_k",
+  "edit_previous_word",
 ];
+
+const DEFAULT_MACROS = { ko: "không", vn: "Việt Nam", dc: "được" };
 
 const DEFAULT_CONFIG = {
   input_method: "telex",
@@ -28,7 +43,10 @@ const DEFAULT_CONFIG = {
   auto_capitalize: false,
   smart_caps: false,
   macro_enabled: true,
+  macro_digits: false,
+  allow_coda_k: false,
   edit_previous_word: true,
+  macros: DEFAULT_MACROS,
   unicode_form: "NFC",
 };
 
@@ -40,6 +58,12 @@ const modePill = $("#pg-mode");
 const viToggle = $("#toggle-vi");
 const viLabel = $("#vi-label");
 const liveDot = $(".live-dot");
+const macroText = $("#macro-text");
+const unicodeForm = $("#unicode-form");
+const csFrom = $("#cs-from");
+const csTo = $("#cs-to");
+const csText = $("#cs-text");
+const csOut = $("#cs-out");
 
 const state = {
   ready: false,
@@ -47,26 +71,37 @@ const state = {
   cursor: 0,
   raw: "",
   enabled: true,
-  config: { ...DEFAULT_CONFIG },
+  config: { ...DEFAULT_CONFIG, macros: { ...DEFAULT_MACROS } },
   lastAction: null,
+  mode: "replace",
+  preeditActive: false,
+  preeditStart: 0,
+  preeditLen: 0,
 };
 
 let session = null;
 let renderEnabled = true;
 
-const clone = (value) => JSON.parse(JSON.stringify(value));
 const chars = (value) => Array.from(value);
 const cpLen = (value) => chars(value).length;
 const cpToUtf16 = (value, n) => chars(value).slice(0, n).join("").length;
 const utf16ToCp = (value, i) => chars(value.slice(0, i)).length;
 
 function normalizeConfig(raw) {
-  const config = { ...DEFAULT_CONFIG };
+  const config = { ...DEFAULT_CONFIG, macros: { ...DEFAULT_MACROS } };
   if (!raw || typeof raw !== "object") return config;
   if (Object.hasOwn(METHODS, raw.input_method)) config.input_method = raw.input_method;
   if (raw.tone_style === "old" || raw.tone_style === "new") config.tone_style = raw.tone_style;
+  if (raw.unicode_form === "NFC" || raw.unicode_form === "NFD") config.unicode_form = raw.unicode_form;
   for (const key of BOOL_KEYS) {
     if (typeof raw[key] === "boolean") config[key] = raw[key];
+  }
+  if (raw.macros && typeof raw.macros === "object" && !Array.isArray(raw.macros)) {
+    const macros = {};
+    for (const [key, value] of Object.entries(raw.macros)) {
+      if (typeof value === "string" && key.trim()) macros[key.trim().toLowerCase()] = value;
+    }
+    config.macros = macros;
   }
   return config;
 }
@@ -75,7 +110,7 @@ function loadConfig() {
   try {
     return normalizeConfig(JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"));
   } catch {
-    return { ...DEFAULT_CONFIG };
+    return normalizeConfig({});
   }
 }
 
@@ -160,27 +195,54 @@ function applyDefault(typedChar, keyName) {
   else if (keyName === "Enter") insertText("\n");
 }
 
+function clearPreeditState() {
+  state.preeditActive = false;
+  state.preeditStart = 0;
+  state.preeditLen = 0;
+}
+
 function applyAction(action, { typedChar = null, keyName = null } = {}) {
-  const list = chars(state.text);
-  if (action.type === "replace") {
-    const del = Math.max(0, Math.min(action.delete_before, state.cursor));
-    const insert = chars(action.insert);
-    list.splice(state.cursor - del, del, ...insert);
+  let list = chars(state.text);
+  if (action.type === "preedit") {
+    const start = state.preeditActive ? state.preeditStart : state.cursor;
+    if (state.preeditActive) list.splice(state.preeditStart, state.preeditLen);
+    const insert = chars(action.text);
+    list.splice(start, 0, ...insert);
     state.text = list.join("");
-    state.cursor = state.cursor - del + insert.length;
+    state.preeditActive = true;
+    state.preeditStart = start;
+    state.preeditLen = insert.length;
+    state.cursor = start + insert.length;
+  } else if (action.type === "replace") {
+    const start = state.preeditActive ? state.preeditStart : state.cursor;
+    if (state.preeditActive) list.splice(state.preeditStart, state.preeditLen);
+    clearPreeditState();
+    const del = Math.max(0, Math.min(action.delete_before, start));
+    const insert = chars(action.insert);
+    list.splice(start - del, del, ...insert);
+    state.text = list.join("");
+    state.cursor = start - del + insert.length;
     if (action.pass_key) applyDefault(typedChar, keyName);
   } else if (action.type === "commit") {
+    const start = state.preeditActive ? state.preeditStart : state.cursor;
+    if (state.preeditActive) list.splice(state.preeditStart, state.preeditLen);
+    clearPreeditState();
     const insert = chars(action.text);
-    list.splice(state.cursor, 0, ...insert);
+    list.splice(start, 0, ...insert);
     state.text = list.join("");
-    state.cursor += insert.length;
+    state.cursor = start + insert.length;
     if (action.pass_key) applyDefault(typedChar, keyName);
   } else if (action.type === "pass") {
+    if (state.preeditActive && typedChar != null) clearPreeditState();
     applyDefault(typedChar, keyName);
   }
-  // PREEDIT không dùng trong demo (demo chạy REPLACE); engine vẫn trả về nếu đổi mode.
   state.lastAction = action;
   render();
+}
+
+function createSession() {
+  session = new WasmSession(JSON.stringify(state.config), state.mode);
+  clearPreeditState();
 }
 
 function processKey(keyName, typedChar = null) {
@@ -189,6 +251,19 @@ function processKey(keyName, typedChar = null) {
   session.set_surrounding(before);
   const action = JSON.parse(session.process_key(keyName, false, false, false));
   applyAction(action, { typedChar, keyName });
+}
+
+function flushSession() {
+  if (!session) return;
+  const action = JSON.parse(session.cursor_moved());
+  if (action.type !== "pass") {
+    applyAction(action, {});
+  } else {
+    clearPreeditState();
+    state.lastAction = null;
+    state.raw = "";
+    updateMeta();
+  }
 }
 
 function selectionHasRange() {
@@ -202,7 +277,8 @@ function deleteSelection() {
   const value = pad.value.slice(0, start) + pad.value.slice(end);
   state.text = value;
   state.cursor = utf16ToCp(value, start);
-  session.reset();
+  if (session) session.reset();
+  clearPreeditState();
   state.raw = "";
   state.lastAction = null;
   render();
@@ -211,16 +287,19 @@ function deleteSelection() {
 
 function syncFromPad({ flush = true } = {}) {
   if (!state.ready) return;
+  const wanted = utf16ToCp(pad.value, pad.selectionEnd ?? pad.value.length);
   state.text = pad.value;
-  state.cursor = utf16ToCp(pad.value, pad.selectionEnd ?? pad.value.length);
-  if (flush) {
-    const action = JSON.parse(session.cursor_moved());
-    if (action.type !== "pass") applyAction(action, {});
-    else {
-      state.lastAction = null;
-      state.raw = "";
-      updateMeta();
-    }
+  state.cursor = wanted;
+  if (!flush) {
+    updateMeta();
+    return;
+  }
+  const before = state.text;
+  flushSession();
+  // Chỉ khôi phục vị trí click nếu flush không làm đổi văn bản.
+  if (state.text === before) {
+    state.cursor = Math.min(wanted, cpLen(state.text));
+    render();
   }
 }
 
@@ -232,6 +311,24 @@ function updateEnabledUI() {
   liveDot.classList.toggle("off", !enabled);
 }
 
+function formatMacros(macros) {
+  return Object.entries(macros || {}).map(([key, value]) => `${key}=${value}`).join("\n");
+}
+
+function parseMacros(text) {
+  const out = {};
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+    const eq = line.indexOf("=");
+    if (eq <= 0) continue;
+    const key = line.slice(0, eq).trim().toLowerCase();
+    const value = line.slice(eq + 1).trim();
+    if (key) out[key] = value;
+  }
+  return out;
+}
+
 function syncControls() {
   for (const button of document.querySelectorAll("[data-method]")) {
     button.classList.toggle("active", button.dataset.method === state.config.input_method);
@@ -239,21 +336,37 @@ function syncControls() {
   for (const button of document.querySelectorAll("[data-tone]")) {
     button.classList.toggle("active", button.dataset.tone === state.config.tone_style);
   }
+  for (const button of document.querySelectorAll("[data-output-mode]")) {
+    button.classList.toggle("active", button.dataset.outputMode === state.mode);
+  }
   for (const checkbox of document.querySelectorAll("[data-opt]")) {
     checkbox.checked = Boolean(state.config[checkbox.dataset.opt]);
   }
-  modePill.textContent = METHODS[state.config.input_method] || "Telex";
+  if (document.activeElement !== macroText) macroText.value = formatMacros(state.config.macros);
+  unicodeForm.value = state.config.unicode_form;
+  const output = state.mode === "preedit" ? " · Preedit" : "";
+  modePill.textContent = `${METHODS[state.config.input_method] || "Telex"}${output}`;
 }
 
 function pushConfig() {
-  if (!session) return;
+  if (!session) return false;
   const ok = session.set_config(JSON.stringify(state.config));
   if (!ok) {
     setStatus("Cấu hình không hợp lệ", true);
-    return;
+    return false;
   }
   saveConfig();
   syncControls();
+  clearPreeditState();
+  updateMeta();
+  return true;
+}
+
+function resetWord() {
+  if (session) session.reset();
+  clearPreeditState();
+  state.raw = "";
+  state.lastAction = null;
   updateMeta();
 }
 
@@ -264,28 +377,33 @@ function setMethod(method) {
   }
   state.config.input_method = method;
   pushConfig();
-  state.raw = "";
-  state.lastAction = null;
-  session.reset();
-  updateMeta();
+  resetWord();
 }
 
 function setTone(tone) {
   if (tone !== "old" && tone !== "new") return;
   state.config.tone_style = tone;
   pushConfig();
+  resetWord();
+}
+
+function setOutputMode(mode) {
+  if (mode !== "replace" && mode !== "preedit") return;
+  if (mode === state.mode) return;
+  state.mode = mode;
+  createSession();
   state.raw = "";
   state.lastAction = null;
-  session.reset();
+  syncControls();
+  updateEnabledUI();
   updateMeta();
+  pad.focus();
 }
 
 function clearPad({ focus = true } = {}) {
   state.text = "";
   state.cursor = 0;
-  state.raw = "";
-  state.lastAction = null;
-  if (session) session.reset();
+  resetWord();
   render();
   updateMeta();
   if (focus) pad.focus();
@@ -303,8 +421,12 @@ function finalizeWord() {
   }
 }
 
-function runExample(text) {
+function runExample(text, enableOption = null) {
   if (!state.ready) return;
+  if (enableOption && !state.config[enableOption]) {
+    state.config[enableOption] = true;
+    if (!pushConfig()) return;
+  }
   if (!state.enabled) {
     applyAction(JSON.parse(session.toggle_vietnamese()), {});
     updateEnabledUI();
@@ -315,9 +437,7 @@ function runExample(text) {
   }
   state.text = "";
   state.cursor = 0;
-  state.raw = "";
-  state.lastAction = null;
-  session.reset();
+  resetWord();
 
   renderEnabled = false;
   for (const ch of text) {
@@ -331,6 +451,37 @@ function runExample(text) {
   pad.focus();
 }
 
+function setupCharsetTool() {
+  const list = JSON.parse(charset_list());
+  for (const select of [csFrom, csTo]) {
+    select.replaceChildren();
+    for (const item of list) {
+      const option = document.createElement("option");
+      option.value = item.key;
+      option.textContent = item.name;
+      select.append(option);
+    }
+  }
+  csFrom.value = "unicode";
+  csTo.value = "tcvn3";
+  const run = () => {
+    try {
+      const decoded = csFrom.value === "unicode" ? csText.value : charset_decode(csFrom.value, csText.value);
+      const encoded = charset_encode(csTo.value, decoded);
+      const bytes = charset_encode_bytes(csTo.value, decoded);
+      const hex = bytes.length ? ` · hex ${Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join(" ")}` : "";
+      csOut.textContent = `${encoded}${hex}`;
+    } catch (error) {
+      csOut.textContent = `Lỗi: ${error}`;
+    }
+  };
+  $("#cs-run").addEventListener("click", run);
+  csText.addEventListener("change", run);
+  csFrom.addEventListener("change", run);
+  csTo.addEventListener("change", run);
+  run();
+}
+
 function setupEvents() {
   pad.addEventListener("keydown", (event) => {
     if (event.isComposing || event.keyCode === 229) return;
@@ -338,7 +489,7 @@ function setupEvents() {
 
     const key = event.key;
     if (key === "Tab") {
-      if (session) session.cursor_moved();
+      flushSession();
       state.raw = "";
       updateMeta();
       return;
@@ -383,18 +534,14 @@ function setupEvents() {
   });
 
   pad.addEventListener("click", () => syncFromPad());
-  pad.addEventListener("blur", () => {
-    if (!session) return;
-    session.cursor_moved();
-    state.lastAction = null;
-    state.raw = "";
-  });
+  pad.addEventListener("blur", () => flushSession());
 
   pad.addEventListener("input", () => {
     // Paste / autofill / undo: đồng bộ lại văn bản và reset từ đang gõ.
     state.text = pad.value;
     state.cursor = utf16ToCp(pad.value, pad.selectionEnd ?? pad.value.length);
     if (session) session.reset();
+    clearPreeditState();
     state.raw = "";
     state.lastAction = null;
     updateMeta();
@@ -406,16 +553,25 @@ function setupEvents() {
   for (const button of document.querySelectorAll("[data-tone]")) {
     button.addEventListener("click", () => setTone(button.dataset.tone));
   }
+  for (const button of document.querySelectorAll("[data-output-mode]")) {
+    button.addEventListener("click", () => setOutputMode(button.dataset.outputMode));
+  }
   for (const checkbox of document.querySelectorAll("[data-opt]")) {
     checkbox.addEventListener("change", () => {
       state.config[checkbox.dataset.opt] = checkbox.checked;
       pushConfig();
-      state.lastAction = null;
-      state.raw = "";
-      session.reset();
-      updateMeta();
+      resetWord();
     });
   }
+
+  macroText.addEventListener("change", () => {
+    state.config.macros = parseMacros(macroText.value);
+    if (pushConfig()) resetWord();
+  });
+  unicodeForm.addEventListener("change", () => {
+    state.config.unicode_form = unicodeForm.value;
+    if (pushConfig()) resetWord();
+  });
 
   viToggle.addEventListener("click", () => {
     if (!session) return;
@@ -426,7 +582,7 @@ function setupEvents() {
 
   $("#clear-pad").addEventListener("click", () => clearPad());
   for (const button of document.querySelectorAll("[data-example]")) {
-    button.addEventListener("click", () => runExample(button.dataset.example));
+    button.addEventListener("click", () => runExample(button.dataset.example, button.dataset.enable || null));
   }
 
   document.querySelector(".pg-screen").addEventListener("click", (event) => {
@@ -438,10 +594,11 @@ async function boot() {
   state.config = loadConfig();
   try {
     await init();
-    session = new WasmSession(JSON.stringify(state.config), "replace");
+    createSession();
     state.ready = true;
     syncControls();
     updateEnabledUI();
+    setupCharsetTool();
     setupEvents();
     state.lastAction = null;
     render();

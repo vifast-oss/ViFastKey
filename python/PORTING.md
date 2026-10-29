@@ -7,7 +7,7 @@ Bản Python là **oracle**. Bản Rust đạt yêu cầu khi chạy qua 100% `c
 | Bước | Crate | Nguồn Python | Kiểm tra bằng |
 |---|---|---|---|
 | 1 | `vi-syllable` | `vi_syllable/__init__.py` | Port `tests/test_syllable.py` (bảng VALID/INVALID/PARTIAL, `TONE_TABLE`) |
-| 2 | `vfk-core` | `vfk_core/rules.py`, `transform.py`, `__init__.py` | `core.jsonl` (13.252 ca) + so `Composer` với `transform` |
+| 2 | `vfk-core` | `vfk_core/rules.py`, `transform.py`, `__init__.py` | `core.jsonl` (13.311 ca) + so `Composer` với `transform` |
 | 3 | `vfk-engine` | `vfk_engine/*.py` | `engine.jsonl` (3.000 kịch bản, so từng Action) |
 | 4 | `vfk-ffi` | `vfk_ffi/__init__.py` | Test UTF-16 (`test_ffi_*`) |
 | 5 | `vfk-cli` | `apps/vfk_cli.py` | Chạy tay, so với `--demo` |
@@ -26,11 +26,12 @@ pub struct Syllable<'a> { onset: &'a str, cluster: &'a str, coda: &'a str, clust
 pub struct Letter { base: u8, upper: bool, mark: Option<Mark>, from_standalone: bool, auto_horn: bool }
 #[derive(Clone)]
 pub struct WordState {
-    letters: ArrayVec<Letter, 24>, tone: u8,
+    letters: Vec<Letter>,        // bản hiện tại; ArrayVec<Letter, 24> là tối ưu sau
+    tone: u8,
     undone: bool, latched: bool, transformed: bool,
     locked: u32,                 // bitset theo phím a-z (thay cho set Python)
 }
-pub struct Composer { raw: ArrayVec<char, 25>, states: ArrayVec<WordState, 25>, im: &'static InputMethodSpec, opt: TransformOptions }
+pub struct Composer { raw: Vec<char>, states: Vec<WordState>, im: &'static InputMethodSpec, opt: TransformOptions }
 
 // vfk-engine
 pub enum Action {
@@ -56,17 +57,21 @@ pub enum Action {
 5. **NFC/NFD**: dùng crate `unicode-normalization`. Bên trong luôn là NFC, chỉ chuẩn hoá ở `_out()`.
 6. **Hoa/thường**: viết hoa `đ` ra `Đ`. Phím chức năng viết hoa (`S`, `W`) vẫn là phím chức năng, nhưng chữ sinh ra theo kiểu hoa của chữ gốc. Riêng `W` đứng riêng thì ra `Ư`.
 7. **`MAX_RAW = 24`**: khi vượt giới hạn, `Composer` ngừng tính tiếp nhưng vẫn ghi raw.
-8. **`Config` trong `engine.jsonl`**: không có `app_profiles`. Dùng `DEFAULT_APP_PROFILES`, và app trong mọi kịch bản là `"app"`.
+8. **`Config` trong `engine.jsonl`**: không có `app_profiles`. Dùng `DEFAULT_APP_PROFILES`, và app trong mọi kịch bản là `"app"`. Các trường `allow_coda_k`/`macro_digits` có thể thiếu trong file cũ; mặc định `false`.
+9. **Tuỳ chọn chính tả**: `TransformOptions.allow_coda_k` phải được truyền vào `check_with`/`tone_allowed_with`; bản Python dùng tham số thứ ba của `check`/`tone_allowed`.
 9. **`FakeTextField`**: cần port sang Rust làm test harness, vì `engine.jsonl` giả định đúng ngữ nghĩa `apply()` (PassThrough thì OS gõ phím, Backspace xoá 1 code point).
 
 ## 4. Hiệu năng
 
-| | Python | Mục tiêu Rust |
+| | Python (tham khảo) | Rust (tham khảo) |
 |---|---|---|
-| `transform` (tính lại từ đầu) | khoảng 165 µs/phím | < 5 µs |
-| `Composer` (tăng dần) | khoảng 87 µs/phím | < 2 µs |
+| `transform` (tính lại từ đầu) | ~22 µs/phím | ~1.0 µs/phím |
+| `Composer` (tăng dần) | ~10 µs/phím | ~0.5 µs/phím |
 
-`python -m tools.bench` để đo lại. Trong Rust, `Composer` không cấp phát heap: mọi thứ nằm trong `ArrayVec`, chỉ `String` kết quả là cấp phát.
+Số đo phụ thuộc máy; chạy `python -m tools.bench` và
+`cargo run -p vfk-core --release --example bench` để đo lại.
+
+`python -m tools.bench` để đo lại. Trong Rust, `Composer` hiện dùng `Vec`; thay bằng `ArrayVec` (24/25 phần tử) là bước tối ưu tiếp theo, không đổi hành vi.
 
 ## 5. Khi muốn đổi hành vi
 

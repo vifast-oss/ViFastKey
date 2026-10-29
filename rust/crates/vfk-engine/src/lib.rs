@@ -10,6 +10,6 @@ pub mod testing;
 
 pub use ports::{
     default_app_profiles, resolve_profile, AppContext, AppProfile, Config, ConfigStore, Dictionary,
-    OutputMode, Ports, SurroundingText, UnicodeForm,
+    OutputMode, Ports, SurroundingText, UnicodeForm, CONFIG_SCHEMA_VERSION,
 };
 pub use session::{Action, FieldKind, ImeSession, Key, KeyEvent};

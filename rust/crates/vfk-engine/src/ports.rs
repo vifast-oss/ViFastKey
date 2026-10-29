@@ -5,6 +5,12 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use vi_syllable::ToneStyle;
 
+pub const CONFIG_SCHEMA_VERSION: u32 = 1;
+
+fn default_schema_version() -> u32 {
+    CONFIG_SCHEMA_VERSION
+}
+
 /// Mô hình xuất chữ.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -38,10 +44,22 @@ pub struct AppProfile {
     pub edit_previous_word: Option<bool>,
     /// Ép bật/tắt (game, ...).
     pub vietnamese: Option<bool>,
+    /// Ghi đè kiểu gõ theo app.
+    pub input_method: Option<String>,
+    /// Ghi đè kiểu đặt dấu theo app.
+    pub tone_style: Option<ToneStyle>,
+    /// Ghi đè kiểm tra chính tả theo app.
+    pub spell_check: Option<bool>,
+    /// Gợi ý bảng mã cho adapter.
+    pub charset: Option<String>,
 }
 
 pub fn default_app_profiles() -> HashMap<String, AppProfile> {
-    let term = AppProfile { output_mode: Some(OutputMode::Preedit), edit_previous_word: Some(false), ..Default::default() };
+    let term = AppProfile {
+        output_mode: Some(OutputMode::Preedit),
+        edit_previous_word: Some(false),
+        ..Default::default()
+    };
     let chromium = AppProfile { wait_ack: true, delay_per_char_ms: 2, ..Default::default() };
     let electron = AppProfile { backspace_delay_ms: 3, ..Default::default() };
     let mut m = HashMap::new();
@@ -75,9 +93,15 @@ pub struct Config {
     pub w_as_u: bool,
     pub bracket_keys: bool,
     pub quick_telex: bool,
+    /// Âm cuối k cho tên riêng (Đắk Lắk); chỉ đi với thanh sắc/nặng.
+    pub allow_coda_k: bool,
     // --- sau khi kết thúc từ
     pub auto_restore_english: bool,
     pub macro_enabled: bool,
+    /// Chữ số thuộc từ để macro có số hoạt động (mp3, k8s); cần `macro_enabled`.
+    pub macro_digits: bool,
+    /// Backspace ngay sau macro: khôi phục phím gõ.
+    pub macro_undo: bool,
     pub macros: HashMap<String, String>,
     pub auto_capitalize: bool,
     // --- ngữ cảnh
@@ -92,6 +116,9 @@ pub struct Config {
     pub smart_caps: bool,
     // --- đầu ra
     pub unicode_form: UnicodeForm,
+    /// Phiên bản tài liệu cấu hình; file cũ thiếu trường này được hiểu là 1.
+    #[serde(default = "default_schema_version")]
+    pub schema_version: u32,
 }
 
 impl Default for Config {
@@ -103,8 +130,11 @@ impl Default for Config {
             w_as_u: true,
             bracket_keys: false,
             quick_telex: false,
+            allow_coda_k: false,
             auto_restore_english: true,
             macro_enabled: true,
+            macro_digits: false,
+            macro_undo: true,
             macros: HashMap::new(),
             auto_capitalize: false,
             excluded_apps: Vec::new(),
@@ -115,7 +145,24 @@ impl Default for Config {
             restore_after_space: true,
             smart_caps: false,
             unicode_form: UnicodeForm::Nfc,
+            schema_version: CONFIG_SCHEMA_VERSION,
         }
+    }
+}
+
+impl Config {
+    /// Trộn một JSON một phần lên cấu hình hiện tại. Trả None nếu JSON sai.
+    /// Dùng chung cho C ABI và WASM; khoá lạ bị bỏ qua như khi deserialize.
+    pub fn apply_json_patch(&self, patch: &str) -> Option<Config> {
+        let mut base = match serde_json::to_value(self) {
+            Ok(serde_json::Value::Object(m)) => m,
+            _ => return None,
+        };
+        let patch: HashMap<String, serde_json::Value> = serde_json::from_str(patch).ok()?;
+        for (k, v) in patch {
+            base.insert(k, v);
+        }
+        serde_json::from_value(serde_json::Value::Object(base)).ok()
     }
 }
 

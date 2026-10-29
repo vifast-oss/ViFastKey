@@ -4,10 +4,12 @@ Rust: mỗi Protocol là 1 trait; `Ports` gom các trait object (Box<dyn ...>) h
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from typing import Protocol
 
 from vi_syllable import ToneStyle
+
+CONFIG_SCHEMA_VERSION = 1
 
 
 @dataclass
@@ -20,6 +22,11 @@ class AppProfile:
     wait_ack: bool = False               # chờ app xử lý xong backspace rồi mới chèn
     edit_previous_word: bool | None = None
     vietnamese: bool | None = None       # ép bật/tắt (game, vim normal mode...)
+    # Ghi đè theo app (P1 từ nghiên cứu VnKey/XKey/Bamboo):
+    input_method: str | None = None      # telex | simple_telex | vni
+    tone_style: ToneStyle | None = None  # None = dùng Config
+    spell_check: bool | None = None
+    charset: str | None = None           # gợi ý bảng mã cho adapter
 
 
 DEFAULT_APP_PROFILES: dict[str, AppProfile] = {
@@ -56,9 +63,12 @@ class Config:
     w_as_u: bool = True
     bracket_keys: bool = False              # [ -> ơ, ] -> ư
     quick_telex: bool = False               # cc=ch, gg=gi, ...
+    allow_coda_k: bool = False              # âm cuối k cho tên riêng (Đắk Lắk); chỉ sắc/nặng
     # --- sau khi kết thúc từ
     auto_restore_english: bool = True       # dùng port Dictionary
     macro_enabled: bool = True
+    macro_digits: bool = False              # chữ số thuộc từ (cần macro_enabled) cho mp3, k8s
+    macro_undo: bool = True                 # Backspace ngay sau macro: khôi phục phím gõ
     macros: dict[str, str] = field(default_factory=dict)
     auto_capitalize: bool = False           # viết hoa đầu câu
     # --- ngữ cảnh
@@ -71,6 +81,8 @@ class Config:
     smart_caps: bool = False                # 2 chữ hoa đầu từ (trừ DD) -> gõ thẳng, bảo vệ HTTP_PORT, JSON...
     # --- đầu ra
     unicode_form: str = "NFC"               # NFC | NFD
+    # --- phiên bản tài liệu; bản cũ thiếu trường này được hiểu là 1
+    schema_version: int = CONFIG_SCHEMA_VERSION
 
 
 class ConfigStore(Protocol):
@@ -88,7 +100,7 @@ class SurroundingText(Protocol):
 
 class Dictionary(Protocol):
     def is_english(self, word: str) -> bool: ...      # phím thô, chữ thường: 'data'
-    def is_vietnamese(self, word: str) -> bool: ...   # chữ tiếng Việt, thường, NFC: 'dât' 
+    def is_vietnamese(self, word: str) -> bool: ...   # chữ tiếng Việt, thường, NFC: 'dât'
 
 
 @dataclass
@@ -97,6 +109,30 @@ class Ports:
     app: AppContext
     surrounding: SurroundingText
     dictionary: Dictionary
+
+
+def config_to_dict(c: Config) -> dict:
+    """Config -> dict JSON (tone_style thành chuỗi "old"/"new")."""
+    d = asdict(c)
+    d["tone_style"] = c.tone_style.value
+    return d
+
+
+def config_from_dict(d: dict) -> Config:
+    """Dict JSON -> Config. Bỏ qua khoá lạ; nhận tone_style/app_profiles dạng thô.
+    Dùng chung cho file config, FFI và WASM để mọi nơi chịu được config của bản mới hơn."""
+    names = {f.name for f in fields(Config)}
+    d = {k: v for k, v in d.items() if k in names}
+    if "input_method" in d and not isinstance(d["input_method"], str):
+        raise TypeError("input_method phải là chuỗi")
+    if "tone_style" in d and not isinstance(d["tone_style"], (str, ToneStyle)):
+        raise TypeError("tone_style phải là 'old'/'new'")
+    if isinstance(d.get("tone_style"), str):
+        d["tone_style"] = ToneStyle(d["tone_style"])
+    if isinstance(d.get("app_profiles"), dict):
+        d["app_profiles"] = {k: v if isinstance(v, AppProfile) else AppProfile(**v)
+                             for k, v in d["app_profiles"].items()}
+    return Config(**d)
 
 
 def resolve_profile(config: Config, app_id: str | None) -> AppProfile:

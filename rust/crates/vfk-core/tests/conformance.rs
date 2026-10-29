@@ -1,5 +1,5 @@
 //! Chạy `conformance/core.jsonl` (sinh bởi bản Python: `python -m tools.export_conformance`).
-//! Mỗi dòng: {"im","opts":{tone_style,spell_check,w_as_u,bracket_keys,quick_telex},"final","keys","expected"}
+//! Mỗi dòng: {"im","opts":{tone_style,spell_check,w_as_u,bracket_keys,quick_telex,allow_coda_k},"final","keys","expected"}
 
 use std::path::PathBuf;
 
@@ -22,6 +22,7 @@ fn core_conformance() {
             w_as_u: op["w_as_u"].as_bool().unwrap(),
             bracket_keys: op["bracket_keys"].as_bool().unwrap(),
             quick_telex: op["quick_telex"].as_bool().unwrap(),
+            allow_coda_k: op["allow_coda_k"].as_bool().unwrap_or(false),
         };
         let fin = c["final"].as_bool().unwrap();
         let keys = c["keys"].as_str().unwrap();

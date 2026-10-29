@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 .venv/
 venv/
 *.egg-info/
@@ -12,7 +15,8 @@ dist/
 # Rust
 target/
 
-# IDE / OS
+# JS / IDE / OS
+node_modules/
 .vscode/
 .idea/
 .DS_Store

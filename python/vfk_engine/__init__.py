@@ -1,8 +1,50 @@
 """vfk-engine: tầng application của hexagon (tương ứng crate Rust `vfk-engine`)."""
-from .ports import DEFAULT_APP_PROFILES, AppProfile, resolve_profile, AppContext, Config, ConfigStore, Dictionary, Ports, SurroundingText
-from .session import (Action, Commit, FieldKind, ImeSession, KeyEvent, OutputMode, PassThrough,
-                      Preedit, Replace)
+from .ports import (
+    CONFIG_SCHEMA_VERSION,
+    DEFAULT_APP_PROFILES,
+    AppContext,
+    AppProfile,
+    Config,
+    ConfigStore,
+    Dictionary,
+    Ports,
+    SurroundingText,
+    config_from_dict,
+    config_to_dict,
+    resolve_profile,
+)
+from .session import (
+    Action,
+    Commit,
+    FieldKind,
+    ImeSession,
+    KeyEvent,
+    OutputMode,
+    PassThrough,
+    Preedit,
+    Replace,
+)
 
-__all__ = ["DEFAULT_APP_PROFILES", "AppProfile", "resolve_profile", "AppContext", "Config", "ConfigStore", "Dictionary", "Ports", "SurroundingText",
-           "Action", "Commit", "FieldKind", "ImeSession", "KeyEvent", "OutputMode", "PassThrough",
-           "Preedit", "Replace"]
+__all__ = [
+    "CONFIG_SCHEMA_VERSION",
+    "DEFAULT_APP_PROFILES",
+    "AppProfile",
+    "resolve_profile",
+    "AppContext",
+    "Config",
+    "ConfigStore",
+    "Dictionary",
+    "Ports",
+    "SurroundingText",
+    "config_from_dict",
+    "config_to_dict",
+    "Action",
+    "Commit",
+    "FieldKind",
+    "ImeSession",
+    "KeyEvent",
+    "OutputMode",
+    "PassThrough",
+    "Preedit",
+    "Replace",
+]

@@ -14,6 +14,37 @@ from .rules import QUICK_TELEX, InputMethodSpec
 
 MAX_RAW = 24   # vượt quá thì coi là chuỗi thô (URL, mã, token...), không biến đổi
 
+# Âm đầu cho phép "uơ" mở (uơ, thuơ, huơ, khuơ, quơ...); các âm đầu khác phải thành "ươ".
+_OPEN_UO_ONSETS = {"", "c", "h", "k", "kh", "qu", "th"}
+
+
+def _vni_literal(raw_s: str, im: InputMethodSpec) -> str | None:
+    """VNI: chuỗi số trông như số thật (2024, 10) hoặc cặp phím số lặp (a11)
+    phải giữ nguyên, không bị biến thành dấu. Trả về chuỗi thay thế hoặc None."""
+    if not im.digit_keys or not any(c.isdigit() for c in raw_s):
+        return None
+    # Cặp số giống nhau là escape: a11 -> a1, viet655 -> viet65.
+    out, i, changed = [], 0, False
+    while i < len(raw_s):
+        if (raw_s[i].isdigit() and i + 1 < len(raw_s) and raw_s[i + 1] == raw_s[i]):
+            out.append(raw_s[i])
+            i += 2
+            changed = True
+        else:
+            out.append(raw_s[i])
+            i += 1
+    if changed:
+        return "".join(out)
+    # Chuỗi số ở cuối có từ 2 phím thanh trở lên là số thật (nam2024, ba10);
+    # còn 65/64 là tổ hợp dấu + thanh nên vẫn chuyển (viet65, nguye64n).
+    tones = 0
+    for ch in reversed(raw_s):
+        if not ch.isdigit():
+            break
+        if "0" <= ch <= "5":
+            tones += 1
+    return raw_s if tones >= 2 else None
+
 
 @dataclass(frozen=True)
 class TransformOptions:
@@ -22,6 +53,7 @@ class TransformOptions:
     w_as_u: bool = True            # Telex: "w" đứng riêng -> "ư"
     bracket_keys: bool = False     # Telex: "[" -> "ơ", "]" -> "ư"
     quick_telex: bool = False      # cc=ch, gg=gi, kk=kh, nn=ng, qq=qu, pp=ph, tt=th (đầu từ)
+    allow_coda_k: bool = False     # cho phép âm cuối k (tên riêng: Đắk Lắk), chỉ với sắc/nặng
 
 
 @dataclass
@@ -38,9 +70,12 @@ class WordState:
     letters: list[Letter] = field(default_factory=list)
     tone: int = 0
     undone: bool = False          # người dùng đã hoàn tác ít nhất 1 lần -> không tự khôi phục
+    undo_key: str | None = None   # phím gây hoàn tác gần nhất (để phân biệt ass với coffee)
     latched: bool = False         # hoàn tác thanh (ass) -> phần còn lại của từ gõ thẳng
     locked: set = field(default_factory=set)  # phím dấu phụ đã hoàn tác (xooong) -> phím đó gõ thẳng
     transformed: bool = False     # có ít nhất 1 biến đổi tiếng Việt
+    keep: bool = False            # giữ nguyên dù sai chính tả (đ ở giữa từ: vcđ, nđm)
+    keep_pos: int = -1            # vị trí đ được bảo vệ
 
 
 @dataclass(frozen=True)
@@ -84,8 +119,8 @@ def _render(st: WordState, style: ToneStyle) -> str:
     return "".join(chars)
 
 
-def _status(letters: list[Letter], tone: int) -> Status:
-    return vs.check(_toneless_lower(letters), tone)
+def _status(letters: list[Letter], tone: int, opt: TransformOptions) -> Status:
+    return vs.check(_toneless_lower(letters), tone, opt.allow_coda_k)
 
 
 def _cluster_span(letters: list[Letter]) -> tuple[int, int]:
@@ -101,10 +136,12 @@ def _candidates(st: WordState, rules) -> list[tuple[tuple[int, str], ...]]:
     pairs, singles = [], []
     for r in rules:
         if r.mark == "-":
-            if L and L[0].base == "d" and end > start:      # đ cần có nguyên âm: 'dd', 'did', 'duowngd'
+            # đ có thể đứng sau phụ âm (vcdd -> vcđ, nddm -> nđm) hoặc đầu từ.
+            # Nếu từ đã có nguyên âm và d ở đầu, ưu tiên d đầu (duowngd -> đường).
+            if L and L[0].base == "d" and end > start:
                 singles.append(((0, "-"),))
-            elif len(L) == 1 and L[0].base == "d":          # 'dd' ở đầu từ
-                singles.append(((0, "-"),))
+            elif L and L[-1].base == "d":
+                singles.append(((len(L) - 1, "-"),))
         elif r.pair:
             for i in range(start, end - 1):
                 if L[i].base == "u" and L[i + 1].base == "o":
@@ -148,11 +185,12 @@ def _step(st: WordState, k: str, im: InputMethodSpec, opt: TransformOptions) -> 
         t = im.tones[lk]
         if st.tone == t:                                   # ass -> as
             st.tone, st.undone, st.latched = 0, True, True
+            st.undo_key = lk
             L.append(_literal(k))
             return
         lowered = _toneless_lower(L)
-        if opt.spell_check and (not vs.tone_allowed(lowered, t)
-                                or vs.check(lowered, t) is Status.INVALID):
+        if opt.spell_check and (not vs.tone_allowed(lowered, t, opt.allow_coda_k)
+                                or vs.check(lowered, t, opt.allow_coda_k) is Status.INVALID):
             L.append(_literal(k))                          # batf -> batf (t chỉ đi với sắc/nặng)
             return
         st.tone, st.transformed = t, True
@@ -174,11 +212,25 @@ def _step(st: WordState, k: str, im: InputMethodSpec, opt: TransformOptions) -> 
             pending = [c for c in cands if c not in applied]
             for c in pending:
                 old = [(i, L[i].mark, L[i].auto_horn) for i, _ in c]
+                protected = False
                 for i, m in c:
                     if len(c) == 2 and L[i].base == "u" and L[i].mark != m:
-                        L[i].auto_horn = True          # 'thuow' -> móc u tự động (có thể bỏ: thuở)
+                        onset = vs.parse(_toneless_lower(L)).onset
+                        L[i].auto_horn = onset in _OPEN_UO_ONSETS
                     L[i].mark = m
-                if not opt.spell_check or _status(L, st.tone) is not Status.INVALID:
+                    if m == "-" and not st.keep:
+                        # đ đứng sau phụ âm/đầu từ là viết tắt hợp lệ (vcđ, nđm, đc);
+                        # còn "ađ" trong add/address thì vẫn phải khôi phục phím thô.
+                        if i == 0:
+                            protected = all(l.base not in vs.VOWELS for l in L[i + 1:])
+                        elif L[i - 1].base not in vs.VOWELS:
+                            protected = True
+                        if protected:
+                            st.keep, st.keep_pos = True, i
+                if protected:                              # viết tắt chứa đ: giữ dù sai chính tả
+                    st.transformed = True
+                    return
+                if not opt.spell_check or _status(L, st.tone, opt) is not Status.INVALID:
                     st.transformed = True
                     return
                 for i, m, a in old:
@@ -190,6 +242,7 @@ def _step(st: WordState, k: str, im: InputMethodSpec, opt: TransformOptions) -> 
                     L[iu].auto_horn = False                # 'thuow' (thuơ) + w -> 'thươ' (kiểu UniKey: thuowwng)
                     return
                 st.undone = True
+                st.undo_key = lk
                 st.locked.add(lk)
                 i0 = c[0][0]
                 if len(c) == 1 and L[i0].from_standalone:  # ư sinh từ "w" -> trả lại "w"
@@ -217,7 +270,7 @@ def _step(st: WordState, k: str, im: InputMethodSpec, opt: TransformOptions) -> 
     if opt.w_as_u and lk in im.standalone:
         base, mark = im.standalone[lk]
         cand = L + [Letter(base, k != lk, mark, True)]
-        if not opt.spell_check or _status(cand, st.tone) is not Status.INVALID:
+        if not opt.spell_check or _status(cand, st.tone, opt) is not Status.INVALID:
             L.append(cand[-1])
             st.transformed = True
             return
@@ -229,19 +282,34 @@ def _step(st: WordState, k: str, im: InputMethodSpec, opt: TransformOptions) -> 
 def _clone(st: WordState) -> WordState:
     return WordState(letters=[Letter(l.base, l.upper, l.mark, l.from_standalone, l.auto_horn)
                               for l in st.letters],
-                     tone=st.tone, undone=st.undone, latched=st.latched,
-                     transformed=st.transformed, locked=set(st.locked))
+                     tone=st.tone, undone=st.undone, undo_key=st.undo_key,
+                     latched=st.latched, transformed=st.transformed, locked=set(st.locked),
+                     keep=st.keep, keep_pos=st.keep_pos)
 
 
 def _result(st: WordState, raw_s: str, opt: TransformOptions, final: bool) -> TransformResult:
     text = _render(st, opt.tone_style)
-    status = _status(st.letters, st.tone)
+    status = _status(st.letters, st.tone, opt)
     if opt.spell_check and st.transformed:
         start, end = _cluster_span(st.letters)
-        # đã hoàn tác (ass -> as, boss -> bos) thì tôn trọng ý người gõ; từ tiếng Anh như 'boss'
-        # được khôi phục ở engine nhờ port Dictionary.
-        bad = not st.undone and (status is Status.INVALID
-                                 or (final and status is Status.PARTIAL and end > start))
+        # Hoàn tác đúng chỗ (aaa, ass, DDD, aaan) thì tôn trọng ý người gõ; còn hoàn tác
+        # nằm giữa từ tiếng Anh (coffee, banana, cheese, daddy) thì khôi phục phím thô.
+        low = raw_s.lower()
+        deliberate_undo = bool(st.undone and st.undo_key
+                               and (low.endswith(st.undo_key * 2)
+                                    or st.undo_key * 3 in low))
+        # Từ chỉ có nguyên âm (không có âm đầu) như aw/aws/uow được giữ dù mới là PARTIAL:
+        # "ă", "ắ", "uơ" là thứ người dùng muốn thấy, không phải từ tiếng Anh dở dang.
+        toneless = _toneless_lower(st.letters)
+        # "dươ", "tườ", "lượ" là các cụm ươ/uơ đang gõ dở nhưng người dùng muốn thấy;
+        # không khôi phục phím thô chỉ vì còn thiếu âm cuối.
+        open_uo = start > 0 and toneless.endswith(("ươ", "uơ"))
+        bad_partial = final and status is Status.PARTIAL and end > start and start > 0 and not open_uo
+        # đ viết tắt chỉ được bảo vệ khi phía sau nó không có nguyên âm (đc, nđm, vcđ);
+        # "đăk" vẫn phải khôi phục phím thô khi chưa bật allow_coda_k.
+        keep_ok = st.keep and not any(l.base in vs.VOWELS for l in st.letters[st.keep_pos + 1:])
+        bad = (not keep_ok and not deliberate_undo
+               and (status is Status.INVALID or bad_partial))
         if bad:
             return TransformResult(raw_s, True, status)
     return TransformResult(text, False, status)
@@ -279,6 +347,9 @@ class Composer:
         raw_s = "".join(self.raw)
         if len(self.raw) > MAX_RAW:
             return TransformResult(raw_s, False, Status.INVALID)
+        lit = _vni_literal(raw_s, self.im)
+        if lit is not None:
+            return TransformResult(lit, True, Status.INVALID)
         return _result(self._states[-1], raw_s, self.opt, final)
 
 
@@ -290,6 +361,9 @@ def transform(raw: str | list[str], im: InputMethodSpec, opt: TransformOptions |
     raw_s = "".join(raw)
     if len(raw) > MAX_RAW:
         return TransformResult(raw_s, False, Status.INVALID)
+    lit = _vni_literal(raw_s, im)
+    if lit is not None:
+        return TransformResult(lit, True, Status.INVALID)
     st = WordState()
     for k in raw:
         _step(st, k, im, opt)

@@ -1,0 +1,27 @@
+{
+  "input_method": "telex",
+  "tone_style": "old",
+  "spell_check": true,
+  "w_as_u": true,
+  "bracket_keys": false,
+  "quick_telex": false,
+  "allow_coda_k": false,
+  "auto_restore_english": true,
+  "macro_enabled": true,
+  "macro_digits": false,
+  "macro_undo": true,
+  "macros": {
+    "ko": "không",
+    "vn": "Việt Nam",
+    "dc": "được"
+  },
+  "auto_capitalize": false,
+  "excluded_apps": ["minecraft"],
+  "app_modes": {},
+  "default_vietnamese": true,
+  "edit_previous_word": true,
+  "restore_after_space": true,
+  "smart_caps": true,
+  "unicode_form": "NFC",
+  "schema_version": 1
+}

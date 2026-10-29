@@ -57,6 +57,20 @@ export class WasmSession {
     toggle_vietnamese(): string;
 }
 
+export function charset_decode(name: string, text: string): string;
+
+export function charset_encode(name: string, text: string): string;
+
+/**
+ * Bytes thô cho bảng một byte; mảng rỗng nếu bảng không hỗ trợ.
+ */
+export function charset_encode_bytes(name: string, text: string): Uint8Array;
+
+/**
+ * Danh sách bảng mã dạng JSON: [{key,name}].
+ */
+export function charset_list(): string;
+
 export function version(): string;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
@@ -64,6 +78,10 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
     readonly __wbg_wasmsession_free: (a: number, b: number) => void;
+    readonly charset_decode: (a: number, b: number, c: number, d: number) => [number, number];
+    readonly charset_encode: (a: number, b: number, c: number, d: number) => [number, number];
+    readonly charset_encode_bytes: (a: number, b: number, c: number, d: number) => [number, number];
+    readonly charset_list: () => [number, number];
     readonly version: () => [number, number];
     readonly wasmsession_config_json: (a: number) => [number, number];
     readonly wasmsession_cursor_moved: (a: number) => [number, number];
@@ -80,9 +98,9 @@ export interface InitOutput {
     readonly wasmsession_set_surrounding: (a: number, b: number, c: number) => void;
     readonly wasmsession_toggle_vietnamese: (a: number) => [number, number];
     readonly __wbindgen_externrefs: WebAssembly.Table;
-    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __wbindgen_malloc: (a: number, b: number) => number;
     readonly __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+    readonly __wbindgen_free: (a: number, b: number, c: number) => void;
     readonly __externref_table_dealloc: (a: number) => void;
     readonly __wbindgen_start: () => void;
 }

@@ -124,23 +124,26 @@ const FRONT_VOWELS: &str = "eêiy";
 
 /// Âm đầu, dài trước để so khớp dài nhất. "gi" và "qu" xử lý riêng trong `parse`.
 const ONSETS: &[&str] = &[
-    "ngh", "ng", "nh", "gh", "kh", "ph", "th", "tr", "ch", "b", "c", "d", "đ", "g", "h", "k", "l",
-    "m", "n", "p", "r", "s", "t", "v", "x",
+    "ngh", "ng", "nh", "gh", "kh", "ph", "th", "tr", "ch", "b", "c", "d", "đ", "g", "h", "k", "l", "m", "n",
+    "p", "r", "s", "t", "v", "x",
 ];
 
 const CODAS: &[&str] = &["c", "ch", "m", "n", "ng", "nh", "p", "t"];
 const STOP_CODAS: &[&str] = &["c", "ch", "p", "t"];
+/// Âm cuối k chỉ dùng cho tên riêng/địa danh (Đắk Lắk); bật bằng `allow_coda_k`.
+const CODAS_WITH_K: &[&str] = &["c", "ch", "m", "n", "ng", "nh", "p", "t", "k"];
+const STOP_CODAS_WITH_K: &[&str] = &["c", "ch", "p", "t", "k"];
 const CH_NH_CLUSTERS: &[&str] = &["a", "ê", "i", "oa", "uê", "uy"];
 
 const OPEN_CLUSTERS: &[&str] = &[
-    "a", "e", "ê", "i", "o", "ô", "ơ", "u", "ư", "y", "ai", "ao", "au", "ay", "âu", "ây", "eo",
-    "êu", "ia", "iu", "oa", "oe", "oi", "ôi", "ơi", "ua", "uê", "ui", "uy", "ưa", "ưi", "ưu", "uơ",
-    "iêu", "yêu", "oai", "oay", "oao", "oeo", "uây", "uôi", "ươi", "ươu", "uya", "uyu",
+    "a", "e", "ê", "i", "o", "ô", "ơ", "u", "ư", "y", "ai", "ao", "au", "ay", "âu", "ây", "eo", "êu", "ia",
+    "iu", "oa", "oe", "oi", "ôi", "ơi", "ua", "uê", "ui", "uy", "ưa", "ưi", "ưu", "uơ", "iêu", "yêu", "oai",
+    "oay", "oao", "oeo", "uây", "uôi", "ươi", "ươu", "uya", "uyu",
 ];
 
 const CLOSED_CLUSTERS: &[&str] = &[
-    "a", "ă", "â", "e", "ê", "i", "o", "ô", "ơ", "u", "ư", "oa", "oă", "oe", "uâ", "uê", "uy", "iê",
-    "yê", "uô", "ươ", "uyê", "oo",
+    "a", "ă", "â", "e", "ê", "i", "o", "ô", "ơ", "u", "ư", "oa", "oă", "oe", "uâ", "uê", "uy", "iê", "yê",
+    "uô", "ươ", "uyê", "oo",
 ];
 
 #[inline]
@@ -182,6 +185,8 @@ struct Tables {
     relaxed_any: HashSet<String>,
     /// coda (có thể gõ dở) -> các cụm nguyên âm (đã bỏ bớt dấu) đi được với nó.
     relaxed_for_coda: HashMap<String, HashSet<String>>,
+    /// Như trên nhưng có thêm âm cuối k (tuỳ chọn tên riêng).
+    relaxed_for_coda_k: HashMap<String, HashSet<String>>,
 }
 
 fn prefixes(s: &str) -> Vec<String> {
@@ -246,8 +251,12 @@ fn tables() -> &'static Tables {
                 }
             }
         }
+        let mut relaxed_for_coda_k = relaxed_for_coda.clone();
+        for cl in CLOSED_CLUSTERS {
+            relaxed_for_coda_k.entry("k".to_string()).or_default().extend(relax(cl));
+        }
 
-        Tables { onset_prefixes, open, closed, ch_nh, relaxed_any, relaxed_for_coda }
+        Tables { onset_prefixes, open, closed, ch_nh, relaxed_any, relaxed_for_coda, relaxed_for_coda_k }
     })
 }
 
@@ -373,6 +382,11 @@ fn onset_ok(onset: &str, first: char) -> bool {
 ///   (cho phép gõ dấu tự do: "chuyenj" + "e" -> "chuyện").
 /// * `Invalid`: không thể thành âm tiết tiếng Việt.
 pub fn check(s: &str, tone: u8) -> Status {
+    check_with(s, tone, false)
+}
+
+/// Như [`check`] nhưng có tuỳ chọn cho âm cuối `k` (tên riêng: Đắk Lắk).
+pub fn check_with(s: &str, tone: u8, allow_coda_k: bool) -> Status {
     if s.is_empty() {
         return Status::Partial;
     }
@@ -399,6 +413,9 @@ pub fn check(s: &str, tone: u8) -> Status {
         return Status::Invalid;
     }
     let stop_bad = matches!(tone, 2..=4);
+    let codas = if allow_coda_k { CODAS_WITH_K } else { CODAS };
+    let stop_codas = if allow_coda_k { STOP_CODAS_WITH_K } else { STOP_CODAS };
+    let relaxed_for_coda = if allow_coda_k { &t.relaxed_for_coda_k } else { &t.relaxed_for_coda };
     let coda = syl.coda.as_str();
 
     // --- hợp lệ hoàn chỉnh
@@ -406,11 +423,11 @@ pub fn check(s: &str, tone: u8) -> Status {
         if t.open.contains(&cluster) {
             return Status::Valid;
         }
-    } else if CODAS.contains(&coda)
+    } else if codas.contains(&coda)
         && t.closed.contains(&cluster)
         && !((coda == "ch" || coda == "nh") && !t.ch_nh.contains(&cluster))
     {
-        if STOP_CODAS.contains(&coda) && stop_bad {
+        if stop_codas.contains(&coda) && stop_bad {
             return Status::Invalid;
         }
         return Status::Valid;
@@ -420,9 +437,9 @@ pub fn check(s: &str, tone: u8) -> Status {
     if coda.is_empty() {
         return if t.relaxed_any.contains(&cluster) { Status::Partial } else { Status::Invalid };
     }
-    if let Some(set) = t.relaxed_for_coda.get(coda) {
+    if let Some(set) = relaxed_for_coda.get(coda) {
         if set.contains(&cluster) {
-            if stop_bad && matches!(coda, "c" | "p" | "t" | "ch") {
+            if stop_bad && stop_codas.contains(&coda) {
                 return Status::Invalid;
             }
             return Status::Partial;
@@ -433,8 +450,14 @@ pub fn check(s: &str, tone: u8) -> Status {
 
 /// Âm cuối tắc (c, ch, p, t) chỉ đi với thanh sắc / nặng.
 pub fn tone_allowed(s: &str, tone: u8) -> bool {
+    tone_allowed_with(s, tone, false)
+}
+
+/// Như [`tone_allowed`] nhưng tính cả âm cuối `k` khi bật tên riêng.
+pub fn tone_allowed_with(s: &str, tone: u8, allow_coda_k: bool) -> bool {
     let syl = parse(s);
-    !(STOP_CODAS.contains(&syl.coda.as_str()) && matches!(tone, 2..=4))
+    let stop_codas = if allow_coda_k { STOP_CODAS_WITH_K } else { STOP_CODAS };
+    !(stop_codas.contains(&syl.coda.as_str()) && matches!(tone, 2..=4))
 }
 
 /// Vị trí (theo char) đặt thanh trong chuỗi thường, không thanh.
@@ -507,5 +530,15 @@ mod unit {
         assert_eq!(compose_char('e', Some(Mark::Circumflex), 1, false), 'ế');
         assert_eq!(compose_char('d', Some(Mark::Stroke), 0, true), 'Đ');
         assert_eq!(compose_char('u', Some(Mark::Horn), 2, true), 'Ừ');
+    }
+
+    #[test]
+    fn coda_k_proper_names() {
+        assert_eq!(check("đăk", 1), Status::Invalid);
+        assert_eq!(check_with("đăk", 1, true), Status::Valid);
+        assert_eq!(check_with("lăk", 5, true), Status::Valid);
+        assert_eq!(check_with("đăk", 2, true), Status::Invalid);
+        assert!(tone_allowed_with("đăk", 1, true));
+        assert!(!tone_allowed_with("đăk", 3, true));
     }
 }

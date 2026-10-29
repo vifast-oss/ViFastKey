@@ -41,7 +41,8 @@ fn engine_conformance() {
             let f = h.field.0.borrow();
             let shown = if mode == OutputMode::Preedit { &f.preedit } else { &f.committed };
             if invariant_broken.is_none() && !shown.ends_with(&h.session.display()) {
-                invariant_broken = Some(format!("sau phím {k:?}: màn hình {shown:?}, session {:?}", h.session.display()));
+                invariant_broken =
+                    Some(format!("sau phím {k:?}: màn hình {shown:?}, session {:?}", h.session.display()));
             }
         }
         n += 1;

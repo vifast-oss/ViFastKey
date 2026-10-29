@@ -2,13 +2,15 @@
 
 Port nguyên văn bản tham chiếu Python v4. **Bản Python là oracle**: bản Rust đạt khi qua 100% `conformance/*.jsonl`.
 
-> Lưu ý: code này được viết khi **chưa biên dịch thử**. Có thể còn lỗi biên dịch nhỏ (lifetime, kiểu dữ liệu, import), cần sửa ở lần `cargo build` đầu tiên. Xem mục 5 để biết thứ tự kiểm tra.
+> Trạng thái: `cargo fmt`, `cargo clippy -- -D warnings`, `cargo test --workspace` và demo CLI đều đã xanh. Bản Rust qua 100% conformance sinh từ Python.
 
 ```bash
 cargo build --workspace
 cargo test --workspace                       # syllable, golden, conformance core + engine, FFI
 cargo run -p vfk-cli -- --demo               # demo
-cargo run -p vfk-cli                         # REPL (:telex :vni :old :new :replace :preedit :trace :q)
+cargo run -p vfk-cli                         # REPL (:telex :vni :old :new :replace :preedit :trace :coda_k :macro_digits :spell :help :q)
+cargo run -p vfk-cli -- --method vni --tone new --text "Vie65t Nam"
+cargo run -p vfk-charset -- --to tcvn3 --text "Tiếng Việt"
 cargo run -p vfk-core --release --example bench
 ```
 
@@ -18,12 +20,13 @@ cargo run -p vfk-core --release --example bench
 rust/
 ├── crates/
 │   ├── vi-syllable/   tách âm tiết, chính tả 3 trạng thái, đặt thanh (dùng chung ViFastTts)
-│   ├── vfk-core/      rules (Telex/Simple Telex/VNI), transform, Composer, to_raw/rebuild, diff
+│   ├── vfk-core/      rules, transform, Composer, to_raw/rebuild, diff, charset
 │   ├── vfk-engine/    ports (Config, AppProfile, 4 trait), session (ImeSession), testing (Harness)
 │   ├── vfk-ffi/       C ABI: lib "vifastkey" (cdylib + staticlib), include/vifastkey.h
 │   └── vfk-wasm/      wasm-bindgen: Session + Action JSON cho web demo
 ├── apps/vfk-cli/      REPL + demo (bin "vfk")
-├── conformance/       core.jsonl (13.252 ca), engine.jsonl (3.000 kịch bản) sinh từ Python
+├── apps/vfk-charset/  chuyển bảng mã (bin "vfk-charset")
+├── conformance/       core.jsonl (13.311 ca), engine.jsonl (3.000 kịch bản) sinh từ Python
 ├── testdata/          golden/*.tsv, corpus_vi.txt (dùng chung với Python)
 └── tools/sync_conformance.sh
 ```
@@ -33,6 +36,7 @@ rust/
 | `vi_syllable/__init__.py` | `crates/vi-syllable/src/lib.rs` |
 | `vfk_core/rules.py` | `crates/vfk-core/src/rules.rs` |
 | `vfk_core/transform.py`, `__init__.py` | `crates/vfk-core/src/transform.rs`, `lib.rs` |
+| `vfk_core/charset.py`, `data/charsets.json` | `crates/vfk-core/src/charset.rs`, `data/charsets.json` |
 | `vfk_engine/ports.py` | `crates/vfk-engine/src/ports.rs` |
 | `vfk_engine/session.py` | `crates/vfk-engine/src/session.rs` |
 | `adapters/__init__.py` | `crates/vfk-engine/src/testing.rs` |
@@ -43,18 +47,30 @@ rust/
 
 Phụ thuộc: chỉ có `unicode-normalization`, `serde`, `serde_json`. Không dùng `rand` (test dùng LCG tự viết), không dùng `phf` (bảng tra sinh một lần bằng `OnceLock`).
 
-## 2. Khác biệt có chủ đích so với Python
+## 2. Tính năng engine
+
+- `allow_coda_k`: âm cuối `k` cho tên riêng (`Đắk Lắk`), chỉ sắc/nặng.
+- `macro_digits`, `macro_undo`: macro có số (`mp3`, `k8s`) và Backspace hoàn tác macro.
+- `đ` viết tắt (`ddc`, `vcdd`, `NDD`), undo tiếng Anh, VNI literal number, sticky restore.
+- Open `uơ`/`ươ` theo âm đầu; giữ `aw`/`aws`/`aa` đứng riêng.
+- Auto-cap `…`, ngoặc kép, newline; Esc không forward.
+- `AppProfile` ghi đè kiểu gõ/kiểu dấu/chính tả.
+- Charset 16 bảng mã; FFI C (`vfk_charset_*`), WASM, CLI `vfk-charset`.
+- FFI C: JSON cấu hình một phần được trộn lên cấu hình hiện tại (không reset trường thiếu).
+- WASM: `Config::apply_json_patch`, preedit/replace, dictionary, surrounding text, charset.
+
+## 3. Khác biệt có chủ đích so với Python
 
 | Chỗ | Python | Rust | Lý do |
 |---|---|---|---|
 | Phím | chuỗi `"Backspace"` | `enum Key` (+ `Key::parse` nhận đúng tên cũ) | an toàn kiểu |
 | `final` | tham số | `is_final` | `final` là từ khoá dự phòng của Rust |
 | `locked` | `set` | `Vec<char>` | rất ít phần tử |
-| Chữ số VNI | `str.isdigit()` | `is_ascii_digit()` | tránh `²`, `٣` bị coi là phím |
-| Kiểu gõ lạ trong config | KeyError | dùng Telex | không panic trong IME |
+| Chữ số | ASCII (`0`–`9`) | ASCII (`0`–`9`) | tránh `²`, `٣` bị coi là phím chức năng |
+| Kiểu gõ lạ trong config | dùng Telex (fallback) | dùng Telex | không panic trong IME |
 | Port | Protocol | `trait` + `Box<dyn>` trong `Ports` | |
 
-## 3. C ABI (`include/vifastkey.h`)
+## 4. C ABI (`include/vifastkey.h`)
 
 ```c
 VfkSession *s = vfk_session_new("{\"input_method\":\"telex\"}", VFK_MODE_REPLACE);
@@ -73,27 +89,32 @@ vfk_session_free(s);
 
 - Mọi hàm đều bắt panic. Nếu có panic, hàm trả `PASS` và xoá từ đang gõ.
 - Độ dài và vị trí con trỏ trả về theo UTF-16, được tính tại FFI từ chuỗi đầu ra (NFC hoặc NFD).
+- Bảng mã: `vfk_charset_encode/decode` trả chuỗi Unicode của codepoint legacy;
+  `vfk_charset_encode_bytes` trả bytes thô cho bảng một byte.
 - Swift/Kotlin: có thể bọc header này trực tiếp, hoặc thêm UniFFI sau.
 
-## 4. Đồng bộ với bản Python
+## 5. Đồng bộ với bản Python
 
-Khi đổi hành vi: sửa bản Python, thêm golden test, rồi chạy `tools/sync_conformance.sh ../../python` và `cargo test`. Bản Rust sẽ báo đỏ đúng những ca bị đổi. Test conformance in ra 15 đến 30 ca sai đầu tiên, kèm vị trí phím lệch đầu tiên và Action của cả hai bản.
+Khi đổi hành vi: sửa bản Python, thêm golden test, rồi chạy `PYTHON=python3 tools/sync_conformance.sh ../python` và `cargo test`. Bản Rust sẽ báo đỏ đúng những ca bị đổi. Test conformance in ra 15 đến 30 ca sai đầu tiên, kèm vị trí phím lệch đầu tiên và Action của cả hai bản.
 
-## 5. Thứ tự kiểm tra lần đầu
+## 6. Kiểm tra
 
-1. `cargo test -p vi-syllable`: bảng chính tả và đặt thanh.
-2. `cargo test -p vfk-core --test golden`, sau đó `--test conformance`.
-3. `cargo test -p vfk-engine --test engine`, sau đó `--test conformance`.
-4. `cargo test -p vfk-ffi`.
-5. `cargo clippy --workspace --all-targets`.
+```bash
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+cargo run -p vfk-cli -- --demo
+```
 
 Nếu core conformance sai, các chỗ đáng nghi nhất (vì logic tinh tế nhất) là:
 - `display()`: luật `ươ` và `uơ`, cờ `auto_horn`.
 - Thứ tự ứng viên trong `candidates()`: cặp đứng trước, sau đó sort ổn định giảm dần theo vị trí.
 - `check()`: nhánh `Partial` dùng `relaxed_any` và `relaxed_for_coda`.
 
-## 6. Bước tiếp theo đề xuất
+## 7. Bước tiếp theo đề xuất
 
 - Tối ưu: `ArrayVec<Letter, 24>` thay `Vec`, bitset cho `locked`, bỏ cấp phát `String` trong `toneless_lower` (dùng buffer `[char; 24]`). Chỉ làm sau khi conformance đã xanh.
 - Adapter đầu tiên: Fcitx5 (C++ gọi `vifastkey.h`) hoặc macOS IMK (Swift).
+- Macro nhiều từ/suffix, VIQR, preedit edit-previous-word.
+- Tối ưu charset decode (longest-match) và thêm cache nếu cần.
 - UniFFI cho Kotlin/Swift. Web đã có `vfk-wasm` + demo trong `web/`.

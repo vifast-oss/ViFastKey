@@ -3,9 +3,15 @@
 //! Port nguyên văn bản Python v4 (`vfk_core/`). Bản Python là oracle:
 //! mọi khác biệt với `conformance/core.jsonl` là lỗi của bản Rust.
 
+pub mod charset;
 pub mod rules;
 pub mod transform;
 
+pub use charset::{
+    charset_names, convert as convert_charset, decode as decode_charset, decode_bytes,
+    detect as detect_charset, encode as encode_charset, encode_bytes, normalize as normalize_charset,
+    remove_diacritics, CHARSETS,
+};
 pub use rules::{quick_telex, InputMethodSpec, MarkRule, SIMPLE_TELEX, TELEX, VNI};
 pub use transform::{
     rebuild, to_raw, transform, transform_str, Composer, Letter, TransformOptions, TransformResult,

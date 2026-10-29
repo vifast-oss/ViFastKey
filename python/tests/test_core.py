@@ -4,11 +4,10 @@ import time
 from pathlib import Path
 
 import pytest
-
 from typing_variants import variants
-from vfk_core import (INPUT_METHODS, MAX_RAW, TELEX, VNI, TransformOptions, diff, rebuild, to_raw,
-                      transform)
-from vi_syllable import ToneStyle
+
+from vfk_core import INPUT_METHODS, MAX_RAW, TELEX, VNI, TransformOptions, diff, rebuild, transform
+from vi_syllable import Status, ToneStyle
 
 HERE = Path(__file__).parent
 CORPUS = sorted(set(re.findall(r"[^\W\d_]+", (HERE / "data/corpus_vi.txt").read_text(encoding="utf-8"))))
@@ -30,6 +29,7 @@ def opts_from(spec: str):
         spell_check="nospell" not in parts,
         quick_telex="quick" in parts,
         bracket_keys="bracket" in parts,
+        allow_coda_k="coda_k" in parts,
     )
     return INPUT_METHODS[parts[0]], o, "final" in parts
 
@@ -69,6 +69,39 @@ def test_english_restore_at_word_end():
 def test_max_raw_is_literal():
     s = "a" * (MAX_RAW + 1)
     assert transform(s, TELEX).text == s
+
+
+# ---------------------------------------------------------------- tên riêng: âm cuối k
+@pytest.mark.parametrize("raw,expected", [
+    ("ddawsk", "đắk"), ("lawsk", "lắk"), ("Lawsk", "Lắk"), ("ddawks", "đắk"),
+])
+def test_proper_name_coda_k(raw, expected):
+    o = TransformOptions(allow_coda_k=True)
+    r = transform(raw, TELEX, o, final=True)
+    assert (r.text, r.restored, r.status) == (expected, False, Status.VALID)
+
+
+def test_proper_name_coda_k_off_restores_raw():
+    r = transform("ddawsk", TELEX, TransformOptions(), final=True)
+    assert r.restored and r.text == "ddawsk"
+
+
+def test_proper_name_coda_k_only_with_accent_or_underdot():
+    o = TransformOptions(allow_coda_k=True)
+    assert transform("ddawkf", TELEX, o, final=True).text == "ddawkf"   # huyền bị từ chối
+    assert transform("ddawkr", TELEX, o, final=True).text == "ddawkr"   # hỏi bị từ chối
+
+
+def test_proper_name_coda_k_vni():
+    o = TransformOptions(allow_coda_k=True)
+    assert transform("d9a81k", VNI, o, final=True).text == "đắk"
+    assert transform("d9a8k5", VNI, o, final=True).text == "đặk"
+
+
+@pytest.mark.parametrize("im", [TELEX, VNI], ids=["telex", "vni"])
+def test_proper_name_coda_k_rebuild(im):
+    o = TransformOptions(allow_coda_k=True)
+    assert rebuild("đắk", im, o) is not None
 
 
 def test_property_no_crash_and_diff_exact():

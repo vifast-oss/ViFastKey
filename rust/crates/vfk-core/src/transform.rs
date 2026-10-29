@@ -10,6 +10,9 @@ use crate::rules::{quick_telex, InputMethodSpec, MarkRule};
 /// Vượt quá thì coi là chuỗi thô (URL, mã, token...), không biến đổi.
 pub const MAX_RAW: usize = 24;
 
+/// Âm đầu cho phép "uơ" mở; các âm đầu khác phải thành "ươ".
+const OPEN_UO_ONSETS: &[&str] = &["", "c", "h", "k", "kh", "qu", "th"];
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TransformOptions {
     pub tone_style: ToneStyle,
@@ -21,6 +24,8 @@ pub struct TransformOptions {
     pub bracket_keys: bool,
     /// cc=ch, gg=gi, kk=kh, nn=ng, qq=qu, pp=ph, tt=th (đầu từ).
     pub quick_telex: bool,
+    /// Cho phép âm cuối k cho tên riêng (Đắk Lắk); k chỉ đi với thanh sắc/nặng.
+    pub allow_coda_k: bool,
 }
 
 impl Default for TransformOptions {
@@ -31,6 +36,7 @@ impl Default for TransformOptions {
             w_as_u: true,
             bracket_keys: false,
             quick_telex: false,
+            allow_coda_k: false,
         }
     }
 }
@@ -70,6 +76,12 @@ pub struct WordState {
     pub locked: Vec<char>,
     /// Có ít nhất 1 biến đổi tiếng Việt.
     pub transformed: bool,
+    /// Phím gây hoàn tác gần nhất (ass vs coffee).
+    pub undo_key: Option<char>,
+    /// Giữ nguyên dù sai chính tả (đ viết tắt: vcđ, nđm, đc).
+    pub keep: bool,
+    /// Vị trí của đ được bảo vệ.
+    pub keep_pos: usize,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -128,8 +140,45 @@ fn render(st: &WordState, style: ToneStyle) -> String {
     chars.into_iter().collect()
 }
 
-fn status(letters: &[Letter], tone: u8) -> Status {
-    vs::check(&toneless_lower(letters), tone)
+fn status(letters: &[Letter], tone: u8, opt: &TransformOptions) -> Status {
+    vs::check_with(&toneless_lower(letters), tone, opt.allow_coda_k)
+}
+
+/// VNI: số thật hoặc cặp phím số lặp phải giữ nguyên (nam2024, ba10, a11).
+fn vni_literal(raw: &[char], im: &InputMethodSpec) -> Option<String> {
+    if !im.digit_keys || !raw.iter().any(|c| c.is_ascii_digit()) {
+        return None;
+    }
+    let mut out = String::with_capacity(raw.len());
+    let mut i = 0;
+    let mut changed = false;
+    while i < raw.len() {
+        if i + 1 < raw.len() && raw[i].is_ascii_digit() && raw[i] == raw[i + 1] {
+            out.push(raw[i]);
+            i += 2;
+            changed = true;
+        } else {
+            out.push(raw[i]);
+            i += 1;
+        }
+    }
+    if changed {
+        return Some(out);
+    }
+    let mut tones = 0;
+    for &c in raw.iter().rev() {
+        if !c.is_ascii_digit() {
+            break;
+        }
+        if ('0'..='5').contains(&c) {
+            tones += 1;
+        }
+    }
+    if tones >= 2 {
+        Some(raw.iter().collect())
+    } else {
+        None
+    }
 }
 
 fn cluster_span(letters: &[Letter]) -> (usize, usize) {
@@ -151,11 +200,12 @@ fn candidates(st: &WordState, rules: &[MarkRule]) -> Vec<Cand> {
     for r in rules {
         if r.mark == Mark::Stroke {
             if !l.is_empty() && l[0].base == 'd' && end > start {
-                // đ cần có nguyên âm: 'dd', 'did', 'duowngd'
+                // ưu tiên d đầu từ: duowngd -> đường
                 singles.push(vec![(0, Mark::Stroke)]);
-            } else if l.len() == 1 && l[0].base == 'd' {
-                // 'dd' ở đầu từ
-                singles.push(vec![(0, Mark::Stroke)]);
+            } else if let Some(last) = l.last().filter(|x| x.base == 'd') {
+                // đ sau phụ âm: vcdd -> vcđ, nddm -> nđm, ddc -> đc
+                let _ = last;
+                singles.push(vec![(l.len() - 1, Mark::Stroke)]);
             }
         } else if r.pair {
             #[allow(clippy::needless_range_loop)] // cần cả i và i+1
@@ -194,8 +244,8 @@ fn step(st: &mut WordState, k: char, im: &InputMethodSpec, opt: &TransformOption
         return;
     }
     let (start, end) = cluster_span(&st.letters);
-    let has_vowel = end > start
-        || (st.letters.len() == 2 && st.letters[0].base == 'q' && st.letters[1].base == 'u');
+    let has_vowel =
+        end > start || (st.letters.len() == 2 && st.letters[0].base == 'q' && st.letters[1].base == 'u');
 
     // 0) Gõ nhanh phụ âm đầu
     if opt.quick_telex
@@ -207,11 +257,8 @@ fn step(st: &mut WordState, k: char, im: &InputMethodSpec, opt: &TransformOption
         if let Some(q) = quick_telex(lk) {
             let up = st.letters[0].upper;
             let k_upper = k.is_uppercase();
-            st.letters = q
-                .chars()
-                .enumerate()
-                .map(|(i, c)| Letter::new(c, up && (i == 0 || k_upper)))
-                .collect();
+            st.letters =
+                q.chars().enumerate().map(|(i, c)| Letter::new(c, up && (i == 0 || k_upper))).collect();
             st.transformed = true;
             return;
         }
@@ -224,13 +271,15 @@ fn step(st: &mut WordState, k: char, im: &InputMethodSpec, opt: &TransformOption
                 // ass -> as
                 st.tone = 0;
                 st.undone = true;
+                st.undo_key = Some(lk);
                 st.latched = true;
                 st.letters.push(Letter::literal(k));
                 return;
             }
             let lowered = toneless_lower(&st.letters);
             if opt.spell_check
-                && (!vs::tone_allowed(&lowered, t) || vs::check(&lowered, t) == Status::Invalid)
+                && (!vs::tone_allowed_with(&lowered, t, opt.allow_coda_k)
+                    || vs::check_with(&lowered, t, opt.allow_coda_k) == Status::Invalid)
             {
                 // batf -> batf (t chỉ đi với sắc/nặng)
                 st.letters.push(Letter::literal(k));
@@ -266,14 +315,31 @@ fn step(st: &mut WordState, k: char, im: &InputMethodSpec, opt: &TransformOption
             for c in &pending {
                 let old: Vec<(usize, Option<Mark>, bool)> =
                     c.iter().map(|&(i, _)| (i, st.letters[i].mark, st.letters[i].auto_horn)).collect();
+                let mut protected = false;
                 for &(i, m) in c {
-                    let l = &mut st.letters[i];
-                    if c.len() == 2 && l.base == 'u' && l.mark != Some(m) {
-                        l.auto_horn = true; // 'thuow' -> móc u tự động (có thể bỏ: thuở)
+                    if c.len() == 2 && st.letters[i].base == 'u' && st.letters[i].mark != Some(m) {
+                        let onset = vs::parse(&toneless_lower(&st.letters)).onset;
+                        st.letters[i].auto_horn = OPEN_UO_ONSETS.contains(&onset.as_str());
                     }
-                    l.mark = Some(m);
+                    st.letters[i].mark = Some(m);
+                    if m == Mark::Stroke && !st.keep {
+                        if i == 0 {
+                            protected = st.letters[i + 1..].iter().all(|l| !vs::is_vowel(l.base));
+                        } else if !vs::is_vowel(st.letters[i - 1].base) {
+                            protected = true;
+                        }
+                        if protected {
+                            st.keep = true;
+                            st.keep_pos = i;
+                        }
+                    }
                 }
-                if !opt.spell_check || status(&st.letters, st.tone) != Status::Invalid {
+                if protected {
+                    // đ viết tắt: giữ dù sai chính tả
+                    st.transformed = true;
+                    return;
+                }
+                if !opt.spell_check || status(&st.letters, st.tone, opt) != Status::Invalid {
                     st.transformed = true;
                     return;
                 }
@@ -292,6 +358,7 @@ fn step(st: &mut WordState, k: char, im: &InputMethodSpec, opt: &TransformOption
                     return;
                 }
                 st.undone = true;
+                st.undo_key = Some(lk);
                 if !st.locked.contains(&lk) {
                     st.locked.push(lk);
                 }
@@ -344,7 +411,7 @@ fn step(st: &mut WordState, k: char, im: &InputMethodSpec, opt: &TransformOption
                 Letter { base, upper: k != lk, mark: Some(mark), from_standalone: true, auto_horn: false };
             let mut cand = st.letters.clone();
             cand.push(letter);
-            if !opt.spell_check || status(&cand, st.tone) != Status::Invalid {
+            if !opt.spell_check || status(&cand, st.tone, opt) != Status::Invalid {
                 st.letters.push(letter);
                 st.transformed = true;
                 return;
@@ -359,15 +426,25 @@ fn step(st: &mut WordState, k: char, im: &InputMethodSpec, opt: &TransformOption
 
 fn result(st: &WordState, raw: &[char], opt: &TransformOptions, is_final: bool) -> TransformResult {
     let text = render(st, opt.tone_style);
-    let stt = status(&st.letters, st.tone);
+    let stt = status(&st.letters, st.tone, opt);
     if opt.spell_check && st.transformed {
         let (start, end) = cluster_span(&st.letters);
-        // đã hoàn tác (ass -> as, boss -> bos) thì tôn trọng ý người gõ; từ tiếng Anh như 'boss'
-        // được khôi phục ở engine nhờ port Dictionary.
-        let bad = !st.undone
-            && (stt == Status::Invalid || (is_final && stt == Status::Partial && end > start));
+        let raw_s: String = raw.iter().collect();
+        let low = raw_s.to_lowercase();
+        let deliberate_undo = st.undone
+            && st.undo_key.is_some_and(|k| {
+                let key: String = k.to_lowercase().collect();
+                let double = format!("{key}{key}");
+                let triple = format!("{key}{key}{key}");
+                low.ends_with(&double) || low.contains(&triple)
+            });
+        let toneless = toneless_lower(&st.letters);
+        let open_uo = start > 0 && (toneless.ends_with("ươ") || toneless.ends_with("uơ"));
+        let bad_partial = is_final && stt == Status::Partial && end > start && start > 0 && !open_uo;
+        let keep_ok = st.keep && st.letters[st.keep_pos + 1..].iter().all(|l| !vs::is_vowel(l.base));
+        let bad = !keep_ok && !deliberate_undo && (stt == Status::Invalid || bad_partial);
         if bad {
-            return TransformResult { text: raw.iter().collect(), restored: true, status: stt };
+            return TransformResult { text: raw_s, restored: true, status: stt };
         }
     }
     TransformResult { text, restored: false, status: stt }
@@ -377,9 +454,17 @@ fn result(st: &WordState, raw: &[char], opt: &TransformOptions, is_final: bool) 
 ///
 /// `is_final = true` khi kết thúc từ (dấu cách, Enter...): khôi phục cả từ chưa trọn vẹn có
 /// nguyên âm như "lă" (law), "tiê" (tiee).
-pub fn transform(raw: &[char], im: &InputMethodSpec, opt: &TransformOptions, is_final: bool) -> TransformResult {
+pub fn transform(
+    raw: &[char],
+    im: &InputMethodSpec,
+    opt: &TransformOptions,
+    is_final: bool,
+) -> TransformResult {
     if raw.len() > MAX_RAW {
         return TransformResult { text: raw.iter().collect(), restored: false, status: Status::Invalid };
+    }
+    if let Some(lit) = vni_literal(raw, im) {
+        return TransformResult { text: lit, restored: true, status: Status::Invalid };
     }
     let mut st = WordState::default();
     for &k in raw {
@@ -389,7 +474,12 @@ pub fn transform(raw: &[char], im: &InputMethodSpec, opt: &TransformOptions, is_
 }
 
 /// Tiện ích: `transform` nhận `&str`.
-pub fn transform_str(raw: &str, im: &InputMethodSpec, opt: &TransformOptions, is_final: bool) -> TransformResult {
+pub fn transform_str(
+    raw: &str,
+    im: &InputMethodSpec,
+    opt: &TransformOptions,
+    is_final: bool,
+) -> TransformResult {
     let cs: Vec<char> = raw.chars().collect();
     transform(&cs, im, opt, is_final)
 }
@@ -443,7 +533,14 @@ impl Composer {
 
     pub fn result(&self, is_final: bool) -> TransformResult {
         if self.raw.len() > MAX_RAW {
-            return TransformResult { text: self.raw.iter().collect(), restored: false, status: Status::Invalid };
+            return TransformResult {
+                text: self.raw.iter().collect(),
+                restored: false,
+                status: Status::Invalid,
+            };
+        }
+        if let Some(lit) = vni_literal(&self.raw, self.im) {
+            return TransformResult { text: lit, restored: true, status: Status::Invalid };
         }
         let st = self.states.last().expect("states luôn có ít nhất 1 phần tử");
         result(st, &self.raw, &self.opt, is_final)

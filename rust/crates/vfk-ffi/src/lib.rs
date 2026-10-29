@@ -18,7 +18,9 @@ use std::ffi::{c_char, CStr, CString};
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::ptr;
 use std::rc::Rc;
+use std::sync::OnceLock;
 
+use vfk_core::charset;
 use vfk_engine::testing::WordListDictionary;
 use vfk_engine::*;
 
@@ -109,6 +111,10 @@ pub struct VfkSession {
     text_buf: CString,
     /// Giữ chuỗi trả về bởi các hàm *_json.
     json_buf: CString,
+    /// Giữ chuỗi trả về bởi các hàm charset (tách khỏi config JSON).
+    charset_buf: CString,
+    /// Giữ bytes trả về bởi vfk_charset_encode_bytes.
+    bytes_buf: Vec<u8>,
 }
 
 fn utf16_len(s: &str) -> u32 {
@@ -210,6 +216,8 @@ pub unsafe extern "C" fn vfk_session_new(config_json: *const c_char, mode: u32) 
             shared,
             text_buf: CString::default(),
             json_buf: CString::default(),
+            charset_buf: CString::default(),
+            bytes_buf: Vec::new(),
         }))
     })
 }
@@ -245,7 +253,13 @@ pub unsafe extern "C" fn vfk_process_key(
 
 /// Giống `vfk_process_key` nhưng nhận mã Unicode (tiện cho Android/JNI, Win32 WM_CHAR).
 #[no_mangle]
-pub unsafe extern "C" fn vfk_process_char(h: *mut VfkSession, codepoint: u32, ctrl: bool, alt: bool, meta: bool) -> VfkAction {
+pub unsafe extern "C" fn vfk_process_char(
+    h: *mut VfkSession,
+    codepoint: u32,
+    ctrl: bool,
+    alt: bool,
+    meta: bool,
+) -> VfkAction {
     let Some(c) = char::from_u32(codepoint) else { return VfkAction::PASS };
     with_session(h, VfkAction::PASS, |s| {
         let before = s.session.display();
@@ -334,13 +348,16 @@ pub unsafe extern "C" fn vfk_reset(h: *mut VfkSession) {
 #[no_mangle]
 pub unsafe extern "C" fn vfk_set_config_json(h: *mut VfkSession, json: *const c_char) -> bool {
     let Some(text) = opt_str(json) else { return false };
-    with_session(h, false, |s| match serde_json::from_str::<Config>(&text) {
-        Ok(c) => {
-            s.shared.0.borrow_mut().config = c;
-            s.session.reload_config();
-            true
+    with_session(h, false, |s| {
+        let base = s.shared.0.borrow().config.clone();
+        match base.apply_json_patch(&text) {
+            Some(c) => {
+                s.shared.0.borrow_mut().config = c;
+                s.session.reload_config();
+                true
+            }
+            None => false,
         }
-        Err(_) => false,
     })
 }
 
@@ -372,7 +389,11 @@ pub unsafe extern "C" fn vfk_app_profile_json(h: *mut VfkSession) -> *const c_ch
 
 /// Nạp từ điển (danh sách từ cách nhau bởi khoảng trắng/xuống dòng). NULL = giữ nguyên danh sách đó.
 #[no_mangle]
-pub unsafe extern "C" fn vfk_load_dictionary(h: *mut VfkSession, english: *const c_char, vietnamese: *const c_char) {
+pub unsafe extern "C" fn vfk_load_dictionary(
+    h: *mut VfkSession,
+    english: *const c_char,
+    vietnamese: *const c_char,
+) {
     let en = opt_str(english);
     let vi = opt_str(vietnamese);
     with_session(h, (), |s| {
@@ -383,6 +404,100 @@ pub unsafe extern "C" fn vfk_load_dictionary(h: *mut VfkSession, english: *const
         if let Some(v) = vi {
             sh.vietnamese = v.split_whitespace().map(|w| w.to_lowercase()).collect();
         }
+    })
+}
+
+// ---------------------------------------------------------------- bảng mã
+
+/// Danh sách bảng mã, mỗi dòng `key<TAB>tên`.
+#[no_mangle]
+pub unsafe extern "C" fn vfk_charset_list() -> *const c_char {
+    static LIST: OnceLock<CString> = OnceLock::new();
+    let list = LIST.get_or_init(|| {
+        let mut s = String::new();
+        for key in vfk_core::CHARSETS {
+            s.push_str(key);
+            s.push('\t');
+            s.push_str(charset::display_name(key).unwrap_or(key));
+            s.push('\n');
+        }
+        CString::new(s).unwrap_or_default()
+    });
+    list.as_ptr()
+}
+
+/// Mã hoá Unicode -> bảng mã. Trả chuỗi UTF-8 của các codepoint legacy; với bảng một byte,
+/// adapter có thể gửi từng codepoint như một byte, hoặc dùng `vfk_charset_encode_bytes`.
+/// Chuỗi thuộc session, hợp lệ tới lần gọi charset kế tiếp.
+#[no_mangle]
+pub unsafe extern "C" fn vfk_charset_encode(
+    h: *mut VfkSession,
+    name: *const c_char,
+    text: *const c_char,
+) -> *const c_char {
+    let Some(name) = opt_str(name) else { return ptr::null() };
+    let Some(text) = opt_str(text) else { return ptr::null() };
+    with_session(h, ptr::null(), |s| {
+        let out = charset::encode(&text, &name);
+        s.charset_buf = CString::new(out).unwrap_or_default();
+        s.charset_buf.as_ptr()
+    })
+}
+
+/// Giải mã bảng mã -> Unicode NFC. Chuỗi thuộc session.
+#[no_mangle]
+pub unsafe extern "C" fn vfk_charset_decode(
+    h: *mut VfkSession,
+    name: *const c_char,
+    text: *const c_char,
+) -> *const c_char {
+    let Some(name) = opt_str(name) else { return ptr::null() };
+    let Some(text) = opt_str(text) else { return ptr::null() };
+    with_session(h, ptr::null(), |s| {
+        let out = charset::decode(&text, &name);
+        s.charset_buf = CString::new(out).unwrap_or_default();
+        s.charset_buf.as_ptr()
+    })
+}
+
+/// Mã hoá sang bytes cho bảng một byte. Trả NULL nếu bảng không phải một byte.
+/// `out_len` nhận số byte. Con trỏ thuộc session, hợp lệ tới lần gọi kế tiếp.
+#[no_mangle]
+pub unsafe extern "C" fn vfk_charset_encode_bytes(
+    h: *mut VfkSession,
+    name: *const c_char,
+    text: *const c_char,
+    out_len: *mut usize,
+) -> *const u8 {
+    let Some(name) = opt_str(name) else { return ptr::null() };
+    let Some(text) = opt_str(text) else { return ptr::null() };
+    with_session(h, ptr::null(), |s| {
+        let Some(bytes) = charset::encode_bytes(&text, &name) else { return ptr::null() };
+        s.bytes_buf = bytes;
+        if !out_len.is_null() {
+            *out_len = s.bytes_buf.len();
+        }
+        s.bytes_buf.as_ptr()
+    })
+}
+
+/// Giải mã bytes của bảng một byte -> Unicode NFC.
+#[no_mangle]
+pub unsafe extern "C" fn vfk_charset_decode_bytes(
+    h: *mut VfkSession,
+    name: *const c_char,
+    data: *const u8,
+    len: usize,
+) -> *const c_char {
+    let Some(name) = opt_str(name) else { return ptr::null() };
+    if data.is_null() {
+        return ptr::null();
+    }
+    let slice = std::slice::from_raw_parts(data, len);
+    with_session(h, ptr::null(), |s| {
+        let out = charset::decode_bytes(slice, &name);
+        s.charset_buf = CString::new(out).unwrap_or_default();
+        s.charset_buf.as_ptr()
     })
 }
 
@@ -400,7 +515,8 @@ mod tests {
     unsafe fn key(h: *mut VfkSession, k: &str) -> (VfkAction, Option<String>) {
         let c = CString::new(k).unwrap();
         let a = vfk_process_key(h, c.as_ptr(), false, false, false);
-        let t = if a.text.is_null() { None } else { Some(CStr::from_ptr(a.text).to_string_lossy().into_owned()) };
+        let t =
+            if a.text.is_null() { None } else { Some(CStr::from_ptr(a.text).to_string_lossy().into_owned()) };
         (a, t)
     }
 
@@ -465,6 +581,70 @@ mod tests {
             assert!(vfk_session_new(bad.as_ptr(), 0).is_null());
             let a = vfk_process_key(ptr::null_mut(), ptr::null(), false, false, false);
             assert_eq!(a.kind, VFK_PASS);
+        }
+    }
+
+    #[test]
+    fn new_options_reach_engine_through_ffi() {
+        unsafe {
+            let cfg =
+                CString::new(r#"{"allow_coda_k":true,"macro_digits":true,"macros":{"mp3":"máy nghe nhạc"}}"#)
+                    .unwrap();
+            let h = vfk_session_new(cfg.as_ptr(), VFK_MODE_REPLACE);
+            assert!(!h.is_null());
+            for k in ["D", "d", "a", "w", "s", "k"] {
+                key(h, k);
+            }
+            assert_eq!((*h).session.display(), "Đắk");
+            let (a, _) = key(h, " ");
+            assert_eq!(a.kind, VFK_PASS); // chữ cuối không đổi, dấu cách do OS chèn
+            for k in ["m", "p", "3"] {
+                key(h, k);
+            }
+            let (a, t) = key(h, " ");
+            assert_eq!(a.kind, VFK_REPLACE);
+            assert_eq!(t.as_deref(), Some("áy nghe nhạc")); // diff giữ tiền tố "m"
+            vfk_session_free(h);
+        }
+    }
+
+    #[test]
+    fn charset_ffi() {
+        unsafe {
+            let h = vfk_session_new(ptr::null(), VFK_MODE_REPLACE);
+            assert!(!h.is_null());
+            let cs = CString::new("viqr").unwrap();
+            let text = CString::new("Tiếng Việt").unwrap();
+            let p = vfk_charset_encode(h, cs.as_ptr(), text.as_ptr());
+            let encoded = CStr::from_ptr(p).to_string_lossy().into_owned();
+            assert_eq!(encoded, "Tie^'ng Vie^.t");
+            let p = vfk_charset_decode(h, cs.as_ptr(), p);
+            assert_eq!(CStr::from_ptr(p).to_string_lossy(), "Tiếng Việt");
+
+            let cs = CString::new("tcvn3").unwrap();
+            let mut n = 0usize;
+            let p = vfk_charset_encode_bytes(h, cs.as_ptr(), text.as_ptr(), &mut n);
+            assert_eq!(std::slice::from_raw_parts(p, n), b"Ti\xd5ng Vi\xd6t");
+            let p = vfk_charset_decode_bytes(h, cs.as_ptr(), p, n);
+            assert_eq!(CStr::from_ptr(p).to_string_lossy(), "Tiếng Việt");
+            vfk_session_free(h);
+        }
+    }
+
+    #[test]
+    fn config_json_patch_keeps_other_fields() {
+        unsafe {
+            let cfg = CString::new(r#"{"macros":{"ko":"không"},"tone_style":"old"}"#).unwrap();
+            let h = vfk_session_new(cfg.as_ptr(), VFK_MODE_REPLACE);
+            assert!(!h.is_null());
+            let patch = CString::new(r#"{"tone_style":"new"}"#).unwrap();
+            assert!(vfk_set_config_json(h, patch.as_ptr()));
+            let c = CStr::from_ptr(vfk_config_json(h)).to_string_lossy().into_owned();
+            assert!(c.contains("\"tone_style\":\"new\""), "{c}");
+            assert!(c.contains("\"ko\":\"không\""), "{c}");
+            let bad = CString::new(r#"{"tone_style":"không có"}"#).unwrap();
+            assert!(!vfk_set_config_json(h, bad.as_ptr()));
+            vfk_session_free(h);
         }
     }
 }

@@ -11,5 +11,6 @@ name = "vifastkey"
 crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]
+vfk-core = { workspace = true }
 vfk-engine = { workspace = true }
 serde_json = { workspace = true }

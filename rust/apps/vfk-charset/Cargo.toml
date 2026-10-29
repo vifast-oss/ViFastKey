@@ -1,0 +1,14 @@
+[package]
+name = "vfk-charset"
+description = "Chuyển văn bản tiếng Việt giữa Unicode và TCVN3/VNI-Windows/VISCII/VIQR/CP1258/NCR..."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "vfk-charset"
+path = "src/main.rs"
+
+[dependencies]
+vfk-core = { workspace = true }

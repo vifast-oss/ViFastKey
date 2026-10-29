@@ -16,6 +16,7 @@
 #define VIFASTKEY_H
 
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -72,6 +73,18 @@ const char *vfk_config_json(VfkSession *s);
 uint64_t vfk_config_version(VfkSession *s);
 const char *vfk_app_profile_json(VfkSession *s);
 void vfk_load_dictionary(VfkSession *s, const char *english /* nullable */, const char *vietnamese /* nullable */);
+
+/* Bảng mã: mỗi dòng "key\tTên hiển thị". */
+const char *vfk_charset_list(void);
+
+/* Mã hoá/giải mã Unicode <-> bảng mã. Chuỗi trả về thuộc session, hợp lệ tới lần gọi
+ * charset kế tiếp. Với bảng một byte, dùng vfk_charset_encode_bytes để lấy bytes thô. */
+const char *vfk_charset_encode(VfkSession *s, const char *charset, const char *text);
+const char *vfk_charset_decode(VfkSession *s, const char *charset, const char *text);
+const uint8_t *vfk_charset_encode_bytes(VfkSession *s, const char *charset, const char *text,
+                                        size_t *out_len);
+const char *vfk_charset_decode_bytes(VfkSession *s, const char *charset,
+                                     const uint8_t *data, size_t len);
 
 const char *vfk_version(void);
 

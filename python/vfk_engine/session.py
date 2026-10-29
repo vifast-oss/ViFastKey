@@ -10,7 +10,7 @@ import unicodedata
 from dataclasses import dataclass
 from enum import Enum
 
-from vfk_core import INPUT_METHODS, MAX_RAW, Composer, TransformOptions, diff, rebuild
+from vfk_core import INPUT_METHODS, MAX_RAW, TELEX, Composer, TransformOptions, diff, rebuild
 
 from .ports import Config, Ports, resolve_profile
 
@@ -73,7 +73,8 @@ Action = PassThrough | Preedit | Replace | Commit
 
 MODIFIER_KEYS = {"Shift", "Control", "Alt", "Meta", "Super", "CapsLock", "Option", "Command", "Fn"}
 NAV_KEYS = {"Tab", "Left", "Right", "Up", "Down", "Home", "End", "Delete", "PageUp", "PageDown"}
-SENTENCE_END = set(".!?")
+SENTENCE_END = set(".!?…")
+SENTENCE_CLOSERS = set("\"')]»”’›")
 
 
 # ---------------------------------------------------------------- session
@@ -92,17 +93,23 @@ class ImeSession:
         self.enabled = True
         self.field = FieldKind.TEXT
         self.last: tuple[list[str], str, bool, str] | None = None   # soft reset: (raw, word, literal, sep)
+        self.last_macro: tuple[str, str] | None = None   # (text đã chèn, phím thô cần khôi phục)
         self.focus_changed(ports.app.current_app())
 
     # ---------- tiện ích
     @property
     def im(self):
-        return INPUT_METHODS[self.config.input_method]
+        # Kiểu gõ lạ trong config (file cũ/sửa tay) không được làm panic IME.
+        name = self.profile.input_method or self.config.input_method
+        return INPUT_METHODS.get(name, TELEX)
 
     @property
     def opt(self) -> TransformOptions:
         c = self.config
-        return TransformOptions(c.tone_style, c.spell_check, c.w_as_u, c.bracket_keys, c.quick_telex)
+        tone_style = self.profile.tone_style if self.profile.tone_style is not None else c.tone_style
+        spell_check = self.profile.spell_check if self.profile.spell_check is not None else c.spell_check
+        return TransformOptions(tone_style, spell_check, c.w_as_u, c.bracket_keys,
+                                c.quick_telex, c.allow_coda_k)
 
     @property
     def display(self) -> str:
@@ -118,6 +125,8 @@ class ImeSession:
         if comp is None or comp.raw != self.raw:            # raw bị thay thế (rebuild/soft reset)
             comp = self._composer = Composer(self.im, self.opt, self.raw)
         res = comp.result(final)
+        if res.restored:
+            self.literal = True                        # dính chế độ thô: text + s -> texts
         if res.restored and self.adopted:              # 'việt' + 'f' -> 'việtf', không phải 'vieetjf'
             word, n = self.adopted
             return word + "".join(self.raw[n:])
@@ -138,7 +147,11 @@ class ImeSession:
             return True
         if self.config.bracket_keys and ch in self.im.insert_keys:
             return True
-        return self.im.digit_keys and ch.isdigit() and bool(self.raw)
+        ascii_digit = "0" <= ch <= "9"
+        if (self.config.macro_enabled and self.config.macro_digits
+                and not self.im.digit_keys and ascii_digit and self.raw):
+            return True                        # 'mp3', 'k8s': giữ số trong từ để macro hoạt động
+        return self.im.digit_keys and ascii_digit and bool(self.raw)
 
     # ---------- cấu hình / ngữ cảnh
     def reload_config(self) -> Action:
@@ -184,6 +197,7 @@ class ImeSession:
         text = self.display
         self.reset()
         self.last = None
+        self.last_macro = None
         if self.mode is OutputMode.PREEDIT and text:
             return Commit(text)
         return PassThrough()
@@ -194,6 +208,8 @@ class ImeSession:
             return PassThrough()
         if ev.key in MODIFIER_KEYS:                 # Shift/Option nhấn riêng: không được làm mất từ đang gõ
             return PassThrough()
+        if ev.key != "Backspace":
+            self.last_macro = None                  # macro undo chỉ có hiệu lực ngay sau macro
         if ev.ctrl or ev.alt or ev.meta or ev.key in NAV_KEYS:
             self.cap_next = self._pending_end = False
             self.last = None
@@ -216,8 +232,10 @@ class ImeSession:
         act = self._word_end(ch)
         if ch in SENTENCE_END:
             self._pending_end = True
+        elif ch in SENTENCE_CLOSERS:
+            pass                                  # ngoặc kép/đóng không làm mất trạng thái câu
         elif ch.isspace():
-            if self._pending_end:
+            if self._pending_end or ch in "\n\r":
                 self.cap_next = self.config.auto_capitalize
             self._pending_end = False
         else:
@@ -275,6 +293,12 @@ class ImeSession:
     def _backspace(self) -> Action:
         """Xoá 1 ký tự HIỂN THỊ (tiếng -> tiến), giữ dấu ở phần còn lại như UniKey/OpenKey."""
         if not self.raw:
+            if self.config.macro_undo and self.mode is OutputMode.REPLACE and self.last_macro:
+                inserted, restored = self.last_macro
+                self.last_macro = None
+                before = self.ports.surrounding.before_cursor(len(inserted))
+                if before is not None and self._out(before) == inserted:
+                    return Replace(len(inserted), restored)
             last, self.last = self.last, None
             if (last and self.config.restore_after_space and self.mode is OutputMode.REPLACE
                     and len(last[3]) == 1):
@@ -298,9 +322,10 @@ class ImeSession:
         """Esc: huỷ biến đổi, trả về đúng phím đã gõ."""
         if not self.raw:
             return PassThrough()
-        return self._finish("".join(self.raw), None)
+        return self._finish("".join(self.raw), None, pass_key=False)
 
     def _word_end(self, sep: str | None) -> Action:
+        self.last_macro = None
         if not self.raw:
             self.last = None
             return PassThrough()
@@ -309,13 +334,15 @@ class ImeSession:
         macro = self._macro(self.word) or self._macro(raw) if self.config.macro_enabled else None
         if macro:
             final = macro
+            if sep is not None and self.config.macro_undo:
+                self.last_macro = (self._out(macro) + sep, raw + sep)
         elif (self.config.auto_restore_english and not self.literal and final != raw
               and self.ports.dictionary.is_english(raw.lower())
               and not self.ports.dictionary.is_vietnamese(final.lower())):
             final = raw                     # 'data' -> 'dât' -> 'data'; nhưng 'thí' (this) giữ nguyên
         return self._finish(final, sep)
 
-    def _finish(self, final: str, sep: str | None) -> Action:
+    def _finish(self, final: str, sep: str | None, pass_key: bool = True) -> Action:
         old_out = self.display
         final_out = self._out(final)
         if sep is not None and final == self.word:   # chỉ soft reset khi từ không bị macro/khôi phục đổi
@@ -325,12 +352,12 @@ class ImeSession:
         self.reset()
         if self.mode is OutputMode.PREEDIT:
             if sep is None:
-                return Commit(final_out, pass_key=True)
+                return Commit(final_out, pass_key=pass_key)
             return Commit(final_out + sep)
         if final_out == old_out:
             return PassThrough()
         e = diff(old_out, final_out)
-        return Replace(e.delete_before, e.insert, pass_key=True)
+        return Replace(e.delete_before, e.insert, pass_key=pass_key)
 
     def _boundary_passthrough(self) -> Action:
         text = self.display

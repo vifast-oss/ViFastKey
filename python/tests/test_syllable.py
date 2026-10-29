@@ -64,3 +64,21 @@ def test_compose_decompose_roundtrip():
                 continue
             c = vs.compose_char(*vs.decompose_char(ch)[:2], t, ch.isupper())
             assert vs.decompose_char(c)[2] == t
+
+
+# ---------------------------------------------------------------- tên riêng: âm cuối k
+@pytest.mark.parametrize("word,tone", [("đăk", 1), ("đăk", 5), ("lăk", 1), ("lăk", 5)])
+def test_coda_k_allowed_for_proper_names(word, tone):
+    assert vs.check(word, tone, allow_coda_k=True) is Status.VALID
+    assert vs.tone_allowed(word, tone, allow_coda_k=True)
+
+
+@pytest.mark.parametrize("word,tone", [("đăk", 2), ("đăk", 3), ("đăk", 4), ("lăk", 2)])
+def test_coda_k_still_stop_coda(word, tone):
+    assert vs.check(word, tone, allow_coda_k=True) is Status.INVALID
+    assert not vs.tone_allowed(word, tone, allow_coda_k=True)
+
+
+def test_coda_k_off_by_default():
+    assert vs.check("đăk", 1) is Status.INVALID
+    assert vs.check("lăk", 5) is Status.INVALID

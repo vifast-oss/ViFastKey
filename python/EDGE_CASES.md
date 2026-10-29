@@ -10,7 +10,7 @@ Ký hiệu trạng thái: ✅ đã làm, có test · 🔌 thuộc adapter (ghi l
 | A2 | `uow` ở cuối từ ra `uơ` (`thuở`, `huơ`, `quở`). Gõ `w` lần 2 nâng lên `ươ` (`thuowwng` ra `thương`) | fcitx5-unikey testunikey | ✅ | golden |
 | A3 | `uwoi` ra `ươi` (móc u gõ trước) | fcitx5-unikey | ✅ | golden |
 | A4 | Âm cuối c/ch/p/t chỉ nhận sắc/nặng (`batf` giữ `batf`) | OpenKey/VietTelex B2 | ✅ | golden |
-| A5 | `d` cuối từ biến `d` đầu thành `đ` (`duowngd`) | OpenKey C1 | ✅ | golden |
+| A5 | `d` cuối từ biến `d` đầu thành `đ` (`duowngd`), `d` sau phụ âm tạo viết tắt (`vcdd`) | OpenKey C1, SKey | ✅ | golden + `test_d_stroke_shortcuts` |
 | A6 | `w` quét ngược qua âm cuối (`quatw` ra `quăt`) | OpenKey C2 | ✅ | golden |
 | A7 | Thanh gõ sau thay thanh trước (`looixfsx` ra `lỗi`) | bamboo-core | ✅ | golden |
 | A8 | Gõ cùng phím thanh 2 lần là hoàn tác (`ass` ra `as`) | bamboo-core, UniKey | ✅ | golden |
@@ -25,7 +25,7 @@ Ký hiệu trạng thái: ✅ đã làm, có test · 🔌 thuộc adapter (ghi l
 | A17 | Simple Telex (không có `w` đứng riêng) | vnkey, OpenKey | ✅ | golden |
 | A18 | Gõ tắt phụ âm đầu `f`→`ph`, `j`→`gi`, `w`→`qu` và phụ âm cuối `g`→`ng`, `h`→`nh`, `k`→`ch` | OpenKey | ⏸ | Đụng với phím thanh. Cần thiết kế kiểu gõ riêng |
 | A19 | Tiếng Tây Nguyên (Êđê...): `oow`→`ö`, `cw`→`č`... | vnkey v1.0.3 | ⏸ | Chỉ cần thêm `InputMethodSpec` và ký tự mới, không đổi thuật toán |
-| A20 | Âm cuối `k` cho địa danh (`Đắk Lắk`) | | ⏸ | Tuỳ chọn tên riêng |
+| A20 | Âm cuối `k` cho địa danh (`Đắk Lắk`) | | ✅ tuỳ chọn `allow_coda_k` | golden `coda_k`, `test_proper_name_coda_k*` |
 
 ## B. Engine (session)
 
@@ -41,7 +41,7 @@ Ký hiệu trạng thái: ✅ đã làm, có test · 🔌 thuộc adapter (ghi l
 | B8 | Macro giữ kiểu hoa/thường (`bc`, `Bc`, `BC`) | vnkey v1.0.3, fcitx5-lotus | ✅ | `test_macro_and_case` |
 | B9 | Nhớ chế độ Việt/Anh theo từng app | UniKey 4.6, fcitx5-lotus | ✅ | `test_toggle_remembered_per_app` |
 | B10 | Sửa từ đã gõ qua surrounding text; phím làm sai từ thì chỉ nối thêm | fcitx5-unikey (modifySurroundingText) | ✅ | `test_edit_previous_word_*` |
-| B11 | Từ tiếng Anh kèm số trong chế độ macro (`mp3`, `k8s`) | fcitx5-lotus #480 | ⏸ | Hiện chữ số là ranh giới từ. Cần buffer token riêng cho macro |
+| B11 | Từ tiếng Anh kèm số trong chế độ macro (`mp3`, `k8s`) | fcitx5-lotus #480 | ✅ tuỳ chọn `macro_digits` | `test_macro_digits*` (Python + Rust) |
 
 ## C. Adapter (ghi lại để khi viết adapter khỏi vấp)
 
@@ -56,7 +56,7 @@ Ký hiệu trạng thái: ✅ đã làm, có test · 🔌 thuộc adapter (ghi l
 | C7 | Phím số ở bàn phím phụ bị loạn trên Chrome | ibus-bamboo #561 | 🔌 Phím numpad luôn PassThrough |
 | C8 | `Win+D` hoặc chuyển cửa sổ làm treo trạng thái | vnkey v1.0.1 | 🔌 Gọi `focus_changed` khi đổi foreground window |
 | C9 | Đơn vị xoá UTF-16, chữ NFD | (tất cả) | ✅ Đã xử lý ở `vfk_ffi` |
-| C10 | Bảng mã cũ TCVN3, VNI-Windows, VISCII, CP1258 (vnkey có 15 bảng mã) | vnkey, OpenKey | ⏸ Làm ở bước chuyển đổi đầu ra, sau `_out()` |
+| C10 | Bảng mã cũ TCVN3, VNI-Windows, VISCII, CP1258, VIQR, NCR, C-string | vnkey, OpenKey, UniKey | ✅ module `vfk_core.charset`, CLI `vfk-charset`, FFI/WASM; adapter tự chuyển ở đầu ra |
 
 ## D. Lỗi tìm ra trong quá trình làm v4
 

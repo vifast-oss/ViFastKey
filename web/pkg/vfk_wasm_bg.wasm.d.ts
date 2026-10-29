@@ -2,6 +2,10 @@
 /* eslint-disable */
 export const memory: WebAssembly.Memory;
 export const __wbg_wasmsession_free: (a: number, b: number) => void;
+export const charset_decode: (a: number, b: number, c: number, d: number) => [number, number];
+export const charset_encode: (a: number, b: number, c: number, d: number) => [number, number];
+export const charset_encode_bytes: (a: number, b: number, c: number, d: number) => [number, number];
+export const charset_list: () => [number, number];
 export const version: () => [number, number];
 export const wasmsession_config_json: (a: number) => [number, number];
 export const wasmsession_cursor_moved: (a: number) => [number, number];
@@ -18,8 +22,8 @@ export const wasmsession_set_field_kind: (a: number, b: number, c: number) => [n
 export const wasmsession_set_surrounding: (a: number, b: number, c: number) => void;
 export const wasmsession_toggle_vietnamese: (a: number) => [number, number];
 export const __wbindgen_externrefs: WebAssembly.Table;
-export const __wbindgen_free: (a: number, b: number, c: number) => void;
 export const __wbindgen_malloc: (a: number, b: number) => number;
 export const __wbindgen_realloc: (a: number, b: number, c: number, d: number) => number;
+export const __wbindgen_free: (a: number, b: number, c: number) => void;
 export const __externref_table_dealloc: (a: number) => void;
 export const __wbindgen_start: () => void;

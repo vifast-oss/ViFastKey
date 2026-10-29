@@ -2,16 +2,16 @@
 use vi_syllable::*;
 
 const VALID: &[&str] = &[
-    "a", "á", "tiếng", "người", "quốc", "quý", "quýt", "quỳnh", "quyết", "giữ", "già", "gì", "gìn",
-    "giếng", "khuỷu", "thuở", "huơ", "xoong", "boong", "ngoèo", "ngoẹo", "khuya", "khuyến",
-    "nguyễn", "chuyện", "rượu", "hươu", "cứu", "hưu", "tuần", "xoắn", "hoà", "hòa", "thuý", "thúy",
-    "khoẻ", "khỏe", "toàn", "toán", "ghế", "nghỉ", "kỹ", "kĩ", "huỳnh", "huých", "huỵch", "tuýp",
-    "suýt", "khuếch", "huênh", "ách", "ếch", "ích", "anh", "ênh", "inh", "oanh", "uếch",
+    "a", "á", "tiếng", "người", "quốc", "quý", "quýt", "quỳnh", "quyết", "giữ", "già", "gì", "gìn", "giếng",
+    "khuỷu", "thuở", "huơ", "xoong", "boong", "ngoèo", "ngoẹo", "khuya", "khuyến", "nguyễn", "chuyện",
+    "rượu", "hươu", "cứu", "hưu", "tuần", "xoắn", "hoà", "hòa", "thuý", "thúy", "khoẻ", "khỏe", "toàn",
+    "toán", "ghế", "nghỉ", "kỹ", "kĩ", "huỳnh", "huých", "huỵch", "tuýp", "suýt", "khuếch", "huênh", "ách",
+    "ếch", "ích", "anh", "ênh", "inh", "oanh", "uếch",
 ];
-const INVALID: &[&str] = &["kan", "ka", "ce", "ci", "ge", "gê", "ngi", "ngia", "ghô", "bl", "tẽt", "bàt", "hảc", "quu", "aă"];
-const PARTIAL: &[&str] = &[
-    "ă", "â", "tiê", "ngh", "ng", "gh", "tr", "đ", "chuyen", "nguoi", "giuong", "uo", "thuo", "q", "qu",
-];
+const INVALID: &[&str] =
+    &["kan", "ka", "ce", "ci", "ge", "gê", "ngi", "ngia", "ghô", "bl", "tẽt", "bàt", "hảc", "quu", "aă"];
+const PARTIAL: &[&str] =
+    &["ă", "â", "tiê", "ngh", "ng", "gh", "tr", "đ", "chuyen", "nguoi", "giuong", "uo", "thuo", "q", "qu"];
 
 fn status_of(w: &str) -> Status {
     let (s, t) = strip_tone(w);
@@ -40,16 +40,36 @@ fn partial() {
 }
 
 const TONE_TABLE: &[(&str, u8, &str, &str)] = &[
-    ("hoa", 2, "hòa", "hoà"), ("hoe", 2, "hòe", "hoè"), ("thuy", 3, "thủy", "thuỷ"),
-    ("khoe", 3, "khỏe", "khoẻ"), ("toan", 2, "toàn", "toàn"), ("khuyu", 3, "khuỷu", "khuỷu"),
-    ("thuơ", 3, "thuở", "thuở"), ("chuyên", 5, "chuyện", "chuyện"), ("gia", 2, "già", "già"),
-    ("qua", 5, "quạ", "quạ"), ("giưa", 4, "giữa", "giữa"), ("mua", 2, "mùa", "mùa"),
-    ("kia", 2, "kìa", "kìa"), ("ngươi", 2, "người", "người"), ("rươu", 5, "rượu", "rượu"),
-    ("tuân", 2, "tuần", "tuần"), ("xoăn", 1, "xoắn", "xoắn"), ("nghia", 4, "nghĩa", "nghĩa"),
-    ("ngoai", 2, "ngoài", "ngoài"), ("huynh", 2, "huỳnh", "huỳnh"), ("quy", 1, "quý", "quý"),
-    ("quyêt", 1, "quyết", "quyết"), ("yêu", 1, "yếu", "yếu"), ("ngoeo", 5, "ngoẹo", "ngoẹo"),
-    ("khuya", 1, "khuýa", "khuýa"), ("cưu", 1, "cứu", "cứu"), ("gin", 2, "gìn", "gìn"),
-    ("gi", 2, "gì", "gì"), ("tuy", 1, "túy", "tuý"), ("oa", 1, "óa", "oá"),
+    ("hoa", 2, "hòa", "hoà"),
+    ("hoe", 2, "hòe", "hoè"),
+    ("thuy", 3, "thủy", "thuỷ"),
+    ("khoe", 3, "khỏe", "khoẻ"),
+    ("toan", 2, "toàn", "toàn"),
+    ("khuyu", 3, "khuỷu", "khuỷu"),
+    ("thuơ", 3, "thuở", "thuở"),
+    ("chuyên", 5, "chuyện", "chuyện"),
+    ("gia", 2, "già", "già"),
+    ("qua", 5, "quạ", "quạ"),
+    ("giưa", 4, "giữa", "giữa"),
+    ("mua", 2, "mùa", "mùa"),
+    ("kia", 2, "kìa", "kìa"),
+    ("ngươi", 2, "người", "người"),
+    ("rươu", 5, "rượu", "rượu"),
+    ("tuân", 2, "tuần", "tuần"),
+    ("xoăn", 1, "xoắn", "xoắn"),
+    ("nghia", 4, "nghĩa", "nghĩa"),
+    ("ngoai", 2, "ngoài", "ngoài"),
+    ("huynh", 2, "huỳnh", "huỳnh"),
+    ("quy", 1, "quý", "quý"),
+    ("quyêt", 1, "quyết", "quyết"),
+    ("yêu", 1, "yếu", "yếu"),
+    ("ngoeo", 5, "ngoẹo", "ngoẹo"),
+    ("khuya", 1, "khuýa", "khuýa"),
+    ("cưu", 1, "cứu", "cứu"),
+    ("gin", 2, "gìn", "gìn"),
+    ("gi", 2, "gì", "gì"),
+    ("tuy", 1, "túy", "tuý"),
+    ("oa", 1, "óa", "oá"),
 ];
 
 #[test]

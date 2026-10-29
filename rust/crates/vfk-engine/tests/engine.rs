@@ -210,12 +210,16 @@ fn replace_mode_plain_letters_pass_through() {
 fn preedit_commit_on_focus_change() {
     let mut h = make(OutputMode::Preedit);
     h.type_str("vieejt");
-    assert_eq!(h.session.focus_changed(Some("chrome")), Action::Commit { text: "việt".into(), pass_key: false });
+    assert_eq!(
+        h.session.focus_changed(Some("chrome")),
+        Action::Commit { text: "việt".into(), pass_key: false }
+    );
 }
 
 #[test]
 fn excluded_app() {
-    let mut h = Harness::new(OutputMode::Replace, Config { excluded_apps: vec!["vim".into()], ..cfg() }, "vim", "");
+    let mut h =
+        Harness::new(OutputMode::Replace, Config { excluded_apps: vec!["vim".into()], ..cfg() }, "vim", "");
     h.type_str("vieejt");
     assert_eq!(h.text(), "vieejt");
 }
@@ -254,7 +258,12 @@ fn edit_previous_word_ignores_english() {
 
 #[test]
 fn edit_previous_word_skips_when_normal_form_differs() {
-    let mut h = Harness::new(OutputMode::Replace, Config { unicode_form: UnicodeForm::Nfd, ..cfg() }, "notepad", "Việt");
+    let mut h = Harness::new(
+        OutputMode::Replace,
+        Config { unicode_form: UnicodeForm::Nfd, ..cfg() },
+        "notepad",
+        "Việt",
+    );
     h.type_str("s");
     assert_eq!(h.text(), "Việts");
 }
@@ -262,7 +271,12 @@ fn edit_previous_word_skips_when_normal_form_differs() {
 #[test]
 fn edit_previous_word_nfd_screen() {
     let nfd: String = "tiêng".nfd().collect();
-    let mut h = Harness::new(OutputMode::Replace, Config { unicode_form: UnicodeForm::Nfd, ..cfg() }, "notepad", &nfd);
+    let mut h = Harness::new(
+        OutputMode::Replace,
+        Config { unicode_form: UnicodeForm::Nfd, ..cfg() },
+        "notepad",
+        &nfd,
+    );
     h.type_str("s");
     assert_eq!(h.text(), "tiếng".nfd().collect::<String>());
 }
@@ -294,7 +308,8 @@ fn soft_reset_add_tone_after_space() {
 
 #[test]
 fn soft_reset_not_after_macro() {
-    let mut h = make_with(OutputMode::Replace, Config { edit_previous_word: false, ..cfg() });
+    let mut h =
+        make_with(OutputMode::Replace, Config { edit_previous_word: false, macro_undo: false, ..cfg() });
     type_mixed(&mut h, &["ko ", BS, "s"]);
     assert_eq!(h.text(), "khôngs");
 }
@@ -381,6 +396,116 @@ fn config_json_roundtrip() {
     assert!(partial.spell_check);
 }
 
+#[test]
+fn macro_undo_restores_trigger_and_separator() {
+    let mut h = make_with(
+        OutputMode::Replace,
+        Config { macros: HashMap::from([("ko".into(), "không".into())]), macro_undo: true, ..cfg() },
+    );
+    h.type_str("ko ");
+    assert_eq!(h.text(), "không ");
+    h.field.key(&mut h.session, BS);
+    assert_eq!(h.text(), "ko ");
+    h.field.key(&mut h.session, BS);
+    assert_eq!(h.text(), "ko");
+}
+
+#[test]
+fn auto_capitalize_handles_ellipsis_quotes_and_newline() {
+    let mut h = make_with(OutputMode::Replace, Config { auto_capitalize: true, ..cfg() });
+    h.type_str("xin chaof… ddi. ”ddaay? ");
+    assert_eq!(h.text(), "xin chào… Đi. ”Đây? ");
+    h.type_str("\noong");
+    assert!(h.text().ends_with("\nÔng"));
+}
+
+#[test]
+fn app_profile_overrides_method_tone_and_spell() {
+    let mut profiles = default_app_profiles();
+    profiles.insert(
+        "notepad".into(),
+        AppProfile {
+            input_method: Some("vni".into()),
+            tone_style: Some(ToneStyle::New),
+            spell_check: Some(false),
+            ..Default::default()
+        },
+    );
+    let mut h = Harness::new(OutputMode::Replace, Config { app_profiles: profiles, ..cfg() }, "notepad", "");
+    h.type_str("hoa2 ");
+    assert_eq!(h.text(), "hoà ");
+    h.session.focus_changed(Some("other"));
+    h.type_str("tieengs ");
+    assert_eq!(h.text(), "hoà tiếng ");
+}
+
+#[test]
+fn config_json_patch_merges_and_rejects_bad_values() {
+    let c = Config {
+        tone_style: ToneStyle::Old,
+        macros: HashMap::from([("ko".into(), "không".into())]),
+        ..cfg()
+    };
+    let p = c.apply_json_patch(r#"{"tone_style":"new"}"#).expect("patch hợp lệ");
+    assert_eq!(p.tone_style, ToneStyle::New);
+    assert_eq!(p.macros.get("ko").map(String::as_str), Some("không"));
+    assert!(c.apply_json_patch(r#"{"tone_style":"không có"}"#).is_none());
+}
+
+// ---------------------------------------------------------------- tuỳ chọn mới
+
+#[test]
+fn proper_name_coda_k() {
+    for m in MODES {
+        let mut h = make_with(m, Config { allow_coda_k: true, ..cfg() });
+        h.type_str("Ddawsk Lawsk ");
+        assert_eq!(h.text(), "Đắk Lắk ", "{m:?}");
+    }
+}
+
+#[test]
+fn proper_name_coda_k_off_restores_raw() {
+    for m in MODES {
+        let mut h = make(m);
+        h.type_str("Ddawsk Lawsk ");
+        assert_eq!(h.text(), "Ddawsk Lawsk ", "{m:?}");
+    }
+}
+
+#[test]
+fn macro_digits() {
+    let mut m = macros();
+    m.insert("mp3".into(), "máy nghe nhạc".into());
+    m.insert("k8s".into(), "kubernetes".into());
+    for mode in MODES {
+        let mut h = make_with(mode, Config { macro_digits: true, macros: m.clone(), ..cfg() });
+        h.type_str("mp3 k8s MP3 123 ");
+        assert_eq!(h.text(), "máy nghe nhạc kubernetes MÁY NGHE NHẠC 123 ", "{mode:?}");
+    }
+}
+
+#[test]
+fn macro_digits_off_does_not_expand() {
+    let mut m = macros();
+    m.insert("mp3".into(), "máy nghe nhạc".into());
+    for mode in MODES {
+        let mut h = make_with(mode, Config { macros: m.clone(), ..cfg() });
+        h.type_str("mp3 ");
+        assert_eq!(h.text(), "mp3 ", "{mode:?}");
+    }
+}
+
+#[test]
+fn macro_digits_do_not_start_a_word() {
+    let mut m = macros();
+    m.insert("123".into(), "một hai ba".into());
+    for mode in MODES {
+        let mut h = make_with(mode, Config { macro_digits: true, macros: m.clone(), ..cfg() });
+        h.type_str("123 ");
+        assert_eq!(h.text(), "123 ", "{mode:?}");
+    }
+}
+
 // ---------------------------------------------------------------- property
 
 struct Lcg(u64);
@@ -402,7 +527,8 @@ fn type_then_backspace_all() {
             let mut h = make_with(m, Config { edit_previous_word: false, ..cfg() });
             h.type_str(&word);
             let o = vfk_core::TransformOptions::default();
-            assert_eq!(h.text(), vfk_core::transform_str(&word, &vfk_core::TELEX, &o, false).text);
+            let expected = vfk_core::transform_str(&word, &vfk_core::TELEX, &o, false).text;
+            assert_eq!(h.text(), if h.session.is_literal() { word.clone() } else { expected });
             let n = h.session.display().chars().count();
             for _ in 0..n {
                 h.field.key(&mut h.session, BS);

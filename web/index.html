@@ -84,6 +84,10 @@
             <button type="button" data-tone="old" class="active">Dấu cũ</button>
             <button type="button" data-tone="new">Dấu mới</button>
           </div>
+          <div class="segmented subtle" role="group" aria-label="Chế độ đầu ra">
+            <button type="button" data-output-mode="replace" class="active">Replace</button>
+            <button type="button" data-output-mode="preedit">Preedit</button>
+          </div>
         </div>
 
         <details class="pg-advanced">
@@ -96,6 +100,29 @@
             <label><input type="checkbox" data-opt="auto_restore_english" checked> Khôi phục tiếng Anh</label>
             <label><input type="checkbox" data-opt="auto_capitalize"> Viết hoa đầu câu</label>
             <label><input type="checkbox" data-opt="smart_caps"> Bảo vệ chữ HOA</label>
+            <label><input type="checkbox" data-opt="macro_enabled" checked> Bật macro</label>
+            <label><input type="checkbox" data-opt="macro_digits"> Macro có số (<code>mp3</code>, <code>k8s</code>)</label>
+            <label><input type="checkbox" data-opt="allow_coda_k"> Âm cuối <code>k</code> (<code>Đắk Lắk</code>)</label>
+            <label><input type="checkbox" data-opt="edit_previous_word" checked> Sửa từ vừa gõ</label>
+          </div>
+          <label class="field-label" for="macro-text">Macro (mỗi dòng <code>khoá=giá trị</code>)</label>
+          <textarea id="macro-text" class="macro-text" rows="2" spellcheck="false"
+                    placeholder="ko=không&#10;vn=Việt Nam"></textarea>
+          <label class="field-label" for="unicode-form">Dạng Unicode đầu ra</label>
+          <select id="unicode-form" class="select">
+            <option value="NFC">NFC — dựng sẵn (mặc định)</option>
+            <option value="NFD">NFD — tổ hợp</option>
+          </select>
+          <label class="field-label" for="cs-from">Chuyển bảng mã</label>
+          <div class="charset-row">
+            <select id="cs-from" class="select" aria-label="Bảng mã nguồn"></select>
+            <span aria-hidden="true">→</span>
+            <select id="cs-to" class="select" aria-label="Bảng mã đích"></select>
+          </div>
+          <textarea id="cs-text" class="macro-text" rows="2" spellcheck="false">Tiếng Việt</textarea>
+          <div class="charset-actions">
+            <button type="button" id="cs-run" class="mini-btn">Chuyển</button>
+            <span id="cs-out" class="charset-out" aria-live="polite"></span>
           </div>
         </details>
 
@@ -105,6 +132,7 @@
           <button type="button" data-example="Nguwowif Vieejt Nam ddi hojc owr truwowngf ddaij hojc">Tên riêng</button>
           <button type="button" data-example="data boss server this did">Tiếng Anh</button>
           <button type="button" data-example="Thuowr nhor, xooongj, quyts, khuyur tay">Dấu khó</button>
+          <button type="button" data-example="Ddawsk Lawsk" data-enable="allow_coda_k">Đắk Lắk</button>
           <button type="button" class="clear-btn" id="clear-pad">Xoá</button>
         </div>
       </div>
@@ -172,9 +200,9 @@
           <h2>Chuỗi phím thô<br>→ một <span class="gold">Action</span>.</h2>
           <p>Mỗi phím đi qua Composer rồi trả về đúng một hành động: chèn, thay thế, preedit hoặc để hệ điều hành xử lý. Adapter chỉ việc áp Action — không chứa logic tiếng Việt.</p>
           <ul class="arch-list">
-            <li><strong>13.252</strong> ca core + <strong>3.000</strong> kịch bản engine</li>
+            <li><strong>13.311</strong> ca core + <strong>3.000</strong> kịch bản engine</li>
             <li>NFC/NFD ở đầu ra, UTF-16 ở ranh giới FFI</li>
-            <li>Không cấp phát heap trong WordState (ArrayVec 24)</li>
+            <li>MAX_RAW = 24 chặn chi phí xử lý mỗi phím</li>
           </ul>
         </div>
         <div class="arch-code" aria-label="Ví dụ Action JSON">

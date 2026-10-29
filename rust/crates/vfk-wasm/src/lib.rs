@@ -8,9 +8,9 @@
 //! `delete_before` tính bằng **code point** (JS tự đổi sang UTF-16 khi cần).
 
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::rc::Rc;
 
+use vfk_core::charset;
 use vfk_engine::testing::WordListDictionary;
 use vfk_engine::*;
 use wasm_bindgen::prelude::*;
@@ -171,25 +171,12 @@ impl WasmSession {
 
     /// Cập nhật một phần cấu hình (merge với cấu hình hiện tại).
     pub fn set_config(&mut self, json: &str) -> bool {
-        let mut base = match serde_json::to_value(&*self.config.0.borrow()) {
-            Ok(serde_json::Value::Object(m)) => m,
-            _ => return false,
+        let Some(c) = self.config.0.borrow().apply_json_patch(json) else {
+            return false;
         };
-        let patch: HashMap<String, serde_json::Value> = match serde_json::from_str(json) {
-            Ok(v) => v,
-            Err(_) => return false,
-        };
-        for (k, v) in patch {
-            base.insert(k, v);
-        }
-        match serde_json::from_value::<Config>(serde_json::Value::Object(base)) {
-            Ok(c) => {
-                *self.config.0.borrow_mut() = c;
-                self.inner.reload_config();
-                true
-            }
-            Err(_) => false,
-        }
+        *self.config.0.borrow_mut() = c;
+        self.inner.reload_config();
+        true
     }
 
     /// Nạp từ điển từ 2 danh sách (mỗi từ cách nhau bởi khoảng trắng/xuống dòng).
@@ -213,6 +200,34 @@ impl WasmSession {
     pub fn reset(&mut self) {
         self.inner.reset();
     }
+}
+
+/// Danh sách bảng mã dạng JSON: [{key,name}].
+#[wasm_bindgen]
+pub fn charset_list() -> String {
+    serde_json::to_string(
+        &vfk_core::CHARSETS
+            .iter()
+            .map(|key| serde_json::json!({"key": key, "name": charset::display_name(key).unwrap_or(key)}))
+            .collect::<Vec<_>>(),
+    )
+    .unwrap_or_else(|_| "[]".to_string())
+}
+
+#[wasm_bindgen]
+pub fn charset_encode(name: &str, text: &str) -> String {
+    charset::encode(text, name)
+}
+
+#[wasm_bindgen]
+pub fn charset_decode(name: &str, text: &str) -> String {
+    charset::decode(text, name)
+}
+
+/// Bytes thô cho bảng một byte; mảng rỗng nếu bảng không hỗ trợ.
+#[wasm_bindgen]
+pub fn charset_encode_bytes(name: &str, text: &str) -> Vec<u8> {
+    charset::encode_bytes(text, name).unwrap_or_default()
 }
 
 #[wasm_bindgen]

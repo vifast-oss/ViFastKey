@@ -126,11 +126,21 @@ impl FieldKind {
 pub enum Action {
     /// Engine không xử lý, trả phím cho hệ điều hành.
     PassThrough,
-    Preedit { text: String, cursor: usize },
+    Preedit {
+        text: String,
+        cursor: usize,
+    },
     /// `delete_before`: số char của chuỗi đầu ra cần xoá lùi.
     /// `pass_key`: sau khi sửa, để phím gốc đi tiếp (dấu cách, Enter...).
-    Replace { delete_before: usize, insert: String, pass_key: bool },
-    Commit { text: String, pass_key: bool },
+    Replace {
+        delete_before: usize,
+        insert: String,
+        pass_key: bool,
+    },
+    Commit {
+        text: String,
+        pass_key: bool,
+    },
 }
 
 /// Trạng thái từ vừa kết thúc, cho soft reset (Backspace ngay sau dấu cách).
@@ -143,7 +153,11 @@ struct LastWord {
 }
 
 fn is_sentence_end(c: char) -> bool {
-    matches!(c, '.' | '!' | '?')
+    matches!(c, '.' | '!' | '?' | '…')
+}
+
+fn is_sentence_closer(c: char) -> bool {
+    matches!(c, '"' | '\'' | ')' | ']' | '»' | '”' | '’' | '›')
 }
 
 /// `str.isupper()` của Python: có ít nhất 1 ký tự có hoa/thường và mọi ký tự đó đều hoa.
@@ -180,6 +194,8 @@ pub struct ImeSession {
     enabled: bool,
     field: FieldKind,
     last: Option<LastWord>,
+    /// (text đã chèn, phím thô cần khôi phục) ngay sau macro.
+    last_macro: Option<(String, String)>,
     composer: Option<Composer>,
     /// (từ cũ đã nạp lại, số phím thô của nó).
     adopted: Option<(String, usize)>,
@@ -201,6 +217,7 @@ impl ImeSession {
             enabled: true,
             field: FieldKind::Text,
             last: None,
+            last_macro: None,
             composer: None,
             adopted: None,
         };
@@ -227,6 +244,11 @@ impl ImeSession {
         self.enabled
     }
 
+    /// Từ hiện tại đang ở chế độ thô (auto-restore/sticky) không?
+    pub fn is_literal(&self) -> bool {
+        self.literal
+    }
+
     pub fn ports(&self) -> &Ports {
         &self.ports
     }
@@ -244,17 +266,19 @@ impl ImeSession {
     // ---------- tiện ích
 
     fn im(&self) -> &'static InputMethodSpec {
-        InputMethodSpec::by_name(&self.config.input_method).unwrap_or(&TELEX)
+        let name = self.profile.input_method.as_deref().unwrap_or(&self.config.input_method);
+        InputMethodSpec::by_name(name).unwrap_or(&TELEX)
     }
 
     fn opt(&self) -> TransformOptions {
         let c = &self.config;
         TransformOptions {
-            tone_style: c.tone_style,
-            spell_check: c.spell_check,
+            tone_style: self.profile.tone_style.unwrap_or(c.tone_style),
+            spell_check: self.profile.spell_check.unwrap_or(c.spell_check),
             w_as_u: c.w_as_u,
             bracket_keys: c.bracket_keys,
             quick_telex: c.quick_telex,
+            allow_coda_k: c.allow_coda_k,
         }
     }
 
@@ -281,6 +305,9 @@ impl ImeSession {
             Some(c) => c.result(is_final),
             None => unreachable!(),
         };
+        if res.restored {
+            self.literal = true; // dính chế độ thô: text + s -> texts
+        }
         if res.restored {
             if let Some((word, n)) = &self.adopted {
                 // 'Việt' + 'f' -> 'Việtf', không phải 'vieetjf'
@@ -317,6 +344,14 @@ impl ImeSession {
         if self.config.bracket_keys && self.im().insert_for(ch).is_some() {
             return true;
         }
+        if self.config.macro_enabled
+            && self.config.macro_digits
+            && !self.im().digit_keys
+            && ch.is_ascii_digit()
+            && !self.raw.is_empty()
+        {
+            return true; // 'mp3', 'k8s': giữ số trong từ để macro hoạt động
+        }
         self.im().digit_keys && ch.is_ascii_digit() && !self.raw.is_empty()
     }
 
@@ -326,6 +361,7 @@ impl ImeSession {
         let act = self.flush();
         self.config = self.ports.config.load();
         self.composer = None;
+        self.last_macro = None;
         act
     }
 
@@ -374,6 +410,7 @@ impl ImeSession {
         let text = self.display();
         self.reset();
         self.last = None;
+        self.last_macro = None;
         if self.mode == OutputMode::Preedit && !text.is_empty() {
             return Action::Commit { text, pass_key: false };
         }
@@ -389,6 +426,9 @@ impl ImeSession {
         if ev.key == Key::Modifier {
             // Shift/Option nhấn riêng: không được làm mất từ đang gõ
             return Action::PassThrough;
+        }
+        if ev.key != Key::Backspace {
+            self.last_macro = None; // macro undo chỉ có hiệu lực ngay sau macro
         }
         if ev.ctrl || ev.alt || ev.meta || ev.key.is_nav() {
             self.cap_next = false;
@@ -415,8 +455,10 @@ impl ImeSession {
         let act = self.word_end(Some(ch));
         if is_sentence_end(ch) {
             self.pending_end = true;
+        } else if is_sentence_closer(ch) {
+            // ngoặc kép/đóng không làm mất trạng thái câu
         } else if ch.is_whitespace() {
-            if self.pending_end {
+            if self.pending_end || matches!(ch, '\n' | '\r') {
                 self.cap_next = self.config.auto_capitalize;
             }
             self.pending_end = false;
@@ -510,8 +552,21 @@ impl ImeSession {
     /// Xoá 1 ký tự HIỂN THỊ (tiếng -> tiến), giữ dấu ở phần còn lại như UniKey/OpenKey.
     fn backspace(&mut self) -> Action {
         if self.raw.is_empty() {
+            if self.config.macro_undo && self.mode == OutputMode::Replace {
+                if let Some((inserted, restored)) = self.last_macro.take() {
+                    let n = inserted.chars().count();
+                    if let Some(before) = self.ports.surrounding.before_cursor(n) {
+                        if self.out(&before) == inserted {
+                            return Action::Replace { delete_before: n, insert: restored, pass_key: false };
+                        }
+                    }
+                }
+            }
             if let Some(last) = self.last.take() {
-                if self.config.restore_after_space && self.mode == OutputMode::Replace && last.sep.len_utf8() > 0 {
+                if self.config.restore_after_space
+                    && self.mode == OutputMode::Replace
+                    && last.sep.len_utf8() > 0
+                {
                     self.raw = last.raw;
                     self.word = last.word;
                     self.literal = last.literal;
@@ -550,10 +605,11 @@ impl ImeSession {
             return Action::PassThrough;
         }
         let raw: String = self.raw.iter().collect();
-        self.finish(raw, None)
+        self.finish(raw, None, false)
     }
 
     fn word_end(&mut self, sep: Option<char>) -> Action {
+        self.last_macro = None;
         if self.raw.is_empty() {
             self.last = None;
             return Action::PassThrough;
@@ -566,6 +622,15 @@ impl ImeSession {
             None
         };
         if let Some(m) = mac {
+            if let Some(s) = sep {
+                if self.config.macro_undo {
+                    let mut inserted = self.out(&m);
+                    inserted.push(s);
+                    let mut restored = raw_s.clone();
+                    restored.push(s);
+                    self.last_macro = Some((inserted, restored));
+                }
+            }
             fin = m;
         } else if self.config.auto_restore_english
             && !self.literal
@@ -575,10 +640,10 @@ impl ImeSession {
         {
             fin = raw_s; // 'data' -> 'dât' -> 'data'; nhưng 'thí' (this) giữ nguyên
         }
-        self.finish(fin, sep)
+        self.finish(fin, sep, true)
     }
 
-    fn finish(&mut self, fin: String, sep: Option<char>) -> Action {
+    fn finish(&mut self, fin: String, sep: Option<char>, pass_key: bool) -> Action {
         let old_out = self.display();
         let final_out = self.out(&fin);
         self.last = match sep {
@@ -594,7 +659,7 @@ impl ImeSession {
         self.reset();
         if self.mode == OutputMode::Preedit {
             return match sep {
-                None => Action::Commit { text: final_out, pass_key: true },
+                None => Action::Commit { text: final_out, pass_key },
                 Some(s) => {
                     let mut text = final_out;
                     text.push(s);
@@ -606,7 +671,7 @@ impl ImeSession {
             return Action::PassThrough;
         }
         let e = diff(&old_out, &final_out);
-        Action::Replace { delete_before: e.delete_before, insert: e.insert, pass_key: true }
+        Action::Replace { delete_before: e.delete_before, insert: e.insert, pass_key }
     }
 
     fn boundary_passthrough(&mut self) -> Action {
