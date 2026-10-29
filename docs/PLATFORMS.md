@@ -8,6 +8,7 @@
 | Linux (Fcitx5) | `linux/fcitx5/` C++ addon | CI build ✅; runtime test Ubuntu 26.04/Fcitx5 5.1.19 trong Xvfb: `tieengs` → `tiếng` | ✅ chạy được trên X11; 🟡 cần test Wayland desktop thật |
 | Android | `android/` IME Java + JNI | SDK/NDK + Gradle, APK arm64/x86_64; CI build + đã test emulator | ✅ gõ được; 🟡 bàn phím tối giản, chưa Play Store |
 | iOS | `ios/` host + keyboard extension | Xcode 27.1, simulator; CI build + engine unit test | ✅ build/test; 🟡 chưa test bật extension/device signing |
+| Chrome/Edge | `chrome-extension/` MV3 + WASM | build + Playwright E2E (popup normalize) | ✅ MVP; 🟡 context menu/selected text cần test thêm; chưa Web Store |
 
 Bài học adapter Fcitx5 từ Areca (queue/barrier, trust probe surrounding text, timing/ACK,
 field kind, test bằng `InputContext` giả lập): `docs/research/08-areca-ime.md`.
