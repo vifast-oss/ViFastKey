@@ -33,7 +33,7 @@ ViFastKey/
 │   ├── adapters/               # port mẫu, từ điển, ô nhập giả lập
 │   ├── apps/                   # CLI demo + REPL + vfk-charset + vfk-suggest + vfk-emoji
 │   ├── vfk_suggest/            # gợi ý từ local
-│   ├── tests/                  # 618 test, golden, corpus
+│   ├── tests/                  # 623 test, golden, corpus
 │   ├── tools/                  # export conformance, bench
 │   ├── conformance/            # core.jsonl + engine.jsonl (oracle cho Rust)
 │   ├── vfk_core/data/          # bảng mã legacy (bamboo-core MIT)
@@ -51,6 +51,8 @@ ViFastKey/
 │   ├── apps/vfk-charset/       # chuyển bảng mã
 │   ├── apps/vfk-suggest/       # gợi ý từ
 │   ├── apps/vfk-windows/       # adapter Windows prototype
+├── linux/
+│   └── ibus/                   # adapter IBus (engine Python)
 │   ├── crates/vfk-suggest/     # lexicon gợi ý
 │   ├── conformance/            # bản sao dữ liệu oracle
 │   ├── testdata/               # golden + corpus
@@ -78,7 +80,7 @@ Yêu cầu Python 3.10+. Có thể cài như package (kèm `pytest`/`ruff`):
 ```bash
 cd python
 pip install -e ".[dev]"
-python -m pytest -q               # 618 test
+python -m pytest -q               # 623 test
 python -m tools.export_conformance
 python -m tools.bench
 python -m apps.vfk_cli --demo
@@ -116,6 +118,7 @@ Adapter IMK thật, gọi engine Rust qua C ABI:
 ./macos/install.sh        # cài vào ~/Library/Input Methods
 ./macos/doctor.sh         # chẩn đoán permission/input source
 ./macos/package.sh        # đóng gói universal2 (arm64 + x86_64)
+./linux/ibus/install.sh   # cài IBus engine trên Linux
 ```
 
 Chi tiết cài, menu, config và giới hạn: `macos/README.md`. Adapter dùng preedit, app profile,

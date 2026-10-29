@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <name>org.freedesktop.IBus.ViFastKey</name>
+  <description>ViFastKey — bộ gõ tiếng Việt</description>
+  <exec>@PREFIX@/share/vifastkey/ibus/ibus_engine.py</exec>
+  <version>0.4.0</version>
+  <author>ViFastKey contributors</author>
+  <license>MIT</license>
+  <homepage>https://github.com/dvchd/ViFastKey</homepage>
+  <textdomain>vifastkey</textdomain>
+  <engines>
+    <engine>
+      <name>vifastkey</name>
+      <language>vi</language>
+      <license>MIT</license>
+      <author>ViFastKey contributors</author>
+      <layout>us</layout>
+      <longname>ViFastKey</longname>
+      <description>Telex / VNI / VIQR</description>
+      <rank>50</rank>
+    </engine>
+  </engines>
+</component>

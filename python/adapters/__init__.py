@@ -78,6 +78,18 @@ class WordListDictionary:
     def is_vietnamese(self, word: str) -> bool:
         return word in self.vietnamese
 
+    def add_words(self, words, vietnamese: bool = True) -> None:
+        target = self.vietnamese if vietnamese else self.english
+        target.update(w.strip().lower() for w in words if w.strip())
+
+    def load_user_file(self, path, vietnamese: bool = True) -> None:
+        """Nạp từ điển người dùng: mỗi từ một dòng hoặc cách nhau khoảng trắng."""
+        try:
+            from pathlib import Path as _Path
+            self.add_words(_Path(path).read_text(encoding="utf-8").split(), vietnamese)
+        except OSError:
+            return
+
 
 SetDictionary = WordListDictionary   # tên cũ
 

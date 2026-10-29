@@ -76,6 +76,21 @@ jobs:
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
       - run: cargo run -p vfk-cli -- --demo
+      - name: Benchmark guard (Ubuntu)
+        if: runner.os == 'Linux'
+        run: python3 tools/bench_guard.py
+
+  linux-ibus-adapter:
+    name: Linux IBus adapter (core + syntax)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -e "python[dev]"
+      - run: python -m pytest -q python/tests/test_ibus_core.py
+      - run: python -m py_compile linux/ibus/ibus_engine.py
 
   macos-adapter:
     name: macOS IMK adapter

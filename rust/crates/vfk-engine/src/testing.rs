@@ -103,6 +103,27 @@ impl WordListDictionary {
             vietnamese: vietnamese.split_whitespace().map(str::to_string).collect(),
         }
     }
+
+    pub fn add_words<I, S>(&mut self, words: I, vietnamese: bool)
+    where
+        I: IntoIterator<Item = S>,
+        S: AsRef<str>,
+    {
+        let target = if vietnamese { &mut self.vietnamese } else { &mut self.english };
+        for word in words {
+            let word = word.as_ref().trim().to_lowercase();
+            if !word.is_empty() {
+                target.insert(word);
+            }
+        }
+    }
+
+    /// Nạp từ điển người dùng (mỗi từ một dòng hoặc cách nhau khoảng trắng).
+    pub fn load_user_file(&mut self, path: impl AsRef<std::path::Path>, vietnamese: bool) {
+        if let Ok(text) = std::fs::read_to_string(path) {
+            self.add_words(text.split_whitespace(), vietnamese);
+        }
+    }
 }
 
 impl Default for WordListDictionary {

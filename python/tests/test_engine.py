@@ -474,6 +474,15 @@ def test_firefox_profile_disables_edit_previous_word():
     assert f.text == "tiêngs"
 
 
+def test_user_dictionary_api():
+    d = WordListDictionary(english=[], vietnamese=[])
+    d.add_words(["Lước", "LƯỚT"], vietnamese=True)
+    d.add_words(["customword"], vietnamese=False)
+    assert d.is_vietnamese("lước") and d.is_vietnamese("lướt")
+    assert d.is_english("customword")
+    assert not d.is_vietnamese("customword")
+
+
 def test_json_config_roundtrip(tmp_path):
     from adapters import JsonFileConfigStore
     st = JsonFileConfigStore(tmp_path / "c.json")

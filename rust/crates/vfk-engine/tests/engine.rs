@@ -468,6 +468,15 @@ fn macro_in_off_mode() {
 }
 
 #[test]
+fn user_dictionary_api() {
+    let mut d = vfk_engine::testing::WordListDictionary::from_text("", "");
+    d.add_words(["Lước", "LƯỚT"], true);
+    d.add_words(["Customword"], false);
+    assert!(d.is_vietnamese("lước") && d.is_vietnamese("lướt"));
+    assert!(d.is_english("customword"));
+}
+
+#[test]
 fn app_id_normalization_and_aliases() {
     assert_eq!(normalize_app_id(Some("/usr/bin/kitty")), "kitty");
     assert_eq!(normalize_app_id(Some("C:\\Program Files\\Google\\Chrome.exe")), "chrome");

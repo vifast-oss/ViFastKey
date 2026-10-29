@@ -56,6 +56,11 @@
 - Ad-hoc signing để test local; `package.sh` build universal2 + hook ký/notarize;
   cần Developer ID/chứng chỉ thật khi phát hành.
 
+### Linux IBus adapter
+
+- Thêm `linux/ibus/`: engine IBus Python, core `adapters.ibus.IbusCore`, install script,
+  component XML; test core trên macOS/CI.
+
 ### Windows prototype
 
 - Thêm adapter `apps/vfk-windows`: low-level keyboard hook + SendInput Unicode,

@@ -26,6 +26,9 @@ conformance:
 	cd python && $(PYTHON) -m tools.export_conformance
 	cd rust && PYTHON=$(PYTHON) tools/sync_conformance.sh ../python
 
+bench:
+	cd rust && python3 tools/bench_guard.py
+
 web:
 	./web/build.sh
 

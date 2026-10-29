@@ -4,7 +4,7 @@ Bản này là **đặc tả chạy được**. Khi port sang Rust, chỉ cần 
 Bản Rust đạt khi ra cùng kết quả với bản Python trên toàn bộ golden test và corpus.
 
 ```bash
-python -m pytest -q               # 618 test
+python -m pytest -q               # 623 test
 python -m tools.export_conformance  # sinh conformance/*.jsonl (oracle cho Rust)
 python -m tools.bench             # đo µs/phím
 python -m apps.vfk_cli --demo     # chạy ví dụ
