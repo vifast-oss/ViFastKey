@@ -307,6 +307,43 @@ void testReplacePassKeyIsForwardedAfterCommit() {
     CHECK(context.forwards.size() == 2);
 }
 
+void testAppProfileReplaceMode() {
+    fcitx::EventLoop loop;
+    fcitx::InputContextManager manager;
+    TestInputContext context(manager);
+    context.setCapabilityFlags(fcitx::CapabilityFlags{
+        fcitx::CapabilityFlag::Preedit,
+        fcitx::CapabilityFlag::SurroundingText});
+    context.surroundingText().setText("", 0, 0);
+
+    auto config = makeConfig(
+        R"({"app_profiles":{"test":{"output_mode":"replace","edit_previous_word":false}}})");
+    fcitx::VifastkeyState state(loop, &context, config);
+    state.activate("test");
+
+    // Plain letter đi thẳng xuống app (PassThrough), không tạo preedit.
+    auto a = keyEvent(context, FcitxKey_a);
+    state.keyEvent(a);
+    CHECK(!a.filtered());
+
+    // Giả lập app đã nhận "a"; phím s tạo "á" bằng Replace.
+    context.surroundingText().setText("a", 1, 1);
+    auto s = keyEvent(context, FcitxKey_s);
+    state.keyEvent(s);
+    CHECK(s.filtered());
+    CHECK(context.deletes.size() == 1);
+    if (context.deletes.size() == 1) {
+        CHECK(context.deletes.front().offset == -1);
+        CHECK(context.deletes.front().size == 1);
+    }
+
+    runLoop(loop);
+    CHECK(context.commits.size() == 1);
+    if (context.commits.size() == 1) {
+        CHECK(context.commits.front() == "á");
+    }
+}
+
 void testReplaceRejectsStaleSurrounding() {
     fcitx::EventLoop loop;
     fcitx::InputContextManager manager;
@@ -423,6 +460,7 @@ int main() {
     testReplaceUsesSurroundingAndCommits();
     testEditPreviousWordUsesRefreshedSurrounding();
     testReplacePassKeyIsForwardedAfterCommit();
+    testAppProfileReplaceMode();
     testReplaceRejectsStaleSurrounding();
     testReplaceRejectsSelection();
     testReplaceCountsCodepointsForAstralCharacters();
