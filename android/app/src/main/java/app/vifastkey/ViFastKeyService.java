@@ -34,7 +34,7 @@ public final class ViFastKeyService extends InputMethodService {
         prefListener = (sharedPreferences, key) -> {
             if (handle != 0) {
                 String action = NativeEngine.setConfig(handle, Prefs.configJson(this));
-                applyProjected(action, "", snapshot(getCurrentInputConnection()));
+                applyProjected(action, "", snapshotForEngine(getCurrentInputConnection()));
                 syncKeyboardState();
                 updateSuggestions();
             }
@@ -68,12 +68,12 @@ public final class ViFastKeyService extends InputMethodService {
             handle = NativeEngine.create(Prefs.configJson(this));
         } else {
             String action = NativeEngine.setConfig(handle, Prefs.configJson(this));
-            applyProjected(action, "", snapshot(getCurrentInputConnection()));
+            applyProjected(action, "", snapshotForEngine(getCurrentInputConnection()));
         }
         NativeEngine.setField(handle, fieldKind);
         String focusAction = NativeEngine.focus(
                 handle, attribute.packageName == null ? "" : attribute.packageName);
-        applyProjected(focusAction, "", snapshot(getCurrentInputConnection()));
+        applyProjected(focusAction, "", snapshotForEngine(getCurrentInputConnection()));
         syncKeyboardState();
         if (keyboard != null) {
             keyboard.setNumericMode(fieldKind == 2);
@@ -150,8 +150,7 @@ public final class ViFastKeyService extends InputMethodService {
 
     private void toggleVietnamese() {
         if (handle == 0) return;
-        InputConnection ic = getCurrentInputConnection();
-        Snapshot snapshot = snapshot(ic);
+        Snapshot snapshot = snapshotForEngine(getCurrentInputConnection());
         applyProjected(NativeEngine.toggle(handle), "", snapshot);
         syncKeyboardState();
     }
@@ -167,7 +166,7 @@ public final class ViFastKeyService extends InputMethodService {
         InputConnection ic = getCurrentInputConnection();
         if (ic == null) return;
         else if (key.length() == 0) return;
-        Snapshot snapshot = snapshot(ic);
+        Snapshot snapshot = snapshotForEngine(ic);
         NativeEngine.setSurrounding(handle, snapshot.selection ? "" : snapshot.before);
         applyProjected(NativeEngine.process(handle, key, false, false, false), key, snapshot);
     }
@@ -195,6 +194,12 @@ public final class ViFastKeyService extends InputMethodService {
         int cursor;
         int anchor;
         boolean selection;
+    }
+
+    private Snapshot snapshotForEngine(InputConnection ic) {
+        // Không đọc nội dung field nhạy cảm. Planner cũng trả pass cho các field này.
+        if (fieldKind != 0 && fieldKind != 5) return new Snapshot();
+        return snapshot(ic);
     }
 
     private Snapshot snapshot(InputConnection ic) {
@@ -374,7 +379,7 @@ public final class ViFastKeyService extends InputMethodService {
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd);
         if (applying || handle == 0) return;
         if (SystemClock.uptimeMillis() - lastAppliedAt < SELECTION_GUARD_MS) return;
-        Snapshot snapshot = snapshot(getCurrentInputConnection());
+        Snapshot snapshot = snapshotForEngine(getCurrentInputConnection());
         applyProjected(NativeEngine.cursorMoved(handle), "", snapshot);
     }
 }
