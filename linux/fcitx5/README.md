@@ -67,6 +67,8 @@ cho mọi frontend Wayland.
 - Chưa dùng `uinput`/Libei/XTest. Nếu app không nhận surrounding text và không
   nhận `forwardKey`, adapter fallback về preedit/pass-through thay vì inject phím.
 - Chưa nạp `user_words.txt`/dictionary file; engine dùng dictionary mặc định.
+- Chưa áp `AppProfile.charset` khi commit; Fcitx5 nhận UTF-8. Dùng `vfk-charset`
+  cho chuyển đổi clipboard/file hoặc app legacy có adapter riêng.
 - `output_mode=replace` là opt-in theo app và cần surrounding text; mặc định vẫn
   là PREEDIT.
 - Fcitx5 có thể cache addon; sau khi cài chạy `fcitx5 -r` hoặc logout/login.
