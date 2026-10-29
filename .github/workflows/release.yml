@@ -71,10 +71,16 @@ jobs:
             target/wasm32-unknown-unknown/release/vfk_wasm.wasm
           cd ../web
           zip -r ../vifastkey-wasm.zip pkg index.html app.js style.css
+          cd ..
+          ./chrome-extension/build.sh
+          cd chrome-extension
+          zip -r ../vifastkey-chrome-extension.zip dist
       - uses: actions/upload-artifact@v4
         with:
           name: vifastkey-WASM
-          path: vifastkey-wasm.zip
+          path: |
+            vifastkey-wasm.zip
+            vifastkey-chrome-extension.zip
           if-no-files-found: error
 
   publish:

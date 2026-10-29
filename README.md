@@ -99,6 +99,12 @@ python -m apps.vfk_suggest nguoi
 python -m apps.vfk_emoji "cười"
 ```
 
+```bash
+# Chrome extension (MV3)
+./chrome-extension/build.sh
+# Load unpacked: chrome://extensions -> developer mode -> chrome-extension/dist
+```
+
 ## Build bản Rust
 
 Yêu cầu Rust stable (MSRV 1.85, đã kiểm tra 1.99.1); `rust/rust-toolchain.toml` ghim stable + wasm target.
