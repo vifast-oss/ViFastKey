@@ -67,19 +67,19 @@ public:
     std::vector<fcitx::Key> forwards;
 };
 
-std::string testConfigPath() {
+std::string testConfigPath(const std::string &content = "{}") {
     static int counter = 0;
     const auto path = std::filesystem::temp_directory_path() /
                       ("vifastkey-fcitx5-test-" +
                        std::to_string(static_cast<long long>(getpid())) + "-" +
                        std::to_string(counter++) + ".json");
     std::ofstream out(path, std::ios::binary);
-    out << "{}";
+    out << content;
     return path.string();
 }
 
-std::shared_ptr<fcitx::ConfigStore> makeConfig() {
-    return std::make_shared<fcitx::ConfigStore>(testConfigPath());
+std::shared_ptr<fcitx::ConfigStore> makeConfig(const std::string &content = "{}") {
+    return std::make_shared<fcitx::ConfigStore>(testConfigPath(content));
 }
 
 void runLoop(fcitx::EventLoop &loop, int milliseconds = 80) {
@@ -197,6 +197,20 @@ void testPasswordPassThrough() {
     CHECK(context.inputPanel().clientPreedit().empty());
 }
 
+void testInvalidConfigFallsBackToDefaults() {
+    fcitx::EventLoop loop;
+    fcitx::InputContextManager manager;
+    TestInputContext context(manager);
+    context.setCapabilityFlags(fcitx::CapabilityFlag::Preedit);
+
+    auto config = makeConfig("{not-json");
+    fcitx::VifastkeyState state(loop, &context, config);
+    state.activate("test");
+
+    typeAscii(context, state, "tieengs");
+    CHECK(context.inputPanel().clientPreedit().toString() == "tiếng");
+}
+
 void testReplaceUsesSurroundingAndCommits() {
     fcitx::EventLoop loop;
     fcitx::InputContextManager manager;
@@ -261,6 +275,36 @@ void testEditPreviousWordUsesRefreshedSurrounding() {
     if (context.commits.size() == 1) {
         CHECK(context.commits.front() == "ềng");
     }
+}
+
+void testReplacePassKeyIsForwardedAfterCommit() {
+    fcitx::EventLoop loop;
+    fcitx::InputContextManager manager;
+    TestInputContext context(manager);
+    context.setCapabilityFlags(fcitx::CapabilityFlag::SurroundingText);
+    context.surroundingText().setText("tiếng", 5, 5);
+
+    auto config = makeConfig();
+    fcitx::VifastkeyState state(loop, &context, config);
+    state.activate("test");
+
+    VfkAction action = {};
+    action.kind = VFK_REPLACE;
+    action.delete_utf16 = 3; // "ếng"
+    action.text = "ềng";
+    action.pass_key = true;
+    state.applyAction(action, nullptr, "tiếng", fcitx::Key(FcitxKey_space));
+
+    CHECK(context.deletes.size() == 1);
+    CHECK(state.busy());
+    runLoop(loop);
+    CHECK(!state.busy());
+    CHECK(context.commits.size() == 1);
+    if (context.commits.size() == 1) {
+        CHECK(context.commits.front() == "ềng");
+    }
+    // Phím gốc (space) phải được forward sau commit, không bị nuốt.
+    CHECK(context.forwards.size() == 2);
 }
 
 void testReplaceRejectsStaleSurrounding() {
@@ -375,8 +419,10 @@ int main() {
     testResetCommitsComposition();
     testFocusOutDoesNotDoubleCommitClientPreedit();
     testPasswordPassThrough();
+    testInvalidConfigFallsBackToDefaults();
     testReplaceUsesSurroundingAndCommits();
     testEditPreviousWordUsesRefreshedSurrounding();
+    testReplacePassKeyIsForwardedAfterCommit();
     testReplaceRejectsStaleSurrounding();
     testReplaceRejectsSelection();
     testReplaceCountsCodepointsForAstralCharacters();

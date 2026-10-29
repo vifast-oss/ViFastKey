@@ -110,6 +110,10 @@ VifastkeyState::VifastkeyState(EventLoop &eventLoop, InputContext *inputContext,
     const std::string json = config_ ? config_->json() : std::string();
     session_ = vfk_session_new(json.empty() ? nullptr : json.c_str(),
                                VFK_MODE_PREEDIT);
+    if (!session_ && !json.empty()) {
+        FCITX_WARN() << "vifastkey: invalid config at startup, using defaults";
+        session_ = vfk_session_new(nullptr, VFK_MODE_PREEDIT);
+    }
     configGeneration_ = config_ ? config_->generation() : 0;
     if (!session_) {
         FCITX_ERROR() << "vifastkey: cannot create engine session";
@@ -499,6 +503,7 @@ void VifastkeyState::applyCommit(const std::string &text, bool passKey,
     }
     if (!text.empty()) {
         ic_->commitString(text);
+        updateSurroundingAfterCommit(text);
     }
     clearPreedit();
 

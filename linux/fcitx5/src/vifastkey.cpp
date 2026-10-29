@@ -98,7 +98,12 @@ private:
             return;
         }
         const bool vietnamese = state->enabled();
-        toggleAction_->setShortText(vietnamese ? "Việt" : "Anh");
+        const std::string label = vietnamese ? "Việt" : "Anh";
+        if (toggleAction_->shortText(ic) == label &&
+            toggleAction_->isChecked(ic) == vietnamese) {
+            return;
+        }
+        toggleAction_->setShortText(label);
         toggleAction_->setChecked(vietnamese);
         toggleAction_->update(ic);
     }
