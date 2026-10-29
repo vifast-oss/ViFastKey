@@ -504,6 +504,9 @@ pub unsafe extern "C" fn vfk_load_dictionary(
     let en = opt_str(english);
     let vi = opt_str(vietnamese);
     with_session(h, (), |s| {
+        if en.is_none() && vi.is_none() {
+            return;
+        }
         let mut sh = s.shared.0.borrow_mut();
         let dict = Arc::make_mut(&mut sh.dictionary);
         if let Some(e) = en {
