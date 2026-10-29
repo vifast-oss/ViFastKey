@@ -2,14 +2,19 @@ import Cocoa
 import InputMethodKit
 import Carbon
 
+ConfigFile.ensureExists()
+
 func maintenance() -> Bool {
     let args = CommandLine.arguments
-    guard args.contains("--register-input-source") || args.contains("--enable-input-source") else {
+    guard args.contains("--register-input-source") ||
+          args.contains("--enable-input-source") ||
+          args.contains("--repair-input-source") else {
         return false
     }
     let bundleURL = Bundle.main.bundleURL
     let status = TISRegisterInputSource(bundleURL as CFURL)
     print("register status: \(status)")
+    print("prefs enabled: \(InputSourceRegistrar.ensureEnabled())")
     let all = TISCreateInputSourceList(nil, true)?.takeRetainedValue() as? [TISInputSource] ?? []
     for src in all {
         guard let idp = TISGetInputSourceProperty(src, kTISPropertyInputSourceID) else { continue }

@@ -56,6 +56,12 @@
 - Ad-hoc signing để test local; `package.sh` build universal2 + hook ký/notarize;
   cần Developer ID/chứng chỉ thật khi phát hành.
 
+### macOS
+
+- Installer ghi `AppleEnabledInputSources` để input source còn sau logout/login.
+- Secure input pass-through, hotkey Ctrl+Shift+F, menu Clipboard (bỏ dấu/NFC/VIQR/TCVN3).
+- Sửa `LSBackgroundOnly` đúng kiểu boolean; doctor kiểm tra enabled lẫn selected.
+
 ### Fcitx5 nâng cao
 
 - Tách `VifastkeyState`/`ConfigStore`, status action Việt/Anh, config reload, surrounding guard,

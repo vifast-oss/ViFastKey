@@ -43,6 +43,7 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
 - **Tiếng Tây Nguyên** (Êđê...): thêm ký tự và `InputMethodSpec`, không đổi thuật toán.
 - **Bộ gõ tắt/macro nâng cao**: nhiều macro theo app, import/export, kiểm tra trùng.
 - **UI cấu hình desktop**: ✅ macOS preferences window; Windows/Linux GUI còn thiếu.
+- **macOS smoothness**: ✅ input source prefs, secure input, Ctrl+Shift+F, clipboard tools.
 
 ## Hiệu năng / chất lượng
 

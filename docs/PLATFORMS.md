@@ -2,7 +2,7 @@
 
 | Nền tảng | Adapter | Build/test | Trạng thái |
 |---|---|---|---|
-| macOS | `macos/` IMK + `package.sh` universal2 | macOS 12+, Swift/Xcode, đã build arm64/x86_64 + self-test | ✅ dùng được; cần logout/login để đăng ký input source; Developer ID/notarize cần chứng chỉ |
+| macOS | `macos/` IMK + `package.sh` universal2 | macOS 12+, Swift/Xcode, đã build arm64/x86_64 + self-test; installer ghi AppleEnabledInputSources | ✅ dùng được; cần logout/login một lần; Developer ID/notarize cần chứng chỉ |
 | Windows | `rust/apps/vfk-windows` low-level hook + SendInput | cross-check MSVC + CI Windows build | 🟡 prototype; chưa test runtime, chưa TSF/tray/signing |
 | Linux (IBus) | `linux/ibus/` engine Python | core test trên macOS/CI; component đăng ký được trong Xvfb | 🟡 runtime key event chưa xác nhận; Fcitx5 là đường đã test |
 | Linux (Fcitx5) | `linux/fcitx5/` C++ addon | CI build ✅; runtime test Ubuntu 26.04/Fcitx5 5.1.19 trong Xvfb: `tieengs` → `tiếng` | ✅ chạy được trên X11; 🟡 cần test Wayland desktop thật |

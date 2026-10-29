@@ -15,7 +15,8 @@ if pgrep -x ViFastKeyIM >/dev/null; then echo "process: running"; else echo "pro
 echo "config: $HOME/Library/Application Support/ViFastKey/config.json"
 [ -f "$HOME/Library/Application Support/ViFastKey/config.json" ] && echo "config: OK" || echo "config: chưa có (tự tạo khi chạy lần đầu)"
 echo "input sources:"
-defaults read com.apple.HIToolbox AppleSelectedInputSources 2>/dev/null | grep -A3 -B1 -i vifastkey || echo "  chưa thấy ViFastKey trong AppleSelectedInputSources"
+defaults read com.apple.HIToolbox AppleEnabledInputSources 2>/dev/null | grep -A3 -B1 -i vifastkey || echo "  chưa thấy ViFastKey trong AppleEnabledInputSources"
+defaults read com.apple.HIToolbox AppleSelectedInputSources 2>/dev/null | grep -A3 -B1 -i vifastkey || echo "  chưa chọn ViFastKey làm input source"
 echo
 echo "Nếu chưa gõ được: đăng xuất/đăng nhập, kiểm tra Input Sources, xem Console/log:"
 echo "  log stream --predicate 'process == \"ViFastKeyIM\"' --level debug"

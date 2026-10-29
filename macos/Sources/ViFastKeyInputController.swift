@@ -1,5 +1,6 @@
 import Cocoa
 import InputMethodKit
+import Carbon
 
 private let MAX_RAW = 24
 
@@ -68,6 +69,26 @@ final class ViFastKeyInputController: IMKInputController {
         let alt = flags.contains(.option)
         let meta = flags.contains(.command)
 
+        // Password/secure fields: không được đưa nội dung vào preedit/logic.
+        if IsSecureEventInputEnabled() {
+            // Không commit preedit vào secure field: xoá marked text và bỏ state.
+            engine.reset()
+            if let client = clientObject(sender) {
+                ImkTextClient(client).setMarkedText(
+                    "", selectedRange: NSRange(location: 0, length: 0),
+                    replacementRange: NSRange(location: NSNotFound, length: 0)
+                )
+            }
+            return false
+        }
+
+        // Ctrl+Shift+F: toggle Việt/Anh ngay trong app; không cho engine xử lý f.
+        if ctrl && !alt && !meta && flags.contains(.shift),
+           event.charactersIgnoringModifiers?.lowercased() == "f" {
+            toggleVietnamese(nil)
+            return true
+        }
+
         if let client = clientObject(sender) {
             let textClient = ImkTextClient(client)
             engine.setSurroundingText(textClient.beforeCursor(MAX_RAW + 1))
@@ -118,7 +139,8 @@ final class ViFastKeyInputController: IMKInputController {
         let menu = NSMenu(title: "ViFastKey")
         let enabled = engine?.isEnabled ?? true
         let toggle = NSMenuItem(title: enabled ? "Tắt tiếng Việt" : "Bật tiếng Việt",
-                                action: #selector(toggleVietnamese(_:)), keyEquivalent: "")
+                                action: #selector(toggleVietnamese(_:)), keyEquivalent: "f")
+        toggle.keyEquivalentModifierMask = [.control, .shift]
         toggle.target = self
         menu.addItem(toggle)
 
@@ -149,6 +171,23 @@ final class ViFastKeyInputController: IMKInputController {
                                 keyEquivalent: "")
         reload.target = self
         menu.addItem(reload)
+
+        let sources = NSMenuItem(title: "Mở Input Sources…",
+                                 action: #selector(openInputSources(_:)), keyEquivalent: "")
+        sources.target = self
+        menu.addItem(sources)
+
+        let clipboard = NSMenuItem(title: "Clipboard", action: nil, keyEquivalent: "")
+        let clipboardMenu = NSMenu(title: "Clipboard")
+        addClipboardItem(clipboardMenu, "Bỏ dấu", op: "strip")
+        addClipboardItem(clipboardMenu, "Chuẩn hoá Unicode NFC", op: "nfc")
+        addClipboardItem(clipboardMenu, "VIQR → Unicode", op: "decode", charset: "viqr")
+        addClipboardItem(clipboardMenu, "Unicode → VIQR", op: "encode", charset: "viqr")
+        clipboardMenu.addItem(.separator())
+        addClipboardItem(clipboardMenu, "TCVN3 → Unicode", op: "decode", charset: "tcvn3")
+        addClipboardItem(clipboardMenu, "Unicode → TCVN3 (UTF-8 thay thế)", op: "encode", charset: "tcvn3")
+        clipboard.submenu = clipboardMenu
+        menu.addItem(clipboard)
         return menu
     }
 
@@ -198,6 +237,46 @@ final class ViFastKeyInputController: IMKInputController {
     @objc private func openConfigFile(_ sender: Any?) {
         ConfigFile.ensureExists()
         NSWorkspace.shared.open(ConfigFile.path)
+    }
+
+    @objc private func openInputSources(_ sender: Any?) {
+        NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.Keyboard-Settings.extension")!)
+    }
+
+    private func addClipboardItem(_ menu: NSMenu, _ title: String, op: String, charset: String? = nil) {
+        let item = NSMenuItem(title: title, action: #selector(transformClipboard(_:)), keyEquivalent: "")
+        item.target = self
+        item.representedObject = ["op": op, "charset": charset ?? ""]
+        menu.addItem(item)
+    }
+
+    @objc private func transformClipboard(_ sender: NSMenuItem) {
+        guard let spec = sender.representedObject as? [String: String],
+              let op = spec["op"],
+              let text = NSPasteboard.general.string(forType: .string) else {
+            NSSound.beep()
+            return
+        }
+        let charset = spec["charset"] ?? ""
+        let output: String?
+        switch op {
+        case "strip":
+            output = text.applyingTransform(.stripDiacritics, reverse: false)
+        case "nfc":
+            output = text.precomposedStringWithCanonicalMapping
+        case "decode":
+            output = engine?.decodeCharset(text, charset: charset)
+        case "encode":
+            output = engine?.encodeCharset(text, charset: charset)
+        default:
+            output = nil
+        }
+        guard let output else {
+            NSSound.beep()
+            return
+        }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(output, forType: .string)
     }
 
     @objc private func reloadConfig(_ sender: Any?) {
