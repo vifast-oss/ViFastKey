@@ -147,7 +147,14 @@ Xem `ADAPTER_GUIDE.md` để biết hợp đồng từng bước.
 - Emoji, text tools, clipboard converter GUI.
 - Adapter thật + GUI cấu hình.
 
-## 7. Quy tắc giấy phép
+## 7. Adapter macOS đầu tiên
+
+- Đã triển khai IMK thật trong `macos/`: Swift controller → Rust C ABI → ActionApplier.
+- Học từ ViFastTts: engine thuần, self-test headless, config atomic/versioned, doctor,
+  IMK trước event tap, stable signing cho TCC. Xem `docs/VIFASTTTS_LESSONS.md`.
+- Chưa có Developer ID/notarize/universal2 và event-tap fallback; xem `macos/README.md`.
+
+## 8. Quy tắc giấy phép
 
 - **Được dùng**: hành vi, tên tính năng, test vector tự viết, bảng mã MIT của `bamboo-core`
   (có ghi công), ý tưởng kiến trúc.
