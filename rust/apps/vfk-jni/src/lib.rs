@@ -81,7 +81,7 @@ fn field_kind_from_i32(value: jint) -> FieldKind {
 }
 
 fn adapter_action_from_json(value: &serde_json::Value) -> Option<AdapterAction> {
-    let text = value["text"].as_str().unwrap_or("").to_owned();
+    let text = value["text"].as_str().or_else(|| value["insert"].as_str()).unwrap_or("").to_owned();
     let pass_key = value["pass"].as_bool().unwrap_or(false);
     match value["kind"].as_str().unwrap_or("pass") {
         "pass" => Some(AdapterAction::Pass),
