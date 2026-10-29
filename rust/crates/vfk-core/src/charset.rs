@@ -303,6 +303,25 @@ pub fn detect(text: &str) -> Vec<&'static str> {
     scored.into_iter().map(|(_, key)| key).collect()
 }
 
+pub fn change_case(text: &str, mode: &str) -> Option<String> {
+    match mode.to_lowercase().as_str() {
+        "upper" => Some(text.to_uppercase()),
+        "lower" => Some(text.to_lowercase()),
+        "title" => Some(
+            text.split_inclusive(' ')
+                .map(|part| {
+                    let mut c = part.chars();
+                    match c.next() {
+                        Some(first) => first.to_uppercase().collect::<String>() + c.as_str(),
+                        None => String::new(),
+                    }
+                })
+                .collect(),
+        ),
+        _ => None,
+    }
+}
+
 pub fn remove_diacritics(text: &str) -> String {
     text.chars()
         .flat_map(|ch| ch.to_string().nfd().collect::<Vec<_>>())

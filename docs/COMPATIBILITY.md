@@ -44,6 +44,8 @@ Khi `spell_check=true`, biến đổi làm INVALID bị chặn và từ có th�
 - `ass → as` và `chuss → chus` được giữ (không khôi phục `ass`/`chuss`) vì người dùng
   chủ động hoàn tác ở cuối từ.
 - Khôi phục tiếng Anh: core trả raw khi INVALID; engine còn dùng `Dictionary` khi kết thúc từ.
+- **PREEDIT sửa từ đã gõ**: nếu adapter cung cấp surrounding text, engine nạp lại từ trước con trỏ
+  và trả `Replace` (delete/insert) thay vì `Preedit`; click/focus làm tắt adopt cho key đầu.
 - **Sticky restore**: sau khi một từ đã bị khôi phục raw, các phím tiếp theo vẫn ở chế độ raw
   cho tới khi kết thúc từ: `text` + `s → texts`, không thành `tét`.
 - **Backspace** xoá một ký tự hiển thị, giữ dấu phần còn lại: `tiếng → tiến`.
@@ -90,7 +92,10 @@ Khi `spell_check=true`, biến đổi làm INVALID bị chặn và từ có th�
 - Giữ kiểu hoa: `ko → không`, `Ko → Không`, `KO → KHÔNG`.
 - `macro_digits` giữ chữ số trong từ (`mp3`, `k8s`); cần `macro_enabled`.
 - Macro chạy ở mọi dấu kết thúc (space, Enter, Tab, dấu câu).
-- Chưa hỗ trợ macro nhiều từ/suffix; xem roadmap.
+- Macro nhiều từ: key có thể chứa dấu cách (`k biet`), khớp đuôi câu trong lịch sử
+  REPLACE; ưu tiên key dài nhất, kiểm tra biên từ.
+- `macro_in_off_mode`: macro vẫn chạy khi Tắt tiếng Việt (mặc định tắt).
+- Chưa hỗ trợ key có dấu câu bên trong/suffix trong một từ; xem roadmap.
 
 ## 9. Bảng mã
 

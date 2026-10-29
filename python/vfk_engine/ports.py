@@ -81,6 +81,7 @@ class Config:
     macro_enabled: bool = True
     macro_digits: bool = False              # chữ số thuộc từ (cần macro_enabled) cho mp3, k8s
     macro_undo: bool = True                 # Backspace ngay sau macro: khôi phục phím gõ
+    macro_in_off_mode: bool = False         # vẫn mở macro khi đang tắt tiếng Việt
     macros: dict[str, str] = field(default_factory=dict)
     auto_capitalize: bool = False           # viết hoa đầu câu
     # --- ngữ cảnh

@@ -12,6 +12,12 @@ final class FakeTextClient: EngineTextClient {
         committed += text
         preedit = ""
     }
+    func replaceText(_ text: String, deleteBeforeUTF16 count: Int) {
+        let chars = Array(committed)
+        let n = min(count, chars.count)
+        committed = String(chars.prefix(chars.count - n)) + text
+        preedit = ""
+    }
 }
 
 var failures = 0
@@ -84,6 +90,16 @@ do {
     let p = e.appProfileJSON ?? ""
     if p.contains("\"wait_ack\":true") { print("ok   app-profile chrome") }
     else { failures += 1; print("FAIL app-profile chrome: \(p)") }
+}
+
+// Replace committed text (preedit edit-previous-word).
+do {
+    let client = FakeTextClient()
+    client.committed = "tiêng"
+    let action = VfkEngineAction(kind: .replace, deleteBeforeUTF16: 3, insert: "ếng",
+                                 cursorUTF16: 0, passKey: false)
+    _ = ActionApplier().apply(action, to: client)
+    check("replace-committed", client.text, "tiếng")
 }
 
 // Key mapping

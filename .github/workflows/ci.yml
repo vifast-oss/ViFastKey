@@ -54,7 +54,8 @@ jobs:
             python/adapters/data \
             rust/crates/vfk-engine/data \
             python/vfk_core/data \
-            rust/crates/vfk-core/data
+            rust/crates/vfk-core/data \
+            rust/crates/vfk-suggest/data
 
   rust:
     name: Rust (${{ matrix.os }})

@@ -68,6 +68,15 @@ def test_detect():
     assert detect_charset("Vi&#7879;t")[0] == "ncr_decimal"
 
 
+def test_change_case():
+    from vfk_core import change_case
+    assert change_case("tiếng Việt", "upper") == "TIẾNG VIỆT"
+    assert change_case("Tiếng Việt", "lower") == "tiếng việt"
+    assert change_case("tiếng việt", "title") == "Tiếng Việt"
+    with pytest.raises(ValueError):
+        change_case("x", "bogus")
+
+
 def test_convert_and_remove_diacritics():
     assert convert_charset("Việt", "unicode", "viqr") == "Vie^.t"
     assert convert_charset("Vie^.t", "viqr", "unicode") == "Việt"

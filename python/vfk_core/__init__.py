@@ -2,11 +2,13 @@
 from dataclasses import dataclass
 
 from .charset import DISPLAY_NAMES as CHARSET_NAMES
-from .charset import charsets, decode_bytes, encode_bytes, normalize_charset, remove_diacritics
+from .charset import change_case, charsets, decode_bytes, encode_bytes, normalize_charset, remove_diacritics
 from .charset import convert as convert_charset
 from .charset import decode as decode_charset
 from .charset import detect as detect_charset
 from .charset import encode as encode_charset
+from .emoji import all_emoji
+from .emoji import search as search_emoji
 from .rules import INPUT_METHODS, QUICK_TELEX, SIMPLE_TELEX, TELEX, VIQR, VNI, InputMethodSpec, MarkRule
 from .transform import MAX_RAW, Composer, TransformOptions, TransformResult, rebuild, to_raw, transform
 
@@ -25,7 +27,8 @@ def diff(old: str, new: str) -> Edit:
     return Edit(len(old) - p, new[p:])
 
 
-__all__ = ["INPUT_METHODS", "QUICK_TELEX", "SIMPLE_TELEX", "TELEX", "VIQR", "VNI", "MAX_RAW", "Composer", "rebuild",
+__all__ = ["INPUT_METHODS", "QUICK_TELEX", "SIMPLE_TELEX", "TELEX", "VIQR", "VNI", "MAX_RAW", "all_emoji", "search_emoji", "Composer", "rebuild",
            "InputMethodSpec", "MarkRule", "TransformOptions", "TransformResult", "transform", "to_raw", "Edit", "diff",
            "CHARSET_NAMES", "charsets", "convert_charset", "decode_charset", "decode_bytes",
-           "detect_charset", "encode_charset", "encode_bytes", "normalize_charset", "remove_diacritics"]
+           "detect_charset", "encode_charset", "encode_bytes", "normalize_charset", "remove_diacritics",
+           "change_case"]

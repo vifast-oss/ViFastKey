@@ -52,6 +52,9 @@ Không đưa logic tiếng Việt vào adapter. Không dịch lại raw/Unicode 
 - Preedit phải là **một vùng nguyên tử**; không gửi từng ký tự vào app.
 - Khi `Action::Commit` có `pass_key=true`, commit rồi gửi phím gốc (Enter).
 - Khi `Action::Preedit` có text rỗng, xoá vùng preedit nhưng vẫn giữ session.
+- Khi engine trả `Replace` trong PREEDIT (sửa từ đã commit), adapter phải xoá `delete_before`
+  UTF-16 trước con trỏ rồi chèn text; nếu app không hỗ trợ, bỏ qua surrounding text để engine
+  không sinh nhánh này.
 - Terminal/Electron: ưu tiên preedit; nếu app không hỗ trợ, commit từng từ và dùng
   backspace có kiểm soát.
 - Escape: engine trả `Commit(pass_key=false)` hoặc `Replace(pass_key=false)`; **không**

@@ -20,7 +20,7 @@ check: test
 	cd rust && cargo fmt --all -- --check
 	cd rust && cargo clippy --workspace --all-targets -- -D warnings
 	$(MAKE) conformance
-	git diff --exit-code -- python/conformance rust/conformance python/tests/golden python/tests/data rust/testdata python/vfk_core/data rust/crates/vfk-core/data
+	git diff --exit-code -- python/conformance rust/conformance python/tests/golden python/tests/data rust/testdata python/vfk_core/data rust/crates/vfk-core/data rust/crates/vfk-suggest/data
 
 conformance:
 	cd python && $(PYTHON) -m tools.export_conformance

@@ -1,0 +1,10 @@
+[package]
+name = "vfk-suggest"
+description = "Gợi ý từ tiếng Việt/tiếng Anh theo tiền tố, chạy local, không mạng."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+unicode-normalization = { workspace = true }

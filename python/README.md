@@ -4,7 +4,7 @@ Bản này là **đặc tả chạy được**. Khi port sang Rust, chỉ cần 
 Bản Rust đạt khi ra cùng kết quả với bản Python trên toàn bộ golden test và corpus.
 
 ```bash
-python -m pytest -q               # 602 test
+python -m pytest -q               # 618 test
 python -m tools.export_conformance  # sinh conformance/*.jsonl (oracle cho Rust)
 python -m tools.bench             # đo µs/phím
 python -m apps.vfk_cli --demo     # chạy ví dụ
@@ -13,6 +13,9 @@ python -m apps.vfk_cli --text "Tieengs Vieejt"
 python -m apps.vfk_cli --method vni --tone new --text "Vie65t Nam"
 python -m apps.vfk_charset --to tcvn3 --text "Tiếng Việt"
 python -m apps.vfk_charset --list
+python -m apps.vfk_charset --clipboard --to tcvn3
+python -m apps.vfk_suggest nguoi
+python -m apps.vfk_emoji "cười"
 ```
 
 Chỉ dùng thư viện chuẩn khi chạy engine. Muốn chạy test:
@@ -85,6 +88,8 @@ PARTIAL có tính đến việc thêm dấu sau, nhờ vậy gõ dấu tự do k
 - `macro_undo`: Backspace ngay sau macro khôi phục trigger + dấu cách (`ko ` → `không ` → `ko `).
 - `allow_coda_k`: cho phép âm cuối `k` cho tên riêng/địa danh (`Đắk Lắk`). `k` là âm cuối tắc nên chỉ đi với sắc/nặng.
 - Esc trả raw nhưng **không** forward phím Esc (`pass_key=False`).
+- PREEDIT sửa từ đã gõ nếu adapter cung cấp surrounding text; engine trả `Replace` thay vì Preedit.
+- Gợi ý từ/emoji local (`vfk_suggest`/`vfk_core.emoji`), không mạng.
 - Auto-cap xử lý `…`, ngoặc kép/đóng, newline; `1.5` không phải ranh giới câu.
 - `AppProfile` ghi đè được `input_method`, `tone_style`, `spell_check` và gợi ý `charset`.
 - VNI: chuỗi số ở cuối có ≥2 phím thanh là số thật (`nam2024`, `ba10`); `viet65` vẫn chuyển.
@@ -142,4 +147,4 @@ Tài liệu đối chiếu 19 dự án IME: `../docs/IME_FEATURE_RESEARCH.md`; h
 - Gõ `xoong`/`boong` cần gõ `ooo`, giống UniKey.
 - Từ vừa là tiếng Anh vừa là từ Việt thông dụng (`this` ra `thí`, `as` ra `á`) luôn ưu tiên tiếng Việt.
 - Bảng mã legacy có module/CLI/FFI riêng, chưa nhúng vào `ImeSession` (adapter chuyển ở đầu ra).
-- Chế độ PREEDIT chưa hỗ trợ sửa lại từ đã gõ, vì cần thêm action `DeleteSurrounding`.
+- PREEDIT sửa từ đã gõ cần surrounding text đáng tin cậy; adapter không có thì bỏ qua.

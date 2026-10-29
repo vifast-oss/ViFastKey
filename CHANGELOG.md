@@ -17,6 +17,11 @@
   Bật/tắt bằng `Config.allow_coda_k` hoặc `TransformOptions.allow_coda_k`.
 - Thêm `macro_digits`: giữ chữ số trong từ để macro có số hoạt động (`mp3`, `k8s`), không ảnh hưởng VNI.
 - Thêm `macro_undo`: Backspace ngay sau macro khôi phục trigger + dấu cách.
+- Macro nhiều từ/suffix câu trong REPLACE; `macro_in_off_mode`.
+- PREEDIT sửa từ đã gõ bằng `Replace` + surrounding text.
+- Gợi ý từ local 23k âm tiết + 20k tiếng Anh (`vfk-suggest`), emoji CLI (`vfk-emoji`),
+  clipboard conversion (`vfk-charset --clipboard`).
+- `WordState.letters` dùng `ArrayVec`; thêm Case conversion.
 - Sửa `đ` viết tắt (`ddc`, `vcdd`, `NDD`), undo tiếng Anh (`banana`, `coffee`, `cheese`),
   VNI literal number (`nam2024`, `ba10`), sticky restore (`text` + `s`), escape pass-key,
   open `uơ`/`ươ` theo âm đầu, nguyên âm có dấu đứng riêng (`aw`, `aws`).
@@ -48,7 +53,13 @@
 - Thêm IMK input method thật (`macos/`): Swift controller → Rust C ABI → ActionApplier.
 - Preedit native, menu Telex/Simple Telex/VNI/VIQR, toggle Việt/Anh, config JSON atomic + backup.
 - Build/install/doctor/self-test; app id normalization cho bundle id.
-- Ad-hoc signing để test local; cần Developer ID/notarize/universal2 khi phát hành.
+- Ad-hoc signing để test local; `package.sh` build universal2 + hook ký/notarize;
+  cần Developer ID/chứng chỉ thật khi phát hành.
+
+### Windows prototype
+
+- Thêm adapter `apps/vfk-windows`: low-level keyboard hook + SendInput Unicode,
+  đọc config JSON, toggle Ctrl+Shift+F; cross-check target Windows MSVC.
 
 ### Hạ tầng
 

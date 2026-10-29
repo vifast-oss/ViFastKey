@@ -164,6 +164,14 @@ không chép code hay dữ liệu GPL.
 | `1.5 met` | 1.5 met (không cap) |
 | `v.v.` | chưa xử lý viết tắt (giới hạn) |
 
+## 8b. Preedit sửa từ đã gõ
+
+| Tình huống | Kỳ vọng |
+|---|---|
+| Prefix `tiêng`, gõ `s` (PREEDIT, có surrounding) | Replace thành `tiếng` |
+| Prefix `tiêng`, click chuột rồi gõ `s` | không adopt (tránh sửa nhầm) |
+| Prefix `việt`, gõ `s` | `viết` (đổi thanh) |
+
 ## 9. Macro
 
 | Cấu hình | Chuỗi | Kết quả |
@@ -174,6 +182,8 @@ không chép code hay dữ liệu GPL.
 | `mp3=...`, không `macro_digits` | `mp3 ` | mp3 |
 | `ko=không`, `macro_undo` | `ko ` + BS | ko |
 | `ko=không`, `macro_undo=false` | `ko ` + BS | không (OS xoá space) |
+| `k biet=không biết` | `toi k biet ` | toi không biết |
+| `ko=không`, `macro_in_off_mode` | `ko ` khi Tắt tiếng Việt | không |
 
 ## 10. Bảng mã
 

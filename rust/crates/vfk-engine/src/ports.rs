@@ -116,6 +116,8 @@ pub struct Config {
     pub macro_digits: bool,
     /// Backspace ngay sau macro: khôi phục phím gõ.
     pub macro_undo: bool,
+    /// Vẫn mở macro khi đang tắt tiếng Việt.
+    pub macro_in_off_mode: bool,
     pub macros: HashMap<String, String>,
     pub auto_capitalize: bool,
     // --- ngữ cảnh
@@ -149,6 +151,7 @@ impl Default for Config {
             macro_enabled: true,
             macro_digits: false,
             macro_undo: true,
+            macro_in_off_mode: false,
             macros: HashMap::new(),
             auto_capitalize: false,
             excluded_apps: Vec::new(),

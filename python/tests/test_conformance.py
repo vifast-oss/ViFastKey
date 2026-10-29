@@ -48,17 +48,23 @@ def test_engine_conformance():
             field.apply(a, ev)
             acts.append(action_dict(a))
             # bất biến: màn hình khớp session với MỌI cấu hình
-            shown = field.preedit if s.mode is OutputMode.PREEDIT else field.committed
+            shown = field.text
             assert shown.endswith(s.display), c
         if acts != c["actions"] or field.text != c["text"]:
             bad.append(c)
     assert not bad, bad[:3]
 
 
-@pytest.mark.parametrize("im", [TELEX, VNI], ids=["telex", "vni"])
+@pytest.mark.parametrize("im", [TELEX, VNI, INPUT_METHODS["simple_telex"], INPUT_METHODS["viqr"]],
+                         ids=["telex", "vni", "simple_telex", "viqr"])
 def test_composer_equals_transform(im):
     rnd = random.Random(5)
-    alpha = "aeiouydwsfrxjzqnghtcAW" if im is TELEX else "aeiouydnghtc0123456789"
+    alpha = {
+        "telex": "aeiouydwsfrxjzqnghtcAW",
+        "vni": "aeiouydnghtc0123456789",
+        "simple_telex": "aeiouydwsfrxjzqnghtcAW",
+        "viqr": "aeiouyd^('+~?.0AEOU",
+    }[im.name]
     for _ in range(600):
         o = TransformOptions(rnd.choice(list(ToneStyle)), rnd.random() < .9)
         comp = Composer(im, o)

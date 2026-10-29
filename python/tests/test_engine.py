@@ -216,6 +216,21 @@ def test_edit_previous_word():
     assert f.text == "tôi học tiếng"
 
 
+@pytest.mark.parametrize("mode", MODES)
+def test_edit_previous_word_in_preedit(mode):
+    s, f, _ = make(mode, text="tiêng")
+    f.type(s, "s")
+    assert f.text == "tiếng"
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_cursor_moved_disables_previous_word_adopt(mode):
+    s, f, _ = make(mode, text="tiêng")
+    s.cursor_moved()
+    f.type(s, "s")
+    assert f.text in ("tiêngs", "tiêng")
+
+
 def test_edit_previous_word_invalid_key_keeps_word():
     s, f, _ = make(OutputMode.REPLACE, text="Việt")
     f.type(s, "f")
@@ -325,6 +340,28 @@ def test_soft_reset_not_after_macro_when_undo_disabled():
     s, f, _ = make(OutputMode.REPLACE, c)
     f.type(s, list("ko ") + [BS] + list("s"))
     assert f.text == "khôngs"
+
+
+def test_phrase_macro_across_spaces():
+    c = Config(macros={"k biet": "không biết", "biet": "biết"}, edit_previous_word=False)
+    s, f, _ = make(OutputMode.REPLACE, c)
+    f.type(s, "toi k biet ")
+    assert f.text == "toi không biết "
+
+
+def test_macro_in_off_mode():
+    c = Config(macros={"ko": "không"}, macro_in_off_mode=True, default_vietnamese=False,
+               edit_previous_word=False)
+    s, f, _ = make(OutputMode.REPLACE, c)
+    f.type(s, "ko ")
+    assert f.text == "không "
+
+
+def test_macro_in_off_mode_disabled_by_default():
+    c = Config(macros={"ko": "không"}, default_vietnamese=False, edit_previous_word=False)
+    s, f, _ = make(OutputMode.REPLACE, c)
+    f.type(s, "ko ")
+    assert f.text == "ko "
 
 
 def test_macro_undo_restores_trigger_and_separator():

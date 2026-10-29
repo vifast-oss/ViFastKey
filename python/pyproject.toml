@@ -31,6 +31,8 @@ dev = ["pytest>=8", "ruff>=0.6"]
 [project.scripts]
 vfk = "apps.vfk_cli:main"
 vfk-charset = "apps.vfk_charset:main"
+vfk-suggest = "apps.vfk_suggest:main"
+vfk-emoji = "apps.vfk_emoji:main"
 
 [project.urls]
 Homepage = "https://github.com/dvchd/ViFastKey"
@@ -39,12 +41,12 @@ Documentation = "https://github.com/dvchd/ViFastKey#readme"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["vi_syllable*", "vfk_core*", "vfk_engine*", "vfk_ffi*", "adapters*", "apps*", "tools*"]
+include = ["vi_syllable*", "vfk_core*", "vfk_engine*", "vfk_ffi*", "vfk_suggest*", "adapters*", "apps*", "tools*"]
 exclude = ["tests*", "conformance*"]
 
 [tool.setuptools.package-data]
 adapters = ["data/*.txt"]
-vfk_core = ["data/*.json"]
+vfk_core = ["data/*.json", "data/*.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -59,4 +61,4 @@ exclude = ["conformance"]
 select = ["E9", "F", "W", "I"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["vi_syllable", "vfk_core", "vfk_engine", "vfk_ffi", "adapters", "apps", "tools"]
+known-first-party = ["vi_syllable", "vfk_core", "vfk_engine", "vfk_ffi", "vfk_suggest", "adapters", "apps", "tools"]

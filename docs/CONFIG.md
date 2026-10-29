@@ -30,6 +30,7 @@ Cấu hình là JSON, dùng chung cho Python, Rust, C ABI và WASM. File mẫu:
 | `macro_enabled` | bool | `true` | Bật macro |
 | `macro_digits` | bool | `false` | Giữ chữ số trong từ (`mp3`, `k8s`) |
 | `macro_undo` | bool | `true` | Backspace ngay sau macro khôi phục trigger + dấu cách |
+| `macro_in_off_mode` | bool | `false` | Vẫn mở macro khi đang tắt tiếng Việt |
 | `macros` | object | `{}` | `{"ko":"không","vn":"Việt Nam"}` |
 | `auto_capitalize` | bool | `false` | Viết hoa đầu câu |
 
@@ -92,7 +93,9 @@ global config → default. Xem `ADAPTER_GUIDE.md`.
 - Macro chạy ở mọi dấu kết thúc từ (space, Enter, Tab, dấu câu).
 - `macro_digits=true` cần `macro_enabled=true`; VNI không bị ảnh hưởng.
 - Macro undo chỉ có hiệu lực ngay sau macro + dấu cách; Backspace khôi phục trigger + dấu cách.
-- Chưa hỗ trợ macro nhiều từ/suffix.
+- Macro nhiều từ dùng lịch sử câu (key có thể chứa dấu cách), REPLACE.
+- `macro_in_off_mode` cho phép macro khi đang Tắt tiếng Việt.
+- Chưa hỗ trợ key có dấu câu bên trong hoặc suffix trong một từ.
 
 ## 4. Bảng mã
 

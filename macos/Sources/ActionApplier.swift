@@ -3,6 +3,9 @@ import Foundation
 protocol EngineTextClient: AnyObject {
     func setMarkedText(_ text: String, selectedRange: NSRange, replacementRange: NSRange)
     func insertText(_ text: String, replacementRange: NSRange)
+    /// Thay thế `deleteBeforeUTF16` code unit ngay trước con trỏ (dùng cho preedit
+    /// sửa từ đã commit, Action Replace trong PREEDIT).
+    func replaceText(_ text: String, deleteBeforeUTF16: Int)
 }
 
 struct ApplyResult {
@@ -29,8 +32,7 @@ struct ActionApplier {
             client.insertText(action.insert, replacementRange: NSRange(location: NSNotFound, length: 0))
             return ApplyResult(handled: true, forwardKey: action.passKey)
         case .replace:
-            // Preedit mode không sinh Replace; xử lý phòng thủ bằng insert tại selection.
-            client.insertText(action.insert, replacementRange: NSRange(location: NSNotFound, length: 0))
+            client.replaceText(action.insert, deleteBeforeUTF16: action.deleteBeforeUTF16)
             return ApplyResult(handled: true, forwardKey: action.passKey)
         }
     }

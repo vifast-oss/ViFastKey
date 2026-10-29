@@ -7,6 +7,7 @@
 
 use std::fs;
 use std::io::{self, Write};
+use std::process::{Command, Stdio};
 
 use vfk_core::{charset, CHARSETS};
 
@@ -18,6 +19,9 @@ struct Args {
     output: Option<String>,
     detect: bool,
     list: bool,
+    clipboard: bool,
+    case: Option<String>,
+    remove_diacritics: bool,
 }
 
 fn usage() -> &'static str {
@@ -42,6 +46,9 @@ fn parse() -> Args {
         output: None,
         detect: false,
         list: false,
+        clipboard: false,
+        case: None,
+        remove_diacritics: false,
     };
     let mut it = std::env::args().skip(1);
     while let Some(flag) = it.next() {
@@ -53,6 +60,9 @@ fn parse() -> Args {
             "--output" | "-o" => a.output = it.next(),
             "--detect" => a.detect = true,
             "--list" => a.list = true,
+            "--clipboard" => a.clipboard = true,
+            "--case" => a.case = it.next(),
+            "--remove-diacritics" => a.remove_diacritics = true,
             "--version" | "-V" => {
                 println!("vfk-charset {}", env!("CARGO_PKG_VERSION"));
                 std::process::exit(0);
@@ -83,7 +93,13 @@ fn main() {
     let from_single = from_key.is_some_and(charset::is_single_byte);
     let to_single = to_key.is_some_and(charset::is_single_byte);
 
-    let raw: Vec<u8> = if let Some(path) = &args.file {
+    let raw: Vec<u8> = if args.clipboard {
+        let out = Command::new("pbpaste").output().unwrap_or_else(|e| {
+            eprintln!("Không đọc được clipboard: {e}");
+            std::process::exit(1);
+        });
+        out.stdout
+    } else if let Some(path) = &args.file {
         fs::read(path).unwrap_or_else(|e| {
             eprintln!("Không đọc được {path}: {e}");
             std::process::exit(1);
@@ -111,6 +127,17 @@ fn main() {
         String::from_utf8_lossy(&raw).into_owned()
     };
 
+    let mut text = text;
+    if args.remove_diacritics {
+        text = charset::remove_diacritics(&text);
+    }
+    if let Some(mode) = &args.case {
+        text = charset::change_case(&text, mode).unwrap_or_else(|| {
+            eprintln!("--case phải là upper/lower/title");
+            std::process::exit(2);
+        });
+    }
+
     let payload: Vec<u8> = match to_key {
         Some(key) if to_single => charset::encode_bytes(&text, key).unwrap_or_else(|| {
             eprintln!("Không mã hoá được bằng {key}");
@@ -120,7 +147,16 @@ fn main() {
         None => text.into_bytes(),
     };
 
-    if let Some(path) = args.output {
+    if args.clipboard {
+        let mut child = Command::new("pbcopy").stdin(Stdio::piped()).spawn().unwrap_or_else(|e| {
+            eprintln!("Không ghi được clipboard: {e}");
+            std::process::exit(1);
+        });
+        if let Some(mut stdin) = child.stdin.take() {
+            let _ = stdin.write_all(&payload);
+        }
+        let _ = child.wait();
+    } else if let Some(path) = args.output {
         if let Err(e) = fs::write(&path, &payload) {
             eprintln!("Không ghi được {path}: {e}");
             std::process::exit(1);

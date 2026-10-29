@@ -1,6 +1,8 @@
 import Cocoa
 import InputMethodKit
 
+private let MAX_RAW = 24
+
 /// IMK input controller thật: nhận NSEvent, gọi engine Rust, áp Action lên text client.
 @objc(ViFastKeyInputController)
 final class ViFastKeyInputController: IMKInputController {
@@ -17,6 +19,10 @@ final class ViFastKeyInputController: IMKInputController {
         engine = VfkEngine(configJSON: ConfigFile.load())
         if let app = currentAppID {
             _ = engine?.focusChanged(appID: app)
+        }
+        NotificationCenter.default.addObserver(forName: .viFastKeyConfigChanged,
+                                               object: nil, queue: .main) { [weak self] _ in
+            self?.reloadConfig(nil)
         }
     }
 
@@ -61,6 +67,11 @@ final class ViFastKeyInputController: IMKInputController {
         let ctrl = flags.contains(.control)
         let alt = flags.contains(.option)
         let meta = flags.contains(.command)
+
+        if let client = clientObject(sender) {
+            let textClient = ImkTextClient(client)
+            engine.setSurroundingText(textClient.beforeCursor(MAX_RAW + 1))
+        }
 
         let keyName = KeyMapper.name(for: event.keyCode)
         let action: VfkEngineAction
@@ -126,10 +137,14 @@ final class ViFastKeyInputController: IMKInputController {
         menu.addItem(methodItem)
 
         menu.addItem(.separator())
-        let prefs = NSMenuItem(title: "Mở cấu hình…", action: #selector(showPreferences(_:)),
+        let prefs = NSMenuItem(title: "Cấu hình…", action: #selector(showPreferences(_:)),
                                keyEquivalent: ",")
         prefs.target = self
         menu.addItem(prefs)
+        let openJSON = NSMenuItem(title: "Mở file JSON", action: #selector(openConfigFile(_:)),
+                                  keyEquivalent: "")
+        openJSON.target = self
+        menu.addItem(openJSON)
         let reload = NSMenuItem(title: "Nạp lại cấu hình", action: #selector(reloadConfig(_:)),
                                 keyEquivalent: "")
         reload.target = self
@@ -177,6 +192,10 @@ final class ViFastKeyInputController: IMKInputController {
     }
 
     override func showPreferences(_ sender: Any?) {
+        PreferencesWindowController.shared.show()
+    }
+
+    @objc private func openConfigFile(_ sender: Any?) {
         ConfigFile.ensureExists()
         NSWorkspace.shared.open(ConfigFile.path)
     }

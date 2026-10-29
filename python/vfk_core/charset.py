@@ -245,6 +245,18 @@ def detect(text: str | bytes) -> list[str]:
     return [key for _, key in scored]
 
 
+def change_case(text: str, mode: str) -> str:
+    """Đổi hoa/thường: upper, lower, title (giữ dấu tiếng Việt)."""
+    mode = mode.lower()
+    if mode == "upper":
+        return text.upper()
+    if mode == "lower":
+        return text.lower()
+    if mode == "title":
+        return text.title()
+    raise ValueError(f"case không hỗ trợ: {mode}")
+
+
 def remove_diacritics(text: str) -> str:
     """Bỏ dấu phụ và thanh, giữ đ/Đ thành d/D (dùng cho tìm kiếm/chuyển bảng mã)."""
     out = []
@@ -255,6 +267,6 @@ def remove_diacritics(text: str) -> str:
     return unicodedata.normalize("NFC", "".join(out))
 
 
-__all__ = ["ALIASES", "DISPLAY_NAMES", "SINGLE_BYTE", "charsets", "convert", "decode",
+__all__ = ["ALIASES", "DISPLAY_NAMES", "SINGLE_BYTE", "change_case", "charsets", "convert", "decode",
            "decode_bytes", "detect", "encode", "encode_bytes", "normalize_charset",
            "remove_diacritics"]

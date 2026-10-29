@@ -39,7 +39,7 @@ fn engine_conformance() {
             acts.push(action_json(&a));
             // bất biến: màn hình khớp session với MỌI cấu hình
             let f = h.field.0.borrow();
-            let shown = if mode == OutputMode::Preedit { &f.preedit } else { &f.committed };
+            let shown = f.text();
             if invariant_broken.is_none() && !shown.ends_with(&h.session.display()) {
                 invariant_broken =
                     Some(format!("sau phím {k:?}: màn hình {shown:?}, session {:?}", h.session.display()));

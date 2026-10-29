@@ -1,0 +1,25 @@
+[package]
+name = "vfk-windows"
+description = "Adapter Windows prototype: low-level keyboard hook + engine ViFastKey."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "vfk-windows"
+path = "src/main.rs"
+
+[dependencies]
+vfk-engine = { workspace = true }
+vi-syllable = { workspace = true }
+serde_json = { workspace = true }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61.2", features = [
+  "Win32_Foundation",
+  "Win32_System_LibraryLoader",
+  "Win32_System_Threading",
+  "Win32_UI_Input_KeyboardAndMouse",
+  "Win32_UI_WindowsAndMessaging",
+] }

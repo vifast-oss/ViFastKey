@@ -94,6 +94,10 @@ class ImeSession:
         self.field = FieldKind.TEXT
         self.last: tuple[list[str], str, bool, str] | None = None   # soft reset: (raw, word, literal, sep)
         self.last_macro: tuple[str, str] | None = None   # (text đã chèn, phím thô cần khôi phục)
+        self.history: str = ""            # text đã commit gần đây, cho macro nhiều từ
+        self.off_raw: list[str] = []      # phím đang gõ khi tắt tiếng Việt (macro off-mode)
+        self.adopted: tuple[str, int] | None = None
+        self.adopt_allowed = True
         self.focus_changed(ports.app.current_app())
 
     # ---------- tiện ích
@@ -184,6 +188,7 @@ class ImeSession:
     def cursor_moved(self) -> Action:
         """Adapter gọi khi người dùng click chuột / con trỏ đổi chỗ (bài học fcitx5-unikey #53, ibus-bamboo #607)."""
         self.cap_next = self._pending_end = False
+        self.adopt_allowed = False
         return self._flush()
 
     def toggle_vietnamese(self) -> Action:
@@ -198,17 +203,22 @@ class ImeSession:
     def _flush(self) -> Action:
         """Chốt từ đang gõ dở trước khi đổi ngữ cảnh (không áp macro/khôi phục)."""
         text = self.display
+        adopted = self.adopted is not None
         self.reset()
         self.last = None
         self.last_macro = None
-        if self.mode is OutputMode.PREEDIT and text:
+        self.history = ""
+        self.off_raw = []
+        if self.mode is OutputMode.PREEDIT and text and not adopted:
             return Commit(text)
         return PassThrough()
 
     # ---------- xử lý phím
     def process_key(self, ev: KeyEvent) -> Action:
-        if not self.enabled or self.field in DISABLED_FIELDS:
+        if self.field in DISABLED_FIELDS:
             return PassThrough()
+        if not self.enabled:
+            return self._off_mode_key(ev)
         if ev.key in MODIFIER_KEYS:                 # Shift/Option nhấn riêng: không được làm mất từ đang gõ
             return PassThrough()
         if ev.key != "Backspace":
@@ -231,6 +241,28 @@ class ImeSession:
             return self._separator(ev.key)
         return self._boundary_passthrough()
 
+    def _off_mode_key(self, ev: KeyEvent) -> Action:
+        """Khi tắt tiếng Việt: vẫn gom phím để mở macro nếu người dùng bật."""
+        if ev.key in MODIFIER_KEYS or ev.ctrl or ev.alt or ev.meta or ev.key in NAV_KEYS:
+            self.off_raw = []
+            self.last_macro = None
+            return PassThrough()
+        macro_on = self.config.macro_enabled and self.config.macro_in_off_mode
+        if ev.is_char and macro_on and ("a" <= ev.key.lower() <= "z" or ev.key.isdigit()):
+            if len(self.off_raw) < MAX_RAW:
+                self.off_raw.append(ev.key)
+            return PassThrough()
+        if macro_on and self.off_raw and (ev.is_char or ev.key == "Enter"):
+            raw = "".join(self.off_raw)
+            macro = self._macro_text(raw, raw)
+            self.off_raw = []
+            if macro is not None and self.mode is OutputMode.REPLACE:
+                sep = ev.key if ev.is_char else ""
+                self.history = (self.history + macro + sep)[-256:]
+                return Replace(len(raw), macro, pass_key=bool(sep) or ev.key == "Enter")
+        self.off_raw = []
+        return PassThrough()
+
     def _separator(self, ch: str) -> Action:
         act = self._word_end(ch)
         if ch in SENTENCE_END:
@@ -249,6 +281,9 @@ class ImeSession:
         old_out, self.word = self.display, new
         new_out = self.display
         if self.mode is OutputMode.PREEDIT:
+            if self.adopted is not None:              # sửa từ đã commit bằng Replace
+                e = diff(old_out, new_out)
+                return Replace(e.delete_before, e.insert)
             return Preedit(new_out, len(new_out))
         e = diff(old_out, new_out)
         if typed is not None and e.delete_before == 0 and e.insert == typed:
@@ -275,7 +310,7 @@ class ImeSession:
         allowed = self.config.edit_previous_word
         if self.profile.edit_previous_word is not None:
             allowed = allowed and self.profile.edit_previous_word
-        if not allowed or self.mode is not OutputMode.REPLACE:
+        if not allowed or not self.adopt_allowed:
             return
         before = self.ports.surrounding.before_cursor(MAX_RAW + 1)
         if not before:
@@ -296,6 +331,8 @@ class ImeSession:
     def _backspace(self) -> Action:
         """Xoá 1 ký tự HIỂN THỊ (tiếng -> tiến), giữ dấu ở phần còn lại như UniKey/OpenKey."""
         if not self.raw:
+            self.history = ""
+            self.off_raw = []
             if self.config.macro_undo and self.mode is OutputMode.REPLACE and self.last_macro:
                 inserted, restored = self.last_macro
                 self.last_macro = None
@@ -334,6 +371,18 @@ class ImeSession:
             return PassThrough()
         final = self._compute(final=True)
         raw = "".join(self.raw)
+        if self.config.macro_enabled and self.mode is OutputMode.REPLACE:
+            phrase = self.history + final
+            hit = self._phrase_macro(phrase, raw)
+            if hit is not None:
+                key, expansion, prefix = hit
+                sep_text = sep or ""
+                inserted = expansion + sep_text
+                self.last_macro = (inserted, key + sep_text) if sep is not None else None
+                self.history = (prefix + inserted)[-256:]
+                self.reset()
+                self.last = None
+                return Replace(len(key), expansion, pass_key=bool(sep))
         macro = self._macro(self.word) or self._macro(raw) if self.config.macro_enabled else None
         if macro:
             final = macro
@@ -352,8 +401,15 @@ class ImeSession:
             self.last = (list(self.raw), self.word, self.literal, sep)
         else:
             self.last = None
+        if sep is not None:
+            self.history = (self.history + final_out + sep)[-256:]
+        adopted = self.adopted is not None
         self.reset()
         if self.mode is OutputMode.PREEDIT:
+            if adopted:                               # từ cũ đã commit: thay bằng Replace
+                out = final_out + (sep or "")
+                e = diff(old_out, out)
+                return Replace(e.delete_before, e.insert, pass_key=pass_key and sep is None)
             if sep is None:
                 return Commit(final_out, pass_key=pass_key)
             return Commit(final_out + sep)
@@ -364,10 +420,47 @@ class ImeSession:
 
     def _boundary_passthrough(self) -> Action:
         text = self.display
+        adopted = self.adopted is not None
         self.reset()
-        if self.mode is OutputMode.PREEDIT and text:
+        if self.mode is OutputMode.PREEDIT and text and not adopted:
             return Commit(text, pass_key=True)
         return PassThrough()
+
+    def _macro_text(self, matched: str, key: str) -> str | None:
+        """Tra macro theo key; giữ kiểu hoa/thường của đoạn khớp."""
+        m = self.config.macros.get(key.lower())
+        if not m:
+            return None
+        if matched.isupper() and len(matched) > 1:
+            return m.upper()
+        if matched[:1].isupper():
+            return m[:1].upper() + m[1:]
+        return m
+
+    def _phrase_macro(self, phrase: str, raw: str) -> tuple[str, str, str] | None:
+        """Tìm macro dài nhất khớp đuôi câu, có kiểm tra biên từ."""
+        low = phrase.lower()
+        candidates = []
+        for key in self.config.macros:
+            k = key.lower()
+            if not k or not low.endswith(k):
+                continue
+            prefix = phrase[: len(phrase) - len(k)]
+            if prefix and (prefix[-1].isalnum() or prefix[-1] == "_"):
+                continue
+            candidates.append((len(k), key, prefix))
+        if not candidates:
+            return None
+        _, key, prefix = max(candidates, key=lambda item: item[0])
+        matched = phrase[len(phrase) - len(key):]
+        expansion = self._macro_text(matched, key)
+        if expansion is None:
+            return None
+        # Chỉ dùng đường nhiều từ khi key vượt quá từ hiện tại; macro đúng từ
+        # hiện tại đã do _word_end xử lý như cũ.
+        if len(key) <= len(self.word):
+            return None
+        return key, expansion, prefix
 
     def _macro(self, word: str) -> str | None:
         m = self.config.macros.get(word.lower())

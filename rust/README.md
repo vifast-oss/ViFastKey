@@ -20,12 +20,15 @@ cargo run -p vfk-core --release --example bench
 rust/
 ├── crates/
 │   ├── vi-syllable/   tách âm tiết, chính tả 3 trạng thái, đặt thanh (dùng chung ViFastTts)
-│   ├── vfk-core/      rules, transform, Composer, to_raw/rebuild, diff, charset
+│   ├── vfk-core/      rules, transform, Composer, to_raw/rebuild, diff, charset, emoji
+│   ├── vfk-suggest/   lexicon gợi ý local
 │   ├── vfk-engine/    ports (Config, AppProfile, 4 trait), session (ImeSession), testing (Harness)
 │   ├── vfk-ffi/       C ABI: lib "vifastkey" (cdylib + staticlib), include/vifastkey.h
 │   └── vfk-wasm/      wasm-bindgen: Session + Action JSON cho web demo
 ├── apps/vfk-cli/      REPL + demo (bin "vfk")
 ├── apps/vfk-charset/  chuyển bảng mã (bin "vfk-charset")
+├── apps/vfk-suggest/  gợi ý từ (bin "vfk-suggest")
+├── apps/vfk-windows/  adapter Windows prototype (WH_KEYBOARD_LL)
 ├── conformance/       core.jsonl (13.337 ca), engine.jsonl (3.000 kịch bản) sinh từ Python
 ├── testdata/          golden/*.tsv, corpus_vi.txt (dùng chung với Python)
 └── tools/sync_conformance.sh
@@ -46,7 +49,7 @@ rust/
 | `tests/test_*.py` | `crates/*/tests/*.rs` |
 
 Phụ thuộc: `unicode-normalization` 0.1.26, `serde` 1.0.229, `serde_json` 1.0.154,
-`wasm-bindgen` 0.2.129. Không dùng `rand` (test dùng LCG tự viết), không dùng `phf`
+`wasm-bindgen` 0.2.129, `arrayvec` 0.7.8; adapter Windows dùng `windows-sys` 0.61.2. Không dùng `rand` (test dùng LCG tự viết), không dùng `phf`
 (bảng tra sinh một lần bằng `OnceLock`). Toolchain: stable 1.99.1 (xem `rust-toolchain.toml`);
 `cargo update` không còn dependency nào lệch bản mới nhất tại thời điểm cập nhật.
 
@@ -59,6 +62,8 @@ Phụ thuộc: `unicode-normalization` 0.1.26, `serde` 1.0.229, `serde_json` 1.0
 - Auto-cap `…`, ngoặc kép, newline; Esc không forward.
 - `AppProfile` ghi đè kiểu gõ/kiểu dấu/chính tả.
 - Charset 16 bảng mã; FFI C (`vfk_charset_*`), WASM, CLI `vfk-charset`.
+- PREEDIT sửa từ đã commit bằng `Replace` + surrounding text.
+- Gợi ý từ/emoji local; CLI `vfk-suggest`; ArrayVec cho `WordState`.
 - FFI C: JSON cấu hình một phần được trộn lên cấu hình hiện tại (không reset trường thiếu).
 - WASM: `Config::apply_json_patch`, preedit/replace, dictionary, surrounding text, charset.
 

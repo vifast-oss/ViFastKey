@@ -133,7 +133,12 @@ fn output_case_follows_input() {
 #[test]
 fn composer_equals_transform() {
     let mut rng = Lcg(5);
-    for (im, alpha) in [(&TELEX, "aeiouydwsfrxjzqnghtcAW"), (&VNI, "aeiouydnghtc0123456789")] {
+    for (im, alpha) in [
+        (&TELEX, "aeiouydwsfrxjzqnghtcAW"),
+        (&VNI, "aeiouydnghtc0123456789"),
+        (&SIMPLE_TELEX, "aeiouydwsfrxjzqnghtcAW"),
+        (&VIQR, "aeiouyd^('+~?.0AEOU"),
+    ] {
         let alpha: Vec<char> = alpha.chars().collect();
         for _ in 0..1500 {
             let o = TransformOptions {

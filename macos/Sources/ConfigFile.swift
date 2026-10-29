@@ -16,6 +16,21 @@ struct ConfigFile {
         try? String(contentsOf: path, encoding: .utf8)
     }
 
+    static func loadDictionary() -> [String: Any] {
+        guard let data = try? Data(contentsOf: path),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return [:]
+        }
+        return obj
+    }
+
+    static func saveDictionary(_ dict: [String: Any]) {
+        guard let data = try? JSONSerialization.data(withJSONObject: dict,
+                                                     options: [.prettyPrinted, .sortedKeys]),
+              let text = String(data: data, encoding: .utf8) else { return }
+        save(text)
+    }
+
     static func ensureExists() {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         if !FileManager.default.fileExists(atPath: path.path) {

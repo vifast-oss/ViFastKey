@@ -10,6 +10,7 @@
   "macro_enabled": true,
   "macro_digits": false,
   "macro_undo": true,
+  "macro_in_off_mode": false,
   "macros": {
     "ko": "không",
     "vn": "Việt Nam",

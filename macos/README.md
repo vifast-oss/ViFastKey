@@ -39,6 +39,21 @@ Build gồm:
 3. Copy `Info.plist`, icon TIFF/PNG vào bundle.
 4. Chạy self-test.
 
+## Đóng gói universal2 / phát hành
+
+```bash
+./macos/package.sh
+# -> macos/build/ViFastKey-macos-universal.zip
+```
+
+Build cả arm64 + x86_64, lipo app, ký ad-hoc. Ký/notarize bản phát hành:
+
+```bash
+SIGN_ID="Developer ID Application: ..." \
+NOTARY_PROFILE="vifastkey-notary" \
+./macos/package.sh
+```
+
 ## Cài
 
 ```bash

@@ -196,9 +196,15 @@ pub struct ImeSession {
     last: Option<LastWord>,
     /// (text đã chèn, phím thô cần khôi phục) ngay sau macro.
     last_macro: Option<(String, String)>,
+    /// Text đã commit gần đây, cho macro nhiều từ.
+    history: String,
+    /// Phím đang gõ khi tắt tiếng Việt (macro off-mode).
+    off_raw: Vec<char>,
     composer: Option<Composer>,
     /// (từ cũ đã nạp lại, số phím thô của nó).
     adopted: Option<(String, usize)>,
+    /// Cho phép nạp lại từ trước con trỏ (tắt ngay sau click/focus).
+    adopt_allowed: bool,
 }
 
 impl ImeSession {
@@ -218,8 +224,11 @@ impl ImeSession {
             field: FieldKind::Text,
             last: None,
             last_macro: None,
+            history: String::new(),
+            off_raw: Vec::new(),
             composer: None,
             adopted: None,
+            adopt_allowed: true,
         };
         let app = s.ports.app.current_app();
         s.focus_changed(app.as_deref());
@@ -396,6 +405,7 @@ impl ImeSession {
     pub fn cursor_moved(&mut self) -> Action {
         self.cap_next = false;
         self.pending_end = false;
+        self.adopt_allowed = false;
         self.flush()
     }
 
@@ -413,10 +423,13 @@ impl ImeSession {
     /// Chốt từ đang gõ dở trước khi đổi ngữ cảnh (không áp macro/khôi phục).
     fn flush(&mut self) -> Action {
         let text = self.display();
+        let adopted = self.adopted.is_some();
         self.reset();
         self.last = None;
         self.last_macro = None;
-        if self.mode == OutputMode::Preedit && !text.is_empty() {
+        self.history.clear();
+        self.off_raw.clear();
+        if self.mode == OutputMode::Preedit && !text.is_empty() && !adopted {
             return Action::Commit { text, pass_key: false };
         }
         Action::PassThrough
@@ -425,8 +438,11 @@ impl ImeSession {
     // ---------- xử lý phím
 
     pub fn process_key(&mut self, ev: &KeyEvent) -> Action {
-        if !self.enabled || self.field.disabled() {
+        if self.field.disabled() {
             return Action::PassThrough;
+        }
+        if !self.enabled {
+            return self.off_mode_key(ev);
         }
         if ev.key == Key::Modifier {
             // Shift/Option nhấn riêng: không được làm mất từ đang gõ
@@ -456,6 +472,47 @@ impl ImeSession {
         }
     }
 
+    fn off_mode_key(&mut self, ev: &KeyEvent) -> Action {
+        if ev.key == Key::Modifier || ev.ctrl || ev.alt || ev.meta || ev.key.is_nav() {
+            self.off_raw.clear();
+            self.last_macro = None;
+            return Action::PassThrough;
+        }
+        let macro_on = self.config.macro_enabled && self.config.macro_in_off_mode;
+        if macro_on {
+            if let Key::Char(ch) = ev.key {
+                if ch.is_alphabetic() || ch.is_ascii_digit() {
+                    if self.off_raw.len() < MAX_RAW {
+                        self.off_raw.push(ch);
+                    }
+                    return Action::PassThrough;
+                }
+            }
+        }
+        if macro_on && !self.off_raw.is_empty() {
+            let raw: String = self.off_raw.iter().collect();
+            let mac = self.macro_text(&raw, &raw);
+            self.off_raw.clear();
+            if let Some(m) = mac {
+                let sep = if let Key::Char(ch) = ev.key { Some(ch) } else { None };
+                if self.mode == OutputMode::Replace {
+                    self.history.push_str(&m);
+                    if let Some(s) = sep {
+                        self.history.push(s);
+                    }
+                    let key_len = raw.chars().count();
+                    return Action::Replace {
+                        delete_before: key_len,
+                        insert: m,
+                        pass_key: sep.is_some() || ev.key == Key::Enter,
+                    };
+                }
+            }
+        }
+        self.off_raw.clear();
+        Action::PassThrough
+    }
+
     fn separator(&mut self, ch: char) -> Action {
         let act = self.word_end(Some(ch));
         if is_sentence_end(ch) {
@@ -479,6 +536,11 @@ impl ImeSession {
         self.word = new;
         let new_out = self.display();
         if self.mode == OutputMode::Preedit {
+            if self.adopted.is_some() {
+                // Sửa từ đã commit: Replace thay vì preedit.
+                let e = diff(&old_out, &new_out);
+                return Action::Replace { delete_before: e.delete_before, insert: e.insert, pass_key: false };
+            }
             let cursor = new_out.chars().count();
             return Action::Preedit { text: new_out, cursor };
         }
@@ -523,7 +585,7 @@ impl ImeSession {
         if let Some(p) = self.profile.edit_previous_word {
             allowed = allowed && p;
         }
-        if !allowed || self.mode != OutputMode::Replace {
+        if !allowed || !self.adopt_allowed {
             return;
         }
         let before = match self.ports.surrounding.before_cursor(MAX_RAW + 1) {
@@ -557,6 +619,8 @@ impl ImeSession {
     /// Xoá 1 ký tự HIỂN THỊ (tiếng -> tiến), giữ dấu ở phần còn lại như UniKey/OpenKey.
     fn backspace(&mut self) -> Action {
         if self.raw.is_empty() {
+            self.history.clear();
+            self.off_raw.clear();
             if self.config.macro_undo && self.mode == OutputMode::Replace {
                 if let Some((inserted, restored)) = self.last_macro.take() {
                     let n = inserted.chars().count();
@@ -621,6 +685,21 @@ impl ImeSession {
         }
         let mut fin = self.compute(true);
         let raw_s: String = self.raw.iter().collect();
+        if self.config.macro_enabled && self.mode == OutputMode::Replace {
+            let phrase = format!("{}{}", self.history, fin);
+            if let Some((key, expansion, prefix)) = self.phrase_macro(&phrase) {
+                let sep_s = sep.map(|c| c.to_string()).unwrap_or_default();
+                let inserted = format!("{expansion}{sep_s}");
+                self.last_macro = sep.map(|_| (inserted.clone(), format!("{key}{sep_s}")));
+                self.history = format!("{prefix}{inserted}");
+                self.reset();
+                return Action::Replace {
+                    delete_before: key.chars().count(),
+                    insert: expansion,
+                    pass_key: sep.is_some(),
+                };
+            }
+        }
         let mac = if self.config.macro_enabled {
             self.macro_of(&self.word).or_else(|| self.macro_of(&raw_s))
         } else {
@@ -661,8 +740,30 @@ impl ImeSession {
             }),
             _ => None,
         };
+        if let Some(s) = sep {
+            self.history.push_str(&final_out);
+            self.history.push(s);
+            if self.history.chars().count() > 256 {
+                let keep: String =
+                    self.history.chars().rev().take(256).collect::<Vec<_>>().into_iter().rev().collect();
+                self.history = keep;
+            }
+        }
+        let adopted = self.adopted.is_some();
         self.reset();
         if self.mode == OutputMode::Preedit {
+            if adopted {
+                let mut out = final_out;
+                if let Some(s) = sep {
+                    out.push(s);
+                }
+                let e = diff(&old_out, &out);
+                return Action::Replace {
+                    delete_before: e.delete_before,
+                    insert: e.insert,
+                    pass_key: pass_key && sep.is_none(),
+                };
+            }
             return match sep {
                 None => Action::Commit { text: final_out, pass_key },
                 Some(s) => {
@@ -681,11 +782,57 @@ impl ImeSession {
 
     fn boundary_passthrough(&mut self) -> Action {
         let text = self.display();
+        let adopted = self.adopted.is_some();
         self.reset();
-        if self.mode == OutputMode::Preedit && !text.is_empty() {
+        if self.mode == OutputMode::Preedit && !text.is_empty() && !adopted {
             return Action::Commit { text, pass_key: true };
         }
         Action::PassThrough
+    }
+
+    fn macro_text(&self, matched: &str, key: &str) -> Option<String> {
+        let m = self.config.macros.get(&key.to_lowercase())?;
+        if m.is_empty() {
+            return None;
+        }
+        if py_isupper(matched) && matched.chars().count() > 1 {
+            return Some(m.to_uppercase());
+        }
+        if matched.chars().next().is_some_and(|c| c.is_uppercase()) {
+            let mut it = m.chars();
+            let first: String = it.next().map(|c| c.to_uppercase().collect()).unwrap_or_default();
+            return Some(first + it.as_str());
+        }
+        Some(m.clone())
+    }
+
+    fn phrase_macro(&self, phrase: &str) -> Option<(String, String, String)> {
+        let low = phrase.to_lowercase();
+        let current_len = self.word.chars().count();
+        let mut best: Option<(usize, String, String)> = None;
+        for key in self.config.macros.keys() {
+            let k = key.to_lowercase();
+            if k.is_empty() || !low.ends_with(&k) {
+                continue;
+            }
+            let prefix = &phrase[..phrase.len() - k.len()];
+            if let Some(last) = prefix.chars().last() {
+                if last.is_alphanumeric() || last == '_' {
+                    continue;
+                }
+            }
+            let len = k.chars().count();
+            if len <= current_len {
+                continue;
+            }
+            if best.as_ref().is_none_or(|(best_len, _, _)| len > *best_len) {
+                best = Some((len, key.clone(), prefix.to_string()));
+            }
+        }
+        let (_, key, prefix) = best?;
+        let matched = &phrase[phrase.len() - key.len()..];
+        let expansion = self.macro_text(matched, &key)?;
+        Some((key, expansion, prefix))
     }
 
     /// Macro giữ kiểu hoa/thường: ko -> không, Ko -> Không, KO -> KHÔNG.

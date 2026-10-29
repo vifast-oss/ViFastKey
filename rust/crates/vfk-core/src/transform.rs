@@ -3,12 +3,26 @@
 //! Thuần, không I/O, không trạng thái toàn cục. Mọi chỉ số tính theo `char`.
 //! Mỗi `Letter` ứng đúng 1 ký tự hiển thị, nên chỉ số trong `letters` == chỉ số char của chuỗi hiển thị.
 
+use arrayvec::ArrayVec;
 use vi_syllable::{self as vs, lower, upper, Mark, Status, ToneStyle};
 
 use crate::rules::{quick_telex, InputMethodSpec, MarkRule};
 
 /// Vượt quá thì coi là chuỗi thô (URL, mã, token...), không biến đổi.
 pub const MAX_RAW: usize = 24;
+
+/// Số Letter tối đa (Quick Telex có thể sinh 2 ký tự từ 1 phím).
+pub const MAX_LETTERS: usize = 32;
+
+trait PushIgnore<T> {
+    fn push_ignore(&mut self, item: T);
+}
+
+impl<T, const N: usize> PushIgnore<T> for ArrayVec<T, N> {
+    fn push_ignore(&mut self, item: T) {
+        self.push(item);
+    }
+}
 
 /// Âm đầu cho phép "uơ" mở; các âm đầu khác phải thành "ươ".
 const OPEN_UO_ONSETS: &[&str] = &["", "c", "h", "k", "kh", "qu", "th"];
@@ -66,7 +80,7 @@ impl Letter {
 
 #[derive(Debug, Clone, Default)]
 pub struct WordState {
-    pub letters: Vec<Letter>,
+    pub letters: ArrayVec<Letter, MAX_LETTERS>,
     pub tone: u8,
     /// Người dùng đã hoàn tác ít nhất 1 lần -> không tự khôi phục.
     pub undone: bool,
@@ -240,7 +254,7 @@ fn is_applied(l: &[Letter], c: &[(usize, Mark)]) -> bool {
 fn step(st: &mut WordState, k: char, im: &InputMethodSpec, opt: &TransformOptions) {
     let lk = lower(k);
     if st.latched || st.locked.contains(&lk) {
-        st.letters.push(Letter::literal(k));
+        st.letters.push_ignore(Letter::literal(k));
         return;
     }
     let (start, end) = cluster_span(&st.letters);
@@ -273,7 +287,7 @@ fn step(st: &mut WordState, k: char, im: &InputMethodSpec, opt: &TransformOption
                 st.undone = true;
                 st.undo_key = Some(lk);
                 st.latched = true;
-                st.letters.push(Letter::literal(k));
+                st.letters.push_ignore(Letter::literal(k));
                 return;
             }
             let lowered = toneless_lower(&st.letters);
@@ -282,7 +296,7 @@ fn step(st: &mut WordState, k: char, im: &InputMethodSpec, opt: &TransformOption
                     || vs::check_with(&lowered, t, opt.allow_coda_k) == Status::Invalid)
             {
                 // batf -> batf (t chỉ đi với sắc/nặng)
-                st.letters.push(Letter::literal(k));
+                st.letters.push_ignore(Letter::literal(k));
                 return;
             }
             st.tone = t;
@@ -369,14 +383,14 @@ fn step(st: &mut WordState, k: char, im: &InputMethodSpec, opt: &TransformOption
                     st.letters[i0] = Letter::new(lk, up);
                     if i0 != st.letters.len() - 1 {
                         // 'windows' giữ cả 2 chữ w
-                        st.letters.push(Letter::literal(k));
+                        st.letters.push_ignore(Letter::literal(k));
                     }
                     return;
                 }
                 for &(i, _) in c {
                     st.letters[i].mark = None;
                 }
-                st.letters.push(Letter::literal(k));
+                st.letters.push_ignore(Letter::literal(k));
                 return;
             }
 
@@ -394,7 +408,7 @@ fn step(st: &mut WordState, k: char, im: &InputMethodSpec, opt: &TransformOption
     // 3) Phím chèn chữ có dấu
     if opt.bracket_keys {
         if let Some((base, mark)) = im.insert_for(k) {
-            st.letters.push(Letter {
+            st.letters.push_ignore(Letter {
                 base,
                 upper: false,
                 mark: Some(mark),
@@ -412,14 +426,14 @@ fn step(st: &mut WordState, k: char, im: &InputMethodSpec, opt: &TransformOption
             let mut cand = st.letters.clone();
             cand.push(letter);
             if !opt.spell_check || status(&cand, st.tone, opt) != Status::Invalid {
-                st.letters.push(letter);
+                st.letters.push_ignore(letter);
                 st.transformed = true;
                 return;
             }
         }
     }
 
-    st.letters.push(Letter::literal(k));
+    st.letters.push_ignore(Letter::literal(k));
 }
 
 // ---------------------------------------------------------------- API

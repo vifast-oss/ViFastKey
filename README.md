@@ -6,9 +6,10 @@
 
 Bộ gõ tiếng Việt gọn, thuần logic: chuỗi phím thô → chữ tiếng Việt (Telex, Simple Telex, VNI, VIQR), kèm tầng engine cho IME (preedit/replace, macro, khôi phục tiếng Anh, hồ sơ ứng dụng).
 
-Tính năng nổi bật: `allow_coda_k` (Đắk Lắk), `macro_digits` (mp3, k8s), macro undo một phím,
+Tính năng nổi bật: `allow_coda_k` (Đắk Lắk), `macro_digits` (mp3, k8s), macro nhiều từ, macro undo một phím,
 `đ` viết tắt (`vcdd`), 16 bảng mã (TCVN3, VNI-Windows, VISCII, VIQR, CP1258, NCR... cùng Unicode),
-app profile ghi đè kiểu gõ/kiểu dấu, FFI C/Python/WASM, playground Preedit + macro + chuyển bảng mã.
+app profile ghi đè kiểu gõ/kiểu dấu, preedit sửa từ đã gõ, macro nhiều từ, gợi ý từ/emoji local,
+FFI C/Python/WASM, macOS IMK universal2, Windows hook prototype, playground Preedit + macro + bảng mã.
 
 Đợt phát triển này dựa trên phân tích 20 dự án IME tiếng Việt công khai; xem
 [`docs/IME_FEATURE_RESEARCH.md`](docs/IME_FEATURE_RESEARCH.md).
@@ -30,8 +31,9 @@ ViFastKey/
 │   ├── vfk_engine/             # ImeSession, ports, Config
 │   ├── vfk_ffi/                # API phẳng kiểu FFI
 │   ├── adapters/               # port mẫu, từ điển, ô nhập giả lập
-│   ├── apps/                   # CLI demo + REPL + vfk-charset
-│   ├── tests/                  # 602 test, golden, corpus
+│   ├── apps/                   # CLI demo + REPL + vfk-charset + vfk-suggest + vfk-emoji
+│   ├── vfk_suggest/            # gợi ý từ local
+│   ├── tests/                  # 618 test, golden, corpus
 │   ├── tools/                  # export conformance, bench
 │   ├── conformance/            # core.jsonl + engine.jsonl (oracle cho Rust)
 │   ├── vfk_core/data/          # bảng mã legacy (bamboo-core MIT)
@@ -47,6 +49,9 @@ ViFastKey/
 │   │   └── vfk-wasm/           # wasm-bindgen cho web demo
 │   ├── apps/vfk-cli/           # CLI demo + REPL
 │   ├── apps/vfk-charset/       # chuyển bảng mã
+│   ├── apps/vfk-suggest/       # gợi ý từ
+│   ├── apps/vfk-windows/       # adapter Windows prototype
+│   ├── crates/vfk-suggest/     # lexicon gợi ý
 │   ├── conformance/            # bản sao dữ liệu oracle
 │   ├── testdata/               # golden + corpus
 │   ├── tools/sync_conformance.sh
@@ -73,7 +78,7 @@ Yêu cầu Python 3.10+. Có thể cài như package (kèm `pytest`/`ruff`):
 ```bash
 cd python
 pip install -e ".[dev]"
-python -m pytest -q               # 602 test
+python -m pytest -q               # 618 test
 python -m tools.export_conformance
 python -m tools.bench
 python -m apps.vfk_cli --demo
@@ -82,11 +87,14 @@ python -m apps.vfk_cli --text "Tieengs Vieejt"
 python -m apps.vfk_cli --method vni --tone new --text "Vie65t Nam"
 python -m apps.vfk_charset --to tcvn3 --text "Tiếng Việt"
 python -m apps.vfk_charset --from tcvn3 --file vi.tcvn --to unicode
+python -m apps.vfk_charset --clipboard --to tcvn3
+python -m apps.vfk_suggest nguoi
+python -m apps.vfk_emoji "cười"
 ```
 
 ## Build bản Rust
 
-Yêu cầu Rust stable (đã kiểm tra 1.99.1); `rust/rust-toolchain.toml` ghim stable + wasm target.
+Yêu cầu Rust stable (MSRV 1.85, đã kiểm tra 1.99.1); `rust/rust-toolchain.toml` ghim stable + wasm target.
 
 ```bash
 cd rust
@@ -96,6 +104,7 @@ cargo run -p vfk-cli -- --demo
 cargo run -p vfk-cli
 cargo run -p vfk-cli -- --method vni --tone new --text "Vie65t Nam"
 cargo run -p vfk-charset -- --to tcvn3 --text "Tiếng Việt"
+cargo run -p vfk-suggest-cli -- nguoi
 ```
 
 ## macOS input method
@@ -106,6 +115,7 @@ Adapter IMK thật, gọi engine Rust qua C ABI:
 ./macos/build.sh          # build app + self-test
 ./macos/install.sh        # cài vào ~/Library/Input Methods
 ./macos/doctor.sh         # chẩn đoán permission/input source
+./macos/package.sh        # đóng gói universal2 (arm64 + x86_64)
 ```
 
 Chi tiết cài, menu, config và giới hạn: `macos/README.md`. Adapter dùng preedit, app profile,
@@ -154,7 +164,9 @@ cargo test --workspace
 - `docs/ADAPTER_GUIDE.md` — hợp đồng viết adapter macOS/Windows/Linux.
 - `docs/CONFIG.md` — toàn bộ trường config và app profile.
 - `docs/IME_TEST_VECTORS.md` — bộ ví dụ hành vi dùng để port/regression.
+- `docs/VIFASTTTS_LESSONS.md` — bài học ViFastTts cho macOS/engineering.
 - `macos/README.md` — build/cài/test adapter macOS IMK.
+- `docs/PLATFORMS.md` — trạng thái adapter từng nền tảng và hợp đồng tối thiểu.
 - `THIRD_PARTY_NOTICES.md` — ghi công bảng mã bamboo-core MIT.
 - `CONTRIBUTING.md` — quy trình sửa hành vi, chạy test, đồng bộ conformance.
 - `CHANGELOG.md` — thay đổi theo phiên bản.

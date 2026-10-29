@@ -66,6 +66,15 @@ final class VfkEngine {
         return convert(raw)
     }
 
+    func setSurroundingText(_ text: String?) {
+        guard let h = handle else { return }
+        if let text {
+            text.withCString { vfk_set_surrounding_text(h, $0) }
+        } else {
+            vfk_set_surrounding_text(h, nil)
+        }
+    }
+
     func focusChanged(appID: String?) -> VfkEngineAction {
         guard let h = handle else { return .pass }
         let raw: VfkAction

@@ -427,6 +427,47 @@ fn viqr_engine_word_boundary() {
 }
 
 #[test]
+fn preedit_edits_previous_word() {
+    for mode in MODES {
+        let mut h = Harness::new(mode, cfg(), "notepad", "tiêng");
+        h.type_str("s");
+        assert_eq!(h.text(), "tiếng", "{mode:?}");
+        h.type_str(" ");
+        assert_eq!(h.text(), "tiếng ", "{mode:?}");
+    }
+}
+
+#[test]
+fn phrase_macro_across_spaces() {
+    let mut h = make_with(
+        OutputMode::Replace,
+        Config {
+            macros: HashMap::from([("k biet".into(), "không biết".into()), ("biet".into(), "biết".into())]),
+            edit_previous_word: false,
+            ..cfg()
+        },
+    );
+    h.type_str("toi k biet ");
+    assert_eq!(h.text(), "toi không biết ");
+}
+
+#[test]
+fn macro_in_off_mode() {
+    let mut h = make_with(
+        OutputMode::Replace,
+        Config {
+            macros: HashMap::from([("ko".into(), "không".into())]),
+            macro_in_off_mode: true,
+            default_vietnamese: false,
+            edit_previous_word: false,
+            ..cfg()
+        },
+    );
+    h.type_str("ko ");
+    assert_eq!(h.text(), "không ");
+}
+
+#[test]
 fn app_id_normalization_and_aliases() {
     assert_eq!(normalize_app_id(Some("/usr/bin/kitty")), "kitty");
     assert_eq!(normalize_app_id(Some("C:\\Program Files\\Google\\Chrome.exe")), "chrome");

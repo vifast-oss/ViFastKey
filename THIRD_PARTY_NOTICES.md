@@ -36,6 +36,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## English suggestion lexicon (public domain)
+
+`python/vfk_core/data/english_suggest.txt` and `rust/crates/vfk-suggest/data/english_suggest.txt`
+are a filtered subset of [dwyl/english-words](https://github.com/dwyl/english-words)
+(`words_alpha.txt`), released under the Unlicense/public domain. The Vietnamese syllable list
+is generated from ViFastKey's own grammar, not copied from a dictionary.
+
 ## Fonts
 
 - **Be Vietnam Pro** — SIL Open Font License 1.1; see

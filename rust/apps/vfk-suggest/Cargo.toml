@@ -1,0 +1,14 @@
+[package]
+name = "vfk-suggest-cli"
+description = "Gợi ý từ tiếng Việt/tiếng Anh theo tiền tố."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "vfk-suggest"
+path = "src/main.rs"
+
+[dependencies]
+vfk-suggest = { workspace = true }
