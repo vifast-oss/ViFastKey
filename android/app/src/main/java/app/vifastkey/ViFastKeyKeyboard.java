@@ -113,7 +113,10 @@ final class ViFastKeyKeyboard extends LinearLayout {
             item.setGravity(Gravity.CENTER);
             item.setPadding(dp(12), dp(4), dp(12), dp(4));
             item.setTextColor(dark ? 0xFFE8EAED : 0xFF202124);
-            item.setOnClickListener(v -> listener.onDirect(value));
+            item.setOnClickListener(v -> {
+                item.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+                listener.onDirect(value);
+            });
             suggestions.addView(item);
         }
     }
@@ -301,11 +304,17 @@ final class ViFastKeyKeyboard extends LinearLayout {
         bottomVietnameseButton.setOnClickListener(v -> listener.onVietnameseToggle());
         row.addView(bottomVietnameseButton);
         Button space = actionKey("␣", 3.2f);
-        space.setOnClickListener(v -> listener.onKey(" "));
+        space.setOnClickListener(v -> {
+            space.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+            listener.onKey(" ");
+        });
         row.addView(space);
         row.addView(actionKey(".", 0.8f));
         Button enter = actionKey("⏎", 1.2f);
-        enter.setOnClickListener(v -> listener.onKey("Enter"));
+        enter.setOnClickListener(v -> {
+            enter.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
+            listener.onKey("Enter");
+        });
         row.addView(enter);
         addView(row, new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(52)));
     }
@@ -315,6 +324,7 @@ final class ViFastKeyKeyboard extends LinearLayout {
         letterButtons.add(button);
         button.setTag(lower);
         button.setOnClickListener(v -> {
+            button.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP);
             String key = (shift || caps) ? lower.toUpperCase() : lower;
             if (!caps) shift = false;
             updateLetters();
