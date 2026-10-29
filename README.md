@@ -9,7 +9,8 @@ Bộ gõ tiếng Việt gọn, thuần logic: chuỗi phím thô → chữ tiế
 Tính năng nổi bật: `allow_coda_k` (Đắk Lắk), `macro_digits` (mp3, k8s), macro nhiều từ, macro undo một phím,
 `đ` viết tắt (`vcdd`), 16 bảng mã (TCVN3, VNI-Windows, VISCII, VIQR, CP1258, NCR... cùng Unicode),
 app profile ghi đè kiểu gõ/kiểu dấu, preedit sửa từ đã gõ, macro nhiều từ, gợi ý từ/emoji local,
-FFI C/Python/WASM, macOS IMK universal2, Windows hook prototype, playground Preedit + macro + bảng mã.
+FFI C/Python/WASM, macOS IMK universal2, Windows hook prototype, Android IME, iOS keyboard extension,
+playground Preedit + macro + bảng mã.
 
 Đợt phát triển này dựa trên phân tích 20 dự án IME tiếng Việt công khai; xem
 [`docs/IME_FEATURE_RESEARCH.md`](docs/IME_FEATURE_RESEARCH.md).

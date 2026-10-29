@@ -17,8 +17,8 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
     (script đã có, cần chứng chỉ) và event-tap fallback.
   - Windows: ✅ prototype low-level hook + Replace (`rust/apps/vfk-windows`); còn TSF/tray/signing.
   - Linux: ✅ IBus engine Python (`linux/ibus/`), ✅ Fcitx5 C++ addon (`linux/fcitx5/`).
-  - Android: ✅ IME Java + JNI, build APK + test emulator; còn polish/Play Store.
-  - iOS: ✅ host + keyboard extension Swift, build simulator + engine test; còn bật extension/device signing.
+  - Android: ✅ IME Java + JNI, build APK + test emulator (`tieengs` → `tiếng`); còn polish/Play Store.
+  - iOS: ✅ host + keyboard extension Swift, build simulator + engine test; còn test bật extension/device signing.
 - **Tích hợp bảng mã vào đầu ra engine** (hiện là module/CLI/FFI riêng): cần định nghĩa
   đơn vị xoá byte/UTF-16 cho từng adapter và test trên app thật.
 - **Sửa từ đã gõ trong PREEDIT**: ✅ engine trả `Replace` + adapter dùng surrounding text;
