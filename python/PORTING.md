@@ -7,7 +7,7 @@ Bản Python là **oracle**. Bản Rust đạt yêu cầu khi chạy qua 100% `c
 | Bước | Crate | Nguồn Python | Kiểm tra bằng |
 |---|---|---|---|
 | 1 | `vi-syllable` | `vi_syllable/__init__.py` | Port `tests/test_syllable.py` (bảng VALID/INVALID/PARTIAL, `TONE_TABLE`) |
-| 2 | `vfk-core` | `vfk_core/rules.py`, `transform.py`, `__init__.py` | `core.jsonl` (13.311 ca) + so `Composer` với `transform` |
+| 2 | `vfk-core` | `vfk_core/rules.py`, `transform.py`, `__init__.py` | `core.jsonl` (13.337 ca) + so `Composer` với `transform` |
 | 3 | `vfk-engine` | `vfk_engine/*.py` | `engine.jsonl` (3.000 kịch bản, so từng Action) |
 | 4 | `vfk-ffi` | `vfk_ffi/__init__.py` | Test UTF-16 (`test_ffi_*`) |
 | 5 | `vfk-cli` | `apps/vfk_cli.py` | Chạy tay, so với `--demo` |

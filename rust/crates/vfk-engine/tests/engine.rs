@@ -420,6 +420,13 @@ fn auto_capitalize_handles_ellipsis_quotes_and_newline() {
 }
 
 #[test]
+fn viqr_engine_word_boundary() {
+    let mut h = make_with(OutputMode::Replace, Config { input_method: "viqr".into(), ..cfg() });
+    h.type_str("tie^ng' ");
+    assert_eq!(h.text(), "tiếng ");
+}
+
+#[test]
 fn app_id_normalization_and_aliases() {
     assert_eq!(normalize_app_id(Some("/usr/bin/kitty")), "kitty");
     assert_eq!(normalize_app_id(Some("C:\\Program Files\\Google\\Chrome.exe")), "chrome");

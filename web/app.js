@@ -15,6 +15,7 @@ const METHODS = {
   telex: "Telex",
   simple_telex: "Simple Telex",
   vni: "VNI",
+  viqr: "VIQR",
 };
 const BOOL_KEYS = [
   "spell_check",

@@ -145,6 +145,8 @@ class ImeSession:
     def _is_word_char(self, ch: str) -> bool:
         if "a" <= ch.lower() <= "z":
             return True
+        if self.raw and ch in self.im.extra_word_keys:
+            return True                        # VIQR: ^ ( + ' ` ? ~ . 0 thuộc từ
         if self.config.bracket_keys and ch in self.im.insert_keys:
             return True
         ascii_digit = "0" <= ch <= "9"

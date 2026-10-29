@@ -4,11 +4,11 @@ Bản này là **đặc tả chạy được**. Khi port sang Rust, chỉ cần 
 Bản Rust đạt khi ra cùng kết quả với bản Python trên toàn bộ golden test và corpus.
 
 ```bash
-python -m pytest -q               # 588 test
+python -m pytest -q               # 602 test
 python -m tools.export_conformance  # sinh conformance/*.jsonl (oracle cho Rust)
 python -m tools.bench             # đo µs/phím
 python -m apps.vfk_cli --demo     # chạy ví dụ
-python -m apps.vfk_cli            # REPL (:telex :vni :simple_telex :old :new :replace :preedit :toggle :trace :coda_k :macro_digits :spell :help)
+python -m apps.vfk_cli            # REPL (:telex :vni :simple_telex :viqr :old :new :replace :preedit :toggle :trace :coda_k :macro_digits :spell :help)
 python -m apps.vfk_cli --text "Tieengs Vieejt"
 python -m apps.vfk_cli --method vni --tone new --text "Vie65t Nam"
 python -m apps.vfk_charset --to tcvn3 --text "Tiếng Việt"
@@ -24,7 +24,7 @@ Cấu hình mẫu đầy đủ: `python/config.example.json`.
 | Python | Crate Rust | Vai trò |
 |---|---|---|
 | `vi_syllable/` | `vi-syllable` | Tách âm tiết, kiểm tra chính tả 3 trạng thái, đặt thanh kiểu cũ/mới. Dùng chung với ViFastTts |
-| `vfk_core/rules.py` | `vfk-core::rules` | Telex, Simple Telex, VNI, Quick Telex dạng dữ liệu |
+| `vfk_core/rules.py` | `vfk-core::rules` | Telex, Simple Telex, VNI, VIQR, Quick Telex dạng dữ liệu |
 | `vfk_core/transform.py` | `vfk-core` | `transform(raw, final)`, `to_raw`, `rebuild`, `diff` (hàm thuần) |
 | `vfk_engine/ports.py` | `vfk-engine::ports` | `Config` + 4 port ra (trait) |
 | `vfk_engine/session.py` | `vfk-engine` | `ImeSession.process_key -> Action` |
@@ -101,7 +101,7 @@ Xem `EDGE_CASES.md`: bảng tổng hợp từ vnkey, fcitx5-unikey, fcitx5-lotus
 
 ### 2.8 Mới trong bản hiện tại
 - `Composer`: bộ biến đổi tăng dần, nhanh gấp khoảng 2 lần, luôn bằng `transform()` (có property test).
-- Bộ **conformance** trung lập ngôn ngữ: 13.311 ca core và 3.000 kịch bản engine (so từng Action). Xem `PORTING.md`.
+- Bộ **conformance** trung lập ngôn ngữ: 13.337 ca core và 3.000 kịch bản engine (so từng Action). Xem `PORTING.md`.
 - `AppProfile` (`DEFAULT_APP_PROFILES`): terminal dùng preedit, Chromium chờ ack và trễ theo độ dài, Firefox tắt sửa từ cũ, Minecraft tắt bộ gõ.
 - Sửa lỗi: sửa từ cũ khi màn hình là NFC nhưng đầu ra là NFD thì trước đây xoá sai số ký tự.
 - Thêm golden cho họ `ươ`/`uơ`: `thuowng`, `huowu`, `ruowuj`, `truowcs`...

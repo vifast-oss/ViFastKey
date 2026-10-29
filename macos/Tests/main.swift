@@ -52,6 +52,7 @@ run("open-uo", config: nil, keys: "duow thuow", want: "dươ thuơ")
 run("shaped-vowel", config: nil, keys: "aw aws", want: "ă ắ")
 run("vni", config: "{\"input_method\":\"vni\"}", keys: "Vie65t nam2024", want: "Việt nam2024")
 run("macro", config: "{\"macros\":{\"ko\":\"không\"}}", keys: "ko ", want: "không ")
+run("viqr", config: "{\"input_method\":\"viqr\"}", keys: "tie^ng'", want: "tiếng")
 
 // Escape không được forward, text trả raw.
 do {

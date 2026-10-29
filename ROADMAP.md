@@ -28,8 +28,7 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
 
 ## Ưu tiên trung bình
 
-- **VIQR** và các kiểu gõ khác: `InputMethodSpec` đã data-driven, nhưng phím dấu câu cần thêm
-  khái niệm `extra_word_keys` và quy tắc phân biệt dấu câu với phím chức năng.
+- **VIQR** ✅ đã có (dấu câu là `extra_word_keys`); còn MS Vietnamese layout và các kiểu gõ khác.
 - **Gợi ý/word prediction local**, user dictionary, emoji, clipboard GUI.
 - **Gõ tắt phụ âm** (OpenKey): `f`→`ph`, `j`→`gi`, `w`→`qu`, coda `g`→`ng`... cần kiểu gõ riêng
   để không đụng phím thanh.

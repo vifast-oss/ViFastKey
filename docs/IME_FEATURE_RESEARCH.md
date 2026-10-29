@@ -44,7 +44,7 @@ Ký hiệu: ✅ có; ◐ một phần; — không có; 🔌 thuộc adapter/OS.
 |---|---|---|---|---|---|---|---|---|---|---|
 | Telex / Simple Telex | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | VNI | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| VIQR / MS layout | VIQR | VIQR | VIQR | ◐ (VIQR lỗi) | — | — | ✅ | ✅ | ✅ | roadmap |
+| VIQR / MS layout | VIQR | VIQR | VIQR | ◐ (VIQR lỗi) | — | — | ✅ | ✅ | ✅ | ✅ VIQR |
 | Chính tả 3 trạng thái | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Khôi phục tiếng Anh | ✅ | ✅ | ✅ | ◐ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ (dictionary) |
 | Undo gõ lặp | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
@@ -120,7 +120,7 @@ Ký hiệu: ✅ có; ◐ một phần; — không có; 🔌 thuộc adapter/OS.
 
 ### Test / tài liệu
 
-- Golden mới cho các ca trên; conformance tăng từ 13.252 lên 13.311 ca.
+- Golden mới cho các ca trên; conformance tăng từ 13.252 lên 13.337 ca.
 - `tests/test_research_regressions.py` chứa ca hồi quy lấy từ nghiên cứu.
 - Tài liệu: `COMPATIBILITY.md`, `ADAPTER_GUIDE.md`, `CONFIG.md`, `THIRD_PARTY_NOTICES.md`.
 

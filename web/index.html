@@ -13,7 +13,7 @@
   <link rel="manifest" href="brand/site.webmanifest">
   <meta property="og:type" content="website">
   <meta property="og:title" content="ViFastKey — Bộ gõ tiếng Việt">
-  <meta property="og:description" content="Telex, Simple Telex, VNI. Lõi Rust nhỏ, chạy local, có C ABI và WASM.">
+  <meta property="og:description" content="Telex, Simple Telex, VNI, VIQR. Lõi Rust nhỏ, chạy local, có C ABI và WASM.">
   <meta property="og:image" content="brand/og-image.png">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -79,6 +79,7 @@
             <button type="button" data-method="telex" class="active">Telex</button>
             <button type="button" data-method="simple_telex">Simple Telex</button>
             <button type="button" data-method="vni">VNI</button>
+            <button type="button" data-method="viqr">VIQR</button>
           </div>
           <div class="segmented subtle" role="group" aria-label="Kiểu đặt dấu">
             <button type="button" data-tone="old" class="active">Dấu cũ</button>
@@ -152,7 +153,7 @@
           <span class="f-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M6 10h.01M9 10h.01M12 10h.01M15 10h.01M18 10h.01M6 14h.01M9 14h.01M12 14h.01M15 14h5"/></svg>
           </span>
-          <h3>Telex · Simple Telex · VNI</h3>
+          <h3>Telex · Simple Telex · VNI · VIQR</h3>
           <p>Đổi kiểu gõ tức thì. Hỗ trợ Quick Telex, <code>w</code> → <code>ư</code>, phím <code>[</code> <code>]</code> và kiểu đặt dấu cũ/mới.</p>
         </article>
         <article class="feature">
@@ -200,7 +201,7 @@
           <h2>Chuỗi phím thô<br>→ một <span class="gold">Action</span>.</h2>
           <p>Mỗi phím đi qua Composer rồi trả về đúng một hành động: chèn, thay thế, preedit hoặc để hệ điều hành xử lý. Adapter chỉ việc áp Action — không chứa logic tiếng Việt.</p>
           <ul class="arch-list">
-            <li><strong>13.311</strong> ca core + <strong>3.000</strong> kịch bản engine</li>
+            <li><strong>13.337</strong> ca core + <strong>3.000</strong> kịch bản engine</li>
             <li>NFC/NFD ở đầu ra, UTF-16 ở ranh giới FFI</li>
             <li>MAX_RAW = 24 chặn chi phí xử lý mỗi phím</li>
           </ul>

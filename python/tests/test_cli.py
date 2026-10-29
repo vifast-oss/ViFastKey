@@ -12,6 +12,11 @@ def test_cli_vni_new_tone(capsys):
     assert capsys.readouterr().out == "hoà\n"
 
 
+def test_cli_viqr(capsys):
+    assert main(["--method", "viqr", "--text", "tie^ng'"]) == 0
+    assert capsys.readouterr().out == "tiếng\n"
+
+
 def test_cli_proper_name(capsys):
     assert main(["--allow-coda-k", "--text", "Ddawsk Lawsk"]) == 0
     assert capsys.readouterr().out == "Đắk Lắk\n"

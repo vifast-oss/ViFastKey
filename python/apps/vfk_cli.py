@@ -4,7 +4,7 @@ Chạy:  python -m apps.vfk_cli                 (tương tác)
        python -m apps.vfk_cli --demo          (chạy ví dụ)
        python -m apps.vfk_cli --text "Tieengs Vieejt"
        python -m apps.vfk_cli --method vni --tone new --preedit --text "Vie65t"
-Lệnh:  :telex :vni :simple_telex :old :new :replace :preedit :toggle :trace
+Lệnh:  :telex :vni :simple_telex :viqr :old :new :replace :preedit :toggle :trace
        :coda_k :macro_digits :spell :help :q
        Trong dòng gõ, '<' = Backspace, '~' = Escape. '|' = Enter.
 """
@@ -115,7 +115,7 @@ def build_parser() -> argparse.ArgumentParser:
     ap.add_argument("--demo", action="store_true", help="chạy bộ ví dụ")
     ap.add_argument("--text", action="append", default=[], metavar="CHUỖI",
                     help="gõ một dòng rồi in kết quả (lặp lại được)")
-    ap.add_argument("--method", choices=["telex", "simple_telex", "vni"], help="kiểu gõ")
+    ap.add_argument("--method", choices=["telex", "simple_telex", "vni", "viqr"], help="kiểu gõ")
     ap.add_argument("--tone", choices=["old", "new"], help="kiểu đặt dấu")
     ap.add_argument("--mode", choices=["replace", "preedit"], default="replace",
                     help="mô hình đầu ra (mặc định replace)")

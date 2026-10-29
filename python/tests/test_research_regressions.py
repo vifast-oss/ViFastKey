@@ -63,6 +63,30 @@ def test_single_key_undo_is_preserved():
     assert transform("chuss", TELEX, TransformOptions(), final=True).text == "chus"
 
 
+# ---------------------------------------------------------------- VIQR
+@pytest.mark.parametrize("raw,expected", [
+    ("vie^t.", "việt"),
+    ("tie^ng'", "tiếng"),
+    ("dda^y'", "đấy"),
+    ("hoa?", "hỏa"),
+    ("mua+", "mưa"),
+    ("tu+o+", "tươ"),
+])
+def test_viqr_words(raw, expected):
+    from vfk_core import VIQR
+    assert transform(raw, VIQR, TransformOptions(), final=True).text == expected
+
+
+def test_viqr_engine_word_boundary():
+    field = FakeTextField()
+    session = ImeSession(
+        Ports(MemoryConfigStore(Config(input_method="viqr")), StaticAppContext("app"), field, DICT),
+        OutputMode.REPLACE,
+    )
+    field.type(session, "tie^ng' ")
+    assert field.text == "tiếng "
+
+
 # ---------------------------------------------------------------- VNI số
 @pytest.mark.parametrize("raw,expected", [
     ("nam2024", "nam2024"),

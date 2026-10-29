@@ -119,6 +119,21 @@ không chép code hay dữ liệu GPL.
 | `giuwx` | giữ |
 | `gif` | gì |
 
+## 6b. VIQR
+
+| Raw | Kết quả |
+|---|---|
+| `vie^t.` | việt |
+| `tie^ng'` | tiếng |
+| `dda^y'` | đấy |
+| `hoa?` | hỏa |
+| `mua+` | mưa |
+| `tu+o+` | tươ |
+| `a^` | â |
+| `a(` | ă |
+| `ddi` | đi |
+| `hoa. ` | họa (dấu chấm là thanh nặng) |
+
 ## 7. VNI
 
 | Raw | Kết quả |

@@ -341,6 +341,9 @@ impl ImeSession {
         if vi_syllable::lower(ch).is_ascii_lowercase() {
             return true;
         }
+        if !self.raw.is_empty() && self.im().extra_word_key(ch) {
+            return true; // VIQR: ^ ( + ' ` ? ~ . 0 thuộc từ
+        }
         if self.config.bracket_keys && self.im().insert_for(ch).is_some() {
             return true;
         }

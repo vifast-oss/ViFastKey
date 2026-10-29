@@ -4,7 +4,7 @@
 
 # ViFastKey
 
-Bộ gõ tiếng Việt gọn, thuần logic: chuỗi phím thô → chữ tiếng Việt (Telex, Simple Telex, VNI), kèm tầng engine cho IME (preedit/replace, macro, khôi phục tiếng Anh, hồ sơ ứng dụng).
+Bộ gõ tiếng Việt gọn, thuần logic: chuỗi phím thô → chữ tiếng Việt (Telex, Simple Telex, VNI, VIQR), kèm tầng engine cho IME (preedit/replace, macro, khôi phục tiếng Anh, hồ sơ ứng dụng).
 
 Tính năng nổi bật: `allow_coda_k` (Đắk Lắk), `macro_digits` (mp3, k8s), macro undo một phím,
 `đ` viết tắt (`vcdd`), 16 bảng mã (TCVN3, VNI-Windows, VISCII, VIQR, CP1258, NCR... cùng Unicode),
@@ -31,7 +31,7 @@ ViFastKey/
 │   ├── vfk_ffi/                # API phẳng kiểu FFI
 │   ├── adapters/               # port mẫu, từ điển, ô nhập giả lập
 │   ├── apps/                   # CLI demo + REPL + vfk-charset
-│   ├── tests/                  # 588 test, golden, corpus
+│   ├── tests/                  # 602 test, golden, corpus
 │   ├── tools/                  # export conformance, bench
 │   ├── conformance/            # core.jsonl + engine.jsonl (oracle cho Rust)
 │   ├── vfk_core/data/          # bảng mã legacy (bamboo-core MIT)
@@ -73,7 +73,7 @@ Yêu cầu Python 3.10+. Có thể cài như package (kèm `pytest`/`ruff`):
 ```bash
 cd python
 pip install -e ".[dev]"
-python -m pytest -q               # 588 test
+python -m pytest -q               # 602 test
 python -m tools.export_conformance
 python -m tools.bench
 python -m apps.vfk_cli --demo
@@ -86,7 +86,7 @@ python -m apps.vfk_charset --from tcvn3 --file vi.tcvn --to unicode
 
 ## Build bản Rust
 
-Yêu cầu Rust 1.75+.
+Yêu cầu Rust stable (đã kiểm tra 1.99.1); `rust/rust-toolchain.toml` ghim stable + wasm target.
 
 ```bash
 cd rust
@@ -158,4 +158,4 @@ cargo test --workspace
 - `THIRD_PARTY_NOTICES.md` — ghi công bảng mã bamboo-core MIT.
 - `CONTRIBUTING.md` — quy trình sửa hành vi, chạy test, đồng bộ conformance.
 - `CHANGELOG.md` — thay đổi theo phiên bản.
-- `ROADMAP.md` — việc còn lại: adapter, VIQR, macro nhiều từ, preedit nâng cao...
+- `ROADMAP.md` — việc còn lại: adapter Windows/Linux, macro nhiều từ, preedit nâng cao...

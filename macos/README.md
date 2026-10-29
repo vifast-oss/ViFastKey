@@ -71,7 +71,7 @@ Kiểm tra:
 - Gõ Telex/Simple Telex/VNI như engine.
 - Menu input method:
   - Bật/tắt tiếng Việt (lưu theo app).
-  - Chọn Telex / Simple Telex / VNI.
+  - Chọn Telex / Simple Telex / VNI / VIQR.
   - Mở cấu hình JSON.
   - Nạp lại cấu hình.
 - Escape trả raw và **không** forward Esc.

@@ -12,7 +12,7 @@ pub use charset::{
     detect as detect_charset, encode as encode_charset, encode_bytes, normalize as normalize_charset,
     remove_diacritics, CHARSETS,
 };
-pub use rules::{quick_telex, InputMethodSpec, MarkRule, SIMPLE_TELEX, TELEX, VNI};
+pub use rules::{quick_telex, InputMethodSpec, MarkRule, SIMPLE_TELEX, TELEX, VIQR, VNI};
 pub use transform::{
     rebuild, to_raw, transform, transform_str, Composer, Letter, TransformOptions, TransformResult,
     WordState, MAX_RAW,

@@ -115,7 +115,7 @@ final class ViFastKeyInputController: IMKInputController {
         let methodTitle = engine?.configJSON.flatMap(methodName) ?? "Telex"
         let methodItem = NSMenuItem(title: "Kiểu gõ: \(methodTitle)", action: nil, keyEquivalent: "")
         let submenu = NSMenu(title: "Kiểu gõ")
-        for (name, label) in [("telex", "Telex"), ("simple_telex", "Simple Telex"), ("vni", "VNI")] {
+        for (name, label) in [("telex", "Telex"), ("simple_telex", "Simple Telex"), ("vni", "VNI"), ("viqr", "VIQR")] {
             let item = NSMenuItem(title: label, action: #selector(selectMethod(_:)), keyEquivalent: "")
             item.target = self
             item.representedObject = name
@@ -152,6 +152,7 @@ final class ViFastKeyInputController: IMKInputController {
         switch method {
         case "vni": return "VNI"
         case "simple_telex": return "Simple Telex"
+        case "viqr": return "VIQR"
         default: return "Telex"
         }
     }

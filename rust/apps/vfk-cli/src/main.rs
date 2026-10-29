@@ -31,7 +31,7 @@ const HELP: &str = r#"ViFastKey CLI — gõ thử chuỗi phím thô.
   vfk                          REPL tương tác
   vfk --demo                   chạy bộ ví dụ
   vfk --text "Tieengs Vieejt"  gõ một dòng rồi in kết quả (lặp lại được)
-  --method telex|simple_telex|vni
+  --method telex|simple_telex|vni|viqr
   --tone old|new
   --mode replace|preedit
   --nfd --no-spell --allow-coda-k --macro-digits --trace
@@ -79,7 +79,7 @@ impl Repl {
     fn command(&mut self, cmd: &str) -> bool {
         match cmd {
             ":q" | ":quit" | ":exit" => return false,
-            ":telex" | ":vni" | ":simple_telex" => {
+            ":telex" | ":vni" | ":simple_telex" | ":viqr" => {
                 self.config.input_method = cmd[1..].to_string();
                 self.rebuild();
             }

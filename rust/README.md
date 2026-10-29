@@ -26,7 +26,7 @@ rust/
 │   └── vfk-wasm/      wasm-bindgen: Session + Action JSON cho web demo
 ├── apps/vfk-cli/      REPL + demo (bin "vfk")
 ├── apps/vfk-charset/  chuyển bảng mã (bin "vfk-charset")
-├── conformance/       core.jsonl (13.311 ca), engine.jsonl (3.000 kịch bản) sinh từ Python
+├── conformance/       core.jsonl (13.337 ca), engine.jsonl (3.000 kịch bản) sinh từ Python
 ├── testdata/          golden/*.tsv, corpus_vi.txt (dùng chung với Python)
 └── tools/sync_conformance.sh
 ```
@@ -45,7 +45,10 @@ rust/
 | `apps/vfk_cli.py` | `apps/vfk-cli/src/main.rs` |
 | `tests/test_*.py` | `crates/*/tests/*.rs` |
 
-Phụ thuộc: chỉ có `unicode-normalization`, `serde`, `serde_json`. Không dùng `rand` (test dùng LCG tự viết), không dùng `phf` (bảng tra sinh một lần bằng `OnceLock`).
+Phụ thuộc: `unicode-normalization` 0.1.26, `serde` 1.0.229, `serde_json` 1.0.154,
+`wasm-bindgen` 0.2.129. Không dùng `rand` (test dùng LCG tự viết), không dùng `phf`
+(bảng tra sinh một lần bằng `OnceLock`). Toolchain: stable 1.99.1 (xem `rust-toolchain.toml`);
+`cargo update` không còn dependency nào lệch bản mới nhất tại thời điểm cập nhật.
 
 ## 2. Tính năng engine
 
@@ -115,6 +118,6 @@ Nếu core conformance sai, các chỗ đáng nghi nhất (vì logic tinh tế n
 
 - Tối ưu: `ArrayVec<Letter, 24>` thay `Vec`, bitset cho `locked`, bỏ cấp phát `String` trong `toneless_lower` (dùng buffer `[char; 24]`). Chỉ làm sau khi conformance đã xanh.
 - Adapter đầu tiên: Fcitx5 (C++ gọi `vifastkey.h`) hoặc macOS IMK (Swift).
-- Macro nhiều từ/suffix, VIQR, preedit edit-previous-word.
+- Macro nhiều từ/suffix, MS Vietnamese layout, preedit edit-previous-word.
 - Tối ưu charset decode (longest-match) và thêm cache nếu cần.
 - UniFFI cho Kotlin/Swift. Web đã có `vfk-wasm` + demo trong `web/`.

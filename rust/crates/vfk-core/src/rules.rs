@@ -82,11 +82,24 @@ impl InputMethodSpec {
         self.tones.iter().find(|(_, t)| *t == tone).map(|(k, _)| *k)
     }
 
+    /// Phím chức năng không phải chữ cái nhưng vẫn thuộc từ đang gõ (VIQR).
+    pub fn extra_word_key(&self, k: char) -> bool {
+        let k = vi_syllable::lower(k);
+        if k.is_ascii_lowercase() {
+            return false;
+        }
+        self.tone_of(k).is_some()
+            || k == self.remove_tone
+            || self.marks_for(k).is_some()
+            || self.standalone_for(k).is_some()
+    }
+
     pub fn by_name(name: &str) -> Option<&'static InputMethodSpec> {
         match name {
             "telex" => Some(&TELEX),
             "simple_telex" => Some(&SIMPLE_TELEX),
             "vni" => Some(&VNI),
+            "viqr" => Some(&VIQR),
             _ => None,
         }
     }
@@ -139,6 +152,24 @@ pub static VNI: InputMethodSpec = InputMethodSpec {
     standalone: &[],
     insert_keys: &[],
     digit_keys: true,
+};
+
+// ---------------------------------------------------------------- VIQR
+
+const VIQR_CIRCUMFLEX: &[MarkRule] = &[rule(Mark::Circumflex, "aeo")];
+const VIQR_BREVE: &[MarkRule] = &[rule(Mark::Breve, "a")];
+const VIQR_HORN: &[MarkRule] = &[pair(Mark::Horn, "uo"), rule(Mark::Horn, "uo")];
+const VIQR_D: &[MarkRule] = &[rule(Mark::Stroke, "d")];
+
+/// VIQR: dấu chấm câu là phím chức năng; engine coi chúng là phần của từ khi raw khác rỗng.
+pub static VIQR: InputMethodSpec = InputMethodSpec {
+    name: "viqr",
+    tones: &[('\'', 1), ('`', 2), ('?', 3), ('~', 4), ('.', 5)],
+    remove_tone: '0',
+    marks: &[('^', VIQR_CIRCUMFLEX), ('(', VIQR_BREVE), ('+', VIQR_HORN), ('d', VIQR_D)],
+    standalone: &[],
+    insert_keys: &[],
+    digit_keys: false,
 };
 
 /// Gõ nhanh phụ âm đầu (Quick Telex): cc=ch, gg=gi, kk=kh, nn=ng, qq=qu, pp=ph, tt=th.

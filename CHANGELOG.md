@@ -46,7 +46,7 @@
 ### macOS adapter
 
 - Thêm IMK input method thật (`macos/`): Swift controller → Rust C ABI → ActionApplier.
-- Preedit native, menu Telex/Simple Telex/VNI, toggle Việt/Anh, config JSON atomic + backup.
+- Preedit native, menu Telex/Simple Telex/VNI/VIQR, toggle Việt/Anh, config JSON atomic + backup.
 - Build/install/doctor/self-test; app id normalization cho bundle id.
 - Ad-hoc signing để test local; cần Developer ID/notarize/universal2 khi phát hành.
 
@@ -57,4 +57,6 @@
 - Thêm `LICENSE` (MIT), `CONTRIBUTING.md`, `.editorconfig`; thống nhất giấy phép Rust về MIT.
 - `rust/tools/sync_conformance.sh` nhận biến `PYTHON`, không còn phụ thuộc lệnh `python`,
   đồng bộ cả bảng mã.
+- Rust stable 1.99.1, dependency trực tiếp và lockfile ở bản mới nhất; thêm
+  `rust-toolchain.toml` và Dependabot.
 - Thêm `docs/`, `THIRD_PARTY_NOTICES.md`, `apps/vfk-charset`.

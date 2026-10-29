@@ -40,6 +40,15 @@ class InputMethodSpec:
     def tone_key(self, tone: int) -> str | None:
         return next((k for k, t in self.tones.items() if t == tone), None)
 
+    @property
+    def extra_word_keys(self) -> set[str]:
+        """Phím chức năng không phải chữ cái nhưng vẫn thuộc từ đang gõ.
+
+        VIQR dùng `^ ( + ' ` ? ~ . 0`; VNI dùng chữ số (đã xử lý riêng). Telex không có.
+        """
+        keys = set(self.tones) | {self.remove_tone} | set(self.marks) | set(self.standalone)
+        return {k for k in keys if len(k) == 1 and not ("a" <= k.lower() <= "z")}
+
 
 TELEX = InputMethodSpec(
     name="telex",
@@ -75,7 +84,21 @@ VNI = InputMethodSpec(
     digit_keys=True,
 )
 
-INPUT_METHODS = {"telex": TELEX, "simple_telex": SIMPLE_TELEX, "vni": VNI}
+# VIQR: dấu chấm câu là phím chức năng. Dùng tone/mark key ngay sau nguyên âm;
+# engine coi các phím này là phần của từ khi raw khác rỗng.
+VIQR = InputMethodSpec(
+    name="viqr",
+    tones={"'": 1, "`": 2, "?": 3, "~": 4, ".": 5},
+    remove_tone="0",
+    marks={
+        "^": (MarkRule("^", "aeo"),),
+        "(": (MarkRule("(", "a"),),
+        "+": (MarkRule("+", "uo", pair=True), MarkRule("+", "uo")),
+        "d": (MarkRule("-", "d"),),
+    },
+)
+
+INPUT_METHODS = {"telex": TELEX, "simple_telex": SIMPLE_TELEX, "vni": VNI, "viqr": VIQR}
 
 # Gõ nhanh phụ âm đầu (Quick Telex, kiểu OpenKey): cc=ch, gg=gi, kk=kh, nn=ng, qq=qu, pp=ph, tt=th
 QUICK_TELEX = {"c": "ch", "g": "gi", "k": "kh", "n": "ng", "q": "qu", "p": "ph", "t": "th"}

@@ -14,7 +14,7 @@ Cấu hình là JSON, dùng chung cho Python, Rust, C ABI và WASM. File mẫu:
 
 | Trường | Kiểu | Mặc định | Ý nghĩa |
 |---|---|---|---|
-| `input_method` | `"telex" \| "simple_telex" \| "vni"` | `"telex"` | Kiểu gõ; giá trị lạ fallback Telex |
+| `input_method` | `"telex" \| "simple_telex" \| "vni" \| "viqr"` | `"telex"` | Kiểu gõ; giá trị lạ fallback Telex |
 | `tone_style` | `"old" \| "new"` | `"old"` | `hòa` / `hoà` |
 | `spell_check` | bool | `true` | Chặn biến đổi sai chính tả, khôi phục raw |
 | `w_as_u` | bool | `true` | Telex `w` đứng riêng → `ư` |

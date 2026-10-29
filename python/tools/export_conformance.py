@@ -59,13 +59,15 @@ def core_cases():
     # 3) ngẫu nhiên, mọi tổ hợp tuỳ chọn
     rnd = random.Random(SEED)
     alpha = {"telex": "aeiouydwsfrxjzqnghtcmpbklAEOUWDS[]", "simple_telex": "aeiouydwsfrxjzngtcAW",
-             "vni": "aeiouydqngthc0123456789AEOU"}
+             "vni": "aeiouydqngthc0123456789AEOU", "viqr": "aeiouyd^('+~?.0AEOU"}
     for _ in range(6000):
         im = rnd.choice(list(alpha))
         o = TransformOptions(rnd.choice(list(ToneStyle)), rnd.random() < .85, rnd.random() < .8,
                              rnd.random() < .2, rnd.random() < .2, rnd.random() < .2)
         keys = "".join(rnd.choice(alpha[im]) for _ in range(rnd.randint(1, 12)))
         if im == "vni" and keys[0].isdigit():
+            keys = "a" + keys
+        if im == "viqr" and keys[0] in "^('+~?.0":
             keys = "a" + keys
         yield im, o, rnd.random() < .5, keys
 
@@ -96,7 +98,7 @@ def engine_cases():
     dic = WordListDictionary()
     for _ in range(3000):
         c = Config(
-            input_method=rnd.choice(["telex", "telex", "vni", "simple_telex"]),
+            input_method=rnd.choice(["telex", "telex", "vni", "simple_telex", "viqr"]),
             tone_style=rnd.choice(list(ToneStyle)),
             auto_capitalize=rnd.random() < .3, smart_caps=rnd.random() < .2,
             macros={"ko": "không", "vn": "Việt Nam", "mp3": "máy nghe nhạc"},
@@ -108,6 +110,8 @@ def engine_cases():
         mode = rnd.choice(list(OutputMode))
         prefix = rnd.choice(["", "", "tôi học tiêng", "Việt", "hello "])
         extra = list("1234567890") if (c.input_method == "vni" or c.macro_digits) else []
+        if c.input_method == "viqr":
+            extra += list("^('+~?.0")
         keys = [rnd.choice(KEYS + extra) for _ in range(rnd.randint(1, 30))]
         field = FakeTextField(prefix)
         s = ImeSession(Ports(MemoryConfigStore(c), StaticAppContext("app"), field, dic), mode)

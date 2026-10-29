@@ -9,6 +9,8 @@ khác, phải giữ đúng các ví dụ ở đây; các khác biệt phải đ�
 - Telex: `s f r x j` = sắc, huyền, hỏi, ngã, nặng; `z` xoá thanh/dấu.
 - Simple Telex: như Telex nhưng không có `w` đứng riêng, không `[ ]`.
 - VNI: `1 2 3 4 5` thanh; `6` mũ; `7` móc; `8` trăng; `9` đ; `0` xoá.
+- VIQR: `^` mũ, `(` trăng, `+` móc, `d` → đ; thanh `'` `?` `~` `.`; `0` xoá dấu.
+  Dấu câu thuộc từ khi raw khác rỗng; gõ dấu cách trước dấu câu cuối câu.
 - Bracket: `[` → ơ, `]` → ư (khi bật `bracket_keys`).
 - Quick Telex: `cc ch`, `gg gi`, `kk kh`, `nn ng`, `qq qu`, `pp ph`, `tt th` ở đầu từ.
 - `w` đứng riêng → `ư` khi `w_as_u`.
