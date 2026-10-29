@@ -118,7 +118,7 @@ pub extern "system" fn Java_app_vifastkey_NativeEngine_setConfig(
 
 #[no_mangle]
 pub extern "system" fn Java_app_vifastkey_NativeEngine_display(
-    mut env: JNIEnv,
+    env: JNIEnv,
     _class: JClass,
     ptr: jlong,
 ) -> jstring {
