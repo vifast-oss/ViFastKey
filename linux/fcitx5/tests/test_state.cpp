@@ -197,6 +197,30 @@ void testPasswordPassThrough() {
     CHECK(context.inputPanel().clientPreedit().empty());
 }
 
+void testPasswordTransitionDropsComposition() {
+    fcitx::EventLoop loop;
+    fcitx::InputContextManager manager;
+    TestInputContext context(manager);
+    context.setCapabilityFlags(fcitx::CapabilityFlag::Preedit);
+
+    auto config = makeConfig();
+    fcitx::VifastkeyState state(loop, &context, config);
+    state.activate("test");
+
+    typeAscii(context, state, "vieejt");
+    CHECK(context.inputPanel().clientPreedit().toString() == "việt");
+
+    context.setCapabilityFlags(fcitx::CapabilityFlags{
+        fcitx::CapabilityFlag::Preedit,
+        fcitx::CapabilityFlag::Password});
+    auto event = keyEvent(context, FcitxKey_a);
+    state.keyEvent(event);
+
+    // Không commit composition cũ vào password field.
+    CHECK(context.commits.empty());
+    CHECK(context.inputPanel().clientPreedit().empty());
+}
+
 void testInvalidConfigFallsBackToDefaults() {
     fcitx::EventLoop loop;
     fcitx::InputContextManager manager;
@@ -456,6 +480,7 @@ int main() {
     testResetCommitsComposition();
     testFocusOutDoesNotDoubleCommitClientPreedit();
     testPasswordPassThrough();
+    testPasswordTransitionDropsComposition();
     testInvalidConfigFallsBackToDefaults();
     testReplaceUsesSurroundingAndCommits();
     testEditPreviousWordUsesRefreshedSurrounding();

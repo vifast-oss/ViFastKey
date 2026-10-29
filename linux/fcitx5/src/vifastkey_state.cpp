@@ -198,7 +198,8 @@ bool VifastkeyState::isDisabled() const {
 bool VifastkeyState::hasSurrounding() const {
     return ic_ &&
            ic_->capabilityFlags().test(CapabilityFlag::SurroundingText) &&
-           ic_->surroundingText().isValid();
+           ic_->surroundingText().isValid() &&
+           ic_->surroundingText().cursor() == ic_->surroundingText().anchor();
 }
 
 void VifastkeyState::refreshSurrounding() {
@@ -252,6 +253,21 @@ void VifastkeyState::syncConfig(bool force) {
                         "config path="
                      << config_->path();
     }
+}
+
+void VifastkeyState::syncProgram() {
+    if (!session_ || !ic_) {
+        return;
+    }
+    const std::string &current = ic_->program();
+    if (current == program_ || !displayText().empty()) {
+        return;
+    }
+    const std::string before = displayText();
+    const VfkAction action =
+        vfk_focus_changed(session_, current.empty() ? nullptr : current.c_str());
+    program_ = current;
+    applyAction(action, nullptr, before);
 }
 
 void VifastkeyState::syncFieldKind() {
@@ -325,6 +341,7 @@ void VifastkeyState::syncProfileMode() {
 
 void VifastkeyState::syncContext(bool forceConfig) {
     syncConfig(forceConfig);
+    syncProgram();
     syncFieldKind();
     if (!isDisabled()) {
         syncProfileMode();
@@ -339,6 +356,7 @@ void VifastkeyState::activate(const std::string &program) {
     const std::string before = displayText();
     const VfkAction action =
         vfk_focus_changed(session_, program.empty() ? nullptr : program.c_str());
+    program_ = program;
     applyAction(action, nullptr, before);
     syncFieldKind();
     syncProfileMode();
