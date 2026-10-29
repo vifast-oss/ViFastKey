@@ -723,6 +723,15 @@ void VifastkeyState::drainQueue() {
     while (!busy_ && !queue_.empty()) {
         QueuedKey queued = std::move(queue_.front());
         queue_.pop_front();
+
+        // Field/app có thể đã đổi trong lúc transaction chạy. Đồng bộ lại
+        // trước khi xử lý key đã queue; nếu field chuyển sang password/URL,
+        // forward key gốc thay vì đưa vào engine.
+        syncContext(false);
+        if (isDisabled()) {
+            forwardQueuedKey(queued.rawKey);
+            continue;
+        }
         processKey(queued.key, queued.ctrl, queued.alt, queued.meta, nullptr,
                    queued.rawKey);
     }
