@@ -17,7 +17,7 @@ Không có logic tiếng Việt trong Swift. Swift chỉ chuyển key, gọi eng
 ## Yêu cầu
 
 - macOS 12+ (đã build/test trên macOS 27, Apple Silicon).
-- Xcode Command Line Tools (`swiftc`), Rust 1.75+.
+- Xcode Command Line Tools (`swiftc`), Rust 1.85+.
 - Build mặc định theo kiến trúc hiện tại (`arm64` hoặc `x86_64`).
 
 ## Build
@@ -61,19 +61,21 @@ NOTARY_PROFILE="vifastkey-notary" \
 ```
 
 Script copy app vào `~/Library/Input Methods/ViFastKey.app`, mở app, đăng ký input source
-bằng `TISRegisterInputSource`, rồi mở System Settings.
+bằng `TISRegisterInputSource`, rồi ghi entry vào `AppleEnabledInputSources` của HIToolbox.
 
 Sau đó:
 
-1. **System Settings → Keyboard → Input Sources → Edit… → +**
-2. Chọn **Vietnamese → ViFastKey** (hoặc tìm “ViFastKey”).
-3. Nếu chưa thấy: đăng xuất/đăng nhập lại (macOS cache input source theo login session),
-   hoặc chạy:
+1. **Đăng xuất/đăng nhập một lần** để macOS làm mới danh sách input source.
+2. **System Settings → Keyboard → Input Sources → chọn ViFastKey**.
+3. Nếu chưa thấy, chạy lại:
    ```bash
-   "$HOME/Library/Input Methods/ViFastKey.app/Contents/MacOS/ViFastKeyIM" --register-input-source
+   "$HOME/Library/Input Methods/ViFastKey.app/Contents/MacOS/ViFastKeyIM" --repair-input-source
    killall TextInputMenuAgent
    ```
-4. Chọn input source **ViFastKey** trong menu bàn phím.
+4. Mở Preferences trực tiếp (kể cả khi chưa chọn input source):
+   ```bash
+   "$HOME/Library/Input Methods/ViFastKey.app/Contents/MacOS/ViFastKeyIM" --preferences
+   ```
 
 Kiểm tra:
 
@@ -84,14 +86,17 @@ Kiểm tra:
 ## Dùng
 
 - Gõ Telex/Simple Telex/VNI như engine.
+- **Ctrl+Shift+F**: bật/tắt tiếng Việt (lưu theo app).
 - Menu input method:
-  - Bật/tắt tiếng Việt (lưu theo app).
+  - Bật/tắt tiếng Việt.
   - Chọn Telex / Simple Telex / VNI / VIQR.
-  - Mở cấu hình JSON.
-  - Nạp lại cấu hình.
+  - Mở Preferences, file JSON, nạp lại cấu hình.
+  - Clipboard: bỏ dấu, NFC, VIQR ↔ Unicode, TCVN3 → Unicode.
+  - Mở Input Sources.
 - Escape trả raw và **không** forward Esc.
 - Backspace xoá ký tự hiển thị, giữ dấu.
 - Preedit được IMK vẽ gạch chân; Enter/dấu cách/click/focus commit đúng.
+- Secure input/password: reset preedit và pass-through, không commit chữ vào field mật khẩu.
 
 ## Cấu hình
 
@@ -116,7 +121,8 @@ Các ca hiện có:
 ```
 telex, d-stroke (vcdd/ddc/NDD), english (coffee/banana),
 open-uo (duow/thuow), shaped-vowel (aw/aws), vni (Vie65t/nam2024),
-macro, escape pass-key, backspace, key mapping, app profile chrome
+macro, escape pass-key, backspace, key mapping, app profile chrome,
+charset VIQR encode/decode, replace committed text
 ```
 
 ### Thủ công trên app thật
@@ -154,12 +160,12 @@ log stream --predicate 'process == "ViFastKeyIM"' --level debug
 ## Giới hạn hiện tại
 
 - Chưa có event-tap fallback cho app không hỗ trợ IMK; ưu tiên IMK vì đây là API chuẩn.
-- Chưa có candidate window (không cần cho Telex/VNI).
-- Chưa sửa từ đã commit trong preedit.
+- Chưa có candidate window/suggestion bar (không cần cho Telex/VNI cơ bản).
 - App id lấy từ `NSWorkspace.frontmostApplication`; một số app đặc biệt có thể trả id
   không ổn định — dùng `app_profiles` với bundle id/alias.
-- Chưa có auto-update, preferences UI đầy đủ, secure-input indicator.
+- Chưa có auto-update; preferences UI hiện có các tùy chọn chính + macro.
 - Chưa ký Developer ID/notarize; xem mục trên.
+- Lần đầu cần logout/login để macOS refresh input source.
 
 ## Gỡ
 
