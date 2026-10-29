@@ -1,0 +1,29 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/vi-syllable",
+    "crates/vfk-core",
+    "crates/vfk-engine",
+    "crates/vfk-ffi",
+    "apps/vfk-cli",
+]
+
+[workspace.package]
+version = "0.4.0"
+edition = "2021"
+rust-version = "1.75"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/dvchd/ViFastKey"
+
+[workspace.dependencies]
+vi-syllable = { path = "crates/vi-syllable" }
+vfk-core = { path = "crates/vfk-core" }
+vfk-engine = { path = "crates/vfk-engine" }
+unicode-normalization = "0.1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+lto = true
+codegen-units = 1
+panic = "unwind"   # FFI dùng catch_unwind, không đổi sang "abort"

@@ -1,0 +1,14 @@
+[package]
+name = "vfk-engine"
+description = "Engine ViFastKey (hexagon): ImeSession + port ra (ConfigStore, AppContext, SurroundingText, Dictionary)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+vfk-core = { workspace = true }
+vi-syllable = { workspace = true, features = ["serde"] }
+unicode-normalization = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

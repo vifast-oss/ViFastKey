@@ -1,0 +1,13 @@
+[package]
+name = "vfk-core"
+description = "Lõi bộ gõ ViFastKey: chuỗi phím thô -> chữ tiếng Việt. Thuần, đồng bộ, không I/O."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+vi-syllable = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

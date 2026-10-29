@@ -1,0 +1,350 @@
+"""Port vào (driving port): ImeSession. Mọi adapter nền tảng chỉ gọi vào đây.
+
+Bất biến quan trọng (đã có property test):
+  * Chữ trên màn hình của từ đang gõ == self.display (sau khi áp mọi Action).
+  * Bên trong luôn dùng NFC; chỉ chuẩn hoá NFC/NFD tại đầu ra.
+"""
+from __future__ import annotations
+
+import unicodedata
+from dataclasses import dataclass
+from enum import Enum
+
+from vfk_core import INPUT_METHODS, MAX_RAW, Composer, TransformOptions, diff, rebuild
+
+from .ports import Config, Ports, resolve_profile
+
+
+# ---------------------------------------------------------------- input / output
+@dataclass(frozen=True)
+class KeyEvent:
+    key: str                  # 1 ký tự, hoặc: Backspace Enter Tab Escape Left Right Up Down Home End Delete
+    ctrl: bool = False
+    alt: bool = False
+    meta: bool = False
+
+    @property
+    def is_char(self) -> bool:
+        return len(self.key) == 1
+
+
+class FieldKind(Enum):
+    TEXT = "text"
+    PASSWORD = "password"   # luôn tắt bộ gõ (tránh lộ mật khẩu trong preedit, sai mật khẩu)
+    NUMBER = "number"
+    EMAIL = "email"
+    URL = "url"
+    TERMINAL = "terminal"   # adapter nên dùng PREEDIT (commit nguyên tử) cho terminal
+
+
+DISABLED_FIELDS = {FieldKind.PASSWORD, FieldKind.NUMBER, FieldKind.EMAIL, FieldKind.URL}
+
+
+class OutputMode(Enum):
+    PREEDIT = "preedit"   # TSF, IMK, Fcitx5, IBus, Android, iOS (chữ gạch chân)
+    REPLACE = "replace"   # hook + gửi backspace (kiểu UniKey/OpenKey)
+
+
+@dataclass(frozen=True)
+class PassThrough:
+    """Engine không xử lý, trả phím cho hệ điều hành."""
+
+
+@dataclass(frozen=True)
+class Preedit:
+    text: str
+    cursor: int
+
+
+@dataclass(frozen=True)
+class Replace:
+    delete_before: int        # đơn vị: code point của chuỗi đầu ra (FFI đổi sang UTF-16)
+    insert: str
+    pass_key: bool = False    # sau khi sửa, để phím gốc đi tiếp (dấu cách, Enter...)
+
+
+@dataclass(frozen=True)
+class Commit:
+    text: str
+    pass_key: bool = False
+
+
+Action = PassThrough | Preedit | Replace | Commit
+
+MODIFIER_KEYS = {"Shift", "Control", "Alt", "Meta", "Super", "CapsLock", "Option", "Command", "Fn"}
+NAV_KEYS = {"Tab", "Left", "Right", "Up", "Down", "Home", "End", "Delete", "PageUp", "PageDown"}
+SENTENCE_END = set(".!?")
+
+
+# ---------------------------------------------------------------- session
+class ImeSession:
+    """Mỗi ô nhập / input context có 1 session. Đồng bộ, không thread, không async."""
+
+    def __init__(self, ports: Ports, mode: OutputMode):
+        self.ports = ports
+        self.mode = mode
+        self.config: Config = ports.config.load()
+        self.raw: list[str] = []
+        self.word = ""             # NFC, chữ đang hiển thị của từ hiện tại
+        self.literal = False       # từ đang ở chế độ thô (sau Backspace vào từ không tái tạo được)
+        self.cap_next = False      # viết hoa đầu câu
+        self._pending_end = False  # vừa gõ dấu kết câu, chờ dấu cách
+        self.enabled = True
+        self.field = FieldKind.TEXT
+        self.last: tuple[list[str], str, bool, str] | None = None   # soft reset: (raw, word, literal, sep)
+        self.focus_changed(ports.app.current_app())
+
+    # ---------- tiện ích
+    @property
+    def im(self):
+        return INPUT_METHODS[self.config.input_method]
+
+    @property
+    def opt(self) -> TransformOptions:
+        c = self.config
+        return TransformOptions(c.tone_style, c.spell_check, c.w_as_u, c.bracket_keys, c.quick_telex)
+
+    @property
+    def display(self) -> str:
+        return self._out(self.word)
+
+    def _out(self, s: str) -> str:
+        return unicodedata.normalize(self.config.unicode_form, s)
+
+    def _compute(self, final: bool = False) -> str:
+        if self.literal or self._smart_caps_literal():
+            return "".join(self.raw)
+        comp = self._composer
+        if comp is None or comp.raw != self.raw:            # raw bị thay thế (rebuild/soft reset)
+            comp = self._composer = Composer(self.im, self.opt, self.raw)
+        res = comp.result(final)
+        if res.restored and self.adopted:              # 'việt' + 'f' -> 'việtf', không phải 'vieetjf'
+            word, n = self.adopted
+            return word + "".join(self.raw[n:])
+        return res.text
+
+    def _smart_caps_literal(self) -> bool:
+        r = self.raw
+        return (self.config.smart_caps and len(r) >= 2 and r[0].isupper() and r[1].isupper()
+                and not (r[0] == "D" and r[1] == "D"))
+
+    def reset(self) -> None:
+        self.raw, self.word, self.literal = [], "", False
+        self._composer: Composer | None = None
+        self.adopted: tuple[str, int] | None = None   # (từ cũ đã nạp lại, số phím thô của nó)
+
+    def _is_word_char(self, ch: str) -> bool:
+        if "a" <= ch.lower() <= "z":
+            return True
+        if self.config.bracket_keys and ch in self.im.insert_keys:
+            return True
+        return self.im.digit_keys and ch.isdigit() and bool(self.raw)
+
+    # ---------- cấu hình / ngữ cảnh
+    def reload_config(self) -> Action:
+        act = self._flush()
+        self.config = self.ports.config.load()
+        self._composer = None
+        return act
+
+    def focus_changed(self, app_id: str | None) -> Action:
+        act = self._flush()
+        self.cap_next = self._pending_end = False
+        c = self.config
+        self.profile = resolve_profile(c, app_id)
+        if app_id and app_id in c.excluded_apps:
+            self.enabled = False
+        elif self.profile.vietnamese is not None and (app_id or "") not in c.app_modes:
+            self.enabled = self.profile.vietnamese
+        else:
+            self.enabled = c.app_modes.get(app_id or "", c.default_vietnamese)
+        return act
+
+    def set_field_kind(self, kind: FieldKind) -> Action:
+        act = self._flush()
+        self.field = kind
+        return act
+
+    def cursor_moved(self) -> Action:
+        """Adapter gọi khi người dùng click chuột / con trỏ đổi chỗ (bài học fcitx5-unikey #53, ibus-bamboo #607)."""
+        self.cap_next = self._pending_end = False
+        return self._flush()
+
+    def toggle_vietnamese(self) -> Action:
+        act = self._flush()
+        self.enabled = not self.enabled
+        app = self.ports.app.current_app()
+        if app:
+            self.config.app_modes[app] = self.enabled
+            self.ports.config.save(self.config)
+        return act
+
+    def _flush(self) -> Action:
+        """Chốt từ đang gõ dở trước khi đổi ngữ cảnh (không áp macro/khôi phục)."""
+        text = self.display
+        self.reset()
+        self.last = None
+        if self.mode is OutputMode.PREEDIT and text:
+            return Commit(text)
+        return PassThrough()
+
+    # ---------- xử lý phím
+    def process_key(self, ev: KeyEvent) -> Action:
+        if not self.enabled or self.field in DISABLED_FIELDS:
+            return PassThrough()
+        if ev.key in MODIFIER_KEYS:                 # Shift/Option nhấn riêng: không được làm mất từ đang gõ
+            return PassThrough()
+        if ev.ctrl or ev.alt or ev.meta or ev.key in NAV_KEYS:
+            self.cap_next = self._pending_end = False
+            self.last = None
+            return self._boundary_passthrough()
+        if ev.key == "Backspace":
+            return self._backspace()
+        if ev.key == "Escape":
+            return self._escape()
+        if ev.key == "Enter":
+            act = self._word_end(None)
+            self.cap_next, self._pending_end = self.config.auto_capitalize, False
+            return act
+        if ev.is_char and self._is_word_char(ev.key):
+            return self._letter(ev.key)
+        if ev.is_char:
+            return self._separator(ev.key)
+        return self._boundary_passthrough()
+
+    def _separator(self, ch: str) -> Action:
+        act = self._word_end(ch)
+        if ch in SENTENCE_END:
+            self._pending_end = True
+        elif ch.isspace():
+            if self._pending_end:
+                self.cap_next = self.config.auto_capitalize
+            self._pending_end = False
+        else:
+            self._pending_end = self.cap_next = False
+        return act
+
+    def _show(self, new: str, typed: str | None = None) -> Action:
+        old_out, self.word = self.display, new
+        new_out = self.display
+        if self.mode is OutputMode.PREEDIT:
+            return Preedit(new_out, len(new_out))
+        e = diff(old_out, new_out)
+        if typed is not None and e.delete_before == 0 and e.insert == typed:
+            return PassThrough()                    # chữ thường: để OS tự gõ, đỡ nháy
+        return Replace(e.delete_before, e.insert)
+
+    def _letter(self, key: str) -> Action:
+        ch = key
+        self.last = None
+        if not self.raw:
+            if self.cap_next:
+                ch = ch.upper()
+            self.cap_next = self._pending_end = False
+            self._adopt_previous_word()
+        self.raw.append(ch)
+        if self._composer is not None and self._composer.raw == self.raw[:-1]:
+            self._composer.push(ch)                         # đường nhanh: tăng dần
+        if len(self.raw) > MAX_RAW:
+            self.literal = True
+        return self._show(self._compute(), typed=ch if ch == key else None)
+
+    def _adopt_previous_word(self) -> None:
+        """Con trỏ đứng ngay sau 1 từ đã gõ: nạp lại từ đó để sửa tiếp (vd thêm dấu)."""
+        allowed = self.config.edit_previous_word
+        if self.profile.edit_previous_word is not None:
+            allowed = allowed and self.profile.edit_previous_word
+        if not allowed or self.mode is not OutputMode.REPLACE:
+            return
+        before = self.ports.surrounding.before_cursor(MAX_RAW + 1)
+        if not before:
+            return
+        i = len(before)
+        while i > 0 and (before[i - 1].isalpha() or unicodedata.combining(before[i - 1])):
+            i -= 1
+        on_screen = before[i:]
+        if not on_screen or self._out(on_screen) != on_screen:
+            return            # chữ trên màn hình khác dạng NFC/NFD đầu ra -> số ký tự xoá sẽ sai, bỏ qua
+        word = unicodedata.normalize("NFC", on_screen)
+        if len(word) > MAX_RAW // 2:
+            return
+        raw = rebuild(word, self.im, self.opt)
+        if raw:
+            self.raw, self.word, self.adopted = raw, word, (word, len(raw))
+
+    def _backspace(self) -> Action:
+        """Xoá 1 ký tự HIỂN THỊ (tiếng -> tiến), giữ dấu ở phần còn lại như UniKey/OpenKey."""
+        if not self.raw:
+            last, self.last = self.last, None
+            if (last and self.config.restore_after_space and self.mode is OutputMode.REPLACE
+                    and len(last[3]) == 1):
+                self.raw, self.word, self.literal = list(last[0]), last[1], last[2]
+                self.adopted = None
+            return PassThrough()                    # OS tự xoá dấu cách
+        target = self.word[:-1]
+        if not target:
+            act = self._show("")
+            self.reset()
+            return act
+        raw = None if self.literal else rebuild(target, self.im, self.opt)
+        self.adopted = None
+        if raw is not None:
+            self.raw, self.literal = raw, False
+        else:
+            self.raw, self.literal = list(target), True
+        return self._show(self._compute())
+
+    def _escape(self) -> Action:
+        """Esc: huỷ biến đổi, trả về đúng phím đã gõ."""
+        if not self.raw:
+            return PassThrough()
+        return self._finish("".join(self.raw), None)
+
+    def _word_end(self, sep: str | None) -> Action:
+        if not self.raw:
+            self.last = None
+            return PassThrough()
+        final = self._compute(final=True)
+        raw = "".join(self.raw)
+        macro = self._macro(self.word) or self._macro(raw) if self.config.macro_enabled else None
+        if macro:
+            final = macro
+        elif (self.config.auto_restore_english and not self.literal and final != raw
+              and self.ports.dictionary.is_english(raw.lower())
+              and not self.ports.dictionary.is_vietnamese(final.lower())):
+            final = raw                     # 'data' -> 'dât' -> 'data'; nhưng 'thí' (this) giữ nguyên
+        return self._finish(final, sep)
+
+    def _finish(self, final: str, sep: str | None) -> Action:
+        old_out = self.display
+        final_out = self._out(final)
+        if sep is not None and final == self.word:   # chỉ soft reset khi từ không bị macro/khôi phục đổi
+            self.last = (list(self.raw), self.word, self.literal, sep)
+        else:
+            self.last = None
+        self.reset()
+        if self.mode is OutputMode.PREEDIT:
+            if sep is None:
+                return Commit(final_out, pass_key=True)
+            return Commit(final_out + sep)
+        if final_out == old_out:
+            return PassThrough()
+        e = diff(old_out, final_out)
+        return Replace(e.delete_before, e.insert, pass_key=True)
+
+    def _boundary_passthrough(self) -> Action:
+        text = self.display
+        self.reset()
+        if self.mode is OutputMode.PREEDIT and text:
+            return Commit(text, pass_key=True)
+        return PassThrough()
+
+    def _macro(self, word: str) -> str | None:
+        m = self.config.macros.get(word.lower())
+        if m is None:
+            return None
+        if word.isupper() and len(word) > 1:
+            return m.upper()
+        if word[:1].isupper():
+            return m[:1].upper() + m[1:]
+        return m

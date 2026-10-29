@@ -1,0 +1,16 @@
+[package]
+name = "vfk-cli"
+description = "REPL gõ thử ViFastKey + chạy demo."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[[bin]]
+name = "vfk"
+path = "src/main.rs"
+
+[dependencies]
+vfk-engine = { workspace = true }
+vi-syllable = { workspace = true }
