@@ -67,6 +67,10 @@
 - Tách `VifastkeyState`/`ConfigStore`, status action Việt/Anh, config reload, surrounding guard,
   transaction barrier cho REPLACE và CTest; thêm C ABI `vfk_flush`, `vfk_display_text`,
   `vfk_set_output_mode`, `vfk_apply_config_json`, profile helpers.
+- Theo dõi program change, drop composition khi field chuyển sang password/URL/number, cache
+  text sau commit, giữ đúng thứ tự pass-key sau Replace, fallback config lỗi về mặc định.
+- CTest adapter: preedit/commit, reset/focus-out, password, surrounding lệch/selection, edit
+  previous word, replace mode, pass-key, emoji/UTF-16 và config lỗi.
 
 ### Chrome extension
 

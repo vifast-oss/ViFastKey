@@ -21,8 +21,9 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
   - Android: ✅ IME Java + JNI, build APK + test emulator (`tieengs` → `tiếng`); còn polish/Play Store.
   - iOS: ✅ host + keyboard extension Swift, build simulator + engine test; còn test bật extension/device signing.
 - **Fcitx5 production hardening** (bài học từ Areca, xem `docs/research/08-areca-ime.md`):
-  field kind/password, commit trước reset, xác minh surrounding trước `Replace`, transaction
-  barrier cho rewrite, AppProfile timing/ACK, test adapter bằng `InputContext` giả lập.
+  ✅ field kind/password, commit trước reset, xác minh surrounding trước `Replace`, transaction
+  barrier, AppProfile timing/ACK, config reload, status action, CTest adapter. Còn test Wayland
+  desktop/app thật; thêm uinput/Libei fallback chỉ khi gặp app không nhận surrounding/forwardKey.
 - **Tích hợp bảng mã vào đầu ra engine** (hiện là module/CLI/FFI riêng): cần định nghĩa
   đơn vị xoá byte/UTF-16 cho từng adapter và test trên app thật.
 - **Sửa từ đã gõ trong PREEDIT**: ✅ engine trả `Replace` + adapter dùng surrounding text;
