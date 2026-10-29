@@ -1,0 +1,92 @@
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cli:
+    name: CLI (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15, windows-latest]
+    defaults:
+      run:
+        shell: bash
+        working-directory: rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build release binaries
+        run: |
+          cargo build --release -p vfk-cli -p vfk-charset -p vfk-suggest-cli -p vfk-ffi
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cargo build --release -p vfk-windows
+          fi
+      - name: Package
+        run: |
+          mkdir -p dist
+          cp target/release/vfk-cli* target/release/vfk-charset* target/release/vfk-suggest* dist/ 2>/dev/null || true
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            cp target/release/vfk-windows.exe dist/ 2>/dev/null || true
+          fi
+          cp crates/vfk-ffi/include/vifastkey.h dist/
+          cp target/release/libvifastkey.a target/release/libvifastkey.dylib \
+             target/release/libvifastkey.so target/release/vifastkey.lib \
+             target/release/vifastkey.dll dist/ 2>/dev/null || true
+          cp README.md dist/ 2>/dev/null || true
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            (cd dist && 7z a ../vifastkey-windows.zip .)
+          else
+            tar -czf "vifastkey-$(echo '${{ runner.os }}' | tr '[:upper:]' '[:lower:]').tar.gz" -C dist .
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vifastkey-${{ runner.os }}
+          path: |
+            rust/vifastkey-*.tar.gz
+            rust/vifastkey-*.zip
+          if-no-files-found: error
+
+  wasm:
+    name: WASM package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Build wasm-bindgen package
+        run: |
+          cargo install wasm-bindgen-cli --version 0.2.129 --locked
+          cd rust
+          cargo build --release -p vfk-wasm --target wasm32-unknown-unknown
+          wasm-bindgen --target web --out-dir ../web/pkg --out-name vfk_wasm \
+            target/wasm32-unknown-unknown/release/vfk_wasm.wasm
+          cd ../web
+          zip -r ../vifastkey-wasm.zip pkg index.html app.js style.css
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vifastkey-WASM
+          path: vifastkey-wasm.zip
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [cli, wasm]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          generate_release_notes: true

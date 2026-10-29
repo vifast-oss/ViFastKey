@@ -119,6 +119,8 @@ Adapter IMK thật, gọi engine Rust qua C ABI:
 ./macos/doctor.sh         # chẩn đoán permission/input source
 ./macos/package.sh        # đóng gói universal2 (arm64 + x86_64)
 ./linux/ibus/install.sh   # cài IBus engine trên Linux
+# Release: tag v* -> .github/workflows/release.yml (CLI/WASM/header/lib)
+# Web:     .github/workflows/pages.yml (GitHub Pages)
 ```
 
 Chi tiết cài, menu, config và giới hạn: `macos/README.md`. Adapter dùng preedit, app profile,

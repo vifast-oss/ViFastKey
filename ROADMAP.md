@@ -43,10 +43,11 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
 - `WordState.letters` ✅ `ArrayVec`; còn `Composer.states`/bitset/cache.
 - Bitset cho `locked`, buffer `[char; 24]` cho `toneless_lower`, cache snapshot theo tiền tố raw.
 - Fuzz hai bản Python/Rust bằng cùng seed, thêm property test cho mọi `InputMethodSpec`.
-- Đo benchmark tự động trong CI (ngưỡng µs/phím) và theo dõi hồi quy — chưa làm ngưỡng CI.
+- Benchmark guard ✅ CI Ubuntu (`rust/tools/bench_guard.py`, ngưỡng rộng).
 
 ## Đóng gói
 
-- Release binary CLI cho macOS/Linux/Windows, WASM npm package, C header + staticlib.
+- Release binary CLI cho macOS/Linux/Windows ✅ workflow `release.yml` (CLI + WASM + header + lib);
+  npm package chính thức còn lại.
 - UniFFI cho Swift/Kotlin.
-- GitHub Pages cho `web/` và trang tài liệu API.
+- GitHub Pages cho `web/` ✅ `pages.yml` (cần bật Pages); trang tài liệu API còn lại.
