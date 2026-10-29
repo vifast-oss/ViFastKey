@@ -33,8 +33,10 @@ public:
               return new VifastkeyState(instance_->eventLoop(), &ic, config_);
           }),
           toggleAction_(std::make_unique<SimpleAction>()) {
-        instance_->inputContextManager().registerProperty("vifastkey-state",
-                                                         &factory_);
+        if (!instance_->inputContextManager().registerProperty(
+                "vifastkey-state", &factory_)) {
+            FCITX_ERROR() << "vifastkey: cannot register input context state";
+        }
         toggleAction_->setIcon("input-keyboard");
         toggleAction_->setShortText("Việt");
         toggleAction_->setLongText("ViFastKey: bật/tắt tiếng Việt");
