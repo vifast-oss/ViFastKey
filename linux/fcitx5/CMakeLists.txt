@@ -20,5 +20,5 @@ if(UNIX AND NOT APPLE)
 endif()
 
 install(TARGETS vifastkey LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}/fcitx5")
-install(FILES vifastkey-addon.conf DESTINATION "${CMAKE_INSTALL_DATADIR}/fcitx5/addon")
+install(FILES vifastkey-addon.conf DESTINATION "${CMAKE_INSTALL_DATADIR}/fcitx5/addon" RENAME vifastkey.conf)
 install(FILES vifastkey.conf DESTINATION "${CMAKE_INSTALL_DATADIR}/fcitx5/inputmethod")
