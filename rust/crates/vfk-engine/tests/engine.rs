@@ -420,6 +420,17 @@ fn auto_capitalize_handles_ellipsis_quotes_and_newline() {
 }
 
 #[test]
+fn app_id_normalization_and_aliases() {
+    assert_eq!(normalize_app_id(Some("/usr/bin/kitty")), "kitty");
+    assert_eq!(normalize_app_id(Some("C:\\Program Files\\Google\\Chrome.exe")), "chrome");
+    assert_eq!(normalize_app_id(Some("com.google.Chrome")), "chrome");
+    assert_eq!(normalize_app_id(Some("com.microsoft.VSCode")), "code");
+    let c = Config::default();
+    assert!(resolve_profile(&c, Some("com.google.Chrome")).wait_ack);
+    assert_eq!(resolve_profile(&c, Some("com.microsoft.VSCode")).backspace_delay_ms, 3);
+}
+
+#[test]
 fn app_profile_overrides_method_tone_and_spell() {
     let mut profiles = default_app_profiles();
     profiles.insert(

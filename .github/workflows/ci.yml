@@ -76,6 +76,21 @@ jobs:
       - run: cargo test --workspace
       - run: cargo run -p vfk-cli -- --demo
 
+  macos-adapter:
+    name: macOS IMK adapter
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build app + self-test
+        run: ./macos/build.sh
+      - name: Upload app bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ViFastKey-macos-app
+          path: macos/build/ViFastKey.app
+          if-no-files-found: error
+
   wasm:
     name: WASM + web build
     runs-on: ubuntu-latest

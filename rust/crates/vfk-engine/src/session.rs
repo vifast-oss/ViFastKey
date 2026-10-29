@@ -10,7 +10,7 @@ use unicode_normalization::UnicodeNormalization;
 use vfk_core::{diff, rebuild, Composer, InputMethodSpec, TransformOptions, MAX_RAW, TELEX};
 use vi_syllable::upper;
 
-use crate::ports::{resolve_profile, AppProfile, Config, OutputMode, Ports, UnicodeForm};
+use crate::ports::{normalize_app_id, resolve_profile, AppProfile, Config, OutputMode, Ports, UnicodeForm};
 
 // ---------------------------------------------------------------- input / output
 
@@ -370,14 +370,15 @@ impl ImeSession {
         self.cap_next = false;
         self.pending_end = false;
         self.profile = resolve_profile(&self.config, app_id);
-        let key = app_id.unwrap_or("");
+        let key = normalize_app_id(app_id);
         let c = &self.config;
-        self.enabled = if app_id.is_some_and(|a| !a.is_empty() && c.excluded_apps.iter().any(|x| x == a)) {
+        let excluded = |a: &String| normalize_app_id(Some(a)) == key;
+        self.enabled = if !key.is_empty() && c.excluded_apps.iter().any(excluded) {
             false
-        } else if let (Some(v), false) = (self.profile.vietnamese, c.app_modes.contains_key(key)) {
+        } else if let (Some(v), false) = (self.profile.vietnamese, c.app_modes.contains_key(&key)) {
             v
         } else {
-            c.app_modes.get(key).copied().unwrap_or(c.default_vietnamese)
+            c.app_modes.get(&key).copied().unwrap_or(c.default_vietnamese)
         };
         act
     }
@@ -398,7 +399,8 @@ impl ImeSession {
     pub fn toggle_vietnamese(&mut self) -> Action {
         let act = self.flush();
         self.enabled = !self.enabled;
-        if let Some(app) = self.ports.app.current_app() {
+        let app = normalize_app_id(self.ports.app.current_app().as_deref());
+        if !app.is_empty() {
             self.config.app_modes.insert(app, self.enabled);
             self.ports.config.save(&self.config);
         }

@@ -11,6 +11,7 @@ Bản tổng hợp và quyết định triển khai nằm ở [`../IME_FEATURE_R
 | `04-linux.md` | ibus-bamboo, fcitx5-lotus, Bamboo Viet, ibus-unikey, fcitx5-unikey, Telebit: output mode, Wayland, ACK |
 | `05-web-mobile-ai.md` | AVIM, v7, Funput, VKey, Bamboo Viet: browser, mobile, AI, config |
 | `06-vnkey-deep.md` | Phân tích riêng VnKey: engine, 4 adapter, charset, config, lỗi và bài học |
+| `07-vifasttts.md` | ViFastTts: engineering, desktop/macOS, test/release, bài học cho IMK |
 
 ## Lưu ý giấy phép
 

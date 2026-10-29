@@ -43,6 +43,13 @@
 - Ví dụ `Đắk Lắk` tự bật tuỳ chọn cần thiết.
 - Công cụ chuyển bảng mã + hiển thị hex cho bảng một byte.
 
+### macOS adapter
+
+- Thêm IMK input method thật (`macos/`): Swift controller → Rust C ABI → ActionApplier.
+- Preedit native, menu Telex/Simple Telex/VNI, toggle Việt/Anh, config JSON atomic + backup.
+- Build/install/doctor/self-test; app id normalization cho bundle id.
+- Ad-hoc signing để test local; cần Developer ID/notarize/universal2 khi phát hành.
+
 ### Hạ tầng
 
 - `python/pyproject.toml`, cài được bằng `pip install -e ".[dev]"`, có entry point `vfk`.

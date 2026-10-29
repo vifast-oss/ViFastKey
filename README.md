@@ -31,7 +31,7 @@ ViFastKey/
 │   ├── vfk_ffi/                # API phẳng kiểu FFI
 │   ├── adapters/               # port mẫu, từ điển, ô nhập giả lập
 │   ├── apps/                   # CLI demo + REPL + vfk-charset
-│   ├── tests/                  # 587 test, golden, corpus
+│   ├── tests/                  # 588 test, golden, corpus
 │   ├── tools/                  # export conformance, bench
 │   ├── conformance/            # core.jsonl + engine.jsonl (oracle cho Rust)
 │   ├── vfk_core/data/          # bảng mã legacy (bamboo-core MIT)
@@ -52,6 +52,7 @@ ViFastKey/
 │   ├── tools/sync_conformance.sh
 │   └── README.md
 ├── docs/                       # nghiên cứu, hợp đồng, adapter, config
+├── macos/                      # adapter IMK thật (Swift + C ABI)
 ├── web/                        # landing page + playground
 ├── design/                     # token thiết kế
 └── resources/                  # brand + font
@@ -72,7 +73,7 @@ Yêu cầu Python 3.10+. Có thể cài như package (kèm `pytest`/`ruff`):
 ```bash
 cd python
 pip install -e ".[dev]"
-python -m pytest -q               # 587 test
+python -m pytest -q               # 588 test
 python -m tools.export_conformance
 python -m tools.bench
 python -m apps.vfk_cli --demo
@@ -96,6 +97,19 @@ cargo run -p vfk-cli
 cargo run -p vfk-cli -- --method vni --tone new --text "Vie65t Nam"
 cargo run -p vfk-charset -- --to tcvn3 --text "Tiếng Việt"
 ```
+
+## macOS input method
+
+Adapter IMK thật, gọi engine Rust qua C ABI:
+
+```bash
+./macos/build.sh          # build app + self-test
+./macos/install.sh        # cài vào ~/Library/Input Methods
+./macos/doctor.sh         # chẩn đoán permission/input source
+```
+
+Chi tiết cài, menu, config và giới hạn: `macos/README.md`. Adapter dùng preedit, app profile,
+menu Telex/VNI, macro undo; chưa ký Developer ID/notarize nên bản phát hành cần bổ sung.
 
 ## Web demo
 
@@ -134,11 +148,13 @@ cargo test --workspace
 - `python/EDGE_CASES.md` — tổng hợp edge case từ các dự án IME khác.
 - `rust/README.md` — kiến trúc crate, khác biệt có chủ đích, C ABI.
 - `docs/IME_FEATURE_RESEARCH.md` — tổng hợp 20 dự án IME, ma trận tính năng, quyết định.
-- `docs/research/` — 6 báo cáo phân tích chi tiết (SKey/UniKey, Rust engines, desktop, Linux, web/mobile, VnKey).
+- `docs/research/` — 7 báo cáo phân tích chi tiết (+ ViFastTts).
+- `docs/VIFASTTTS_LESSONS.md` — bài học kỹ thuật từ ViFastTts cho adapter macOS.
 - `docs/COMPATIBILITY.md` — hợp đồng hành vi (tone, undo, đ, VNI số, charset, Action).
 - `docs/ADAPTER_GUIDE.md` — hợp đồng viết adapter macOS/Windows/Linux.
 - `docs/CONFIG.md` — toàn bộ trường config và app profile.
 - `docs/IME_TEST_VECTORS.md` — bộ ví dụ hành vi dùng để port/regression.
+- `macos/README.md` — build/cài/test adapter macOS IMK.
 - `THIRD_PARTY_NOTICES.md` — ghi công bảng mã bamboo-core MIT.
 - `CONTRIBUTING.md` — quy trình sửa hành vi, chạy test, đồng bộ conformance.
 - `CHANGELOG.md` — thay đổi theo phiên bản.

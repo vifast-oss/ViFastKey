@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key><string>vi</string>
+  <key>CFBundleDisplayName</key><string>ViFastKey</string>
+  <key>CFBundleExecutable</key><string>ViFastKeyIM</string>
+  <key>CFBundleIdentifier</key><string>app.vifastkey.inputmethod.ViFastKey</string>
+  <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+  <key>CFBundleName</key><string>ViFastKey</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleShortVersionString</key><string>0.4.0</string>
+  <key>CFBundleSignature</key><string>????</string>
+  <key>CFBundleSupportedPlatforms</key><array><string>MacOSX</string></array>
+  <key>CFBundleVersion</key><string>1</string>
+  <key>LSBackgroundOnly</key><string>1</string>
+  <key>LSUIElement</key><true/>
+  <key>LSMinimumSystemVersion</key><string>12.0</string>
+  <key>NSPrincipalClass</key><string>NSApplication</string>
+  <key>NSSupportsSuddenTermination</key><true/>
+  <key>TISInputSourceID</key><string>app.vifastkey.inputmethod.ViFastKey</string>
+  <key>TISIntendedLanguage</key><string>vi</string>
+  <key>TISIconIsTemplate</key><true/>
+  <key>tsInputMethodCharacterRepertoireKey</key><array><string>Latn</string></array>
+  <key>tsInputMethodIconFileKey</key><string>ViFastKey.tiff</string>
+  <key>InputMethodConnectionName</key><string>ViFastKey_Connection</string>
+  <key>InputMethodServerControllerClass</key><string>ViFastKeyInputController</string>
+  <key>InputMethodServerDelegateClass</key><string>ViFastKeyInputController</string>
+</dict>
+</plist>

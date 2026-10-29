@@ -5,7 +5,7 @@
 #   make web         dựng WASM + asset cho web demo
 PYTHON ?= python3
 
-.PHONY: test test-python test-rust check conformance web clean
+.PHONY: test test-python test-rust check conformance web macos clean
 
 test: test-python test-rust
 
@@ -28,6 +28,9 @@ conformance:
 
 web:
 	./web/build.sh
+
+macos:
+	./macos/build.sh
 
 clean:
 	cd python && rm -rf .pytest_cache __pycache__ */__pycache__ *.egg-info build dist

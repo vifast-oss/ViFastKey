@@ -54,6 +54,20 @@ pub struct AppProfile {
     pub charset: Option<String>,
 }
 
+pub fn app_aliases() -> HashMap<&'static str, &'static str> {
+    HashMap::from([
+        ("google-chrome", "chrome"),
+        ("google-chrome-stable", "chrome"),
+        ("google-chrome-beta", "chrome"),
+        ("microsoft-edge", "msedge"),
+        ("microsoft-edge-stable", "msedge"),
+        ("vscode", "code"),
+        ("code-url-handler", "code"),
+        ("soffice.bin", "libreoffice"),
+        ("gnome-terminal-server", "gnome-terminal"),
+    ])
+}
+
 pub fn default_app_profiles() -> HashMap<String, AppProfile> {
     let term = AppProfile {
         output_mode: Some(OutputMode::Preedit),
@@ -196,16 +210,31 @@ pub struct Ports {
     pub dictionary: Box<dyn Dictionary>,
 }
 
-/// So khớp không phân biệt hoa thường, theo tên tiến trình rút gọn (bỏ đường dẫn, .exe, .app).
+/// Chuẩn hoá app id: bỏ path/.exe/.app/.desktop, lowercase, lấy segment cuối của bundle id.
+pub fn normalize_app_id(app_id: Option<&str>) -> String {
+    let Some(app) = app_id else { return String::new() };
+    let mut key = app.trim().to_lowercase().replace('\\', "/");
+    key = key.rsplit('/').next().unwrap_or("").to_string();
+    for suffix in [".exe", ".app", ".desktop"] {
+        if let Some(stripped) = key.strip_suffix(suffix) {
+            key = stripped.to_string();
+        }
+    }
+    if let Some((head, _)) = key.split_once(':') {
+        key = head.to_string();
+    }
+    let head = key.split('.').next().unwrap_or("");
+    if matches!(head, "com" | "org" | "io" | "net" | "app") {
+        key = key.rsplit('.').next().unwrap_or("").to_string();
+    }
+    app_aliases().get(key.as_str()).map(|v| (*v).to_string()).unwrap_or(key)
+}
+
+/// So khớp app id đã chuẩn hoá; fallback theo segment cuối của bundle id.
 pub fn resolve_profile(config: &Config, app_id: Option<&str>) -> AppProfile {
-    let Some(app) = app_id else { return AppProfile::default() };
-    if app.is_empty() {
+    let key = normalize_app_id(app_id);
+    if key.is_empty() {
         return AppProfile::default();
     }
-    let lo = app.to_lowercase();
-    let k = lo.rsplit('/').next().unwrap_or("");
-    let k = k.rsplit('\\').next().unwrap_or("");
-    let k = k.strip_suffix(".exe").unwrap_or(k);
-    let k = k.strip_suffix(".app").unwrap_or(k);
-    config.app_profiles.get(k).cloned().unwrap_or_default()
+    config.app_profiles.get(&key).cloned().unwrap_or_default()
 }

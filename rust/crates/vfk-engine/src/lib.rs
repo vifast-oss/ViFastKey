@@ -9,7 +9,7 @@ pub mod session;
 pub mod testing;
 
 pub use ports::{
-    default_app_profiles, resolve_profile, AppContext, AppProfile, Config, ConfigStore, Dictionary,
-    OutputMode, Ports, SurroundingText, UnicodeForm, CONFIG_SCHEMA_VERSION,
+    default_app_profiles, normalize_app_id, resolve_profile, AppContext, AppProfile, Config, ConfigStore,
+    Dictionary, OutputMode, Ports, SurroundingText, UnicodeForm, CONFIG_SCHEMA_VERSION,
 };
 pub use session::{Action, FieldKind, ImeSession, Key, KeyEvent};

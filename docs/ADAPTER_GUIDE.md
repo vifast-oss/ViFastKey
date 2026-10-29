@@ -116,10 +116,18 @@ Thứ tự ưu tiên đề xuất (từ cao xuống thấp):
 ## 11. Ghi chú nền tảng
 
 ### macOS
-- IMK nếu muốn preedit chuẩn; CGEventTap nếu mô phỏng UniKey.
-- Dùng marker cho synthetic event, ghim PID đích, serial queue cho backspace chậm.
-- Watchdog event tap; secure input → tắt IME.
-- Accessibility permission cần ký code ổn định.
+- **Đã có adapter IMK**: [`../macos/README.md`](../macos/README.md). IMK là mặc định vì
+  preedit native, không cần Accessibility; CGEventTap để sau như chế độ tương thích.
+- Controller nhận `NSEvent`, gọi `VfkEngine` (C ABI), áp `Preedit/Commit/Pass`.
+- `handleEvent` đã map Backspace/Enter/Tab/Esc/arrows; Escape trả raw và không forward.
+- App id lấy từ `NSWorkspace.frontmostApplication`; `normalize_app_id` xử lý bundle id
+  (`com.google.Chrome` → `chrome`) và alias (`vscode` → `code`).
+- Config atomic + backup; menu đổi Telex/VNI, toggle, reload.
+- Bản phát hành cần Developer ID + notarize + universal2; ad-hoc chỉ để test local.
+- Nếu app không hỗ trợ IMK: fallback CGEventTap (chưa triển khai), cần Input Monitoring/
+  Accessibility và có nguy cơ race backspace.
+- Secure input: IMK thường tự pass; adapter cần kiểm tra `IsSecureEventInputEnabled` nếu
+  thêm event tap; không log nội dung.
 
 ### Windows
 - TSF cho app hiện đại; WH_KEYBOARD_LL + SendInput cho app không hỗ trợ TSF.

@@ -29,6 +29,18 @@ class AppProfile:
     charset: str | None = None           # gợi ý bảng mã cho adapter
 
 
+APP_ALIASES = {
+    "google-chrome": "chrome",
+    "google-chrome-stable": "chrome",
+    "google-chrome-beta": "chrome",
+    "microsoft-edge": "msedge",
+    "microsoft-edge-stable": "msedge",
+    "vscode": "code",
+    "code-url-handler": "code",
+    "soffice.bin": "libreoffice",
+    "gnome-terminal-server": "gnome-terminal",
+}
+
 DEFAULT_APP_PROFILES: dict[str, AppProfile] = {
     # terminal: xoá + chèn tách rời dễ hỏng -> preedit commit nguyên tử
     "terminal": AppProfile(output_mode="preedit", edit_previous_word=False),
@@ -135,9 +147,24 @@ def config_from_dict(d: dict) -> Config:
     return Config(**d)
 
 
-def resolve_profile(config: Config, app_id: str | None) -> AppProfile:
-    """So khớp không phân biệt hoa thường, theo tên tiến trình rút gọn (bỏ .exe, đường dẫn)."""
+def normalize_app_id(app_id: str | None) -> str:
+    """Chuẩn hoá app id: bỏ path/.exe/.app/.desktop, lowercase, lấy segment cuối của bundle id."""
     if not app_id:
+        return ""
+    key = app_id.strip().lower().replace("\\", "/").rsplit("/", 1)[-1]
+    for suffix in (".exe", ".app", ".desktop"):
+        if key.endswith(suffix):
+            key = key[: -len(suffix)]
+    if ":" in key:                                    # WM_CLASS "instance:class"
+        key = key.split(":", 1)[0]
+    if "." in key and key.split(".")[0] in {"com", "org", "io", "net", "app"}:
+        key = key.rsplit(".", 1)[-1]
+    return APP_ALIASES.get(key, key)
+
+
+def resolve_profile(config: Config, app_id: str | None) -> AppProfile:
+    """So khớp app id đã chuẩn hoá; fallback theo segment cuối của bundle id."""
+    key = normalize_app_id(app_id)
+    if not key:
         return AppProfile()
-    key = app_id.lower().rsplit("/", 1)[-1].rsplit("\\", 1)[-1].removesuffix(".exe").removesuffix(".app")
     return config.app_profiles.get(key, AppProfile())

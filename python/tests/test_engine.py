@@ -407,6 +407,19 @@ def test_app_profile_overrides_method_tone_and_spell():
     assert f.text == "hoà tiếng "
 
 
+def test_app_id_normalization_and_aliases():
+    from vfk_engine import resolve_profile
+    from vfk_engine.ports import normalize_app_id
+    c = Config()
+    assert normalize_app_id("/usr/bin/kitty") == "kitty"
+    assert normalize_app_id("C:\\Program Files\\Google\\Chrome.exe") == "chrome"
+    assert normalize_app_id("com.google.Chrome") == "chrome"
+    assert normalize_app_id("com.microsoft.VSCode") == "code"
+    assert resolve_profile(c, "com.google.Chrome").wait_ack
+    assert resolve_profile(c, "com.microsoft.VSCode").backspace_delay_ms == 3
+    assert resolve_profile(c, "org.mozilla.firefox").edit_previous_word is False
+
+
 def test_app_profiles():
     from vfk_engine import resolve_profile
     c = Config()

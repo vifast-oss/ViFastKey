@@ -13,7 +13,8 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
 ## Ưu tiên cao
 
 - **Adapter thật** cho từng nền tảng:
-  - macOS: IMK (Swift) gọi `vifastkey.h` hoặc dùng preedit.
+  - macOS: ✅ IMK (Swift) đã có trong `macos/`; còn Developer ID/notarize/universal2 và
+    event-tap fallback.
   - Windows: TSF (C++) hoặc hook + replace.
   - Linux: Fcitx5/IBus (C++), ưu tiên preedit cho terminal.
   - Android/iOS: bàn phím riêng dùng C ABI/UniFFI, xử lý preedit và surrounding text.

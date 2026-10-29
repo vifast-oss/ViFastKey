@@ -12,7 +12,7 @@ from enum import Enum
 
 from vfk_core import INPUT_METHODS, MAX_RAW, TELEX, Composer, TransformOptions, diff, rebuild
 
-from .ports import Config, Ports, resolve_profile
+from .ports import Config, Ports, normalize_app_id, resolve_profile
 
 
 # ---------------------------------------------------------------- input / output
@@ -164,13 +164,14 @@ class ImeSession:
         act = self._flush()
         self.cap_next = self._pending_end = False
         c = self.config
+        key = normalize_app_id(app_id)
         self.profile = resolve_profile(c, app_id)
-        if app_id and app_id in c.excluded_apps:
+        if key and key in {normalize_app_id(a) for a in c.excluded_apps}:
             self.enabled = False
-        elif self.profile.vietnamese is not None and (app_id or "") not in c.app_modes:
+        elif self.profile.vietnamese is not None and key not in c.app_modes:
             self.enabled = self.profile.vietnamese
         else:
-            self.enabled = c.app_modes.get(app_id or "", c.default_vietnamese)
+            self.enabled = c.app_modes.get(key, c.default_vietnamese)
         return act
 
     def set_field_kind(self, kind: FieldKind) -> Action:
@@ -186,7 +187,7 @@ class ImeSession:
     def toggle_vietnamese(self) -> Action:
         act = self._flush()
         self.enabled = not self.enabled
-        app = self.ports.app.current_app()
+        app = normalize_app_id(self.ports.app.current_app())
         if app:
             self.config.app_modes[app] = self.enabled
             self.ports.config.save(self.config)
