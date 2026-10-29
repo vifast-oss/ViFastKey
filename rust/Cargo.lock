@@ -301,6 +301,7 @@ dependencies = [
  "jni",
  "serde_json",
  "vfk-engine",
+ "vfk-suggest",
 ]
 
 [[package]]

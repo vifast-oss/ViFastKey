@@ -99,8 +99,9 @@ final class ViFastKeyKeyboard extends LinearLayout {
         if (suggestions == null) return;
         suggestions.removeAllViews();
         if (values == null || values.isEmpty()) {
-            suggestionScroll.setVisibility(GONE);
-            suggestions.setVisibility(GONE);
+            // Giữ chiều cao cố định để bàn phím không nhảy khi gợi ý xuất hiện.
+            suggestionScroll.setVisibility(INVISIBLE);
+            suggestions.setVisibility(INVISIBLE);
             return;
         }
         suggestionScroll.setVisibility(VISIBLE);
@@ -194,7 +195,7 @@ final class ViFastKeyKeyboard extends LinearLayout {
     private void addSuggestionsBar() {
         suggestionScroll = new HorizontalScrollView(context);
         suggestionScroll.setHorizontalScrollBarEnabled(false);
-        suggestionScroll.setVisibility(GONE);
+        suggestionScroll.setVisibility(INVISIBLE);
         suggestions = new LinearLayout(context);
         suggestions.setOrientation(HORIZONTAL);
         suggestions.setGravity(Gravity.CENTER_VERTICAL);

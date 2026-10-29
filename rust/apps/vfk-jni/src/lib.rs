@@ -45,6 +45,7 @@ struct Handle {
     session: ImeSession,
     app: Rc<RefCell<Option<String>>>,
     surrounding: Rc<RefCell<Option<String>>>,
+    config: Rc<RefCell<Config>>,
 }
 
 fn action_json(action: &Action) -> serde_json::Value {
@@ -78,12 +79,12 @@ pub extern "system" fn Java_app_vifastkey_NativeEngine_create(_env: JNIEnv, _cla
     let surrounding = Rc::new(RefCell::new(None::<String>));
     let config = Rc::new(RefCell::new(Config::default()));
     let ports = Ports {
-        config: Box::new(SharedConfig(config)),
+        config: Box::new(SharedConfig(config.clone())),
         app: Box::new(SharedApp(app.clone())),
         surrounding: Box::new(SharedSurrounding(surrounding.clone())),
         dictionary: Box::new(WordListDictionary::default()),
     };
-    let handle = Handle { session: ImeSession::new(ports, OutputMode::Preedit), app, surrounding };
+    let handle = Handle { session: ImeSession::new(ports, OutputMode::Preedit), app, surrounding, config };
     Box::into_raw(Box::new(handle)) as jlong
 }
 
@@ -94,6 +95,51 @@ pub extern "system" fn Java_app_vifastkey_NativeEngine_free(_env: JNIEnv, _class
             drop(Box::from_raw(ptr as *mut Handle));
         }
     }
+}
+
+#[no_mangle]
+pub extern "system" fn Java_app_vifastkey_NativeEngine_setConfig(
+    mut env: JNIEnv,
+    _class: JClass,
+    ptr: jlong,
+    config_json: JString,
+) -> jstring {
+    let Some(h) = handle(ptr) else {
+        return std::ptr::null_mut();
+    };
+    let text: String = env.get_string(&config_json).map(|s| s.into()).unwrap_or_default();
+    let Some(config) = serde_json::from_str::<Config>(&text).ok() else {
+        return to_jstring(&mut env, json!({"kind": "pass"}));
+    };
+    *h.config.borrow_mut() = config;
+    let action = h.session.reload_config();
+    to_jstring(&mut env, action_json(&action))
+}
+
+#[no_mangle]
+pub extern "system" fn Java_app_vifastkey_NativeEngine_display(
+    mut env: JNIEnv,
+    _class: JClass,
+    ptr: jlong,
+) -> jstring {
+    let Some(h) = handle(ptr) else {
+        return std::ptr::null_mut();
+    };
+    let text = h.session.display();
+    env.new_string(text).map(|s| s.into_raw()).unwrap_or(std::ptr::null_mut())
+}
+
+#[no_mangle]
+pub extern "system" fn Java_app_vifastkey_NativeEngine_suggest(
+    mut env: JNIEnv,
+    _class: JClass,
+    _ptr: jlong,
+    prefix: JString,
+) -> jstring {
+    let prefix: String = env.get_string(&prefix).map(|s| s.into()).unwrap_or_default();
+    let values = vfk_suggest::suggest(prefix.trim(), 6);
+    let json = serde_json::to_string(&values).unwrap_or_else(|_| "[]".to_string());
+    env.new_string(json).map(|s| s.into_raw()).unwrap_or(std::ptr::null_mut())
 }
 
 #[no_mangle]
@@ -175,6 +221,15 @@ pub extern "system" fn Java_app_vifastkey_NativeEngine_toggle(
     };
     let action = h.session.toggle_vietnamese();
     to_jstring(&mut env, action_json(&action))
+}
+
+#[no_mangle]
+pub extern "system" fn Java_app_vifastkey_NativeEngine_isEnabled(
+    _env: JNIEnv,
+    _class: JClass,
+    ptr: jlong,
+) -> jboolean {
+    handle(ptr).map(|h| if h.session.is_enabled() { 1 } else { 0 }).unwrap_or(0)
 }
 
 #[no_mangle]
