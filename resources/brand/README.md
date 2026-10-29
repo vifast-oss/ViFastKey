@@ -19,7 +19,8 @@ Logo chính thức của dự án. Tên hiển thị luôn viết **ViFastKey** 
 | `site.webmanifest` | manifest PWA |
 
 Web dùng PNG cho lockup để font không bị lệch giữa macOS/Windows/Linux; SVG vẫn là
-nguồn thiết kế. Icon dùng PNG cho app/favicon, SVG cho web.
+nguồn thiết kế. Icon dùng PNG cho app/favicon, SVG cho web. `web/build.sh` copy các
+file cần thiết sang `web/brand/` và `web/fonts/` trước khi deploy tĩnh.
 
 ## Màu
 

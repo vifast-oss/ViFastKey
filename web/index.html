@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ViFastKey — Bộ gõ tiếng Việt nhỏ, nhanh, thuần logic</title>
+  <meta name="description" content="ViFastKey là bộ gõ tiếng Việt Telex, Simple Telex và VNI: lõi Rust nhỏ, chạy local, có C ABI và WASM. Gõ thử ngay trong trình duyệt.">
+  <meta name="theme-color" content="#FFF8EC">
+  <link rel="icon" href="brand/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="brand/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="brand/favicon-16.png">
+  <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+  <link rel="manifest" href="brand/site.webmanifest">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="ViFastKey — Bộ gõ tiếng Việt">
+  <meta property="og:description" content="Telex, Simple Telex, VNI. Lõi Rust nhỏ, chạy local, có C ABI và WASM.">
+  <meta property="og:image" content="brand/og-image.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="topline" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="#" aria-label="ViFastKey — về đầu trang">
+        <img src="brand/vifastkey-icon-192.png" width="40" height="40" alt="">
+        <span class="brand-word"><span class="red">Vi</span><em>Fast</em><span class="red">Key</span></span>
+      </a>
+      <nav class="nav" aria-label="Điều hướng chính">
+        <a href="#go-thu">Gõ thử</a>
+        <a href="#tinh-nang">Tính năng</a>
+        <a href="#kien-truc">Kiến trúc</a>
+        <a href="#tai-ve">Tải về</a>
+      </nav>
+      <a class="ghost-btn" href="https://github.com/dvchd/ViFastKey" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 .7a11.3 11.3 0 0 0-3.57 22.02c.57.1.78-.25.78-.55v-2.13c-3.18.69-3.85-1.35-3.85-1.35-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.33.95.1-.74.4-1.24.72-1.53-2.54-.29-5.21-1.27-5.21-5.65 0-1.25.45-2.27 1.18-3.07-.12-.29-.51-1.45.11-3.02 0 0 .96-.31 3.15 1.17a10.9 10.9 0 0 1 5.74 0c2.18-1.48 3.14-1.17 3.14-1.17.63 1.57.24 2.73.12 3.02.74.8 1.18 1.82 1.18 3.07 0 4.39-2.68 5.35-5.23 5.64.41.35.77 1.05.77 2.12v3.14c0 .3.2.66.79.55A11.3 11.3 0 0 0 12 .7Z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero wrap">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="spark">★</span> Bộ gõ tiếng Việt · mã nguồn mở</div>
+        <h1>Gõ tiếng Việt,<br><span class="mark">mượt như ý.</span></h1>
+        <p class="lede">Telex, Simple Telex và VNI trên một lõi Rust nhỏ, thuần logic. Không mạng, không tài khoản, không dữ liệu rời khỏi máy.</p>
+        <div class="hero-actions">
+          <a class="primary-btn" href="#go-thu">Gõ thử ngay</a>
+          <a class="text-btn" href="https://github.com/dvchd/ViFastKey" target="_blank" rel="noopener">Xem mã nguồn <span aria-hidden="true">↗</span></a>
+        </div>
+        <ul class="hero-facts" aria-label="Điểm chính">
+          <li><strong>3</strong> kiểu gõ</li>
+          <li><strong>0</strong> phụ thuộc runtime</li>
+          <li><strong>WASM</strong> + C ABI</li>
+        </ul>
+      </div>
+
+      <div class="playground" id="go-thu">
+        <div class="pg-head">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span class="pg-title">Gõ thử</span>
+          <span class="pg-mode" id="pg-mode">Telex</span>
+          <button class="vi-toggle" id="toggle-vi" type="button" aria-pressed="true" title="Bật/tắt tiếng Việt">
+            <span class="vi-dot" aria-hidden="true"></span><span id="vi-label">Tiếng Việt</span>
+          </button>
+        </div>
+
+        <div class="pg-screen">
+          <textarea id="pad" rows="4" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="Gõ thử: Tieengs Vieejt laf ngoon ngwx..."></textarea>
+          <div class="pg-meta">
+            <span id="raw-line">Phím thô: —</span>
+            <span id="action-line" class="action-line">sẵn sàng</span>
+          </div>
+        </div>
+
+        <div class="pg-controls">
+          <div class="segmented" role="group" aria-label="Kiểu gõ">
+            <button type="button" data-method="telex" class="active">Telex</button>
+            <button type="button" data-method="simple_telex">Simple Telex</button>
+            <button type="button" data-method="vni">VNI</button>
+          </div>
+          <div class="segmented subtle" role="group" aria-label="Kiểu đặt dấu">
+            <button type="button" data-tone="old" class="active">Dấu cũ</button>
+            <button type="button" data-tone="new">Dấu mới</button>
+          </div>
+        </div>
+
+        <details class="pg-advanced">
+          <summary>Tùy chọn nâng cao</summary>
+          <div class="checks">
+            <label><input type="checkbox" data-opt="spell_check" checked> Kiểm tra chính tả</label>
+            <label><input type="checkbox" data-opt="w_as_u" checked> <code>w</code> → <code>ư</code></label>
+            <label><input type="checkbox" data-opt="bracket_keys"> <code>[</code> <code>]</code> → <code>ơ</code> <code>ư</code></label>
+            <label><input type="checkbox" data-opt="quick_telex"> Quick Telex</label>
+            <label><input type="checkbox" data-opt="auto_restore_english" checked> Khôi phục tiếng Anh</label>
+            <label><input type="checkbox" data-opt="auto_capitalize"> Viết hoa đầu câu</label>
+            <label><input type="checkbox" data-opt="smart_caps"> Bảo vệ chữ HOA</label>
+          </div>
+        </details>
+
+        <div class="pg-examples">
+          <span>Thử nhanh</span>
+          <button type="button" data-example="Tieengs Vieejt laf ngoon ngwx raats hay.">Câu mẫu</button>
+          <button type="button" data-example="Nguwowif Vieejt Nam ddi hojc owr truwowngf ddaij hojc">Tên riêng</button>
+          <button type="button" data-example="data boss server this did">Tiếng Anh</button>
+          <button type="button" data-example="Thuowr nhor, xooongj, quyts, khuyur tay">Dấu khó</button>
+          <button type="button" class="clear-btn" id="clear-pad">Xoá</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section wrap" id="tinh-nang">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">Vì sao ViFastKey</div>
+          <h2>Đủ thông minh để quên đi.<br>Đủ nhỏ để chạy mọi nơi.</h2>
+        </div>
+        <p>Engine chỉ giữ chuỗi phím thô của từ hiện tại rồi dựng lại từ đầu. Nhờ vậy dấu luôn đúng vị trí, kể cả khi gõ dấu trước hay sau.</p>
+      </div>
+
+      <div class="feature-grid">
+        <article class="feature">
+          <span class="f-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M6 10h.01M9 10h.01M12 10h.01M15 10h.01M18 10h.01M6 14h.01M9 14h.01M12 14h.01M15 14h5"/></svg>
+          </span>
+          <h3>Telex · Simple Telex · VNI</h3>
+          <p>Đổi kiểu gõ tức thì. Hỗ trợ Quick Telex, <code>w</code> → <code>ư</code>, phím <code>[</code> <code>]</code> và kiểu đặt dấu cũ/mới.</p>
+        </article>
+        <article class="feature">
+          <span class="f-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 5h8M8 3v2M6 5c0 4 2.5 7 6 8M10 9c-1.5 2-4 3.5-6 4"/><path d="M13 20l3.5-9 3.5 9M14.5 16h4"/></svg>
+          </span>
+          <h3>Khôi phục tiếng Anh</h3>
+          <p><code>data</code>, <code>boss</code>, <code>server</code> không bị bẻ dấu. Từ vừa là tiếng Anh vừa là tiếng Việt như <code>this</code> vẫn ưu tiên tiếng Việt.</p>
+        </article>
+        <article class="feature">
+          <span class="f-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 20l8-16 8 16M7 14h10"/><path d="M18 4l2-2M20 6h2"/></svg>
+          </span>
+          <h3>Macro & viết hoa</h3>
+          <p><code>ko</code> → <code>không</code>, <code>vn</code> → <code>Việt Nam</code>. Giữ đúng kiểu hoa/thường và tự viết hoa đầu câu nếu bật.</p>
+        </article>
+        <article class="feature">
+          <span class="f-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 4v5"/></svg>
+          </span>
+          <h3>Hồ sơ theo ứng dụng</h3>
+          <p>Terminal dùng preedit, Chrome chờ ack, Firefox tắt sửa từ cũ, game tắt bộ gõ. Cùng một engine, hành vi phù hợp từng app.</p>
+        </article>
+        <article class="feature">
+          <span class="f-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 16l4 4 4-4M8 20V4"/><path d="M20 8l-4-4-4 4M16 4v16"/></svg>
+          </span>
+          <h3>Sửa lại từ đã gõ</h3>
+          <p>Gõ thêm dấu vào từ vừa xong: <code>tiêng</code> + <code>s</code> → <code>tiếng</code>. Backspace xoá đúng ký tự hiển thị và giữ dấu phần còn lại.</p>
+        </article>
+        <article class="feature">
+          <span class="f-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M9 3v2M15 3v2M9 19v2M15 19v2M3 9h2M3 15h2M19 9h2M19 15h2"/></svg>
+          </span>
+          <h3>Một lõi, mọi nền tảng</h3>
+          <p>Rust core + C ABI cho IMK/TSF/Fcitx5/IBus, WASM cho web, Python làm oracle. Cùng một bộ golden test và conformance.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section wrap" id="kien-truc">
+      <div class="arch-panel">
+        <div class="arch-copy">
+          <div class="eyebrow light">Kiến trúc</div>
+          <h2>Chuỗi phím thô<br>→ một <span class="gold">Action</span>.</h2>
+          <p>Mỗi phím đi qua Composer rồi trả về đúng một hành động: chèn, thay thế, preedit hoặc để hệ điều hành xử lý. Adapter chỉ việc áp Action — không chứa logic tiếng Việt.</p>
+          <ul class="arch-list">
+            <li><strong>13.252</strong> ca core + <strong>3.000</strong> kịch bản engine</li>
+            <li>NFC/NFD ở đầu ra, UTF-16 ở ranh giới FFI</li>
+            <li>Không cấp phát heap trong WordState (ArrayVec 24)</li>
+          </ul>
+        </div>
+        <div class="arch-code" aria-label="Ví dụ Action JSON">
+          <div class="code-head"><span></span><span></span><span></span><em>action.json</em></div>
+          <pre><code><span class="c-muted">// gõ: t i e e n g s</span>
+{
+  <span class="c-key">"type"</span>: <span class="c-str">"replace"</span>,
+  <span class="c-key">"delete_before"</span>: <span class="c-num">3</span>,
+  <span class="c-key">"insert"</span>: <span class="c-str">"ếng"</span>,
+  <span class="c-key">"pass_key"</span>: <span class="c-bool">false</span>
+}</code></pre>
+          <div class="code-foot"><span class="pulse"></span> chạy local · không gọi mạng</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section wrap" id="tai-ve">
+      <div class="section-head compact">
+        <div>
+          <div class="eyebrow">Bắt đầu</div>
+          <h2>Chạy thử hôm nay.</h2>
+        </div>
+        <p>Engine và CLI đã chạy được. App desktop, extension và bàn phím mobile đang được phát triển trên cùng lõi này.</p>
+      </div>
+      <div class="download-grid">
+        <a class="download-card primary" href="#go-thu">
+          <span class="d-tag">Ngay trong trình duyệt</span>
+          <strong>Gõ thử WASM</strong>
+          <span>Không cài đặt · không gửi dữ liệu</span>
+          <span class="d-arrow" aria-hidden="true">→</span>
+        </a>
+        <a class="download-card" href="https://github.com/dvchd/ViFastKey" target="_blank" rel="noopener">
+          <span class="d-tag">Mã nguồn</span>
+          <strong>GitHub · ViFastKey</strong>
+          <span>Python oracle + Rust port + C ABI</span>
+          <span class="d-arrow" aria-hidden="true">↗</span>
+        </a>
+        <div class="download-card muted-card">
+          <span class="d-tag">Desktop & extension</span>
+          <strong>Sắp có</strong>
+          <span>Theo dõi release để nhận bản đầu tiên</span>
+          <span class="d-arrow" aria-hidden="true">·</span>
+        </div>
+      </div>
+      <div class="cli-line">
+        <span>Thử CLI:</span>
+        <code>cargo run -p vfk-cli -- --demo</code>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div class="footer-brand">
+        <img src="brand/vifastkey-icon-192.png" width="32" height="32" alt="">
+        <span><strong>ViFastKey</strong> · Bộ gõ tiếng Việt</span>
+      </div>
+      <p>MIT · Rust + Python · Logo do chủ dự án cung cấp</p>
+      <div class="footer-links">
+        <a href="https://github.com/dvchd/ViFastKey" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/dvchd/ViFastKey#readme" target="_blank" rel="noopener">Tài liệu</a>
+        <a href="#go-thu">Gõ thử</a>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

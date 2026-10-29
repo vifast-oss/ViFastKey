@@ -35,7 +35,8 @@ ViFastKey/
     │   ├── vi-syllable/
     │   ├── vfk-core/
     │   ├── vfk-engine/
-    │   └── vfk-ffi/            # C ABI + include/vifastkey.h
+    │   ├── vfk-ffi/            # C ABI + include/vifastkey.h
+    │   └── vfk-wasm/           # wasm-bindgen cho web demo
     ├── apps/vfk-cli/           # CLI demo + REPL
     ├── conformance/            # bản sao dữ liệu oracle
     ├── testdata/               # golden + corpus
@@ -43,8 +44,11 @@ ViFastKey/
     └── README.md
 ```
 
-Ngoài hai bản engine, repo còn có `resources/brand/` (logo, favicon, OG) và
-`design/tokens.json` (màu/font/spacing dùng chung cho desktop, web, extension, mobile).
+Ngoài hai bản engine, repo còn có:
+
+- `web/` — landing page + playground gõ thử chạy WASM trong trình duyệt.
+- `resources/brand/` — logo, favicon, OG; `resources/fonts/` — Be Vietnam Pro (OFL).
+- `design/tokens.json` — màu/font/spacing dùng chung cho desktop, web, extension, mobile.
 
 Hai bản tự chứa dữ liệu `conformance/`, `tests/golden/`, `tests/data/` để chạy test độc lập. Khi sửa hành vi, sửa bản Python trước rồi đồng bộ sang Rust bằng `rust/tools/sync_conformance.sh`.
 
@@ -72,6 +76,20 @@ cargo test --workspace
 cargo run -p vfk-cli -- --demo
 cargo run -p vfk-cli
 ```
+
+## Web demo
+
+Playground gõ thử chạy engine Rust qua WASM, không cần server API:
+
+```bash
+rustup target add wasm32-unknown-unknown
+cargo install wasm-bindgen-cli --version 0.2.129
+./web/build.sh
+python3 -m http.server 8080 -d web
+# mở http://127.0.0.1:8080/
+```
+
+Chi tiết hành vi, giới hạn và cách deploy tĩnh: `web/README.md`.
 
 ## Đồng bộ hai bản
 
