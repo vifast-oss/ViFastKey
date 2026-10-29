@@ -293,4 +293,4 @@ public:
 
 } // namespace fcitx
 
-FCITX_ADDON_FACTORY_V2(vifastkey, fcitx::VifastkeyFactory)
+FCITX_ADDON_FACTORY(fcitx::VifastkeyFactory)
