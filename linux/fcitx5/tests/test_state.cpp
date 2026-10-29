@@ -183,8 +183,8 @@ void testPasswordPassThrough() {
     fcitx::EventLoop loop;
     fcitx::InputContextManager manager;
     TestInputContext context(manager);
-    context.setCapabilityFlags(fcitx::CapabilityFlag::Password |
-                               fcitx::CapabilityFlag::PasswordOrSensitive);
+    context.setCapabilityFlags(fcitx::CapabilityFlags{fcitx::CapabilityFlag::Password,
+                                        fcitx::CapabilityFlag::PasswordOrSensitive});
 
     auto config = makeConfig();
     fcitx::VifastkeyState state(loop, &context, config);
@@ -201,8 +201,8 @@ void testReplaceUsesSurroundingAndCommits() {
     fcitx::EventLoop loop;
     fcitx::InputContextManager manager;
     TestInputContext context(manager);
-    context.setCapabilityFlags(fcitx::CapabilityFlag::Preedit |
-                               fcitx::CapabilityFlag::SurroundingText);
+    context.setCapabilityFlags(fcitx::CapabilityFlags{fcitx::CapabilityFlag::Preedit,
+                                        fcitx::CapabilityFlag::SurroundingText});
     context.surroundingText().setText("tiếng", 5, 5);
 
     auto config = makeConfig();
@@ -308,8 +308,8 @@ void testQueuedKeyIsForwardedWhenReplaceIsBusy() {
     fcitx::EventLoop loop;
     fcitx::InputContextManager manager;
     TestInputContext context(manager);
-    context.setCapabilityFlags(fcitx::CapabilityFlag::Preedit |
-                               fcitx::CapabilityFlag::SurroundingText);
+    context.setCapabilityFlags(fcitx::CapabilityFlags{fcitx::CapabilityFlag::Preedit,
+                                        fcitx::CapabilityFlag::SurroundingText});
     context.surroundingText().setText("tiếng", 5, 5);
 
     auto config = makeConfig();
