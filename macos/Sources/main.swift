@@ -8,7 +8,7 @@ func maintenance() -> Bool {
     let args = CommandLine.arguments
     if args.contains("--preferences") {
         let app = NSApplication.shared
-        app.setActivationPolicy(.accessory)
+        app.setActivationPolicy(.regular)
         PreferencesWindowController.shared.show()
         app.run()
         return true
@@ -39,7 +39,9 @@ if maintenance() {
     exit(0)
 }
 
-// Tự bật input source khi IMK khởi động app (nếu chưa được bật).
+// Tự đăng ký/bật input source khi IMK khởi động app.
+_ = TISRegisterInputSource(Bundle.main.bundleURL as CFURL)
+_ = InputSourceRegistrar.ensureEnabled()
 do {
     let all = TISCreateInputSourceList(nil, true)?.takeRetainedValue() as? [TISInputSource] ?? []
     for src in all {
