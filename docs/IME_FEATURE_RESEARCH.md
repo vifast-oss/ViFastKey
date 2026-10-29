@@ -32,7 +32,7 @@ mọi phần triển khai trong repo này là MIT và được viết lại từ
 | [UniKey / x-unikey](https://www.unikey.org/source.html) | Engine gốc, charset, macro, config | GPL/LGPL + điều khoản riêng | UniKey 3.62 / x-unikey 1.0.4 |
 | [vn-input/ibus-unikey](https://github.com/vn-input/ibus-unikey) | IBus adapter | GPL | `ede78c3` |
 
-Các báo cáo phân tích chi tiết nằm trong [`docs/research/`](research/README.md) (6 báo cáo,
+Các báo cáo phân tích chi tiết nằm trong [`docs/research/`](research/README.md) (7 báo cáo,
 ~5.800 dòng). Tài liệu này là bản tổng hợp. Không có mã nguồn, bảng dữ liệu, từ điển hay test
 corpus GPL nào được sao chép.
 

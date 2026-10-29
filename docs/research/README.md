@@ -1,6 +1,6 @@
 # Báo cáo phân tích chi tiết
 
-Đây là 6 báo cáo do các sub agent lập trong đợt đối chiếu 20 dự án IME tiếng Việt.
+Đây là 7 báo cáo do các sub agent lập trong đợt đối chiếu 20 dự án IME tiếng Việt.
 Bản tổng hợp và quyết định triển khai nằm ở [`../IME_FEATURE_RESEARCH.md`](../IME_FEATURE_RESEARCH.md).
 
 | File | Nội dung |
