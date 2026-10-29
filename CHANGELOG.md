@@ -79,6 +79,12 @@
 - Playwright E2E: popup `tieengs` → `tiếng`, giữ `data`/`hello`, `Vieejt` → `Việt`.
 - Release workflow đóng gói thêm `vifastkey-chrome-extension.zip`.
 
+### Android full keyboard
+
+- QWERTY đầy đủ, số, shift/caps, symbols, emoji, long-press dấu tiếng Việt.
+- Suggestion bar local qua JNI `vfk-suggest`; settings đầy đủ + SharedPreferences → engine JSON.
+- Hardware keyboard, cursor guard, numeric/password handling, app icon.
+
 ### Android / iOS
 
 - Android: IME Java + JNI Rust, bàn phím QWERTY, build APK và test end-to-end

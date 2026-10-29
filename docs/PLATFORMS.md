@@ -6,7 +6,7 @@
 | Windows | `rust/apps/vfk-windows` low-level hook + SendInput | cross-check MSVC + CI Windows build | 🟡 prototype; chưa test runtime, chưa TSF/tray/signing |
 | Linux (IBus) | `linux/ibus/` engine Python | core test trên macOS/CI; component đăng ký được trong Xvfb | 🟡 runtime key event chưa xác nhận; Fcitx5 là đường đã test |
 | Linux (Fcitx5) | `linux/fcitx5/` C++ addon | CI build + CTest adapter ✅; runtime test Ubuntu 26.04/Fcitx5 5.1.19 trong Xvfb: `tieengs` → `tiếng` | ✅ X11 + preedit/surrounding/guard/barrier; 🟡 cần test Wayland desktop và app thật |
-| Android | `android/` IME Java + JNI | SDK/NDK + Gradle, APK arm64/x86_64; CI build + đã test emulator | ✅ gõ được; 🟡 bàn phím tối giản, chưa Play Store |
+| Android | `android/` IME Java + JNI | SDK/NDK + Gradle, APK arm64/x86_64; CI build + test emulator | ✅ QWERTY full, suggestions, settings, emoji, long-press; 🟡 chưa Play Store |
 | iOS | `ios/` host + keyboard extension | Xcode 27.1, simulator; CI build + engine unit test | ✅ build/test; 🟡 chưa test bật extension/device signing |
 | Chrome/Edge | `chrome-extension/` MV3 + WASM | build + Playwright E2E (popup normalize) | ✅ MVP; 🟡 context menu/selected text cần test thêm; chưa Web Store |
 
