@@ -621,6 +621,12 @@ Areca:
 
 ## 4. Ưu tiên áp dụng cho ViFastKey
 
+> **Cập nhật triển khai (2026-10-30):** adapter `linux/fcitx5/` đã áp phần lớn P0/P1:
+> field kind/password, commit trước reset/focus-out, xác minh surrounding trước `Replace`,
+> transaction barrier, AppProfile timing/ACK, config reload, status action, theo dõi program
+> change và CTest bằng `InputContext` giả lập. P2 còn lại: adaptive wait, uinput/Libei/XTest,
+> mouse click tracking và GUI.
+
 ### P0 — nên làm ngay
 
 | # | Việc | Cụ thể | Tiêu chí hoàn thành |
