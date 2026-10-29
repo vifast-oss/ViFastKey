@@ -12,6 +12,7 @@ Bàn phím Android dùng engine Rust qua JNI, không dùng mạng.
 - Settings: kiểu gõ, đặt dấu, chính tả, macro, quick Telex, âm cuối k, auto-cap...
 - Password/number/email/URL: pass-through hoặc bàn phím số.
 - Hỗ trợ bàn phím vật lý qua `onKeyDown`; cursor/selection guard.
+- Haptic feedback; app icon; suggestion bar giữ chiều cao cố định (không nhảy layout).
 - APK arm64-v8a + x86_64; debug signing.
 
 ## Build

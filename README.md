@@ -100,6 +100,10 @@ python -m apps.vfk_emoji "cười"
 ```
 
 ```bash
+# Android IME
+./android/build.sh
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+
 # Chrome extension (MV3)
 ./chrome-extension/build.sh
 # Load unpacked: chrome://extensions -> developer mode -> chrome-extension/dist
