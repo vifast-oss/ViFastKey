@@ -91,6 +91,19 @@ final class VfkEngine {
         return convert(vfk_cursor_moved(h))
     }
 
+
+    /// 0 = none, 1 = PREEDIT, 2 = REPLACE (từ AppProfile).
+    var profileOutputMode: UInt32 {
+        guard let h = handle else { return 0 }
+        return vfk_profile_output_mode(h)
+    }
+
+    /// 0 = PREEDIT, 1 = REPLACE.
+    func setOutputMode(_ mode: UInt32) -> VfkEngineAction {
+        guard let h = handle else { return .pass }
+        return convert(vfk_set_output_mode(h, mode))
+    }
+
     func toggleVietnamese() -> VfkEngineAction {
         guard let h = handle else { return .pass }
         return convert(vfk_toggle_vietnamese(h))

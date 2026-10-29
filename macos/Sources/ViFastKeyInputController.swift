@@ -40,6 +40,7 @@ final class ViFastKeyInputController: IMKInputController {
         _ = engine?.focusChanged(appID: currentAppID)
         // Preedit cũ không được tồn tại khi vừa chuyển context.
         _ = engine?.cursorMoved()
+        applyProfileOutputMode(for: sender)
     }
 
     override func deactivateServer(_ sender: Any!) {
@@ -116,6 +117,16 @@ final class ViFastKeyInputController: IMKInputController {
         guard let client = clientObject(sender) else { return false }
         let result = applier.apply(action, to: ImkTextClient(client))
         return result.handled && !result.forwardKey
+    }
+
+    private func applyProfileOutputMode(for sender: Any!) {
+        guard let engine, let client = clientObject(sender) else { return }
+        let profileMode = engine.profileOutputMode
+        guard profileMode == 1 || profileMode == 2 else { return }
+        let action = engine.setOutputMode(profileMode == 2 ? 1 : 0)
+        if action.kind != VfkActionKind.pass {
+            _ = applier.apply(action, to: ImkTextClient(client))
+        }
     }
 
     private func clientObject(_ sender: Any!) -> AnyObject? {
