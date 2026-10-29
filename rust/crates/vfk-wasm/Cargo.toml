@@ -1,0 +1,17 @@
+[package]
+name = "vfk-wasm"
+description = "WASM bindings cho ViFastKey: chạy engine trong trình duyệt / Node."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "0.2.129"
+vfk-engine = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

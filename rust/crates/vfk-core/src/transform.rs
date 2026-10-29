@@ -158,14 +158,15 @@ fn candidates(st: &WordState, rules: &[MarkRule]) -> Vec<Cand> {
                 singles.push(vec![(0, Mark::Stroke)]);
             }
         } else if r.pair {
+            #[allow(clippy::needless_range_loop)] // cần cả i và i+1
             for i in start..end.saturating_sub(1) {
                 if l[i].base == 'u' && l[i + 1].base == 'o' {
                     pairs.push(vec![(i, Mark::Horn), (i + 1, Mark::Horn)]);
                 }
             }
         } else {
-            for i in start..end {
-                if r.targets.contains(l[i].base) {
+            for (i, letter) in l.iter().enumerate().take(end).skip(start) {
+                if r.targets.contains(letter.base) {
                     singles.push(vec![(i, r.mark)]);
                 }
             }

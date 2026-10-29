@@ -5,6 +5,7 @@ members = [
     "crates/vfk-core",
     "crates/vfk-engine",
     "crates/vfk-ffi",
+    "crates/vfk-wasm",
     "apps/vfk-cli",
 ]
 

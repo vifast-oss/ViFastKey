@@ -20,7 +20,8 @@ rust/
 │   ├── vi-syllable/   tách âm tiết, chính tả 3 trạng thái, đặt thanh (dùng chung ViFastTts)
 │   ├── vfk-core/      rules (Telex/Simple Telex/VNI), transform, Composer, to_raw/rebuild, diff
 │   ├── vfk-engine/    ports (Config, AppProfile, 4 trait), session (ImeSession), testing (Harness)
-│   └── vfk-ffi/       C ABI: lib "vifastkey" (cdylib + staticlib), include/vifastkey.h
+│   ├── vfk-ffi/       C ABI: lib "vifastkey" (cdylib + staticlib), include/vifastkey.h
+│   └── vfk-wasm/      wasm-bindgen: Session + Action JSON cho web demo
 ├── apps/vfk-cli/      REPL + demo (bin "vfk")
 ├── conformance/       core.jsonl (13.252 ca), engine.jsonl (3.000 kịch bản) sinh từ Python
 ├── testdata/          golden/*.tsv, corpus_vi.txt (dùng chung với Python)
@@ -36,6 +37,7 @@ rust/
 | `vfk_engine/session.py` | `crates/vfk-engine/src/session.rs` |
 | `adapters/__init__.py` | `crates/vfk-engine/src/testing.rs` |
 | `vfk_ffi/__init__.py` | `crates/vfk-ffi/src/lib.rs` (mở rộng thành C ABI thật) |
+| — | `crates/vfk-wasm/src/lib.rs` (wasm-bindgen cho web) |
 | `apps/vfk_cli.py` | `apps/vfk-cli/src/main.rs` |
 | `tests/test_*.py` | `crates/*/tests/*.rs` |
 
@@ -94,4 +96,4 @@ Nếu core conformance sai, các chỗ đáng nghi nhất (vì logic tinh tế n
 
 - Tối ưu: `ArrayVec<Letter, 24>` thay `Vec`, bitset cho `locked`, bỏ cấp phát `String` trong `toneless_lower` (dùng buffer `[char; 24]`). Chỉ làm sau khi conformance đã xanh.
 - Adapter đầu tiên: Fcitx5 (C++ gọi `vifastkey.h`) hoặc macOS IMK (Swift).
-- UniFFI cho Kotlin/Swift, wasm-bindgen cho web.
+- UniFFI cho Kotlin/Swift. Web đã có `vfk-wasm` + demo trong `web/`.

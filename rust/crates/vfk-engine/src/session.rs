@@ -236,6 +236,11 @@ impl ImeSession {
         self.out(&self.word)
     }
 
+    /// Chuỗi phím thô của từ hiện tại (để adapter/debug hiển thị).
+    pub fn raw_string(&self) -> String {
+        self.raw.iter().collect()
+    }
+
     // ---------- tiện ích
 
     fn im(&self) -> &'static InputMethodSpec {
