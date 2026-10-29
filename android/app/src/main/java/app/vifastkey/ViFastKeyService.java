@@ -33,7 +33,8 @@ public final class ViFastKeyService extends InputMethodService {
         new Thread(() -> NativeEngine.suggest(0L, "a"), "vfk-suggest-warmup").start();
         prefListener = (sharedPreferences, key) -> {
             if (handle != 0) {
-                NativeEngine.setConfig(handle, Prefs.configJson(this));
+                String action = NativeEngine.setConfig(handle, Prefs.configJson(this));
+                if (action != null && !action.contains("\"pass\"")) apply(action, "");
                 syncKeyboardState();
                 updateSuggestions();
             }
@@ -65,7 +66,8 @@ public final class ViFastKeyService extends InputMethodService {
         if (handle == 0) {
             handle = NativeEngine.create(Prefs.configJson(this));
         } else {
-            NativeEngine.setConfig(handle, Prefs.configJson(this));
+            String action = NativeEngine.setConfig(handle, Prefs.configJson(this));
+            if (action != null && !action.contains("\"pass\"")) apply(action, "");
         }
         fieldKind = fieldKind(attribute.inputType);
         NativeEngine.setField(handle, fieldKind);
