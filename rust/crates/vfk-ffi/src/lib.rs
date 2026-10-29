@@ -158,6 +158,16 @@ fn to_c(s: &mut VfkSession, act: Action, before: &str) -> VfkAction {
     }
 }
 
+/// Display hiện tại; nếu rỗng nhưng engine đang adopt từ trước con trỏ, dùng
+/// surrounding text để `Replace` biết chính xác hậu tố cần xoá.
+fn before_display(s: &VfkSession) -> String {
+    let display = s.session.display();
+    if !display.is_empty() {
+        return display;
+    }
+    s.shared.0.borrow().surrounding.clone().unwrap_or_default()
+}
+
 unsafe fn opt_str(p: *const c_char) -> Option<String> {
     if p.is_null() {
         return None;
@@ -247,7 +257,7 @@ pub unsafe extern "C" fn vfk_process_key(
 ) -> VfkAction {
     let Some(name) = opt_str(key) else { return VfkAction::PASS };
     with_session(h, VfkAction::PASS, |s| {
-        let before = s.session.display();
+        let before = before_display(s);
         let ev = KeyEvent { key: Key::parse(&name), ctrl, alt, meta };
         let act = s.session.process_key(&ev);
         to_c(s, act, &before)
@@ -265,7 +275,7 @@ pub unsafe extern "C" fn vfk_process_char(
 ) -> VfkAction {
     let Some(c) = char::from_u32(codepoint) else { return VfkAction::PASS };
     with_session(h, VfkAction::PASS, |s| {
-        let before = s.session.display();
+        let before = before_display(s);
         let ev = KeyEvent { key: Key::Char(c), ctrl, alt, meta };
         let act = s.session.process_key(&ev);
         to_c(s, act, &before)

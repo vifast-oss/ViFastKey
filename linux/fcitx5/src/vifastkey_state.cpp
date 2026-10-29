@@ -449,7 +449,11 @@ void VifastkeyState::processKey(const std::string &key, bool ctrl, bool alt,
         return;
     }
 
-    const std::string before = displayText();
+    std::string before = displayText();
+    if (before.empty() && hasSurrounding()) {
+        const auto &surrounding = ic_->surroundingText();
+        before = utf8Prefix(surrounding.text(), surrounding.cursor());
+    }
     const VfkAction action =
         vfk_process_key(session_, key.c_str(), ctrl, alt, meta);
     applyAction(action, event, before, rawKey);

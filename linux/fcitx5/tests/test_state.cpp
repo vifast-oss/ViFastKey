@@ -250,8 +250,8 @@ void testEditPreviousWordUsesRefreshedSurrounding() {
     CHECK(event.filtered());
     CHECK(context.deletes.size() == 1);
     if (context.deletes.size() == 1) {
-        CHECK(context.deletes.front().offset == -5);
-        CHECK(context.deletes.front().size == 5);
+        CHECK(context.deletes.front().offset == -3);
+        CHECK(context.deletes.front().size == 3);
     }
     CHECK(state.busy());
 
@@ -259,7 +259,7 @@ void testEditPreviousWordUsesRefreshedSurrounding() {
     CHECK(!state.busy());
     CHECK(context.commits.size() == 1);
     if (context.commits.size() == 1) {
-        CHECK(context.commits.front() == "tiềng");
+        CHECK(context.commits.front() == "ềng");
     }
 }
 
