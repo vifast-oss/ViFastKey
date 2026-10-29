@@ -33,8 +33,9 @@ public final class ViFastKeyService extends InputMethodService {
         new Thread(() -> NativeEngine.suggest(0L, "a"), "vfk-suggest-warmup").start();
         prefListener = (sharedPreferences, key) -> {
             if (handle != 0) {
+                String beforeDisplay = NativeEngine.display(handle);
                 String action = NativeEngine.setConfig(handle, Prefs.configJson(this));
-                applyProjected(action, "", snapshotForEngine(getCurrentInputConnection()));
+                applyProjected(action, "", snapshotForEngine(getCurrentInputConnection()), beforeDisplay);
                 syncKeyboardState();
                 updateSuggestions();
             }
@@ -67,13 +68,15 @@ public final class ViFastKeyService extends InputMethodService {
         if (handle == 0) {
             handle = NativeEngine.create(Prefs.configJson(this));
         } else {
+            String beforeDisplay = NativeEngine.display(handle);
             String action = NativeEngine.setConfig(handle, Prefs.configJson(this));
-            applyProjected(action, "", snapshotForEngine(getCurrentInputConnection()));
+            applyProjected(action, "", snapshotForEngine(getCurrentInputConnection()), beforeDisplay);
         }
         NativeEngine.setField(handle, fieldKind);
+        String beforeFocus = NativeEngine.display(handle);
         String focusAction = NativeEngine.focus(
                 handle, attribute.packageName == null ? "" : attribute.packageName);
-        applyProjected(focusAction, "", snapshotForEngine(getCurrentInputConnection()));
+        applyProjected(focusAction, "", snapshotForEngine(getCurrentInputConnection()), beforeFocus);
         syncKeyboardState();
         if (keyboard != null) {
             keyboard.setNumericMode(fieldKind == 2);
@@ -151,7 +154,8 @@ public final class ViFastKeyService extends InputMethodService {
     private void toggleVietnamese() {
         if (handle == 0) return;
         Snapshot snapshot = snapshotForEngine(getCurrentInputConnection());
-        applyProjected(NativeEngine.toggle(handle), "", snapshot);
+        String beforeDisplay = NativeEngine.display(handle);
+        applyProjected(NativeEngine.toggle(handle), "", snapshot, beforeDisplay);
         syncKeyboardState();
     }
 
@@ -168,7 +172,9 @@ public final class ViFastKeyService extends InputMethodService {
         else if (key.length() == 0) return;
         Snapshot snapshot = snapshotForEngine(ic);
         NativeEngine.setSurrounding(handle, snapshot.selection ? "" : snapshot.before);
-        applyProjected(NativeEngine.process(handle, key, false, false, false), key, snapshot);
+        String beforeDisplay = NativeEngine.display(handle);
+        String action = NativeEngine.process(handle, key, false, false, false);
+        applyProjected(action, key, snapshot, beforeDisplay);
     }
 
     private void commitDirect(String text) {
@@ -218,13 +224,13 @@ public final class ViFastKeyService extends InputMethodService {
         return result;
     }
 
-    private void applyProjected(String actionJson, String originalKey, Snapshot snapshot) {
+    private void applyProjected(String actionJson, String originalKey,
+                                Snapshot snapshot, String beforeDisplay) {
         if (handle == 0 || actionJson == null) {
             passOriginal(getCurrentInputConnection(), originalKey);
             return;
         }
         if (snapshot == null) snapshot = new Snapshot();
-        String beforeDisplay = NativeEngine.display(handle);
         String plan = NativeEngine.plan(
                 handle,
                 actionJson,
@@ -380,6 +386,7 @@ public final class ViFastKeyService extends InputMethodService {
         if (applying || handle == 0) return;
         if (SystemClock.uptimeMillis() - lastAppliedAt < SELECTION_GUARD_MS) return;
         Snapshot snapshot = snapshotForEngine(getCurrentInputConnection());
-        applyProjected(NativeEngine.cursorMoved(handle), "", snapshot);
+        String beforeDisplay = NativeEngine.display(handle);
+        applyProjected(NativeEngine.cursorMoved(handle), "", snapshot, beforeDisplay);
     }
 }
