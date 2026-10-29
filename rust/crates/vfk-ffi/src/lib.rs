@@ -753,6 +753,26 @@ mod tests {
     }
 
     #[test]
+    fn preedit_edits_previous_word_from_surrounding() {
+        unsafe {
+            let h = vfk_session_new(ptr::null(), VFK_MODE_PREEDIT);
+            assert!(!h.is_null());
+            let app = CString::new("notepad").unwrap();
+            vfk_focus_changed(h, app.as_ptr());
+            let surrounding = CString::new("tiếng").unwrap();
+            vfk_set_surrounding_text(h, surrounding.as_ptr());
+            let f = CString::new("f").unwrap();
+            let a = vfk_process_key(h, f.as_ptr(), false, false, false);
+            assert_eq!(a.kind, VFK_REPLACE);
+            // Diff giữ tiền tố "ti", chỉ thay "ếng" -> "ềng".
+            assert_eq!(a.delete_utf16, 3);
+            assert_eq!(CStr::from_ptr(a.text).to_string_lossy(), "ềng");
+            assert_eq!(CStr::from_ptr(vfk_display_text(h)).to_string_lossy(), "tiềng");
+            vfk_session_free(h);
+        }
+    }
+
+    #[test]
     fn display_flush_mode_and_profile() {
         unsafe {
             let h = vfk_session_new(ptr::null(), VFK_MODE_PREEDIT);
