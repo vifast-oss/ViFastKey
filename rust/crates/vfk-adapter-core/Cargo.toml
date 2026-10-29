@@ -1,0 +1,13 @@
+[package]
+name = "vfk-adapter-core"
+description = "Logic adapter dùng chung cho mọi port: field policy, surrounding guard, action plan và timing."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+vfk-engine = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

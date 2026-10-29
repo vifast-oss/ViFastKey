@@ -90,8 +90,11 @@ final class ViFastKeyInputController: IMKInputController {
             return true
         }
 
+        let beforeDisplay = engine.displayText
+        var snapshot: (text: String, cursorUTF16: UInt32, anchorUTF16: UInt32)?
         if let client = clientObject(sender) {
             let textClient = ImkTextClient(client)
+            snapshot = textClient.surroundingSnapshot(maxLength: MAX_RAW + 1)
             engine.setSurroundingText(textClient.beforeCursor(MAX_RAW + 1))
         }
 
@@ -115,7 +118,22 @@ final class ViFastKeyInputController: IMKInputController {
         }
 
         guard let client = clientObject(sender) else { return false }
-        let result = applier.apply(action, to: ImkTextClient(client))
+        let textClient = ImkTextClient(client)
+        let plan = engine.planAction(
+            action,
+            fieldKind: 0,
+            beforeDisplay: beforeDisplay,
+            surroundingText: snapshot?.text,
+            cursorUTF16: snapshot?.cursorUTF16 ?? 0,
+            anchorUTF16: snapshot?.anchorUTF16 ?? 0
+        )
+        if plan.kind == .failSafe {
+            engine.reset()
+            textClient.setMarkedText("", selectedRange: NSRange(location: 0, length: 0),
+                                     replacementRange: NSRange(location: NSNotFound, length: 0))
+            return false
+        }
+        let result = applier.apply(plan, to: textClient)
         return result.handled && !result.forwardKey
     }
 

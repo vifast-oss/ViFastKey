@@ -19,6 +19,10 @@ use std::ptr;
 use std::rc::Rc;
 use std::sync::{Arc, OnceLock};
 
+use vfk_adapter_core::{
+    char_to_utf16_offset, plan_action, AdapterAction, DeleteAmount, PlanContext, PlanKind,
+    SurroundingSnapshot,
+};
 use vfk_core::charset;
 use vfk_engine::testing::WordListDictionary;
 use vfk_engine::*;
@@ -89,6 +93,31 @@ pub const VFK_COMMIT: u32 = 3;
 pub const VFK_MODE_PREEDIT: u32 = 0;
 pub const VFK_MODE_REPLACE: u32 = 1;
 
+pub const VFK_PLAN_PASS: u32 = 0;
+pub const VFK_PLAN_PREEDIT: u32 = 1;
+pub const VFK_PLAN_COMMIT: u32 = 2;
+pub const VFK_PLAN_REPLACE: u32 = 3;
+pub const VFK_PLAN_FAIL_SAFE: u32 = 4;
+
+pub const VFK_FIELD_TEXT: u32 = 0;
+pub const VFK_FIELD_PASSWORD: u32 = 1;
+pub const VFK_FIELD_NUMBER: u32 = 2;
+pub const VFK_FIELD_EMAIL: u32 = 3;
+pub const VFK_FIELD_URL: u32 = 4;
+pub const VFK_FIELD_TERMINAL: u32 = 5;
+
+#[repr(C)]
+#[derive(Debug, Clone, Copy)]
+pub struct VfkPlan {
+    pub kind: u32,
+    pub delete_utf16: u32,
+    pub delete_chars: u32,
+    pub cursor_utf16: u32,
+    pub wait_ms: u32,
+    pub pass_key: bool,
+    pub text: *const c_char,
+}
+
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct VfkAction {
@@ -116,6 +145,8 @@ pub struct VfkSession {
     text_buf: CString,
     /// Giữ chuỗi display hiện tại cho adapter kiểm tra surrounding text.
     display_buf: CString,
+    /// Giữ text của VfkPlan gần nhất.
+    plan_buf: CString,
     /// Giữ chuỗi trả về bởi các hàm *_json.
     json_buf: CString,
     /// Giữ chuỗi trả về bởi các hàm charset (tách khỏi config JSON).
@@ -180,6 +211,17 @@ unsafe fn opt_str(p: *const c_char) -> Option<String> {
     Some(CStr::from_ptr(p).to_string_lossy().into_owned())
 }
 
+fn field_kind_from_u32(value: u32) -> FieldKind {
+    match value {
+        1 => FieldKind::Password,
+        2 => FieldKind::Number,
+        3 => FieldKind::Email,
+        4 => FieldKind::Url,
+        5 => FieldKind::Terminal,
+        _ => FieldKind::Text,
+    }
+}
+
 fn guard<T>(fallback: T, f: impl FnOnce() -> T) -> T {
     catch_unwind(AssertUnwindSafe(f)).unwrap_or(fallback)
 }
@@ -231,6 +273,7 @@ pub unsafe extern "C" fn vfk_session_new(config_json: *const c_char, mode: u32) 
             shared,
             text_buf: CString::default(),
             display_buf: CString::default(),
+            plan_buf: CString::default(),
             json_buf: CString::default(),
             charset_buf: CString::default(),
             bytes_buf: Vec::new(),
@@ -322,14 +365,7 @@ pub unsafe extern "C" fn vfk_cursor_moved(h: *mut VfkSession) -> VfkAction {
 /// 0 text, 1 password, 2 number, 3 email, 4 url, 5 terminal.
 #[no_mangle]
 pub unsafe extern "C" fn vfk_set_field_kind(h: *mut VfkSession, kind: u32) -> VfkAction {
-    let k = match kind {
-        1 => FieldKind::Password,
-        2 => FieldKind::Number,
-        3 => FieldKind::Email,
-        4 => FieldKind::Url,
-        5 => FieldKind::Terminal,
-        _ => FieldKind::Text,
-    };
+    let k = field_kind_from_u32(kind);
     with_session(h, VfkAction::PASS, |s| {
         let before = s.session.display();
         let act = s.session.set_field_kind(k);
@@ -371,6 +407,87 @@ pub unsafe extern "C" fn vfk_display_text(h: *mut VfkSession) -> *const c_char {
 
 /// Chốt composition hiện tại. Trả `COMMIT` nếu đang ở PREEDIT, `PASS` nếu không
 /// còn gì để commit. Adapter nên áp Action này trước `vfk_reset`/focus-out.
+/// Đổi offset char (Unicode codepoint) sang UTF-16 code unit.
+/// Trả `UINT32_MAX` nếu text/offset không hợp lệ.
+#[no_mangle]
+pub unsafe extern "C" fn vfk_char_to_utf16_offset(text: *const c_char, chars: u32) -> u32 {
+    let Some(text) = opt_str(text) else { return u32::MAX };
+    char_to_utf16_offset(&text, chars).unwrap_or(u32::MAX)
+}
+
+/// Lập kế hoạch thi hành Action bằng logic adapter dùng chung.
+///
+/// `before_display` là `vfk_display_text()` trước khi xử lý phím.
+/// `surrounding_text` là snapshot đầy đủ app cung cấp (nullable), offset tính
+/// bằng UTF-16 code unit. `allow_unverified_replace` chỉ dùng cho port tự quản
+/// lý toàn bộ vùng text (Windows hook), nơi không có surrounding text.
+#[no_mangle]
+pub unsafe extern "C" fn vfk_plan_action(
+    h: *mut VfkSession,
+    action: *const VfkAction,
+    field_kind: u32,
+    before_display: *const c_char,
+    surrounding_text: *const c_char,
+    cursor_utf16: u32,
+    anchor_utf16: u32,
+    allow_unverified_replace: bool,
+    out: *mut VfkPlan,
+) -> bool {
+    if action.is_null() || out.is_null() {
+        return false;
+    }
+    let raw = &*action;
+    let text = opt_str(raw.text).unwrap_or_default();
+    let adapter_action = match raw.kind {
+        VFK_PASS => AdapterAction::Pass,
+        VFK_PREEDIT => AdapterAction::Preedit { text, cursor_utf16: raw.cursor_utf16 },
+        VFK_COMMIT => AdapterAction::Commit { text, pass_key: raw.pass_key },
+        VFK_REPLACE => AdapterAction::Replace {
+            insert: text,
+            delete: DeleteAmount::Utf16(raw.delete_utf16),
+            pass_key: raw.pass_key,
+        },
+        _ => return false,
+    };
+
+    let before = opt_str(before_display).unwrap_or_default();
+    let surrounding_owned = opt_str(surrounding_text);
+    let surrounding =
+        surrounding_owned.as_deref().map(|text| SurroundingSnapshot { text, cursor_utf16, anchor_utf16 });
+    let context = PlanContext {
+        field_kind: field_kind_from_u32(field_kind),
+        before_display: &before,
+        surrounding,
+        allow_unverified_replace,
+    };
+
+    with_session(h, false, |s| {
+        let plan = plan_action(&adapter_action, &context, s.session.profile());
+        let kind = match plan.kind {
+            PlanKind::Pass => VFK_PLAN_PASS,
+            PlanKind::Preedit => VFK_PLAN_PREEDIT,
+            PlanKind::Commit => VFK_PLAN_COMMIT,
+            PlanKind::Replace => VFK_PLAN_REPLACE,
+            PlanKind::FailSafe => VFK_PLAN_FAIL_SAFE,
+        };
+        let mut result = VfkPlan {
+            kind,
+            delete_utf16: plan.delete_utf16,
+            delete_chars: plan.delete_chars,
+            cursor_utf16: plan.cursor_utf16,
+            wait_ms: plan.wait_ms,
+            pass_key: plan.pass_key,
+            text: ptr::null(),
+        };
+        if !plan.text.is_empty() {
+            s.plan_buf = CString::new(plan.text.replace('\0', "")).unwrap_or_default();
+            result.text = s.plan_buf.as_ptr();
+        }
+        *out = result;
+        true
+    })
+}
+
 #[no_mangle]
 pub unsafe extern "C" fn vfk_flush(h: *mut VfkSession) -> VfkAction {
     with_session(h, VfkAction::PASS, |s| {
@@ -755,6 +872,78 @@ mod tests {
             assert!(c.contains("\"ko\":\"không\""), "{c}");
             let bad = CString::new(r#"{"tone_style":"không có"}"#).unwrap();
             assert!(!vfk_set_config_json(h, bad.as_ptr()));
+            vfk_session_free(h);
+        }
+    }
+
+    #[test]
+    fn plan_action_shared_guard() {
+        unsafe {
+            let h = vfk_session_new(ptr::null(), VFK_MODE_PREEDIT);
+            assert!(!h.is_null());
+            let before = CString::new("tiếng").unwrap();
+            let surrounding = CString::new("tiếng").unwrap();
+            let insert = CString::new("ềng").unwrap();
+            let action = VfkAction {
+                kind: VFK_REPLACE,
+                delete_utf16: 3,
+                cursor_utf16: 0,
+                pass_key: false,
+                text: insert.as_ptr(),
+            };
+            let mut plan = VfkPlan {
+                kind: 0,
+                delete_utf16: 0,
+                delete_chars: 0,
+                cursor_utf16: 0,
+                wait_ms: 0,
+                pass_key: false,
+                text: ptr::null(),
+            };
+            assert!(vfk_plan_action(
+                h,
+                &action,
+                VFK_FIELD_TEXT,
+                before.as_ptr(),
+                surrounding.as_ptr(),
+                5,
+                5,
+                false,
+                &mut plan,
+            ));
+            assert_eq!(plan.kind, VFK_PLAN_REPLACE);
+            assert_eq!(plan.delete_chars, 3);
+            assert_eq!(CStr::from_ptr(plan.text).to_string_lossy(), "ềng");
+
+            // Selection -> fail-safe.
+            let mut stale = plan;
+            assert!(vfk_plan_action(
+                h,
+                &action,
+                VFK_FIELD_TEXT,
+                before.as_ptr(),
+                surrounding.as_ptr(),
+                5,
+                2,
+                false,
+                &mut stale,
+            ));
+            assert_eq!(stale.kind, VFK_PLAN_FAIL_SAFE);
+
+            // Password -> pass.
+            let mut password = plan;
+            assert!(vfk_plan_action(
+                h,
+                &action,
+                VFK_FIELD_PASSWORD,
+                before.as_ptr(),
+                surrounding.as_ptr(),
+                5,
+                5,
+                false,
+                &mut password,
+            ));
+            assert_eq!(password.kind, VFK_PLAN_PASS);
             vfk_session_free(h);
         }
     }

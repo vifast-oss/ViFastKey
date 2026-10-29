@@ -21,6 +21,29 @@ struct VfkEngineAction {
                                       cursorUTF16: 0, passKey: false)
 }
 
+enum VfkPlanKind: UInt32 {
+    case pass = 0
+    case preedit = 1
+    case commit = 2
+    case replace = 3
+    case failSafe = 4
+}
+
+/// Kết quả từ adapter-core dùng chung: đã qua field policy, surrounding guard
+/// và timing. Swift chỉ cần thi hành primitive tương ứng.
+struct VfkEnginePlan {
+    var kind: VfkPlanKind
+    var deleteUTF16: Int
+    var deleteChars: Int
+    var cursorUTF16: Int
+    var waitMs: Int
+    var passKey: Bool
+    var text: String
+
+    static let pass = VfkEnginePlan(kind: .pass, deleteUTF16: 0, deleteChars: 0,
+                                    cursorUTF16: 0, waitMs: 0, passKey: false, text: "")
+}
+
 final class VfkEngine {
     private var handle: OpaquePointer?
 
@@ -64,6 +87,56 @@ final class VfkEngine {
         guard let h = handle else { return .pass }
         let raw = key.withCString { vfk_process_key(h, $0, ctrl, alt, meta) }
         return convert(raw)
+    }
+
+    var displayText: String {
+        guard let h = handle, let ptr = vfk_display_text(h) else { return "" }
+        return String(cString: ptr)
+    }
+
+    /// Lập kế hoạch bằng adapter-core dùng chung (field policy + surrounding
+    /// guard + timing). Port chỉ thi hành plan.
+    func planAction(_ action: VfkEngineAction,
+                    fieldKind: UInt32,
+                    beforeDisplay: String,
+                    surroundingText: String?,
+                    cursorUTF16: UInt32,
+                    anchorUTF16: UInt32,
+                    allowUnverifiedReplace: Bool = false) -> VfkEnginePlan {
+        guard let h = handle else { return .pass }
+        var raw = VfkAction()
+        raw.kind = action.kind.rawValue
+        raw.delete_utf16 = UInt32(max(0, action.deleteBeforeUTF16))
+        raw.cursor_utf16 = UInt32(max(0, action.cursorUTF16))
+        raw.pass_key = action.passKey
+        var out = VfkPlan()
+        let ok = action.insert.withCString { textPtr -> Bool in
+            raw.text = textPtr
+            return beforeDisplay.withCString { beforePtr in
+                let beforeArg: UnsafePointer<CChar>? =
+                    beforeDisplay.isEmpty ? nil : beforePtr
+                if let surroundingText = surroundingText {
+                    return surroundingText.withCString { surroundingPtr in
+                        vfk_plan_action(h, &raw, fieldKind, beforeArg,
+                                        surroundingPtr, cursorUTF16, anchorUTF16,
+                                        allowUnverifiedReplace, &out)
+                    }
+                }
+                return vfk_plan_action(h, &raw, fieldKind, beforeArg, nil,
+                                       cursorUTF16, anchorUTF16,
+                                       allowUnverifiedReplace, &out)
+            }
+        }
+        guard ok else { return .pass }
+        return VfkEnginePlan(
+            kind: VfkPlanKind(rawValue: out.kind) ?? .pass,
+            deleteUTF16: Int(out.delete_utf16),
+            deleteChars: Int(out.delete_chars),
+            cursorUTF16: Int(out.cursor_utf16),
+            waitMs: Int(out.wait_ms),
+            passKey: out.pass_key,
+            text: out.text.map { String(cString: $0) } ?? ""
+        )
     }
 
     func setSurroundingText(_ text: String?) {

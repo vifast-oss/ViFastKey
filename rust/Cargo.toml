@@ -5,6 +5,7 @@ members = [
     "crates/vfk-suggest",
     "crates/vfk-core",
     "crates/vfk-engine",
+    "crates/vfk-adapter-core",
     "crates/vfk-ffi",
     "crates/vfk-wasm",
     "apps/vfk-cli",
@@ -25,6 +26,7 @@ repository = "https://github.com/dvchd/ViFastKey"
 vi-syllable = { path = "crates/vi-syllable" }
 vfk-core = { path = "crates/vfk-core" }
 vfk-engine = { path = "crates/vfk-engine" }
+vfk-adapter-core = { path = "crates/vfk-adapter-core" }
 vfk-suggest = { path = "crates/vfk-suggest" }
 arrayvec = "0.7.8"
 unicode-normalization = "0.1"

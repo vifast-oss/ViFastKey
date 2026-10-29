@@ -250,6 +250,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "vfk-adapter-core"
+version = "0.4.0"
+dependencies = [
+ "serde_json",
+ "vfk-engine",
+]
+
+[[package]]
 name = "vfk-charset"
 version = "0.4.0"
 dependencies = [
@@ -290,6 +298,7 @@ name = "vfk-ffi"
 version = "0.4.0"
 dependencies = [
  "serde_json",
+ "vfk-adapter-core",
  "vfk-core",
  "vfk-engine",
 ]
@@ -336,6 +345,7 @@ name = "vfk-windows"
 version = "0.4.0"
 dependencies = [
  "serde_json",
+ "vfk-adapter-core",
  "vfk-engine",
  "vi-syllable",
  "windows-sys 0.61.2",

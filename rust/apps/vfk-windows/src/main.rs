@@ -17,6 +17,7 @@ mod win {
     use std::cell::RefCell;
     use std::path::PathBuf;
 
+    use vfk_adapter_core::{plan_action, AdapterAction, Plan, PlanContext, PlanKind};
     use vfk_engine::testing::WordListDictionary;
     use vfk_engine::*;
     use windows_sys::Win32::Foundation::{LPARAM, LRESULT, WPARAM};
@@ -26,7 +27,7 @@ mod win {
     use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
         GetAsyncKeyState, GetKeyboardLayout, GetKeyboardState, SendInput, ToUnicodeEx, INPUT, INPUT_0,
         INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE, VK_BACK, VK_CONTROL, VK_LWIN,
-        VK_MENU, VK_RETURN, VK_SHIFT,
+        VK_MENU, VK_SHIFT,
     };
     use windows_sys::Win32::UI::WindowsAndMessaging::{
         CallNextHookEx, DispatchMessageW, GetForegroundWindow, GetMessageW, GetWindowThreadProcessId,
@@ -151,34 +152,28 @@ mod win {
         }
     }
 
-    fn text_of(action: &Action) -> (&str, bool) {
-        match action {
-            Action::Commit { text, pass_key } => (text, *pass_key),
-            Action::Replace { insert, pass_key, .. } => (insert, *pass_key),
-            _ => ("", false),
-        }
-    }
-
-    fn apply(action: Action) {
-        match action {
-            Action::PassThrough => {}
-            Action::Preedit { text, .. } => {
-                // Không có preedit trong hook; commit trực tiếp.
-                type_text(&text);
+    /// Thi hành plan từ adapter-core. Trả `true` nếu hook phải nuốt phím gốc.
+    fn apply_plan(plan: &Plan) -> bool {
+        match plan.kind {
+            PlanKind::Pass | PlanKind::FailSafe => false,
+            PlanKind::Preedit => {
+                type_text(&plan.text);
+                true
             }
-            Action::Commit { text, pass_key } => {
-                type_text(&text);
-                if pass_key {
-                    send_key(VK_RETURN, false);
-                }
+            PlanKind::Commit => {
+                type_text(&plan.text);
+                !plan.pass_key
             }
-            Action::Replace { delete_before, insert, pass_key } => {
-                for _ in 0..delete_before {
+            PlanKind::Replace => {
+                // Windows text model dùng UTF-16, nhưng VK_BACK thường xoá một
+                // grapheme; dùng delete_chars để giữ hành vi cũ với tiếng Việt
+                // BMP. delete_utf16 vẫn có trong plan cho port khác.
+                for _ in 0..plan.delete_chars {
                     send_key(VK_BACK, false);
                     send_key(VK_BACK, true);
                 }
-                type_text(&insert);
-                if pass_key { /* phím gốc do hook nuốt; Enter/space đã nằm trong insert */ }
+                type_text(&plan.text);
+                !plan.pass_key
             }
         }
     }
@@ -242,12 +237,21 @@ mod win {
         let mut swallowed = false;
         SESSION.with(|s| {
             if let Some(session) = s.borrow_mut().as_mut() {
+                let before = session.display();
                 let action = session.process_key(&KeyEvent::parse(&key));
-                let (text, pass_key) = text_of(&action);
-                if !text.is_empty() || matches!(action, Action::Replace { .. } | Action::Commit { .. }) {
-                    apply(action);
-                    swallowed = !pass_key;
+                let adapter_action = AdapterAction::from(action);
+                let context = PlanContext {
+                    field_kind: FieldKind::Text,
+                    before_display: &before,
+                    surrounding: None,
+                    // Hook tự quản lý vùng text; không có surrounding text.
+                    allow_unverified_replace: true,
+                };
+                let plan = plan_action(&adapter_action, &context, session.profile());
+                if plan.kind == PlanKind::FailSafe {
+                    session.reset();
                 }
+                swallowed = apply_plan(&plan);
             }
         });
         if swallowed {

@@ -31,6 +31,22 @@ extern "C" {
 #define VFK_MODE_PREEDIT 0u
 #define VFK_MODE_REPLACE 1u
 
+#define VFK_PLAN_PASS 0u
+#define VFK_PLAN_PREEDIT 1u
+#define VFK_PLAN_COMMIT 2u
+#define VFK_PLAN_REPLACE 3u
+#define VFK_PLAN_FAIL_SAFE 4u
+
+typedef struct VfkPlan {
+    uint32_t kind;
+    uint32_t delete_utf16;
+    uint32_t delete_chars;
+    uint32_t cursor_utf16;
+    uint32_t wait_ms;
+    bool pass_key;
+    const char *text; /* thuộc session, hợp lệ tới lần gọi kế tiếp */
+} VfkPlan;
+
 #define VFK_FIELD_TEXT 0u
 #define VFK_FIELD_PASSWORD 1u
 #define VFK_FIELD_NUMBER 2u
@@ -73,6 +89,20 @@ VfkAction vfk_flush(VfkSession *s);
 /* Chuỗi engine tin là đang hiển thị; dùng để xác minh surrounding text.
  * Chuỗi thuộc session, hợp lệ tới lần gọi kế tiếp. */
 const char *vfk_display_text(VfkSession *s);
+
+/* Đổi offset char (codepoint) sang UTF-16 code unit; UINT32_MAX nếu sai. */
+uint32_t vfk_char_to_utf16_offset(const char *text, uint32_t chars);
+
+/* Lập kế hoạch thi hành Action bằng logic adapter dùng chung.
+ * - before_display: vfk_display_text() trước khi xử lý phím (nullable).
+ * - surrounding_text: snapshot đầy đủ (nullable), offset UTF-16.
+ * - allow_unverified_replace: chỉ dùng cho port tự quản lý toàn bộ text
+ *   (Windows hook), nơi không có surrounding text.
+ * Trả false nếu tham số sai; khi true, out nhận VfkPlan. */
+bool vfk_plan_action(VfkSession *s, const VfkAction *action, uint32_t field_kind,
+                     const char *before_display, const char *surrounding_text,
+                     uint32_t cursor_utf16, uint32_t anchor_utf16,
+                     bool allow_unverified_replace, VfkPlan *out);
 
 /* Đổi chế độ xuất chữ: VFK_MODE_PREEDIT hoặc VFK_MODE_REPLACE.
  * Có thể trả COMMIT/PASS để adapter chốt composition cũ trước khi đổi. */

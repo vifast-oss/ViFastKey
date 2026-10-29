@@ -36,4 +36,28 @@ final class ImkTextClient: EngineTextClient {
         let length = min(max(0, count), selected.location)
         c.insertText(text, replacementRange: NSRange(location: location, length: length))
     }
+
+    /// Snapshot đầy đủ cho adapter-core: text + cursor/anchor UTF-16 + 1 ký tự
+    /// sau cursor để phát hiện caret giữa từ.
+    func surroundingSnapshot(maxLength: Int) -> (text: String, cursorUTF16: UInt32, anchorUTF16: UInt32)? {
+        guard let c = client as? IMKTextInput else { return nil }
+        let selected = c.selectedRange()
+        guard selected.location != NSNotFound else { return nil }
+
+        let start = max(0, selected.location - maxLength)
+        let beforeLength = max(0, selected.location - start)
+        let before = beforeLength > 0
+            ? c.attributedSubstring(from: NSRange(location: start, length: beforeLength))?.string ?? ""
+            : ""
+        let selectedText = selected.length > 0
+            ? c.attributedSubstring(from: selected)?.string ?? ""
+            : ""
+        let afterLocation = selected.location + selected.length
+        let after = c.attributedSubstring(from: NSRange(location: afterLocation, length: 1))?.string ?? ""
+
+        let text = before + selectedText + after
+        let cursor = (before as NSString).length + (selectedText as NSString).length
+        let anchor = (before as NSString).length
+        return (text, UInt32(cursor), UInt32(anchor))
+    }
 }

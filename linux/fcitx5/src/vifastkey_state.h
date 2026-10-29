@@ -75,16 +75,16 @@ private:
     void applyCommit(const std::string &text, bool passKey, KeyEvent *event,
                      const std::optional<Key> &queuedKey);
     void startReplace(const std::string &text, int deleteChars, bool passKey,
-                      const std::optional<Key> &rawKey, KeyEvent *event);
+                      const std::optional<Key> &rawKey, KeyEvent *event,
+                      uint32_t waitMs);
     void finishReplace();
     void scheduleReplaceCommit(uint32_t waitMs);
     void schedulePostCommitDrain();
     void drainQueue();
+    void failSafe(KeyEvent *event, const std::optional<Key> &queuedKey);
 
-    bool safeToReplace(const std::string &deleted) const;
     bool hasSurrounding() const;
     bool isDisabled() const;
-    uint32_t replaceWaitMs(int deleteChars) const;
 
     void updateSurroundingAfterDelete(int deleteChars);
     void updateSurroundingAfterCommit(const std::string &insert);

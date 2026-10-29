@@ -15,10 +15,9 @@
 namespace fcitx {
 namespace {
 
-constexpr uint32_t kMaxReplaceWaitMs = 60;
-constexpr uint32_t kMinReplaceWaitMs = 3;
 // Khoảng bảo vệ sau Replace để app kịp xử lý commit trước khi key kế tiếp
-// bắt đầu một delete/commit mới.
+// bắt đầu một delete/commit mới. Giá trị này khớp
+// vfk_adapter_core::timing::POST_COMMIT_DELAY_MS.
 constexpr uint32_t kPostReplaceCommitDelayMs = 10;
 
 // Cắt `chars` code point đầu tiên của chuỗi UTF-8.
@@ -55,33 +54,6 @@ uint32_t utf16Units(uint32_t codepoint) {
     return codepoint > 0xFFFF ? 2 : 1;
 }
 
-std::string utf16Suffix(const std::string &text, uint32_t units) {
-    if (units == 0) {
-        return {};
-    }
-    size_t begin = text.size();
-    uint32_t count = 0;
-    while (begin > 0 && count < units) {
-        size_t start = begin - 1;
-        while (start > 0 &&
-               (static_cast<unsigned char>(text[start]) & 0xC0) == 0x80) {
-            --start;
-        }
-        uint32_t codepoint = 0;
-        fcitx::utf8::getNextChar(text.begin() + start, text.end(), &codepoint);
-        const uint32_t add = utf16Units(codepoint);
-        if (count + add > units) {
-            return {};
-        }
-        count += add;
-        begin = start;
-    }
-    if (count != units) {
-        return {};
-    }
-    return text.substr(begin);
-}
-
 size_t utf16ToByteOffset(const std::string &text, uint32_t cursorUtf16) {
     size_t offset = 0;
     uint32_t units = 0;
@@ -94,24 +66,6 @@ size_t utf16ToByteOffset(const std::string &text, uint32_t cursorUtf16) {
         offset = static_cast<size_t>(next - text.begin());
     }
     return offset;
-}
-
-bool endsWith(const std::string &text, const std::string &suffix) {
-    return suffix.size() <= text.size() &&
-           text.compare(text.size() - suffix.size(), suffix.size(), suffix) ==
-               0;
-}
-
-bool isWordCodepoint(uint32_t codepoint) {
-    if (codepoint < 0x80) {
-        return (codepoint >= '0' && codepoint <= '9') ||
-               (codepoint >= 'A' && codepoint <= 'Z') ||
-               (codepoint >= 'a' && codepoint <= 'z') || codepoint == '_';
-    }
-    // Latin mở rộng + khối tiếng Việt + combining marks.
-    return (codepoint >= 0x00C0 && codepoint <= 0x024F) ||
-           (codepoint >= 0x0300 && codepoint <= 0x036F) ||
-           (codepoint >= 0x1E00 && codepoint <= 0x1EFF);
 }
 
 } // namespace
@@ -572,6 +526,18 @@ void VifastkeyState::applyCommit(const std::string &text, bool passKey,
     }
 }
 
+void VifastkeyState::failSafe(KeyEvent *event,
+                             const std::optional<Key> &queuedKey) {
+    FCITX_WARN() << "vifastkey: plan fail-safe, not touching surrounding text";
+    if (session_) {
+        vfk_reset(session_);
+    }
+    clearPreedit();
+    if (!event && queuedKey) {
+        forwardQueuedKey(*queuedKey);
+    }
+}
+
 void VifastkeyState::applyAction(const VfkAction &action, KeyEvent *event,
                                 const std::string &beforeDisplay,
                                 const std::optional<Key> &queuedKey) {
@@ -579,9 +545,40 @@ void VifastkeyState::applyAction(const VfkAction &action, KeyEvent *event,
         return;
     }
 
-    const std::string text = action.text ? action.text : "";
-    switch (action.kind) {
-    case VFK_PASS:
+    // Gom đúng những gì adapter-core cần: display trước phím + snapshot đầy
+    // đủ. Nếu app không hỗ trợ surrounding, truyền nullptr để planner fail-safe.
+    std::string surroundingText;
+    bool hasSnapshot = false;
+    uint32_t cursorUtf16 = 0;
+    uint32_t anchorUtf16 = 0;
+    if (ic_ &&
+        ic_->capabilityFlags().test(CapabilityFlag::SurroundingText)) {
+        const auto &surrounding = ic_->surroundingText();
+        if (surrounding.isValid()) {
+            surroundingText = surrounding.text();
+            const uint32_t c = vfk_char_to_utf16_offset(
+                surroundingText.c_str(), surrounding.cursor());
+            const uint32_t a = vfk_char_to_utf16_offset(
+                surroundingText.c_str(), surrounding.anchor());
+            if (c != UINT32_MAX && a != UINT32_MAX) {
+                hasSnapshot = true;
+                cursorUtf16 = c;
+                anchorUtf16 = a;
+            }
+        }
+    }
+
+    VfkPlan plan = {};
+    if (!vfk_plan_action(session_, &action, fieldKind_, beforeDisplay.c_str(),
+                         hasSnapshot ? surroundingText.c_str() : nullptr,
+                         cursorUtf16, anchorUtf16, false, &plan)) {
+        failSafe(event, queuedKey);
+        return;
+    }
+
+    const std::string text = plan.text ? plan.text : "";
+    switch (plan.kind) {
+    case VFK_PLAN_PASS:
         if (event) {
             return; // để app xử lý phím gốc
         }
@@ -590,84 +587,34 @@ void VifastkeyState::applyAction(const VfkAction &action, KeyEvent *event,
         }
         return;
 
-    case VFK_PREEDIT:
-        applyPreedit(text, action.cursor_utf16, event);
+    case VFK_PLAN_PREEDIT:
+        applyPreedit(text, plan.cursor_utf16, event);
         return;
 
-    case VFK_COMMIT:
-        applyCommit(text, action.pass_key, event, queuedKey);
+    case VFK_PLAN_COMMIT:
+        applyCommit(text, plan.pass_key, event, queuedKey);
         return;
 
-    case VFK_REPLACE: {
-        if (action.delete_utf16 == 0) {
-            applyCommit(text, action.pass_key, event, queuedKey);
+    case VFK_PLAN_REPLACE:
+        if (plan.delete_chars == 0) {
+            applyCommit(text, plan.pass_key, event, queuedKey);
             return;
         }
-
-        const std::string deleted = utf16Suffix(beforeDisplay, action.delete_utf16);
-        if (deleted.empty() || !safeToReplace(deleted)) {
-            // Snapshot lệch hoặc app không còn surrounding text. Không xoá mù:
-            // reset engine và để phím đi tiếp để tránh làm hỏng văn bản.
-            FCITX_WARN() << "vifastkey: surrounding text mismatch, fail-safe "
-                            "replace";
-            vfk_reset(session_);
-            clearPreedit();
-            if (!event && queuedKey) {
-                forwardQueuedKey(*queuedKey);
-            }
-            return;
-        }
-
-        const int deleteChars = static_cast<int>(fcitx::utf8::length(deleted));
-        if (deleteChars <= 0) {
-            applyCommit(text, action.pass_key, event, queuedKey);
-            return;
-        }
-        startReplace(text, deleteChars, action.pass_key, queuedKey, event);
+        startReplace(text, static_cast<int>(plan.delete_chars), plan.pass_key,
+                     queuedKey, event, plan.wait_ms);
         return;
-    }
 
+    case VFK_PLAN_FAIL_SAFE:
     default:
+        failSafe(event, queuedKey);
         return;
     }
-}
-
-bool VifastkeyState::safeToReplace(const std::string &deleted) const {
-    if (!ic_ ||
-        !ic_->capabilityFlags().test(CapabilityFlag::SurroundingText)) {
-        return false;
-    }
-    const auto &surrounding = ic_->surroundingText();
-    if (!surrounding.isValid() ||
-        surrounding.cursor() != surrounding.anchor()) {
-        return false;
-    }
-    const std::string before =
-        utf8Prefix(surrounding.text(), surrounding.cursor());
-    return endsWith(before, deleted);
-}
-
-uint32_t VifastkeyState::replaceWaitMs(int deleteChars) const {
-    if (!session_) {
-        return kMinReplaceWaitMs;
-    }
-    uint32_t wait = kMinReplaceWaitMs;
-    if (vfk_profile_wait_ack(session_)) {
-        const uint32_t perChar = vfk_profile_delay_per_char_ms(session_);
-        const uint32_t base = vfk_profile_backspace_delay_ms(session_);
-        const uint64_t computed = static_cast<uint64_t>(base) +
-                                  static_cast<uint64_t>(perChar) *
-                                      static_cast<uint64_t>(deleteChars);
-        wait = static_cast<uint32_t>(
-            std::min<uint64_t>(kMaxReplaceWaitMs, std::max<uint64_t>(wait, computed)));
-    }
-    return wait;
 }
 
 void VifastkeyState::startReplace(const std::string &text, int deleteChars,
                                  bool passKey,
                                  const std::optional<Key> &queuedKey,
-                                 KeyEvent *event) {
+                                 KeyEvent *event, uint32_t waitMs) {
     if (!ic_ || busy_) {
         return;
     }
@@ -685,7 +632,7 @@ void VifastkeyState::startReplace(const std::string &text, int deleteChars,
         event->filterAndAccept();
     }
 
-    scheduleReplaceCommit(replaceWaitMs(deleteChars));
+    scheduleReplaceCommit(waitMs);
 }
 
 void VifastkeyState::scheduleReplaceCommit(uint32_t waitMs) {
