@@ -61,6 +61,23 @@ surrounding guard, Replace transaction và emoji/UTF-16.
 Test runtime trên desktop Wayland thật vẫn cần thiết; Xvfb/X11 không đại diện
 cho mọi frontend Wayland.
 
+### Checklist app thật
+
+| App | Việc cần thử |
+|---|---|
+| GNOME Terminal / Kitty / WezTerm | `tieengs` → `tiếng`; Backspace giữ dấu; Enter/Tab không mất chữ |
+| Chrome/Chromium address bar | Gõ tiếng Việt, autocomplete không nhân đôi; chuyển tab qua lại |
+| Google Sheets | Gõ vào cell chưa enter edit; từ đầu tiên không bị nuốt |
+| Firefox | Address bar + trang web; selection/autocomplete không bị xoá nhầm |
+| LibreOffice Writer | Preedit/commit, sửa từ trước con trỏ |
+| VS Code / Cursor | Terminal embedded, editor, command palette |
+| Discord / Signal / Slack | Gõ nhanh, macro, Backspace; không lặp từ |
+| Password field | Không preedit, không commit nội dung cũ |
+| URL/number/email field | Không tạo preedit; phím đi thẳng app |
+
+Khi lỗi, bật `FCITX_LOG_LEVEL=debug` (hoặc xem journal) và ghi lại app, frontend,
+field, action gần nhất; log adapter không chứa nội dung từ.
+
 ## Giới hạn
 
 - Chưa có preferences GUI/tray riêng; sửa JSON hoặc dùng status action.
