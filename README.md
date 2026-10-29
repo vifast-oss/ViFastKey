@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="resources/brand/vifastkey-lockup-cream.png" alt="ViFastKey · Bộ gõ tiếng Việt" width="620">
+</p>
+
 # ViFastKey
 
 Bộ gõ tiếng Việt gọn, thuần logic: chuỗi phím thô → chữ tiếng Việt (Telex, Simple Telex, VNI), kèm tầng engine cho IME (preedit/replace, macro, khôi phục tiếng Anh, hồ sơ ứng dụng).
@@ -38,6 +42,9 @@ ViFastKey/
     ├── tools/sync_conformance.sh
     └── README.md
 ```
+
+Ngoài hai bản engine, repo còn có `resources/brand/` (logo, favicon, OG) và
+`design/tokens.json` (màu/font/spacing dùng chung cho desktop, web, extension, mobile).
 
 Hai bản tự chứa dữ liệu `conformance/`, `tests/golden/`, `tests/data/` để chạy test độc lập. Khi sửa hành vi, sửa bản Python trước rồi đồng bộ sang Rust bằng `rust/tools/sync_conformance.sh`.
 

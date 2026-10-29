@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 400" width="1400" height="400" role="img" aria-labelledby="vifastkey-lockup-title">
+  <title id="vifastkey-lockup-title">ViFastKey — Bộ gõ tiếng Việt</title>
+  <rect width="1400" height="400" fill="#FFFFFF"/>
+  <g transform="translate(44,44) scale(0.61)">
+<title id="vifastkey-icon-title">ViFastKey</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E5352B"/>
+      <stop offset="1" stop-color="#B3140F"/>
+    </linearGradient>
+    <linearGradient id="y" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#FFE14D"/>
+      <stop offset="1" stop-color="#FFB800"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <g stroke="#FFC93C" stroke-width="16" stroke-linecap="round">
+    <line x1="40" y1="190" x2="92" y2="190"/>
+    <line x1="56" y1="232" x2="92" y2="232"/>
+    <line x1="40" y1="274" x2="92" y2="274"/>
+  </g>
+  <polygon points="196.0,132.0 219.5,199.6 291.1,201.1 234.0,244.4 254.8,312.9 196.0,272.0 137.2,312.9 158.0,244.4 100.9,201.1 172.5,199.6" fill="url(#y)" stroke="#F7E08A" stroke-width="3" stroke-linejoin="round"/>
+  <rect x="280" y="158" width="40" height="40" rx="9" fill="#fff"/>
+  <rect x="332" y="158" width="40" height="40" rx="9" fill="#fff" opacity="0.75"/>
+  <rect x="384" y="158" width="40" height="40" rx="9" fill="#fff" opacity="0.45"/>
+  <rect x="302" y="214" width="40" height="40" rx="9" fill="#fff"/>
+  <rect x="354" y="214" width="40" height="40" rx="9" fill="#fff" opacity="0.75"/>
+  <rect x="406" y="214" width="40" height="40" rx="9" fill="#fff" opacity="0.45"/>
+  <rect x="280" y="270" width="40" height="40" rx="9" fill="#fff"/>
+  <rect x="332" y="270" width="40" height="40" rx="9" fill="#fff" opacity="0.75"/>
+  <rect x="384" y="270" width="40" height="40" rx="9" fill="#fff" opacity="0.45"/>
+  <rect x="280" y="326" width="146" height="22" rx="10" fill="#fff" opacity="0.85"/>
+  </g>
+  <text x="415" y="242" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="170" letter-spacing="-4"><tspan fill="#D42A22">Vi</tspan><tspan fill="#1F2430" font-style="italic">Fast</tspan><tspan fill="#D42A22">Key</tspan></text>
+  <text x="425" y="318" font-family="Arial, sans-serif" font-weight="bold" font-size="44" letter-spacing="7" fill="#6B7280">BỘ GÕ TIẾNG VIỆT</text>
+</svg>
