@@ -13,12 +13,11 @@
 #![allow(clippy::missing_safety_doc)]
 
 use std::cell::RefCell;
-use std::collections::HashSet;
 use std::ffi::{c_char, CStr, CString};
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::ptr;
 use std::rc::Rc;
-use std::sync::OnceLock;
+use std::sync::{Arc, OnceLock};
 
 use vfk_core::charset;
 use vfk_engine::testing::WordListDictionary;
@@ -30,10 +29,16 @@ struct Shared {
     config: Config,
     app: Option<String>,
     surrounding: Option<String>,
-    english: HashSet<String>,
-    vietnamese: HashSet<String>,
+    /// Dictionary mặc định dùng chung giữa các session; copy-on-write khi
+    /// adapter nạp user dictionary.
+    dictionary: Arc<WordListDictionary>,
     /// Bộ đếm số lần lưu cấu hình (adapter so sánh để biết cần ghi file).
     config_version: u64,
+}
+
+fn shared_dictionary() -> Arc<WordListDictionary> {
+    static DICTIONARY: OnceLock<Arc<WordListDictionary>> = OnceLock::new();
+    DICTIONARY.get_or_init(|| Arc::new(WordListDictionary::default())).clone()
 }
 
 #[derive(Clone)]
@@ -67,10 +72,10 @@ impl SurroundingText for SharedPorts {
 
 impl Dictionary for SharedPorts {
     fn is_english(&self, word: &str) -> bool {
-        self.0.borrow().english.contains(word)
+        self.0.borrow().dictionary.english.contains(word)
     }
     fn is_vietnamese(&self, word: &str) -> bool {
-        self.0.borrow().vietnamese.contains(word)
+        self.0.borrow().dictionary.vietnamese.contains(word)
     }
 }
 
@@ -207,13 +212,11 @@ pub unsafe extern "C" fn vfk_session_new(config_json: *const c_char, mode: u32) 
                 Err(_) => return ptr::null_mut(),
             },
         };
-        let dict = WordListDictionary::default();
         let shared = SharedPorts(Rc::new(RefCell::new(Shared {
             config,
             app: None,
             surrounding: None,
-            english: dict.english,
-            vietnamese: dict.vietnamese,
+            dictionary: shared_dictionary(),
             config_version: 0,
         })));
         let ports = Ports {
@@ -502,11 +505,12 @@ pub unsafe extern "C" fn vfk_load_dictionary(
     let vi = opt_str(vietnamese);
     with_session(h, (), |s| {
         let mut sh = s.shared.0.borrow_mut();
+        let dict = Arc::make_mut(&mut sh.dictionary);
         if let Some(e) = en {
-            sh.english = e.split_whitespace().map(|w| w.to_lowercase()).collect();
+            dict.english = e.split_whitespace().map(|w| w.to_lowercase()).collect();
         }
         if let Some(v) = vi {
-            sh.vietnamese = v.split_whitespace().map(|w| w.to_lowercase()).collect();
+            dict.vietnamese = v.split_whitespace().map(|w| w.to_lowercase()).collect();
         }
     })
 }
