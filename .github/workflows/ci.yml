@@ -92,6 +92,27 @@ jobs:
       - run: python -m pytest -q python/tests/test_ibus_core.py
       - run: python -m py_compile linux/ibus/ibus_engine.py
 
+  linux-fcitx5-adapter:
+    name: Linux Fcitx5 adapter (build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Cài Fcitx5 dev
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake pkg-config libfcitx5core-dev libfcitx5utils-dev
+      - name: Build Rust staticlib + addon
+        run: |
+          cd rust
+          cargo build --release -p vfk-ffi
+          cd ..
+          cmake -S linux/fcitx5 -B linux/fcitx5/build \
+            -DVIFASTKEY_LIB="$PWD/rust/target/release/libvifastkey.a" \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build linux/fcitx5/build -j2
+          test -f linux/fcitx5/build/libvifastkey.so
+
   macos-adapter:
     name: macOS IMK adapter
     runs-on: macos-15

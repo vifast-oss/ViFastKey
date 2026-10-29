@@ -52,7 +52,8 @@ ViFastKey/
 │   ├── apps/vfk-suggest/       # gợi ý từ
 │   ├── apps/vfk-windows/       # adapter Windows prototype
 ├── linux/
-│   └── ibus/                   # adapter IBus (engine Python)
+│   ├── ibus/                   # adapter IBus (engine Python)
+│   └── fcitx5/                 # adapter Fcitx5 (C++ + C ABI)
 │   ├── crates/vfk-suggest/     # lexicon gợi ý
 │   ├── conformance/            # bản sao dữ liệu oracle
 │   ├── testdata/               # golden + corpus

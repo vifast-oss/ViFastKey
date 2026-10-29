@@ -1,6 +1,6 @@
 [package]
 name = "vi-syllable"
-description = "Mô hình âm tiết tiếng Việt: tách âm, kiểm tra chính tả 3 trạng thái, đặt thanh. Dùng chung ViFastKey và ViFastTts."
+description = "Mô hình âm tiết tiếng Việt: tách âm, kiểm tra chính tả 3 trạng thái, đặt thanh (thuần, không I/O)."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

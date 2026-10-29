@@ -5,7 +5,7 @@
 | macOS | `macos/` IMK + `package.sh` universal2 | macOS 12+, Swift/Xcode, đã build arm64/x86_64 + self-test | ✅ dùng được; cần logout/login để đăng ký input source; Developer ID/notarize cần chứng chỉ |
 | Windows | `rust/apps/vfk-windows` low-level hook + SendInput | `cargo check --target x86_64-pc-windows-msvc` trên macOS; build native trên Windows | 🟡 prototype; chưa test runtime, chưa TSF/tray/signing |
 | Linux (IBus) | `linux/ibus/` engine Python | core test trên macOS/CI; cần Linux + PyGObject/IBus để chạy | 🟡 adapter có mã + install; chưa test runtime |
-| Linux (Fcitx5) | chưa có | cần Linux + dev headers | ⏳ dùng C ABI `vifastkey.h` |
+| Linux (Fcitx5) | `linux/fcitx5/` C++ addon | CI Ubuntu cài Fcitx5 dev, build Rust staticlib + addon | 🟡 có mã/build; chưa test GUI Fcitx5 |
 | Android | chưa có | cần Android SDK/JNI + bàn phím native | ⏳ dùng C ABI/UniFFI |
 | iOS | chưa có | cần Xcode + keyboard extension | ⏳ dùng C ABI/UniFFI |
 

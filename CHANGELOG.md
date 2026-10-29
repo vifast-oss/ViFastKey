@@ -56,6 +56,10 @@
 - Ad-hoc signing để test local; `package.sh` build universal2 + hook ký/notarize;
   cần Developer ID/chứng chỉ thật khi phát hành.
 
+### Linux Fcitx5 adapter
+
+- Thêm `linux/fcitx5/`: addon C++ + CMake dùng C ABI Rust; CI Ubuntu build.
+
 ### Linux IBus adapter
 
 - Thêm `linux/ibus/`: engine IBus Python, core `adapters.ibus.IbusCore`, install script,

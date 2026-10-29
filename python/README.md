@@ -26,7 +26,7 @@ Cấu hình mẫu đầy đủ: `python/config.example.json`.
 
 | Python | Crate Rust | Vai trò |
 |---|---|---|
-| `vi_syllable/` | `vi-syllable` | Tách âm tiết, kiểm tra chính tả 3 trạng thái, đặt thanh kiểu cũ/mới. Dùng chung với ViFastTts |
+| `vi_syllable/` | `vi-syllable` | Tách âm tiết, kiểm tra chính tả 3 trạng thái, đặt thanh kiểu cũ/mới. Parser chính tả riêng; ViFastTts có frontend âm vị riêng |
 | `vfk_core/rules.py` | `vfk-core::rules` | Telex, Simple Telex, VNI, VIQR, Quick Telex dạng dữ liệu |
 | `vfk_core/transform.py` | `vfk-core` | `transform(raw, final)`, `to_raw`, `rebuild`, `diff` (hàm thuần) |
 | `vfk_engine/ports.py` | `vfk-engine::ports` | `Config` + 4 port ra (trait) |

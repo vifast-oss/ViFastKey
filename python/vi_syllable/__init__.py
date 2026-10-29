@@ -1,6 +1,9 @@
 """vi-syllable: mô hình âm tiết tiếng Việt (thuần, không I/O).
 
-Tương ứng crate Rust `vi-syllable`, có thể dùng chung với frontend ViFastTts.
+Tương ứng crate Rust `vi-syllable`. Đây là bộ tách chính tả riêng của ViFastKey:
+chịu được chuỗi gõ dở (PARTIAL) và đặt thanh khi gõ tự do. ViFastTts có bộ phân tích
+âm vị riêng (5 thành phần + dạng abstract + G2P); hai bên chỉ cùng quy ước chính tả
+Quốc ngữ nên có thể đối chiếu chéo, không dùng chung code.
 Âm tiết = âm đầu (onset) + cụm vần nguyên âm (âm đệm + âm chính + bán âm cuối) + âm cuối (coda) + thanh.
 """
 from __future__ import annotations

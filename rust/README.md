@@ -19,7 +19,7 @@ cargo run -p vfk-core --release --example bench
 ```
 rust/
 ├── crates/
-│   ├── vi-syllable/   tách âm tiết, chính tả 3 trạng thái, đặt thanh (dùng chung ViFastTts)
+│   ├── vi-syllable/   tách âm tiết, chính tả 3 trạng thái, đặt thanh (thuần; parser riêng, không phải frontend âm vị của ViFastTts)
 │   ├── vfk-core/      rules, transform, Composer, to_raw/rebuild, diff, charset, emoji
 │   ├── vfk-suggest/   lexicon gợi ý local
 │   ├── vfk-engine/    ports (Config, AppProfile, 4 trait), session (ImeSession), testing (Harness)

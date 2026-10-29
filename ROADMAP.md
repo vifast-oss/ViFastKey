@@ -16,7 +16,7 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
   - macOS: ✅ IMK (Swift), ✅ universal2 (`package.sh`); còn Developer ID/notarize
     (script đã có, cần chứng chỉ) và event-tap fallback.
   - Windows: ✅ prototype low-level hook + Replace (`rust/apps/vfk-windows`); còn TSF/tray/signing.
-  - Linux: ✅ IBus engine Python (`linux/ibus/`); Fcitx5 (C++) còn lại.
+  - Linux: ✅ IBus engine Python (`linux/ibus/`), ✅ Fcitx5 C++ addon (`linux/fcitx5/`).
   - Android/iOS: cần bàn phím native + UniFFI; chưa triển khai (không build được trong môi trường macOS hiện tại).
 - **Tích hợp bảng mã vào đầu ra engine** (hiện là module/CLI/FFI riêng): cần định nghĩa
   đơn vị xoá byte/UTF-16 cho từng adapter và test trên app thật.
