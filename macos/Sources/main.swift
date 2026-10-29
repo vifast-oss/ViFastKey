@@ -6,6 +6,13 @@ ConfigFile.ensureExists()
 
 func maintenance() -> Bool {
     let args = CommandLine.arguments
+    if args.contains("--preferences") {
+        let app = NSApplication.shared
+        app.setActivationPolicy(.accessory)
+        PreferencesWindowController.shared.show()
+        app.run()
+        return true
+    }
     guard args.contains("--register-input-source") ||
           args.contains("--enable-input-source") ||
           args.contains("--repair-input-source") else {
