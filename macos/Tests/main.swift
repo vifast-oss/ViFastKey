@@ -102,6 +102,13 @@ do {
     check("replace-committed", client.text, "tiếng")
 }
 
+// Charset clipboard helpers
+do {
+    let e = VfkEngine(configJSON: nil)
+    check("charset-encode-viqr", e.encodeCharset("tiếng", charset: "viqr") ?? "nil", "tie^'ng")
+    check("charset-decode-viqr", e.decodeCharset("tie^'ng", charset: "viqr") ?? "nil", "tiếng")
+}
+
 // Key mapping
 check("key-backspace", KeyMapper.name(for: 51) ?? "nil", "Backspace")
 check("key-enter", KeyMapper.name(for: 36) ?? "nil", "Enter")
