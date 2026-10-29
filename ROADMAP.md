@@ -24,6 +24,9 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
   ✅ field kind/password, commit trước reset, xác minh surrounding trước `Replace`, transaction
   barrier, AppProfile timing/ACK, config reload, status action, CTest adapter. Còn test Wayland
   desktop/app thật; thêm uinput/Libei fallback chỉ khi gặp app không nhận surrounding/forwardKey.
+- **Adapter-core dùng chung**: ✅ `vfk-adapter-core` + `vfk_plan_action`; Fcitx5, macOS, iOS,
+  Android, Windows dùng chung field policy/surrounding guard/action plan/timing. Còn hợp nhất
+  IBus Python qua C ABI và mở rộng `adapter-conformance` khi thêm port mới.
 - **Tích hợp bảng mã vào đầu ra engine** (hiện là module/CLI/FFI riêng): cần định nghĩa
   đơn vị xoá byte/UTF-16 cho từng adapter và test trên app thật.
 - **Sửa từ đã gõ trong PREEDIT**: ✅ engine trả `Replace` + adapter dùng surrounding text;

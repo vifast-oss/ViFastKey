@@ -26,6 +26,8 @@ addon load `vifastkey`, gõ `tieengs` → `tiếng` qua GTK entry. CI dùng Fcit
 
 - **PREEDIT mặc định**, phù hợp terminal/Chromium/Electron và an toàn hơn
   direct-rewrite.
+- Dùng `vfk_plan_action` từ `vfk-adapter-core`: field policy, surrounding guard,
+  delete_chars/delete_utf16 và timing nằm ở logic dùng chung, không lặp trong C++.
 - **Password/URL/number/email** được phát hiện từ `CapabilityFlag`; composition
   bị huỷ (không commit) khi field chuyển sang nhạy cảm.
 - **Sửa từ đã commit / macro undo** dùng `Replace`: adapter kiểm tra

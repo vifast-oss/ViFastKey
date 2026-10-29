@@ -13,6 +13,21 @@
 Bài học adapter Fcitx5 từ Areca (queue/barrier, trust probe surrounding text, timing/ACK,
 field kind, test bằng `InputContext` giả lập): `docs/research/08-areca-ime.md`.
 
+## Adapter-core dùng chung
+
+`rust/crates/vfk-adapter-core` + C ABI `vfk_plan_action` gom logic dễ lặp:
+
+- field policy (password/URL/number/email/terminal);
+- surrounding guard (selection, caret giữa từ, snapshot lệch, emoji/NFD);
+- action plan (`pass/preedit/commit/replace/fail_safe`);
+- `delete_chars` cho Fcitx5/IBus và `delete_utf16` cho macOS/Android/Windows;
+- timing `wait_ms` từ AppProfile.
+
+Đã dùng ở Fcitx5, macOS IMK, iOS keyboard, Android JNI và Windows hook. IBus Python
+vẫn dùng engine Python trực tiếp; giữ tương thích qua bộ scenario
+[`adapter-conformance/`](../adapter-conformance/README.md), và có thể chuyển sang
+C ABI khi cần đồng bộ tuyệt đối.
+
 ## Môi trường build hiện tại
 
 - macOS: Xcode 27.1 + iOS 27 simulator; Swift + Rust iOS targets đã cài.

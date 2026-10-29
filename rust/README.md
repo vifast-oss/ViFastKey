@@ -23,6 +23,7 @@ rust/
 │   ├── vfk-core/      rules, transform, Composer, to_raw/rebuild, diff, charset, emoji
 │   ├── vfk-suggest/   lexicon gợi ý local
 │   ├── vfk-engine/    ports (Config, AppProfile, 4 trait), session (ImeSession), testing (Harness)
+│   ├── vfk-adapter-core/ field policy, surrounding guard, action plan, timing dùng chung
 │   ├── vfk-ffi/       C ABI: lib "vifastkey" (cdylib + staticlib), include/vifastkey.h
 │   └── vfk-wasm/      wasm-bindgen: Session + Action JSON cho web demo
 ├── apps/vfk-cli/      REPL + demo (bin "vfk")
@@ -65,6 +66,9 @@ Phụ thuộc: `unicode-normalization` 0.1.26, `serde` 1.0.229, `serde_json` 1.0
 - PREEDIT sửa từ đã commit bằng `Replace` + surrounding text.
 - Gợi ý từ/emoji local; CLI `vfk-suggest`; ArrayVec cho `WordState`.
 - FFI C: JSON cấu hình một phần được trộn lên cấu hình hiện tại (không reset trường thiếu).
+- `vfk-adapter-core`: field policy, surrounding guard, `plan_action` và timing dùng chung
+  cho Fcitx5/macOS/iOS/Android/Windows; C ABI `vfk_plan_action`; scenario
+  `adapter-conformance/*.jsonl`.
 - WASM: `Config::apply_json_patch`, preedit/replace, dictionary, surrounding text, charset.
 
 ## 3. Khác biệt có chủ đích so với Python
