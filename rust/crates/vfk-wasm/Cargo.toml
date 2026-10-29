@@ -14,5 +14,7 @@ crate-type = ["cdylib", "rlib"]
 wasm-bindgen = "0.2.129"
 vfk-core = { workspace = true }
 vfk-engine = { workspace = true }
+vfk-suggest = { workspace = true }
+vi-syllable = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

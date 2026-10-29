@@ -12,7 +12,7 @@ app profile ghi đè kiểu gõ/kiểu dấu, preedit sửa từ đã gõ, macro
 FFI C/Python/WASM, macOS IMK universal2, Windows hook prototype, Android IME, iOS keyboard extension,
 playground Preedit + macro + bảng mã.
 
-Đợt phát triển này dựa trên phân tích 20 dự án IME tiếng Việt công khai; xem
+Đợt phát triển này dựa trên phân tích 21 dự án IME tiếng Việt công khai; xem
 [`docs/IME_FEATURE_RESEARCH.md`](docs/IME_FEATURE_RESEARCH.md).
 
 Repository gồm hai bản:
@@ -57,6 +57,7 @@ ViFastKey/
 │   └── fcitx5/                 # adapter Fcitx5 (C++ + C ABI)
 ├── android/                    # IME Android (Java + JNI/Rust)
 ├── ios/                        # host app + keyboard extension (Swift + C ABI)
+├── chrome-extension/           # tiện ích web (MV3 + WASM)
 │   ├── crates/vfk-suggest/     # lexicon gợi ý
 │   ├── conformance/            # bản sao dữ liệu oracle
 │   ├── testdata/               # golden + corpus
@@ -166,14 +167,15 @@ cargo test --workspace
 - `python/PORTING.md` — hướng dẫn port và mô tả bộ conformance.
 - `python/EDGE_CASES.md` — tổng hợp edge case từ các dự án IME khác.
 - `rust/README.md` — kiến trúc crate, khác biệt có chủ đích, C ABI.
-- `docs/IME_FEATURE_RESEARCH.md` — tổng hợp 20 dự án IME, ma trận tính năng, quyết định.
-- `docs/research/` — 7 báo cáo phân tích chi tiết (+ ViFastTts).
+- `docs/IME_FEATURE_RESEARCH.md` — tổng hợp 21 dự án IME, ma trận tính năng, quyết định.
+- `docs/research/` — 8 báo cáo phân tích chi tiết (+ ViFastTts, Areca IME).
+- `docs/research/08-areca-ime.md` — bài học adapter Fcitx5 từ Areca: queue/barrier, backend,
+  trust probe, timing/ACK, app compatibility.
 - `docs/VIFASTTTS_LESSONS.md` — bài học kỹ thuật từ ViFastTts cho adapter macOS.
 - `docs/COMPATIBILITY.md` — hợp đồng hành vi (tone, undo, đ, VNI số, charset, Action).
 - `docs/ADAPTER_GUIDE.md` — hợp đồng viết adapter macOS/Windows/Linux.
 - `docs/CONFIG.md` — toàn bộ trường config và app profile.
 - `docs/IME_TEST_VECTORS.md` — bộ ví dụ hành vi dùng để port/regression.
-- `docs/VIFASTTTS_LESSONS.md` — bài học ViFastTts cho macOS/engineering.
 - `macos/README.md` — build/cài/test adapter macOS IMK.
 - `docs/PLATFORMS.md` — trạng thái adapter từng nền tảng và hợp đồng tối thiểu.
 - `THIRD_PARTY_NOTICES.md` — ghi công bảng mã bamboo-core MIT.

@@ -11,6 +11,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use vfk_core::charset;
+use vfk_core::{to_raw, transform_str, InputMethodSpec, TransformOptions, SIMPLE_TELEX, TELEX, VIQR, VNI};
 use vfk_engine::testing::WordListDictionary;
 use vfk_engine::*;
 use wasm_bindgen::prelude::*;
@@ -200,6 +201,74 @@ impl WasmSession {
     pub fn reset(&mut self) {
         self.inner.reset();
     }
+}
+
+fn input_method(name: &str) -> &'static InputMethodSpec {
+    match name {
+        "simple_telex" => &SIMPLE_TELEX,
+        "vni" => &VNI,
+        "viqr" => &VIQR,
+        _ => &TELEX,
+    }
+}
+
+fn word_char(ch: char) -> bool {
+    ch.is_alphabetic() || (ch as u32) >= 0x0300 && (ch as u32) <= 0x036f
+}
+
+/// Chuẩn hoá một đoạn văn bản: chuyển Telex/VNI thô thành chữ Việt và
+/// chuẩn hoá các từ đã có dấu. Giữ nguyên dấu câu/khoảng trắng.
+/// Từ tiếng Anh đã biết trong lexicon được giữ nguyên để tránh `data` -> `dât`.
+#[wasm_bindgen]
+pub fn normalize_text(text: &str, method: &str, tone_style: &str) -> String {
+    let im = input_method(method);
+    let opt = TransformOptions {
+        tone_style: if tone_style == "new" { vfk_core::ToneStyle::New } else { vfk_core::ToneStyle::Old },
+        ..TransformOptions::default()
+    };
+
+    fn normalize_word(word: &str, im: &InputMethodSpec, opt: &TransformOptions) -> String {
+        let marked = word.chars().any(|ch| {
+            let d = vi_syllable::decompose_char(ch);
+            d.tone != 0 || d.mark.is_some()
+        });
+        if marked {
+            let Some(raw) = to_raw(word, im) else { return word.to_string() };
+            let result = transform_str(&raw, im, opt, true);
+            if result.status != vfk_core::Status::Invalid && !result.text.is_empty() {
+                result.text
+            } else {
+                word.to_string()
+            }
+        } else if vfk_suggest::contains(&word.to_lowercase()) {
+            word.to_string()
+        } else {
+            let result = transform_str(word, im, opt, true);
+            if result.status != vfk_core::Status::Invalid && !result.text.is_empty() {
+                result.text
+            } else {
+                word.to_string()
+            }
+        }
+    }
+
+    let mut out = String::new();
+    let mut word = String::new();
+    for ch in text.chars() {
+        if word_char(ch) {
+            word.push(ch);
+        } else {
+            if !word.is_empty() {
+                out.push_str(&normalize_word(&word, im, &opt));
+                word.clear();
+            }
+            out.push(ch);
+        }
+    }
+    if !word.is_empty() {
+        out.push_str(&normalize_word(&word, im, &opt));
+    }
+    out
 }
 
 /// Danh sách bảng mã dạng JSON: [{key,name}].

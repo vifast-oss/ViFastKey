@@ -71,6 +71,13 @@ export function charset_encode_bytes(name: string, text: string): Uint8Array;
  */
 export function charset_list(): string;
 
+/**
+ * Chuẩn hoá một đoạn văn bản: chuyển Telex/VNI thô thành chữ Việt và
+ * chuẩn hoá các từ đã có dấu. Giữ nguyên dấu câu/khoảng trắng.
+ * Từ tiếng Anh đã biết trong lexicon được giữ nguyên để tránh `data` -> `dât`.
+ */
+export function normalize_text(text: string, method: string, tone_style: string): string;
+
 export function version(): string;
 
 export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembly.Module;
@@ -82,6 +89,7 @@ export interface InitOutput {
     readonly charset_encode: (a: number, b: number, c: number, d: number) => [number, number];
     readonly charset_encode_bytes: (a: number, b: number, c: number, d: number) => [number, number];
     readonly charset_list: () => [number, number];
+    readonly normalize_text: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
     readonly version: () => [number, number];
     readonly wasmsession_config_json: (a: number) => [number, number];
     readonly wasmsession_cursor_moved: (a: number) => [number, number];

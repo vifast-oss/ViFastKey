@@ -170,6 +170,28 @@ jobs:
           path: ios/build/Build/Products/Debug-iphonesimulator/ViFastKeyHost.app
           if-no-files-found: error
 
+  chrome-extension:
+    name: Chrome extension (build + E2E)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Cài wasm-bindgen
+        run: cargo install wasm-bindgen-cli --version 0.2.129 --locked
+      - name: Build extension
+        run: ./chrome-extension/build.sh
+      - name: Playwright E2E
+        working-directory: chrome-extension/test
+        run: |
+          npm install --no-audit --no-fund
+          npx playwright install --with-deps chromium
+          xvfb-run -a npm test
+
   macos-adapter:
     name: macOS IMK adapter
     runs-on: macos-15

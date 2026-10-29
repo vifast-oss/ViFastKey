@@ -118,6 +118,10 @@ impl SuggestionEngine {
         self.words.len()
     }
 
+    pub fn contains(&self, word: &str) -> bool {
+        self.words.contains(word)
+    }
+
     pub fn is_empty(&self) -> bool {
         self.words.is_empty()
     }
@@ -137,6 +141,10 @@ pub fn default_engine() -> &'static SuggestionEngine {
 
 pub fn suggest(prefix: &str, limit: usize) -> Vec<String> {
     default_engine().suggest(prefix, limit)
+}
+
+pub fn contains(word: &str) -> bool {
+    default_engine().contains(word)
 }
 
 #[cfg(test)]

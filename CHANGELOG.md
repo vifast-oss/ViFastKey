@@ -56,6 +56,12 @@
 - Ad-hoc signing để test local; `package.sh` build universal2 + hook ký/notarize;
   cần Developer ID/chứng chỉ thật khi phát hành.
 
+### Chrome extension
+
+- Thêm `chrome-extension/`: MV3, context menu chuẩn hoá/bỏ dấu vùng chọn, popup
+  chuyển Telex/VNI/VIQR + bàn phím ảo; dùng WASM `normalize_text`.
+- Playwright E2E: popup `tieengs` → `tiếng`, giữ `data`/`hello`, `Vieejt` → `Việt`.
+
 ### Android / iOS
 
 - Android: IME Java + JNI Rust, bàn phím QWERTY, build APK và test end-to-end

@@ -20,6 +20,9 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
     đã test runtime Fcitx5/Xvfb; còn test Wayland desktop và IBus runtime.
   - Android: ✅ IME Java + JNI, build APK + test emulator (`tieengs` → `tiếng`); còn polish/Play Store.
   - iOS: ✅ host + keyboard extension Swift, build simulator + engine test; còn test bật extension/device signing.
+- **Fcitx5 production hardening** (bài học từ Areca, xem `docs/research/08-areca-ime.md`):
+  field kind/password, commit trước reset, xác minh surrounding trước `Replace`, transaction
+  barrier cho rewrite, AppProfile timing/ACK, test adapter bằng `InputContext` giả lập.
 - **Tích hợp bảng mã vào đầu ra engine** (hiện là module/CLI/FFI riêng): cần định nghĩa
   đơn vị xoá byte/UTF-16 cho từng adapter và test trên app thật.
 - **Sửa từ đã gõ trong PREEDIT**: ✅ engine trả `Replace` + adapter dùng surrounding text;
@@ -34,6 +37,7 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
 - **VIQR** ✅ đã có (dấu câu là `extra_word_keys`); còn MS Vietnamese layout và các kiểu gõ khác.
 - **Gợi ý/word prediction local** ✅ prefix completion (`vfk-suggest`); user dictionary ✅ API;
   emoji ✅ CLI/module; clipboard ✅ `vfk-charset --clipboard` (macOS).
+- **Chrome extension** ✅ MVP chuẩn hoá vùng chọn + popup/bàn phím ảo (WASM); chưa Web Store.
 - **Gõ tắt phụ âm** (OpenKey): `f`→`ph`, `j`→`gi`, `w`→`qu`, coda `g`→`ng`... cần kiểu gõ riêng
   để không đụng phím thanh.
 - **Tiếng Tây Nguyên** (Êđê...): thêm ký tự và `InputMethodSpec`, không đổi thuật toán.

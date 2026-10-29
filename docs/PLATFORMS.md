@@ -9,6 +9,9 @@
 | Android | `android/` IME Java + JNI | SDK/NDK + Gradle, APK arm64/x86_64; CI build + đã test emulator | ✅ gõ được; 🟡 bàn phím tối giản, chưa Play Store |
 | iOS | `ios/` host + keyboard extension | Xcode 27.1, simulator; CI build + engine unit test | ✅ build/test; 🟡 chưa test bật extension/device signing |
 
+Bài học adapter Fcitx5 từ Areca (queue/barrier, trust probe surrounding text, timing/ACK,
+field kind, test bằng `InputContext` giả lập): `docs/research/08-areca-ime.md`.
+
 ## Môi trường build hiện tại
 
 - macOS: Xcode 27.1 + iOS 27 simulator; Swift + Rust iOS targets đã cài.

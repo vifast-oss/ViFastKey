@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ViFastKey for Web</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header><strong>ViFastKey</strong><span>web tools</span></header>
+  <main>
+    <label for="input">Văn bản / phím thô</label>
+    <textarea id="input" rows="5" spellcheck="false" placeholder="tieengs Vieejt"></textarea>
+    <div class="row">
+      <select id="method">
+        <option value="telex">Telex</option>
+        <option value="simple_telex">Simple Telex</option>
+        <option value="vni">VNI</option>
+        <option value="viqr">VIQR</option>
+      </select>
+      <button id="normalize" class="primary">Chuẩn hoá</button>
+    </div>
+    <label for="output">Kết quả</label>
+    <textarea id="output" rows="4" readonly></textarea>
+    <div class="row">
+      <button id="insert">Chèn vào trang</button>
+      <button id="copy">Chép</button>
+    </div>
+    <div class="keyboard" id="keyboard" aria-label="Bàn phím ảo"></div>
+    <p class="hint">Vùng chọn: bôi đen trên trang rồi chuột phải → ViFastKey. Chỉ hoạt động trong trang web, không phải address bar.</p>
+  </main>
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

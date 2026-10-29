@@ -1,6 +1,6 @@
 # Báo cáo phân tích chi tiết
 
-Đây là 7 báo cáo do các sub agent lập trong đợt đối chiếu 20 dự án IME tiếng Việt.
+Đây là 8 báo cáo do các sub agent lập trong đợt đối chiếu 21 dự án IME tiếng Việt.
 Bản tổng hợp và quyết định triển khai nằm ở [`../IME_FEATURE_RESEARCH.md`](../IME_FEATURE_RESEARCH.md).
 
 | File | Nội dung |
@@ -12,6 +12,7 @@ Bản tổng hợp và quyết định triển khai nằm ở [`../IME_FEATURE_R
 | `05-web-mobile-ai.md` | AVIM, v7, Funput, VKey, Bamboo Viet: browser, mobile, AI, config |
 | `06-vnkey-deep.md` | Phân tích riêng VnKey: engine, 4 adapter, charset, config, lỗi và bài học |
 | `07-vifasttts.md` | ViFastTts: engineering, desktop/macOS, test/release, bài học cho IMK |
+| `08-areca-ime.md` | Areca IME (Fcitx5, MIT): FIFO/barrier, backend/fallback, trust probe, adaptive delay, app compatibility, bài học cho adapter Linux của ViFastKey |
 
 ## Lưu ý giấy phép
 

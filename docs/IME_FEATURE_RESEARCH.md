@@ -1,6 +1,6 @@
 # Nghiên cứu tính năng các bộ gõ tiếng Việt
 
-Tài liệu này tổng hợp phân tích 20 dự án IME tiếng Việt công khai (cùng các engine đi kèm),
+Tài liệu này tổng hợp phân tích 21 dự án IME tiếng Việt công khai (cùng các engine đi kèm),
 đối chiếu với ViFastKey, và ghi rõ tính năng nào đã được triển khai, tính năng nào thuộc
 adapter nền tảng, tính năng nào còn để lại trong roadmap.
 
@@ -31,9 +31,10 @@ mọi phần triển khai trong repo này là MIT và được viết lại từ
 | [sonnam0904/telebit](https://github.com/sonnam0904/telebit) | C++ Telex/VNI, spell/escape, fcitx5 | **MIT** | `969efe2` |
 | [UniKey / x-unikey](https://www.unikey.org/source.html) | Engine gốc, charset, macro, config | GPL/LGPL + điều khoản riêng | UniKey 3.62 / x-unikey 1.0.4 |
 | [vn-input/ibus-unikey](https://github.com/vn-input/ibus-unikey) | IBus adapter | GPL | `ede78c3` |
+| [xhkzeroone/ArecaIME](https://github.com/xhkzeroone/ArecaIME) | Fcitx5 addon, queue/backend/adaptive delay, app compatibility | **MIT** | v8.2.6 / `ac738bf` |
 
-Các báo cáo phân tích chi tiết nằm trong [`docs/research/`](research/README.md) (7 báo cáo,
-~5.800 dòng). Tài liệu này là bản tổng hợp. Không có mã nguồn, bảng dữ liệu, từ điển hay test
+Các báo cáo phân tích chi tiết nằm trong [`docs/research/`](research/README.md) (8 báo cáo,
+hơn 8.000 dòng). Tài liệu này là bản tổng hợp. Không có mã nguồn, bảng dữ liệu, từ điển hay test
 corpus GPL nào được sao chép.
 
 ## 2. Ma trận tính năng
@@ -102,6 +103,31 @@ Ký hiệu: ✅ có; ◐ một phần; — không có; 🔌 thuộc adapter/OS.
 - **Macro cần undo một phím** và trigger rõ ràng (Space/Enter/Tab/punctuation).
 - **Adapter phải kiểm tra surrounding text** trước khi xoá; nếu không khớp thì fail safe.
 - **UI cấu hình/CLI** quan trọng ngang engine: người dùng không muốn sửa JSON tay.
+
+### 3.4 Areca IME: bài học adapter Fcitx5
+
+Areca (MIT, v8.2.6) không phải engine tiếng Việt mới — nó dùng `bamboo-core` — mà là một
+**playbook adapter Fcitx5 production-grade**. Đây là dự án sát nhất với khoảng trống hiện tại
+của ViFastKey trên Linux:
+
+- **FIFO + single-flight + transaction barrier** cho key/rewrite; commit ở pha post của event
+  loop; reset bị chặn trong transaction và ~20 ms sau commit.
+- **Backend abstraction + fallback**: surrounding text, forward Backspace, uinput Backspace,
+  Shift+Left, Libei/XTest; chọn theo frontend, capability, app và selection.
+- **Trust probe surrounding text**: xóa thử, chờ `SurroundingTextUpdated`, kiểm tra ngữ nghĩa,
+  timeout 150/80 ms rồi fallback; không tin capability flag.
+- **Timing/ACK/AdaptiveWait** theo frontend và loại thao tác; tự giãn khi event loop/CPU lag.
+- **App/field/context detection** và compatibility list cho terminal, browser, IDE, Office,
+  Electron; có override theo app.
+- **Preedit lifecycle**: finalized word, Backspace quay lại sửa từ đã commit, click/cursor reset
+  được bảo vệ.
+- **Đóng gói/debug/test** nghiêm túc: installer đa distro, AUR, DEB/RPM, udev/uinput, 22 CTest
+  target với `InputContext` giả lập.
+
+Áp dụng cho ViFastKey theo thứ tự: (P0) field kind/password, commit trước reset, xác minh
+surrounding trước `Replace`, transaction barrier, cursor lifecycle; (P1) AppProfile timing/ACK,
+fallback preedit, app override, browser/URL, adapter tests; (P2) adaptive wait, uinput/Libei,
+mouse tracking, GUI. Chi tiết và pseudo-code: [`research/08-areca-ime.md`](research/08-areca-ime.md).
 
 ## 4. Đã triển khai trong đợt này
 

@@ -6,6 +6,7 @@ export const charset_decode: (a: number, b: number, c: number, d: number) => [nu
 export const charset_encode: (a: number, b: number, c: number, d: number) => [number, number];
 export const charset_encode_bytes: (a: number, b: number, c: number, d: number) => [number, number];
 export const charset_list: () => [number, number];
+export const normalize_text: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
 export const version: () => [number, number];
 export const wasmsession_config_json: (a: number) => [number, number];
 export const wasmsession_cursor_moved: (a: number) => [number, number];

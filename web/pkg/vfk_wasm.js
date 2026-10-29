@@ -296,6 +296,34 @@ export function charset_list() {
 }
 
 /**
+ * Chuẩn hoá một đoạn văn bản: chuyển Telex/VNI thô thành chữ Việt và
+ * chuẩn hoá các từ đã có dấu. Giữ nguyên dấu câu/khoảng trắng.
+ * Từ tiếng Anh đã biết trong lexicon được giữ nguyên để tránh `data` -> `dât`.
+ * @param {string} text
+ * @param {string} method
+ * @param {string} tone_style
+ * @returns {string}
+ */
+export function normalize_text(text, method, tone_style) {
+    let deferred4_0;
+    let deferred4_1;
+    try {
+        const ptr0 = passStringToWasm0(text, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(method, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ptr2 = passStringToWasm0(tone_style, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len2 = WASM_VECTOR_LEN;
+        const ret = wasm.normalize_text(ptr0, len0, ptr1, len1, ptr2, len2);
+        deferred4_0 = ret[0];
+        deferred4_1 = ret[1];
+        return getStringFromWasm0(ret[0], ret[1]);
+    } finally {
+        wasm.__wbindgen_free(deferred4_0, deferred4_1, 1);
+    }
+}
+
+/**
  * @returns {string}
  */
 export function version() {
