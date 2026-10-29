@@ -5,9 +5,13 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use jni::objects::{JClass, JString};
-use jni::sys::{jboolean, jlong, jstring};
+use jni::sys::{jboolean, jint, jlong, jstring};
 use jni::JNIEnv;
 use serde_json::json;
+use vfk_adapter_core::{
+    char_to_utf16_offset, plan_action, AdapterAction, DeleteAmount, PlanContext, PlanKind,
+    SurroundingSnapshot,
+};
 use vfk_engine::testing::WordListDictionary;
 use vfk_engine::{
     Action, AppContext, Config, ConfigStore, FieldKind, ImeSession, KeyEvent, OutputMode, Ports,
@@ -65,6 +69,55 @@ fn to_jstring(env: &mut JNIEnv, value: serde_json::Value) -> jstring {
     env.new_string(value.to_string()).map(|s| s.into_raw()).unwrap_or(std::ptr::null_mut())
 }
 
+fn field_kind_from_i32(value: jint) -> FieldKind {
+    match value {
+        1 => FieldKind::Password,
+        2 => FieldKind::Number,
+        3 => FieldKind::Email,
+        4 => FieldKind::Url,
+        5 => FieldKind::Terminal,
+        _ => FieldKind::Text,
+    }
+}
+
+fn adapter_action_from_json(value: &serde_json::Value) -> Option<AdapterAction> {
+    let text = value["text"].as_str().unwrap_or("").to_owned();
+    let pass_key = value["pass"].as_bool().unwrap_or(false);
+    match value["kind"].as_str().unwrap_or("pass") {
+        "pass" => Some(AdapterAction::Pass),
+        "preedit" => {
+            let cursor = value["cursor"].as_u64().unwrap_or(0) as u32;
+            let cursor_utf16 = char_to_utf16_offset(&text, cursor).unwrap_or(0);
+            Some(AdapterAction::Preedit { text, cursor_utf16 })
+        }
+        "commit" => Some(AdapterAction::Commit { text, pass_key }),
+        "replace" => {
+            let delete = value["delete"].as_u64().unwrap_or(0) as u32;
+            Some(AdapterAction::Replace { insert: text, delete: DeleteAmount::Chars(delete), pass_key })
+        }
+        _ => None,
+    }
+}
+
+fn plan_value(plan: &vfk_adapter_core::Plan) -> serde_json::Value {
+    let kind = match plan.kind {
+        PlanKind::Pass => "pass",
+        PlanKind::Preedit => "preedit",
+        PlanKind::Commit => "commit",
+        PlanKind::Replace => "replace",
+        PlanKind::FailSafe => "fail_safe",
+    };
+    json!({
+        "kind": kind,
+        "text": plan.text,
+        "delete_utf16": plan.delete_utf16,
+        "delete_chars": plan.delete_chars,
+        "cursor": plan.cursor_utf16,
+        "wait": plan.wait_ms,
+        "pass": plan.pass_key,
+    })
+}
+
 fn handle<'a>(ptr: jlong) -> Option<&'a mut Handle> {
     if ptr == 0 {
         None
@@ -74,10 +127,15 @@ fn handle<'a>(ptr: jlong) -> Option<&'a mut Handle> {
 }
 
 #[no_mangle]
-pub extern "system" fn Java_app_vifastkey_NativeEngine_create(_env: JNIEnv, _class: JClass) -> jlong {
+pub extern "system" fn Java_app_vifastkey_NativeEngine_create(
+    mut env: JNIEnv,
+    _class: JClass,
+    config_json: JString,
+) -> jlong {
     let app = Rc::new(RefCell::new(None::<String>));
     let surrounding = Rc::new(RefCell::new(None::<String>));
-    let config = Rc::new(RefCell::new(Config::default()));
+    let config_text: String = env.get_string(&config_json).map(|s| s.into()).unwrap_or_default();
+    let config = Rc::new(RefCell::new(serde_json::from_str::<Config>(&config_text).unwrap_or_default()));
     let ports = Ports {
         config: Box::new(SharedConfig(config.clone())),
         app: Box::new(SharedApp(app.clone())),
@@ -165,6 +223,50 @@ pub extern "system" fn Java_app_vifastkey_NativeEngine_process(
     event.meta = meta != 0;
     let action = h.session.process_key(&event);
     to_jstring(&mut env, action_json(&action))
+}
+
+#[no_mangle]
+pub extern "system" fn Java_app_vifastkey_NativeEngine_plan(
+    mut env: JNIEnv,
+    _class: JClass,
+    ptr: jlong,
+    action_json: JString,
+    field: jint,
+    before_display: JString,
+    surrounding_text: JString,
+    cursor_utf16: jint,
+    anchor_utf16: jint,
+    allow_unverified_replace: jboolean,
+) -> jstring {
+    let Some(h) = handle(ptr) else {
+        return std::ptr::null_mut();
+    };
+    let action_text: String = env.get_string(&action_json).map(|s| s.into()).unwrap_or_default();
+    let value: serde_json::Value =
+        serde_json::from_str(&action_text).unwrap_or_else(|_| json!({"kind": "pass"}));
+    let Some(action) = adapter_action_from_json(&value) else {
+        return to_jstring(&mut env, json!({"kind": "pass"}));
+    };
+
+    let before: String = env.get_string(&before_display).map(|s| s.into()).unwrap_or_default();
+    let surrounding: String = env.get_string(&surrounding_text).map(|s| s.into()).unwrap_or_default();
+    let snapshot = if surrounding.is_empty() {
+        None
+    } else {
+        Some(SurroundingSnapshot {
+            text: &surrounding,
+            cursor_utf16: cursor_utf16.max(0) as u32,
+            anchor_utf16: anchor_utf16.max(0) as u32,
+        })
+    };
+    let context = PlanContext {
+        field_kind: field_kind_from_i32(field),
+        before_display: &before,
+        surrounding: snapshot,
+        allow_unverified_replace: allow_unverified_replace != 0,
+    };
+    let plan = plan_action(&action, &context, h.session.profile());
+    to_jstring(&mut env, plan_value(&plan))
 }
 
 #[no_mangle]

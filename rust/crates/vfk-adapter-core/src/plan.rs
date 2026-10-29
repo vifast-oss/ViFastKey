@@ -126,7 +126,17 @@ pub fn plan_action(action: &AdapterAction, context: &PlanContext<'_>, profile: &
             let delete_utf16 = match delete {
                 DeleteAmount::Utf16(units) => *units,
                 DeleteAmount::Chars(chars) => {
-                    let Some(units) = char_suffix_utf16_len(context.before_display, *chars) else {
+                    // Adopt previous word: display rỗng, suffix nằm trong
+                    // surrounding trước cursor.
+                    let source = if context.before_display.is_empty() {
+                        context
+                            .surrounding
+                            .and_then(|s| crate::surrounding::utf16_prefix(s.text, s.cursor_utf16))
+                            .unwrap_or("")
+                    } else {
+                        context.before_display
+                    };
+                    let Some(units) = char_suffix_utf16_len(source, *chars) else {
                         return Plan::fail("replace-suffix-out-of-range");
                     };
                     units
@@ -292,6 +302,21 @@ mod tests {
         );
         assert_eq!(plan.kind, PlanKind::Replace);
         assert_eq!(plan.delete_chars, 2);
+        assert_eq!(plan.delete_utf16, 3);
+    }
+
+    #[test]
+    fn chars_delete_uses_surrounding_when_display_empty() {
+        let snapshot = SurroundingSnapshot { text: "tiếng", cursor_utf16: 5, anchor_utf16: 5 };
+        let plan = plan_action(
+            &AdapterAction::Replace {
+                insert: "ềng".into(), delete: DeleteAmount::Chars(3), pass_key: false
+            },
+            &ctx(FieldKind::Text, "", Some(snapshot), false),
+            &AppProfile::default(),
+        );
+        assert_eq!(plan.kind, PlanKind::Replace);
+        assert_eq!(plan.delete_chars, 3);
         assert_eq!(plan.delete_utf16, 3);
     }
 

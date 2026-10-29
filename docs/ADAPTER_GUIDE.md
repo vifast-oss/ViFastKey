@@ -17,6 +17,27 @@ OS key event ──► Adapter ──► ImeSession::process_key ──► Actio
 
 Không đưa logic tiếng Việt vào adapter. Không dịch lại raw/Unicode ở adapter; engine đã xử lý.
 
+### 1.1 Adapter-core dùng chung
+
+Các quyết định dễ gây mất chữ được gom vào crate `vfk-adapter-core` và C ABI
+`vfk_plan_action`:
+
+- field policy: password/URL/number/email/terminal;
+- surrounding guard: selection, caret giữa từ, snapshot lệch, emoji/NFD;
+- action plan: `pass/preedit/commit/replace/fail_safe`;
+- `delete_chars` cho Fcitx5/IBus và `delete_utf16` cho macOS/Android/Windows;
+- timing `wait_ms` từ AppProfile.
+
+Adapter chỉ cần:
+
+1. lấy `before_display = vfk_display_text()`;
+2. lấy surrounding đầy đủ + cursor/anchor UTF-16 (nếu có);
+3. gọi `vfk_plan_action(...)` sau khi engine trả `VfkAction`;
+4. thi hành `VfkPlan`.
+
+Scenario dùng chung nằm ở [`adapter-conformance/`](../adapter-conformance/README.md).
+Port không nên tự quyết định xoá bao nhiêu ký tự hoặc có được xoá không.
+
 ## 2. Chọn output mode
 
 | Mode | Dùng khi | Cách áp |
@@ -68,9 +89,14 @@ Không đưa logic tiếng Việt vào adapter. Không dịch lại raw/Unicode 
 
 - `delete_before` của engine tính theo **code point** của chuỗi đầu ra (NFC/NFD).
   FFI C/WASM đổi sang UTF-16; nền tảng khác phải đổi theo đơn vị của mình.
-- Gửi backspace theo `AppProfile`: `backspace_delay_ms`, `delay_per_char_ms`, `wait_ack`.
+- Dùng `vfk_plan_action`: plan trả `fail_safe` nếu snapshot lệch/selection/mid-word.
+  Không tự gọi `deleteSurroundingText` khi chưa có plan `replace`.
+- `VfkPlan.delete_chars` dùng cho Fcitx5/IBus; `delete_utf16` dùng cho macOS/
+  Android/Windows. Không trộn hai đơn vị.
+- Gửi backspace theo `AppProfile`: `backspace_delay_ms`, `delay_per_char_ms`, `wait_ack`
+  (đã được planner tính vào `wait_ms`).
 - Không gửi quá nhanh cho Electron/Firefox/Notion; chờ app xử lý (ACK) nếu có.
-- Nếu app nuốt backspace hoặc chèn lặp, dừng, đọc lại surrounding, rồi fallback preedit.
+- Nếu plan `fail_safe`, reset engine và để phím gốc đi tiếp; không xoá mù.
 - Không dùng `Delete` thay Backspace cho vùng trước con trỏ.
 
 ## 7. App/field context

@@ -34,7 +34,7 @@ public final class ViFastKeyService extends InputMethodService {
         prefListener = (sharedPreferences, key) -> {
             if (handle != 0) {
                 String action = NativeEngine.setConfig(handle, Prefs.configJson(this));
-                if (action != null && !action.contains("\"pass\"")) apply(action, "");
+                applyProjected(action, "", snapshot(getCurrentInputConnection()));
                 syncKeyboardState();
                 updateSuggestions();
             }
@@ -63,15 +63,17 @@ public final class ViFastKeyService extends InputMethodService {
     @Override
     public void onStartInput(EditorInfo attribute, boolean restarting) {
         super.onStartInput(attribute, restarting);
+        fieldKind = fieldKind(attribute.inputType);
         if (handle == 0) {
             handle = NativeEngine.create(Prefs.configJson(this));
         } else {
             String action = NativeEngine.setConfig(handle, Prefs.configJson(this));
-            if (action != null && !action.contains("\"pass\"")) apply(action, "");
+            applyProjected(action, "", snapshot(getCurrentInputConnection()));
         }
-        fieldKind = fieldKind(attribute.inputType);
         NativeEngine.setField(handle, fieldKind);
-        NativeEngine.focus(handle, attribute.packageName == null ? "" : attribute.packageName);
+        String focusAction = NativeEngine.focus(
+                handle, attribute.packageName == null ? "" : attribute.packageName);
+        applyProjected(focusAction, "", snapshot(getCurrentInputConnection()));
         syncKeyboardState();
         if (keyboard != null) {
             keyboard.setNumericMode(fieldKind == 2);
@@ -148,7 +150,9 @@ public final class ViFastKeyService extends InputMethodService {
 
     private void toggleVietnamese() {
         if (handle == 0) return;
-        apply(NativeEngine.toggle(handle), "");
+        InputConnection ic = getCurrentInputConnection();
+        Snapshot snapshot = snapshot(ic);
+        applyProjected(NativeEngine.toggle(handle), "", snapshot);
         syncKeyboardState();
     }
 
@@ -163,9 +167,9 @@ public final class ViFastKeyService extends InputMethodService {
         InputConnection ic = getCurrentInputConnection();
         if (ic == null) return;
         else if (key.length() == 0) return;
-        CharSequence before = ic.getTextBeforeCursor(96, 0);
-        NativeEngine.setSurrounding(handle, before == null ? "" : before.toString());
-        apply(NativeEngine.process(handle, key, false, false, false), key);
+        Snapshot snapshot = snapshot(ic);
+        NativeEngine.setSurrounding(handle, snapshot.selection ? "" : snapshot.before);
+        applyProjected(NativeEngine.process(handle, key, false, false, false), key, snapshot);
     }
 
     private void commitDirect(String text) {
@@ -185,8 +189,52 @@ public final class ViFastKeyService extends InputMethodService {
         if (keyboard != null) keyboard.setSuggestions(null);
     }
 
-    private void apply(String json, String originalKey) {
-        if (json == null) {
+    private static final class Snapshot {
+        String before = "";
+        String text = "";
+        int cursor;
+        int anchor;
+        boolean selection;
+    }
+
+    private Snapshot snapshot(InputConnection ic) {
+        Snapshot result = new Snapshot();
+        if (ic == null) return result;
+        CharSequence before = ic.getTextBeforeCursor(96, 0);
+        CharSequence selected = ic.getSelectedText(0);
+        CharSequence after = ic.getTextAfterCursor(2, 0);
+        result.before = before == null ? "" : before.toString();
+        String selectedText = selected == null ? "" : selected.toString();
+        String afterText = after == null ? "" : after.toString();
+        result.text = result.before + selectedText + afterText;
+        result.cursor = (result.before + selectedText).length();
+        result.anchor = result.before.length();
+        result.selection = !selectedText.isEmpty();
+        return result;
+    }
+
+    private void applyProjected(String actionJson, String originalKey, Snapshot snapshot) {
+        if (handle == 0 || actionJson == null) {
+            passOriginal(getCurrentInputConnection(), originalKey);
+            return;
+        }
+        if (snapshot == null) snapshot = new Snapshot();
+        String beforeDisplay = NativeEngine.display(handle);
+        String plan = NativeEngine.plan(
+                handle,
+                actionJson,
+                fieldKind,
+                beforeDisplay == null ? "" : beforeDisplay,
+                snapshot.text,
+                snapshot.cursor,
+                snapshot.anchor,
+                false
+        );
+        applyPlan(plan, originalKey);
+    }
+
+    private void applyPlan(String planJson, String originalKey) {
+        if (planJson == null) {
             passOriginal(getCurrentInputConnection(), originalKey);
             return;
         }
@@ -194,10 +242,10 @@ public final class ViFastKeyService extends InputMethodService {
         if (ic == null) return;
         applying = true;
         try {
-            JSONObject action = new JSONObject(json);
-            String kind = action.optString("kind");
-            String text = action.optString("text", "");
-            boolean pass = action.optBoolean("pass", false);
+            JSONObject plan = new JSONObject(planJson);
+            String kind = plan.optString("kind");
+            String text = plan.optString("text", "");
+            boolean pass = plan.optBoolean("pass", false);
             switch (kind) {
                 case "preedit":
                     if (text.isEmpty()) {
@@ -211,12 +259,17 @@ public final class ViFastKeyService extends InputMethodService {
                     ic.finishComposingText();
                     if (pass) passOriginal(ic, originalKey);
                     break;
-                case "replace":
-                    int delete = action.optInt("delete", 0);
+                case "replace": {
+                    int delete = plan.optInt("delete_utf16", 0);
                     if (delete > 0) ic.deleteSurroundingText(delete, 0);
-                    ic.commitText(action.optString("insert", ""), 1);
+                    ic.commitText(text, 1);
                     ic.finishComposingText();
                     if (pass) passOriginal(ic, originalKey);
+                    break;
+                }
+                case "fail_safe":
+                    NativeEngine.reset(handle);
+                    passOriginal(ic, originalKey);
                     break;
                 case "pass":
                 default:
@@ -291,12 +344,7 @@ public final class ViFastKeyService extends InputMethodService {
         }
         String key = hardwareKey(keyCode, event);
         if (key == null) return super.onKeyDown(keyCode, event);
-        InputConnection ic = getCurrentInputConnection();
-        if (ic != null) {
-            CharSequence before = ic.getTextBeforeCursor(96, 0);
-            NativeEngine.setSurrounding(handle, before == null ? "" : before.toString());
-        }
-        apply(NativeEngine.process(handle, key, false, false, false), key);
+        press(key);
         return true;
     }
 
@@ -326,9 +374,7 @@ public final class ViFastKeyService extends InputMethodService {
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd);
         if (applying || handle == 0) return;
         if (SystemClock.uptimeMillis() - lastAppliedAt < SELECTION_GUARD_MS) return;
-        String json = NativeEngine.cursorMoved(handle);
-        if (json != null && !json.contains("\"pass\"")) {
-            apply(json, "");
-        }
+        Snapshot snapshot = snapshot(getCurrentInputConnection());
+        applyProjected(NativeEngine.cursorMoved(handle), "", snapshot);
     }
 }

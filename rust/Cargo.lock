@@ -309,6 +309,7 @@ version = "0.4.0"
 dependencies = [
  "jni",
  "serde_json",
+ "vfk-adapter-core",
  "vfk-engine",
  "vfk-suggest",
 ]

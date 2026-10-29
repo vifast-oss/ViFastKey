@@ -71,6 +71,10 @@
   text sau commit, giữ đúng thứ tự pass-key sau Replace, fallback config lỗi về mặc định.
 - CTest adapter: preedit/commit, reset/focus-out, password, surrounding lệch/selection, edit
   previous word, replace mode, pass-key, emoji/UTF-16 và config lỗi.
+- Thêm crate `vfk-adapter-core` dùng chung cho mọi port: field policy, surrounding guard,
+  action planner, timing; C ABI `vfk_plan_action`, `vfk_char_to_utf16_offset`,
+  `vfk_is_word_codepoint`. Fcitx5/Windows/macOS/iOS dùng planner; Android JNI có
+  `NativeEngine.plan`; bộ `adapter-conformance/*.jsonl` giữ hợp đồng hành vi.
 
 ### Chrome extension
 

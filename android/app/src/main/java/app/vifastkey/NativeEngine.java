@@ -17,6 +17,12 @@ public final class NativeEngine {
     public static native String process(long handle, String key, boolean ctrl,
                                         boolean alt, boolean meta);
 
+    /** Lập kế hoạch bằng adapter-core dùng chung; trả JSON plan. */
+    public static native String plan(long handle, String actionJson, int field,
+                                     String beforeDisplay, String surroundingText,
+                                     int cursorUtf16, int anchorUtf16,
+                                     boolean allowUnverifiedReplace);
+
     public static native String display(long handle);
 
     public static native String suggest(long handle, String prefix);

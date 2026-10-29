@@ -46,6 +46,7 @@ ViFastKey/
 │   │   ├── vi-syllable/
 │   │   ├── vfk-core/           # transform + charset
 │   │   ├── vfk-engine/
+│   │   ├── vfk-adapter-core/   # field policy, surrounding guard, action plan, timing
 │   │   ├── vfk-ffi/            # C ABI + include/vifastkey.h
 │   │   └── vfk-wasm/           # wasm-bindgen cho web demo
 │   ├── apps/vfk-cli/           # CLI demo + REPL
@@ -183,7 +184,10 @@ cargo test --workspace
   trust probe, timing/ACK, app compatibility.
 - `docs/VIFASTTTS_LESSONS.md` — bài học kỹ thuật từ ViFastTts cho adapter macOS.
 - `docs/COMPATIBILITY.md` — hợp đồng hành vi (tone, undo, đ, VNI số, charset, Action).
-- `docs/ADAPTER_GUIDE.md` — hợp đồng viết adapter macOS/Windows/Linux.
+- `docs/ADAPTER_GUIDE.md` — hợp đồng viết adapter macOS/Windows/Linux, dùng
+  `vfk-adapter-core`/`vfk_plan_action`.
+- `adapter-conformance/` — scenario JSON dùng chung cho mọi port (surrounding,
+  selection, emoji/NFD, pass-key, fail-safe).
 - `docs/CONFIG.md` — toàn bộ trường config và app profile.
 - `docs/IME_TEST_VECTORS.md` — bộ ví dụ hành vi dùng để port/regression.
 - `macos/README.md` — build/cài/test adapter macOS IMK.
