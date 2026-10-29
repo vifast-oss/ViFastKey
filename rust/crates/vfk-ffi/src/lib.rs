@@ -109,6 +109,8 @@ pub struct VfkSession {
     shared: SharedPorts,
     /// Giữ chuỗi của Action gần nhất.
     text_buf: CString,
+    /// Giữ chuỗi display hiện tại cho adapter kiểm tra surrounding text.
+    display_buf: CString,
     /// Giữ chuỗi trả về bởi các hàm *_json.
     json_buf: CString,
     /// Giữ chuỗi trả về bởi các hàm charset (tách khỏi config JSON).
@@ -215,6 +217,7 @@ pub unsafe extern "C" fn vfk_session_new(config_json: *const c_char, mode: u32) 
             session: ImeSession::new(ports, mode),
             shared,
             text_buf: CString::default(),
+            display_buf: CString::default(),
             json_buf: CString::default(),
             charset_buf: CString::default(),
             bytes_buf: Vec::new(),
@@ -341,10 +344,101 @@ pub unsafe extern "C" fn vfk_reset(h: *mut VfkSession) {
     with_session(h, (), |s| s.session.reset())
 }
 
+/// Chuỗi engine tin là đang hiển thị (display của từ hiện tại).
+///
+/// Adapter dùng để xác minh surrounding text trước khi áp `REPLACE`. Chuỗi thuộc
+/// về session, hợp lệ tới lần gọi kế tiếp.
+#[no_mangle]
+pub unsafe extern "C" fn vfk_display_text(h: *mut VfkSession) -> *const c_char {
+    with_session(h, ptr::null(), |s| {
+        s.display_buf = CString::new(s.session.display().replace('\0', "")).unwrap_or_default();
+        s.display_buf.as_ptr()
+    })
+}
+
+/// Chốt composition hiện tại. Trả `COMMIT` nếu đang ở PREEDIT, `PASS` nếu không
+/// còn gì để commit. Adapter nên áp Action này trước `vfk_reset`/focus-out.
+#[no_mangle]
+pub unsafe extern "C" fn vfk_flush(h: *mut VfkSession) -> VfkAction {
+    with_session(h, VfkAction::PASS, |s| {
+        let before = s.session.display();
+        let act = s.session.flush_composition();
+        to_c(s, act, &before)
+    })
+}
+
+/// Đổi chế độ xuất chữ (VFK_MODE_PREEDIT/VFK_MODE_REPLACE).
+///
+/// Có thể trả Action `COMMIT`/`PASS` để adapter chốt composition cũ trước khi
+/// đổi mode. Adapter phải áp Action trả về trước khi xử lý phím tiếp theo.
+#[no_mangle]
+pub unsafe extern "C" fn vfk_set_output_mode(h: *mut VfkSession, mode: u32) -> VfkAction {
+    let mode = if mode == VFK_MODE_REPLACE { OutputMode::Replace } else { OutputMode::Preedit };
+    with_session(h, VfkAction::PASS, |s| {
+        let before = s.session.display();
+        let act = s.session.set_output_mode(mode);
+        to_c(s, act, &before)
+    })
+}
+
+/// Gợi ý timing/ACK của AppProfile hiện tại.
+#[no_mangle]
+pub unsafe extern "C" fn vfk_profile_backspace_delay_ms(h: *mut VfkSession) -> u32 {
+    with_session(h, 0, |s| s.session.profile().backspace_delay_ms)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn vfk_profile_delay_per_char_ms(h: *mut VfkSession) -> u32 {
+    with_session(h, 0, |s| s.session.profile().delay_per_char_ms)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn vfk_profile_wait_ack(h: *mut VfkSession) -> bool {
+    with_session(h, false, |s| s.session.profile().wait_ack)
+}
+
+/// 0 = không đặt, 1 = PREEDIT, 2 = REPLACE.
+#[no_mangle]
+pub unsafe extern "C" fn vfk_profile_output_mode(h: *mut VfkSession) -> u32 {
+    with_session(h, 0, |s| match s.session.profile().output_mode {
+        Some(OutputMode::Preedit) => 1,
+        Some(OutputMode::Replace) => 2,
+        None => 0,
+    })
+}
+
 // ---------------------------------------------------------------- cấu hình / từ điển
 
+/// Áp JSON cấu hình và trả Action cần áp trước khi dùng session tiếp.
+///
+/// Trả false nếu JSON sai/không đọc được; khi đó `out_action` không bị thay đổi.
+/// Khi thành công, `out_action` nhận Action do `reload_config` sinh ra (thường là
+/// `COMMIT` nếu đang có composition).
+#[no_mangle]
+pub unsafe extern "C" fn vfk_apply_config_json(
+    h: *mut VfkSession,
+    json: *const c_char,
+    out_action: *mut VfkAction,
+) -> bool {
+    let Some(text) = opt_str(json) else { return false };
+    with_session(h, false, |s| {
+        let before = s.session.display();
+        let base = s.shared.0.borrow().config.clone();
+        let Some(c) = base.apply_json_patch(&text) else { return false };
+        {
+            let mut shared = s.shared.0.borrow_mut();
+            shared.config = c;
+        }
+        let act = s.session.reload_config();
+        if !out_action.is_null() {
+            *out_action = to_c(s, act, &before);
+        }
+        true
+    })
+}
+
 /// Thay cấu hình bằng JSON (một phần cũng được). Trả false nếu JSON sai. Có thể chốt preedit:
-/// adapter nên gọi `vfk_cursor_moved` trước nếu đang có preedit.
+/// adapter nên gọi `vfk_flush` trước nếu đang có preedit.
 #[no_mangle]
 pub unsafe extern "C" fn vfk_set_config_json(h: *mut VfkSession, json: *const c_char) -> bool {
     let Some(text) = opt_str(json) else { return false };
@@ -644,6 +738,41 @@ mod tests {
             assert!(c.contains("\"ko\":\"không\""), "{c}");
             let bad = CString::new(r#"{"tone_style":"không có"}"#).unwrap();
             assert!(!vfk_set_config_json(h, bad.as_ptr()));
+            vfk_session_free(h);
+        }
+    }
+
+    #[test]
+    fn display_flush_mode_and_profile() {
+        unsafe {
+            let h = vfk_session_new(ptr::null(), VFK_MODE_PREEDIT);
+            assert!(!h.is_null());
+            for k in ["v", "i", "e", "e", "j", "t"] {
+                key(h, k);
+            }
+            let shown = CStr::from_ptr(vfk_display_text(h)).to_string_lossy().into_owned();
+            assert_eq!(shown, "việt");
+
+            let a = vfk_flush(h);
+            assert_eq!(a.kind, VFK_COMMIT);
+            assert_eq!(CStr::from_ptr(a.text).to_string_lossy(), "việt");
+            assert_eq!(CStr::from_ptr(vfk_display_text(h)).to_string_lossy(), "");
+
+            let app = CString::new("chrome").unwrap();
+            vfk_focus_changed(h, app.as_ptr());
+            assert!(vfk_profile_wait_ack(h));
+            assert_eq!(vfk_profile_delay_per_char_ms(h), 2);
+            assert_eq!(vfk_profile_output_mode(h), 0);
+
+            let mode_action = vfk_set_output_mode(h, VFK_MODE_REPLACE);
+            assert_eq!(mode_action.kind, VFK_PASS);
+            assert_eq!(vfk_profile_output_mode(h), 0);
+
+            let cfg = CString::new(r#"{"tone_style":"new"}"#).unwrap();
+            let mut out = VfkAction::PASS;
+            assert!(vfk_apply_config_json(h, cfg.as_ptr(), &mut out));
+            let json = CStr::from_ptr(vfk_config_json(h)).to_string_lossy().into_owned();
+            assert!(json.contains("\"tone_style\":\"new\""), "{json}");
             vfk_session_free(h);
         }
     }

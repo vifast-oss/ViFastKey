@@ -55,6 +55,10 @@ Không đưa logic tiếng Việt vào adapter. Không dịch lại raw/Unicode 
 - Khi engine trả `Replace` trong PREEDIT (sửa từ đã commit), adapter phải xoá `delete_before`
   UTF-16 trước con trỏ rồi chèn text; nếu app không hỗ trợ, bỏ qua surrounding text để engine
   không sinh nhánh này.
+- Trước focus-out/reset/đổi mode, gọi `vfk_flush` để chốt composition; dùng
+  `vfk_display_text` để kiểm tra text engine tin là đang hiển thị.
+- `vfk_set_output_mode` đổi PREEDIT/REPLACE sau khi áp Action trả về; `vfk_apply_config_json`
+  trả Action cần áp trước khi reload cấu hình. AppProfile có helper delay/ack/output mode.
 - Terminal/Electron: ưu tiên preedit; nếu app không hỗ trợ, commit từng từ và dùng
   backspace có kiểm soát.
 - Escape: engine trả `Commit(pass_key=false)` hoặc `Replace(pass_key=false)`; **không**

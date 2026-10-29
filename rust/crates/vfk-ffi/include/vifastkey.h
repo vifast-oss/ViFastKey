@@ -67,8 +67,29 @@ VfkAction vfk_toggle_vietnamese(VfkSession *s);
 bool vfk_is_enabled(VfkSession *s);
 void vfk_reset(VfkSession *s);
 
+/* Chốt composition trước reset/focus-out. Trả COMMIT nếu đang PREEDIT. */
+VfkAction vfk_flush(VfkSession *s);
+
+/* Chuỗi engine tin là đang hiển thị; dùng để xác minh surrounding text.
+ * Chuỗi thuộc session, hợp lệ tới lần gọi kế tiếp. */
+const char *vfk_display_text(VfkSession *s);
+
+/* Đổi chế độ xuất chữ: VFK_MODE_PREEDIT hoặc VFK_MODE_REPLACE.
+ * Có thể trả COMMIT/PASS để adapter chốt composition cũ trước khi đổi. */
+VfkAction vfk_set_output_mode(VfkSession *s, uint32_t mode);
+
+/* Gợi ý timing/ACK từ AppProfile hiện tại. */
+uint32_t vfk_profile_backspace_delay_ms(VfkSession *s);
+uint32_t vfk_profile_delay_per_char_ms(VfkSession *s);
+bool vfk_profile_wait_ack(VfkSession *s);
+/* 0 = không đặt, 1 = PREEDIT, 2 = REPLACE. */
+uint32_t vfk_profile_output_mode(VfkSession *s);
+
 /* Cấu hình / từ điển. Chuỗi *_json thuộc về session, hợp lệ tới lần gọi *_json kế tiếp. */
 bool vfk_set_config_json(VfkSession *s, const char *json);
+/* Như vfk_set_config_json nhưng trả Action cần áp trước khi dùng session tiếp.
+ * Trả false nếu JSON sai; khi đó out_action không bị thay đổi. */
+bool vfk_apply_config_json(VfkSession *s, const char *json, VfkAction *out_action);
 const char *vfk_config_json(VfkSession *s);
 uint64_t vfk_config_version(VfkSession *s);
 const char *vfk_app_profile_json(VfkSession *s);

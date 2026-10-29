@@ -109,8 +109,10 @@ jobs:
           cd ..
           cmake -S linux/fcitx5 -B linux/fcitx5/build \
             -DVIFASTKEY_LIB="$PWD/rust/target/release/libvifastkey.a" \
-            -DCMAKE_BUILD_TYPE=Release
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_TESTING=ON
           cmake --build linux/fcitx5/build -j2
+          ctest --test-dir linux/fcitx5/build --output-on-failure
           test -f linux/fcitx5/build/libvifastkey.so
 
   android-adapter:

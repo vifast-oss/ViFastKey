@@ -346,6 +346,26 @@ impl ImeSession {
         self.adopted = None;
     }
 
+    /// Chốt composition hiện tại và trả Action tương ứng.
+    ///
+    /// Adapter dùng hàm này trước reset/focus-out để không làm mất từ đang gõ.
+    /// Trong PREEDIT, Action là `Commit`; trong REPLACE, chữ đã nằm trên màn hình
+    /// nên Action là `PassThrough` và state được xoá.
+    pub fn flush_composition(&mut self) -> Action {
+        self.flush()
+    }
+
+    /// Đổi chế độ xuất chữ sau khi chốt composition hiện tại.
+    ///
+    /// Adapter phải áp Action trả về trước khi xử lý phím tiếp theo. Hàm không
+    /// tự gọi UI/preedit; đó là việc của adapter.
+    pub fn set_output_mode(&mut self, mode: OutputMode) -> Action {
+        let act = self.flush();
+        self.mode = mode;
+        self.composer = None;
+        act
+    }
+
     fn is_word_char(&self, ch: char) -> bool {
         if vi_syllable::lower(ch).is_ascii_lowercase() {
             return true;

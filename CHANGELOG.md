@@ -56,11 +56,18 @@
 - Ad-hoc signing để test local; `package.sh` build universal2 + hook ký/notarize;
   cần Developer ID/chứng chỉ thật khi phát hành.
 
+### Fcitx5 nâng cao
+
+- Tách `VifastkeyState`/`ConfigStore`, status action Việt/Anh, config reload, surrounding guard,
+  transaction barrier cho REPLACE và CTest; thêm C ABI `vfk_flush`, `vfk_display_text`,
+  `vfk_set_output_mode`, `vfk_apply_config_json`, profile helpers.
+
 ### Chrome extension
 
 - Thêm `chrome-extension/`: MV3, context menu chuẩn hoá/bỏ dấu vùng chọn, popup
   chuyển Telex/VNI/VIQR + bàn phím ảo; dùng WASM `normalize_text`.
 - Playwright E2E: popup `tieengs` → `tiếng`, giữ `data`/`hello`, `Vieejt` → `Việt`.
+- Release workflow đóng gói thêm `vifastkey-chrome-extension.zip`.
 
 ### Android / iOS
 
