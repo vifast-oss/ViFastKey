@@ -130,7 +130,9 @@ void testPreeditAndCommit() {
     state.keyEvent(space);
     CHECK(space.filtered());
     CHECK(context.commits.size() == 1);
-    CHECK(context.commits.front() == "tiếng ");
+    if (context.commits.size() == 1) {
+        CHECK(context.commits.front() == "tiếng ");
+    }
     CHECK(context.inputPanel().clientPreedit().empty());
 }
 
@@ -149,7 +151,9 @@ void testResetCommitsComposition() {
 
     state.reset();
     CHECK(context.commits.size() == 1);
-    CHECK(context.commits.front() == "việt");
+    if (context.commits.size() == 1) {
+        CHECK(context.commits.front() == "việt");
+    }
     CHECK(context.inputPanel().clientPreedit().empty());
 }
 
@@ -212,21 +216,25 @@ void testReplaceUsesSurroundingAndCommits() {
     state.applyAction(action, nullptr, "tiếng");
 
     CHECK(context.deletes.size() == 1);
-    CHECK(context.deletes.front().offset == -5);
-    CHECK(context.deletes.front().size == 5);
+    if (context.deletes.size() == 1) {
+        CHECK(context.deletes.front().offset == -5);
+        CHECK(context.deletes.front().size == 5);
+    }
     CHECK(state.busy());
 
     runLoop(loop);
     CHECK(!state.busy());
     CHECK(context.commits.size() == 1);
-    CHECK(context.commits.front() == "tiếng");
+    if (context.commits.size() == 1) {
+        CHECK(context.commits.front() == "tiếng");
+    }
 }
 
 void testReplaceRejectsStaleSurrounding() {
     fcitx::EventLoop loop;
     fcitx::InputContextManager manager;
     TestInputContext context(manager);
-    context.setCapabilityFlags(fcitx::CapabilityFlag::Preedit);
+    context.setCapabilityFlags(fcitx::CapabilityFlag::SurroundingText);
     context.surroundingText().setText("hello", 5, 5);
 
     auto config = makeConfig();
@@ -248,7 +256,7 @@ void testReplaceRejectsSelection() {
     fcitx::EventLoop loop;
     fcitx::InputContextManager manager;
     TestInputContext context(manager);
-    context.setCapabilityFlags(fcitx::CapabilityFlag::Preedit);
+    context.setCapabilityFlags(fcitx::CapabilityFlag::SurroundingText);
     context.surroundingText().setText("tiếng", 5, 2);
 
     auto config = makeConfig();
@@ -269,7 +277,7 @@ void testReplaceCountsCodepointsForAstralCharacters() {
     fcitx::EventLoop loop;
     fcitx::InputContextManager manager;
     TestInputContext context(manager);
-    context.setCapabilityFlags(fcitx::CapabilityFlag::Preedit);
+    context.setCapabilityFlags(fcitx::CapabilityFlag::SurroundingText);
     // Emoji chiếm 2 UTF-16 code unit nhưng 1 code point.
     context.surroundingText().setText("🙂a", 2, 2);
 
@@ -284,12 +292,16 @@ void testReplaceCountsCodepointsForAstralCharacters() {
     state.applyAction(action, nullptr, "🙂a");
 
     CHECK(context.deletes.size() == 1);
-    CHECK(context.deletes.front().offset == -2);
-    CHECK(context.deletes.front().size == 2);
+    if (context.deletes.size() == 1) {
+        CHECK(context.deletes.front().offset == -2);
+        CHECK(context.deletes.front().size == 2);
+    }
 
     runLoop(loop);
     CHECK(context.commits.size() == 1);
-    CHECK(context.commits.front() == "X");
+    if (context.commits.size() == 1) {
+        CHECK(context.commits.front() == "X");
+    }
 }
 
 void testQueuedKeyIsForwardedWhenReplaceIsBusy() {

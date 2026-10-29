@@ -258,7 +258,8 @@ void VifastkeyState::syncFieldKind() {
     const auto flags = ic_->capabilityFlags();
     bool disabled = flags.test(CapabilityFlag::Disable);
     uint32_t kind = VFK_FIELD_TEXT;
-    if (disabled || flags.test(CapabilityFlag::PasswordOrSensitive)) {
+    if (disabled || flags.test(CapabilityFlag::Password) ||
+        flags.test(CapabilityFlag::Sensitive)) {
         kind = VFK_FIELD_PASSWORD;
     } else if (flags.test(CapabilityFlag::Email)) {
         kind = VFK_FIELD_EMAIL;
