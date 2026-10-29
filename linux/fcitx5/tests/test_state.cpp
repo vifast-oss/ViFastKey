@@ -301,6 +301,28 @@ void testEditPreviousWordUsesRefreshedSurrounding() {
     }
 }
 
+void testMidWordCursorDoesNotAdopt() {
+    fcitx::EventLoop loop;
+    fcitx::InputContextManager manager;
+    TestInputContext context(manager);
+    context.setCapabilityFlags(fcitx::CapabilityFlags{
+        fcitx::CapabilityFlag::Preedit,
+        fcitx::CapabilityFlag::SurroundingText});
+    // Caret ở giữa "tiếng", ngay sau "ti".
+    context.surroundingText().setText("tiếng", 2, 2);
+
+    auto config = makeConfig();
+    fcitx::VifastkeyState state(loop, &context, config);
+    state.activate("test");
+
+    auto event = keyEvent(context, FcitxKey_f);
+    state.keyEvent(event);
+    CHECK(event.filtered());
+    CHECK(context.deletes.empty());
+    CHECK(context.commits.empty());
+    CHECK(context.inputPanel().clientPreedit().toString() == "f");
+}
+
 void testReplacePassKeyIsForwardedAfterCommit() {
     fcitx::EventLoop loop;
     fcitx::InputContextManager manager;
@@ -484,6 +506,7 @@ int main() {
     testInvalidConfigFallsBackToDefaults();
     testReplaceUsesSurroundingAndCommits();
     testEditPreviousWordUsesRefreshedSurrounding();
+    testMidWordCursorDoesNotAdopt();
     testReplacePassKeyIsForwardedAfterCommit();
     testAppProfileReplaceMode();
     testReplaceRejectsStaleSurrounding();

@@ -99,6 +99,18 @@ bool endsWith(const std::string &text, const std::string &suffix) {
                0;
 }
 
+bool isWordCodepoint(uint32_t codepoint) {
+    if (codepoint < 0x80) {
+        return (codepoint >= '0' && codepoint <= '9') ||
+               (codepoint >= 'A' && codepoint <= 'Z') ||
+               (codepoint >= 'a' && codepoint <= 'z') || codepoint == '_';
+    }
+    // Latin mở rộng + khối tiếng Việt + combining marks.
+    return (codepoint >= 0x00C0 && codepoint <= 0x024F) ||
+           (codepoint >= 0x0300 && codepoint <= 0x036F) ||
+           (codepoint >= 0x1E00 && codepoint <= 0x1EFF);
+}
+
 } // namespace
 
 VifastkeyState::VifastkeyState(EventLoop &eventLoop, InputContext *inputContext,
@@ -221,8 +233,23 @@ void VifastkeyState::refreshSurrounding() {
         return;
     }
 
-    const std::string before =
-        utf8Prefix(surrounding.text(), surrounding.cursor());
+    const std::string &text = surrounding.text();
+    const unsigned int cursor = surrounding.cursor();
+    // Nếu caret đang ở giữa một từ (ký tự ngay sau caret vẫn là chữ), không
+    // đưa surrounding vào engine: adopt một prefix cụt sẽ sửa sai phần còn lại.
+    if (cursor < fcitx::utf8::length(text)) {
+        const size_t byteOffset = charOffsetToByte(text, cursor);
+        uint32_t nextCodepoint = 0;
+        fcitx::utf8::getNextChar(
+            text.begin() + static_cast<std::ptrdiff_t>(byteOffset), text.end(),
+            &nextCodepoint);
+        if (isWordCodepoint(nextCodepoint)) {
+            vfk_set_surrounding_text(session_, nullptr);
+            return;
+        }
+    }
+
+    const std::string before = utf8Prefix(text, cursor);
     vfk_set_surrounding_text(session_, before.c_str());
 }
 
