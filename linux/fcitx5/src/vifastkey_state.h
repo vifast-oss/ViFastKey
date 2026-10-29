@@ -42,7 +42,7 @@ public:
 
     bool enabled() const;
     bool hasComposition() const;
-    bool busy() const { return busy_; }
+    bool busy() const { return busy_ || postCommitPending_; }
 
     // Public để test adapter trực tiếp với VfkAction tổng hợp.
     void applyAction(const VfkAction &action, KeyEvent *event,
@@ -78,6 +78,7 @@ private:
                       const std::optional<Key> &rawKey, KeyEvent *event);
     void finishReplace();
     void scheduleReplaceCommit(uint32_t waitMs);
+    void schedulePostCommitDrain();
     void drainQueue();
 
     bool safeToReplace(const std::string &deleted) const;
@@ -107,9 +108,11 @@ private:
     std::deque<QueuedKey> queue_;
 
     std::unique_ptr<EventSourceTime> replaceTimer_;
+    std::unique_ptr<EventSourceTime> postCommitTimer_;
     std::string pendingText_;
     bool pendingPassKey_ = false;
     std::optional<Key> pendingRawKey_;
+    bool postCommitPending_ = false;
 };
 
 } // namespace fcitx

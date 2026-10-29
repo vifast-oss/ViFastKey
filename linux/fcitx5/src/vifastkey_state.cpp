@@ -17,6 +17,9 @@ namespace {
 
 constexpr uint32_t kMaxReplaceWaitMs = 60;
 constexpr uint32_t kMinReplaceWaitMs = 3;
+// Khoảng bảo vệ sau Replace để app kịp xử lý commit trước khi key kế tiếp
+// bắt đầu một delete/commit mới.
+constexpr uint32_t kPostReplaceCommitDelayMs = 10;
 
 // Cắt `chars` code point đầu tiên của chuỗi UTF-8.
 std::string utf8Prefix(const std::string &text, unsigned int chars) {
@@ -134,6 +137,7 @@ VifastkeyState::VifastkeyState(EventLoop &eventLoop, InputContext *inputContext,
 
 VifastkeyState::~VifastkeyState() {
     replaceTimer_.reset();
+    postCommitTimer_.reset();
     queue_.clear();
     if (session_) {
         vfk_session_free(session_);
@@ -399,8 +403,12 @@ void VifastkeyState::deactivate(InputContextEvent &event) {
     // duplicate the word.
     const bool focusOut = event.type() == EventType::InputContextFocusOut;
     queue_.clear();
+    postCommitTimer_.reset();
+    postCommitPending_ = false;
     if (busy_) {
         finishReplace();
+        postCommitTimer_.reset();
+        postCommitPending_ = false;
     }
 
     if (focusOut && usingClientPreedit_ && hasPreedit_) {
@@ -425,8 +433,12 @@ void VifastkeyState::reset() {
         return;
     }
     queue_.clear();
+    postCommitTimer_.reset();
+    postCommitPending_ = false;
     if (busy_) {
         finishReplace();
+        postCommitTimer_.reset();
+        postCommitPending_ = false;
     }
 
     const std::string before = displayText();
@@ -463,7 +475,7 @@ void VifastkeyState::keyEvent(KeyEvent &event) {
         return;
     }
 
-    if (busy_) {
+    if (busy_ || postCommitPending_) {
         // Key đã bị chặn khỏi app; giữ nguyên thứ tự để xử lý sau transaction.
         // Không syncContext ở đây vì field/config change có thể flush state
         // trong lúc delete/commit đang chờ.
@@ -716,11 +728,34 @@ void VifastkeyState::finishReplace() {
     pendingText_.clear();
     pendingPassKey_ = false;
     pendingRawKey_.reset();
-    drainQueue();
+    schedulePostCommitDrain();
+}
+
+void VifastkeyState::schedulePostCommitDrain() {
+    postCommitTimer_.reset();
+    postCommitPending_ = true;
+    const uint64_t deadline =
+        now(CLOCK_MONOTONIC) +
+        static_cast<uint64_t>(kPostReplaceCommitDelayMs) * 1000;
+    postCommitTimer_ = eventLoop_.addTimeEvent(
+        CLOCK_MONOTONIC, deadline, 1000,
+        [this](EventSourceTime *, uint64_t) {
+            auto completed = std::move(postCommitTimer_);
+            (void)completed;
+            postCommitPending_ = false;
+            drainQueue();
+            return false;
+        });
+    if (postCommitTimer_) {
+        postCommitTimer_->setOneShot();
+    } else {
+        postCommitPending_ = false;
+        drainQueue();
+    }
 }
 
 void VifastkeyState::drainQueue() {
-    while (!busy_ && !queue_.empty()) {
+    while (!busy_ && !postCommitPending_ && !queue_.empty()) {
         QueuedKey queued = std::move(queue_.front());
         queue_.pop_front();
 
