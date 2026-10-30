@@ -1,0 +1,120 @@
+# ViFastKey Windows TSF (preedit)
+
+Text service TSF cho Windows: composition/preedit thật (vùng gạch chân), commit
+nguyên tử, sửa từ đã gõ qua surrounding text. DLL gọi C ABI `vfk-ffi` nên dùng
+chung engine, adapter-core và conformance với các nền tảng khác.
+
+Adapter hook (`rust/apps/vfk-windows`) vẫn là fallback Replace cho app không dùng
+TSF. Hai backend không xử lý cùng một context: TSF ghi named mapping
+`Local\ViFastKeyTsfState`, hook đọc mapping và pass-through khi PID trùng.
+
+## Build (Windows 10/11)
+
+```powershell
+# 1. Engine C ABI (x64)
+cd rust
+cargo build --release -p vfk-ffi
+cd ..
+
+# 2. TSF DLL
+cmake -S windows/tsf -B build/tsf -A x64 -DVFK_RUST_PROFILE=release
+cmake --build build/tsf --config Release
+
+# 3. Cài per-user + đăng ký TSF profile
+powershell -ExecutionPolicy Bypass -File windows/installer/install.ps1 `
+  -BuildDir build/tsf
+```
+
+`install.ps1` copy `vifastkey_tsf.dll` + `vifastkey.dll` vào
+`%LOCALAPPDATA%\ViFastKey\tsf\<arch>` rồi gọi `regsvr32` đúng view (SysWOW64 cho
+x86). Chạy PowerShell **không** elevated để đăng ký profile cho user hiện tại.
+
+Bản zip phát hành có `x64\` và `x86\`; cài đúng kiến trúc:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1 -BuildDir x64
+```
+
+### 32-bit
+
+TSF bị nạp vào process của app, nên app 32-bit cần DLL 32-bit:
+
+```powershell
+rustup target add i686-pc-windows-msvc
+cd rust
+cargo build --release -p vfk-ffi --target i686-pc-windows-msvc
+cd ..
+cmake -S windows/tsf -B build/tsf-x86 -A Win32 `
+  -DVFK_RUST_PROFILE=release `
+  -DVFK_FFI_LIB_DIR="$PWD/rust/target/i686-pc-windows-msvc/release"
+cmake --build build/tsf-x86 --config Release
+```
+
+Mỗi lần chạy `install.ps1` sẽ copy DLL vào `tsf\x64` hoặc `tsf\x86` và đăng ký
+đúng registry view (SysWOW64 cho x86), nên có thể cài cả hai kiến trúc cho app
+64-bit và 32-bit.
+
+## Chọn bộ gõ
+
+1. Settings → Time & language → Language & region → Vietnamese → Language options
+   → Add a keyboard → **ViFastKey**.
+2. Hoặc dùng language bar (nếu bật) để chọn ViFastKey.
+3. Nếu chưa thấy profile: đăng xuất/đăng nhập lại, hoặc kiểm tra
+   `regsvr32` đã chạy đúng user.
+
+## Cấu hình
+
+- `%APPDATA%\ViFastKey\config.json`: cấu hình engine (Telex/VNI/VIQR, macro,
+  app profile...). Xem `docs/CONFIG.md`.
+- `%APPDATA%\ViFastKey\windows.json`:
+
+```json
+{
+  "backend": "auto"
+}
+```
+
+Mẫu: `windows/tsf/windows.example.json`.
+
+| backend | Hành vi |
+|---|---|
+| `auto` (mặc định) | TSF xử lý khi profile đang active; hook pass-through khi TSF ghi mapping cho foreground PID |
+| `tsf` | Hook luôn pass; chỉ TSF xử lý |
+| `hook` | TSF không ăn phím; chỉ hook Replace xử lý |
+
+Đổi config cần khởi động lại app/hook (TSF đọc lại khi focus đổi; engine config
+được reload khi file thay đổi).
+
+## Hành vi
+
+- Preedit = một composition của TSF; gõ `tieengs` → `tiếng`, Space/Enter/Dấu câu
+  commit theo `Action` của engine.
+- Backspace sửa trong composition; click/focus khác chốt composition, không mất từ.
+- Surrounding text lấy từ `ITfRange` trước caret; `Replace` chỉ chạy khi plan xác
+  minh được hậu tố.
+- Password/PIN/URL/email/số bị tắt qua `ITfInputScope`; terminal nhận field
+  `Terminal`.
+- Display attribute: gạch chân xanh cho composition.
+- Ctrl+Shift+F toggle Việt/Anh (khi TSF đang xử lý context).
+
+## Giới hạn / còn lại
+
+- Chưa test runtime trên Windows thật trong môi trường repo (macOS); CI build MSVC
+  chỉ kiểm tra compile. Cần smoke test Notepad/Chrome/Office/Windows Terminal.
+- Chưa có tray/GUI/cài đặt tự động; installer chỉ đăng ký per-user.
+- Macro hiện chỉ chạy ở `REPLACE` trong engine; TSF `PREEDIT` chưa mở macro.
+- Charset legacy chưa áp ở đầu ra TSF (luôn chèn Unicode).
+- App elevated: TSF per-user thường không nạp vào process elevated; cần bản HKLM
+  hoặc chạy app cùng mức quyền. Hook cũng bị UIPI giới hạn.
+- Chưa ký Authenticode; SmartScreen sẽ cảnh báo.
+- `windows.json` chưa hot-reload trong hook (khởi động lại hook sau khi sửa).
+- Nếu app không hỗ trợ TSF/không nhận composition: dùng backend `hook`.
+
+## Kiểm thử tay
+
+1. Mở Notepad, chọn ViFastKey, gõ `tieengs` → `tiếng`, Space → commit.
+2. Backspace trong lúc preedit, Enter, dấu câu, click chuột giữa từ.
+3. Chrome address bar + Google Docs; Office; Windows Terminal.
+4. Field password/URL/number: không có composition, phím đi thẳng.
+5. Chuyển app qua lại: không mất từ, không nhân đôi chữ.
+6. `backend: hook` → chỉ hook chạy; `backend: tsf` → chỉ TSF; `auto` → không double.

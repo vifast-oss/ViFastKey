@@ -190,7 +190,11 @@ Thứ tự ưu tiên đề xuất (từ cao xuống thấp):
   thêm event tap; không log nội dung.
 
 ### Windows
-- TSF cho app hiện đại; WH_KEYBOARD_LL + SendInput cho app không hỗ trợ TSF.
+- TSF cho app hiện đại (`windows/tsf/`); WH_KEYBOARD_LL + SendInput cho app không hỗ trợ TSF.
+- Hai backend không xử lý cùng context: TSF ghi `Local\ViFastKeyTsfState`, hook pass-through
+  theo foreground window/PID; `windows.json` chọn `auto`/`tsf`/`hook`.
+- TSF lấy surrounding từ `ITfRange`, flush composition khi focus/caret, map `ITfInputScope`
+  sang password/PIN/URL/email/number.
 - Kiểm tra layout CJK/IME đang bật; đừng nuốt phím khi app đang composition.
 - Console dùng `WriteConsoleInputW`; một số app cần `VK_BACK` thay vì unicode backspace.
 - Game/anti-cheat: tôn trọng exclusion, không hook khi không cần.

@@ -118,10 +118,18 @@
 - Thêm `linux/ibus/runtime_test.sh`: IBus 1.5.29 + GTK3 X11/Xvfb,
   `tieengs` → `tiếng`.
 
-### Windows prototype
+### Windows prototype / TSF
 
 - Thêm adapter `apps/vfk-windows`: low-level keyboard hook + SendInput Unicode,
   đọc config JSON, toggle Ctrl+Shift+F; cross-check target Windows MSVC.
+- Thêm `windows/tsf/`: TSF text service C++ gọi C ABI (`vfk_process_key`,
+  `vfk_plan_action`, `vfk_flush`, `vfk_set_field_kind`, `vfk_set_output_mode`).
+  Preedit composition + display attribute gạch chân, surrounding text, input scope
+  (password/PIN/URL/email/number), flush khi focus/caret, toggle Ctrl+Shift+F.
+- Backend Windows `windows.json`: `auto`/`tsf`/`hook`; TSF ghi named mapping
+  `Local\ViFastKeyTsfState`, hook pass-through theo foreground window/PID để không double input.
+- Hook bỏ qua phím injected (`LLKHF_INJECTED`), không fake preedit.
+- Installer per-user `windows/installer/`; CI build TSF x64/x86 bằng MSVC.
 
 ### Hạ tầng
 

@@ -1,7 +1,8 @@
-//! Adapter Windows prototype: WH_KEYBOARD_LL + engine ViFastKey.
+//! Adapter Windows hook (Replace fallback): WH_KEYBOARD_LL + engine ViFastKey.
 //!
-//! Đây là adapter thực nghiệm: không có tray/GUI, config đọc từ
-//! `%APPDATA%\ViFastKey\config.json`; dùng SendInput Unicode/backspace.
+//! Preedit thật nằm ở `windows/tsf/` (TSF text service). Adapter này dùng cho
+//! app/game không hỗ trợ TSF hoặc khi `windows.json` đặt `backend: "hook"`.
+//! Config đọc từ `%APPDATA%\ViFastKey\config.json`; dùng SendInput Unicode/backspace.
 //! Build trên Windows bằng `cargo build -p vfk-windows --release`.
 //!
 //! Giới hạn: low-level hook yêu cầu app chạy trong desktop session và một số app
@@ -16,11 +17,16 @@ fn main() {
 mod win {
     use std::cell::RefCell;
     use std::path::PathBuf;
+    use std::sync::OnceLock;
 
+    use serde::Deserialize;
     use vfk_adapter_core::{plan_action, AdapterAction, Plan, PlanContext, PlanKind};
     use vfk_engine::testing::WordListDictionary;
     use vfk_engine::*;
-    use windows_sys::Win32::Foundation::{LPARAM, LRESULT, WPARAM};
+    use windows_sys::Win32::Foundation::{CloseHandle, LPARAM, LRESULT, WPARAM};
+    use windows_sys::Win32::System::Memory::{
+        MapViewOfFile, OpenFileMappingW, UnmapViewOfFile, FILE_MAP_READ,
+    };
     use windows_sys::Win32::System::Threading::{
         OpenProcess, QueryFullProcessImageNameW, PROCESS_QUERY_LIMITED_INFORMATION,
     };
@@ -31,14 +37,35 @@ mod win {
     };
     use windows_sys::Win32::UI::WindowsAndMessaging::{
         CallNextHookEx, DispatchMessageW, GetForegroundWindow, GetMessageW, GetWindowThreadProcessId,
-        SetWindowsHookExW, TranslateMessage, UnhookWindowsHookEx, HC_ACTION, KBDLLHOOKSTRUCT, MSG,
-        WH_KEYBOARD_LL, WM_KEYDOWN, WM_SYSKEYDOWN,
+        SetWindowsHookExW, TranslateMessage, UnhookWindowsHookEx, HC_ACTION, KBDLLHOOKSTRUCT, LLKHF_INJECTED,
+        MSG, WH_KEYBOARD_LL, WM_KEYDOWN, WM_SYSKEYDOWN,
     };
 
     thread_local! {
         static SESSION: RefCell<Option<ImeSession>> = const { RefCell::new(None) };
         static LAST_APP: RefCell<Option<String>> = const { RefCell::new(None) };
+        static WINDOWS_CONFIG: RefCell<WindowsConfig> =
+            const { RefCell::new(WindowsConfig { backend: None }) };
     }
+
+    #[derive(Deserialize, Default)]
+    struct WindowsConfig {
+        /// hook | tsf | auto. Mặc định auto.
+        #[serde(default)]
+        backend: Option<String>,
+    }
+
+    #[repr(C)]
+    #[derive(Clone, Copy)]
+    struct TsfState {
+        magic: u32,
+        version: u32,
+        pid: u32,
+        active: u32,
+        window: u64,
+    }
+
+    const TSF_STATE_MAGIC: u32 = 0x5646_4B54; // 'VFKT'
 
     #[derive(Clone)]
     struct MemStore(std::rc::Rc<RefCell<Config>>);
@@ -75,7 +102,53 @@ mod win {
             .unwrap_or_default()
     }
 
-    fn process_name() -> Option<String> {
+    fn windows_config_path() -> PathBuf {
+        config_path().with_file_name("windows.json")
+    }
+
+    fn load_windows_config() -> WindowsConfig {
+        std::fs::read_to_string(windows_config_path())
+            .ok()
+            .and_then(|s| serde_json::from_str(&s).ok())
+            .unwrap_or_default()
+    }
+
+    fn windows_backend() -> String {
+        WINDOWS_CONFIG.with(|c| c.borrow().backend.clone().unwrap_or_else(|| "auto".to_string()))
+    }
+
+    fn tsf_state_name() -> &'static [u16] {
+        static NAME: OnceLock<Vec<u16>> = OnceLock::new();
+        NAME.get_or_init(|| "Local\\ViFastKeyTsfState\0".encode_utf16().collect())
+    }
+
+    /// TSF ghi named mapping khi nó đang giữ focus. Hook thấy PID trùng thì
+    /// pass-through để không xử lý kép.
+    fn tsf_active_for(pid: u32, window: u64) -> bool {
+        unsafe {
+            let mapping = OpenFileMappingW(FILE_MAP_READ, 0, tsf_state_name().as_ptr());
+            if mapping.is_null() {
+                return false;
+            }
+            let view = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, std::mem::size_of::<TsfState>());
+            let active = if view.Value.is_null() {
+                false
+            } else {
+                let state = &*(view.Value as *const TsfState);
+                state.magic == TSF_STATE_MAGIC
+                    && state.version == 1
+                    && state.active == 1
+                    && (state.window == window || (state.window == 0 && state.pid == pid))
+            };
+            if !view.Value.is_null() {
+                UnmapViewOfFile(view);
+            }
+            CloseHandle(mapping);
+            active
+        }
+    }
+
+    fn foreground_info() -> Option<(u32, u64, String)> {
         unsafe {
             let hwnd = GetForegroundWindow();
             if hwnd.is_null() {
@@ -86,6 +159,12 @@ mod win {
             if pid == 0 {
                 return None;
             }
+            app_name_for_pid(pid).map(|name| (pid, hwnd as u64, name))
+        }
+    }
+
+    fn app_name_for_pid(pid: u32) -> Option<String> {
+        unsafe {
             let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
             if handle.is_null() {
                 return None;
@@ -93,13 +172,17 @@ mod win {
             let mut buf = [0u16; 1024];
             let mut len = buf.len() as u32;
             let ok = QueryFullProcessImageNameW(handle, 0, buf.as_mut_ptr(), &mut len);
-            windows_sys::Win32::Foundation::CloseHandle(handle);
+            CloseHandle(handle);
             if ok == 0 {
                 return None;
             }
             let path = String::from_utf16_lossy(&buf[..len as usize]);
             Some(path.rsplit(['\\', '/']).next().unwrap_or(&path).trim_end_matches(".exe").to_lowercase())
         }
+    }
+
+    fn process_name() -> Option<String> {
+        foreground_info().map(|(_, _, name)| name)
     }
 
     fn send_key(vk: u16, up: bool) {
@@ -157,10 +240,9 @@ mod win {
     fn apply_plan(plan: &Plan) -> bool {
         match plan.kind {
             PlanKind::Pass | PlanKind::FailSafe => false,
-            PlanKind::Preedit => {
-                type_text(&plan.text);
-                true
-            }
+            // Hook không có composition/TSF. Nếu ai đó bật PREEDIT cho hook,
+            // đừng gõ thẳng text (sẽ nhân đôi); để phím đi tiếp và dùng TSF.
+            PlanKind::Preedit => false,
             PlanKind::Commit => {
                 type_text(&plan.text);
                 !plan.pass_key
@@ -201,13 +283,28 @@ mod win {
             return CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam);
         }
         let kb = &*(lparam as *const KBDLLHOOKSTRUCT);
+        // Bỏ qua phím do chính SendInput của hook bơm ra, tránh xử lý kép.
+        if kb.flags & LLKHF_INJECTED != 0 {
+            return CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam);
+        }
         let ctrl = GetAsyncKeyState(VK_CONTROL as i32) < 0;
         let alt = GetAsyncKeyState(VK_MENU as i32) < 0;
         let meta = GetAsyncKeyState(VK_LWIN as i32) < 0;
         let shift = GetAsyncKeyState(VK_SHIFT as i32) < 0;
+
+        let Some((foreground_pid, foreground_window, app)) = foreground_info() else {
+            return CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam);
+        };
+        let backend = windows_backend();
+        let tsf_owns =
+            backend == "tsf" || (backend == "auto" && tsf_active_for(foreground_pid, foreground_window));
+
         if ctrl || alt || meta {
             if ctrl && shift && kb.vkCode == 0x46 {
-                // Ctrl+Shift+F toggle
+                if tsf_owns {
+                    return CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam);
+                }
+                // Ctrl+Shift+F toggle (chỉ khi TSF không xử lý context này).
                 SESSION.with(|s| {
                     if let Some(session) = s.borrow_mut().as_mut() {
                         session.toggle_vietnamese();
@@ -215,6 +312,9 @@ mod win {
                 });
                 return 1;
             }
+            return CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam);
+        }
+        if tsf_owns {
             return CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam);
         }
         let key = if let Some(name) = key_name(kb.vkCode) {
@@ -235,10 +335,10 @@ mod win {
                 return CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam);
             }
         };
+        let app = Some(app);
         let mut swallowed = false;
         SESSION.with(|s| {
             if let Some(session) = s.borrow_mut().as_mut() {
-                let app = process_name();
                 let changed = LAST_APP.with(|last| {
                     let is_changed = {
                         let last_ref = last.borrow();
@@ -280,6 +380,7 @@ mod win {
 
     pub fn run() {
         let config = load_config();
+        WINDOWS_CONFIG.with(|c| *c.borrow_mut() = load_windows_config());
         let store = MemStore(std::rc::Rc::new(RefCell::new(config)));
         let ports = Ports {
             config: Box::new(store),

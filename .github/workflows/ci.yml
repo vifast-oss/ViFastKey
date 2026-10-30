@@ -80,6 +80,39 @@ jobs:
         if: runner.os == 'Linux'
         run: python3 tools/bench_guard.py
 
+  windows-tsf-adapter:
+    name: Windows TSF adapter (build x64 + x86)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: i686-pc-windows-msvc
+      - name: Build vfk-ffi (x64 + x86)
+        run: |
+          cd rust
+          cargo build --release -p vfk-ffi
+          cargo build --release -p vfk-ffi --target i686-pc-windows-msvc
+      - name: Build TSF x64
+        run: |
+          cmake -S windows/tsf -B build/tsf-x64 -A x64 -DVFK_RUST_PROFILE=release
+          cmake --build build/tsf-x64 --config Release
+      - name: Build TSF x86
+        run: |
+          cmake -S windows/tsf -B build/tsf-x86 -A Win32 `
+            -DVFK_RUST_PROFILE=release `
+            -DVFK_FFI_LIB_DIR="$PWD/rust/target/i686-pc-windows-msvc/release"
+          cmake --build build/tsf-x86 --config Release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ViFastKey-windows-tsf
+          path: |
+            build/tsf-x64/Release/vifastkey_tsf.dll
+            build/tsf-x64/Release/vifastkey.dll
+            build/tsf-x86/Release/vifastkey_tsf.dll
+            build/tsf-x86/Release/vifastkey.dll
+          if-no-files-found: error
+
   linux-ibus-adapter:
     name: Linux IBus adapter (core + syntax)
     runs-on: ubuntu-latest

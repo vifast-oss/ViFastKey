@@ -3,7 +3,7 @@
 | Nền tảng | Adapter | Build/test | Trạng thái |
 |---|---|---|---|
 | macOS | `macos/` IMK + `package.sh` universal2 | macOS 12+, Swift/Xcode, đã build arm64/x86_64 + self-test; installer ghi AppleEnabledInputSources | ✅ dùng được; cần logout/login một lần; Developer ID/notarize cần chứng chỉ |
-| Windows | `rust/apps/vfk-windows` low-level hook + SendInput | cross-check MSVC + CI Windows build | 🟡 prototype; chưa test runtime, chưa TSF/tray/signing |
+| Windows | `windows/tsf/` TSF preedit + `rust/apps/vfk-windows` hook Replace | CI Windows build MSVC (TSF) + cross-check hook; **chưa test runtime** | 🟡 code đủ backend; cần smoke test Windows thật, tray/signing |
 | Linux (IBus) | `linux/ibus/` engine Python | core test + runtime smoke test Ubuntu 24.04/IBus 1.5.29 + GTK3 Xvfb: `tieengs` → `tiếng` | ✅ X11 preedit; 🟡 cần test Wayland desktop và app thật |
 | Linux (Fcitx5) | `linux/fcitx5/` C++ addon | CI build + CTest adapter ✅; runtime test Ubuntu 24.04/Fcitx5 5.1.7 và Ubuntu 26.04/Fcitx5 5.1.19 trong Xvfb: `tieengs` → `tiếng` | ✅ X11 + preedit/surrounding/guard/barrier; 🟡 cần test Wayland desktop và app thật |
 | Android | `android/` IME Java + JNI | SDK/NDK + Gradle, APK arm64/x86_64; CI build + test emulator; release signing qua env | ✅ QWERTY full, suggestions, settings, emoji, long-press; 🟡 chưa Play Store/device matrix |
@@ -50,6 +50,9 @@ và chạy chung bộ scenario [`adapter-conformance/`](../adapter-conformance/R
 # Linux X11/Xvfb: IBus
 ./linux/ibus/install.sh
 ./linux/ibus/runtime_test.sh
+
+# Windows: build TSF trước (xem windows/tsf/README.md), rồi cài per-user
+powershell -ExecutionPolicy Bypass -File windows/installer/install.ps1 -BuildDir build/tsf
 ```
 
 Các script Linux cần gói `xvfb openbox xdotool zenity dbus-x11` (và `fcitx5-frontend-gtk3`

@@ -29,7 +29,7 @@ rust/
 ├── apps/vfk-cli/      REPL + demo (bin "vfk")
 ├── apps/vfk-charset/  chuyển bảng mã (bin "vfk-charset")
 ├── apps/vfk-suggest/  gợi ý từ (bin "vfk-suggest")
-├── apps/vfk-windows/  adapter Windows prototype (WH_KEYBOARD_LL)
+├── apps/vfk-windows/  adapter Windows hook Replace fallback (WH_KEYBOARD_LL)
 ├── conformance/       core.jsonl (13.337 ca), engine.jsonl (3.000 kịch bản) sinh từ Python
 ├── testdata/          golden/*.tsv, corpus_vi.txt (dùng chung với Python)
 └── tools/sync_conformance.sh

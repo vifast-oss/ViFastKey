@@ -9,7 +9,7 @@ Bộ gõ tiếng Việt gọn, thuần logic: chuỗi phím thô → chữ tiế
 Tính năng nổi bật: `allow_coda_k` (Đắk Lắk), `macro_digits` (mp3, k8s), macro nhiều từ, macro undo một phím,
 `đ` viết tắt (`vcdd`), 16 bảng mã (TCVN3, VNI-Windows, VISCII, VIQR, CP1258, NCR... cùng Unicode),
 app profile ghi đè kiểu gõ/kiểu dấu, preedit sửa từ đã gõ, macro nhiều từ, gợi ý từ/emoji local,
-FFI C/Python/WASM, macOS IMK universal2, Windows hook prototype, Android IME, iOS keyboard extension,
+FFI C/Python/WASM, macOS IMK universal2, Windows hook + TSF preedit, Android IME, iOS keyboard extension,
 playground Preedit + macro + bảng mã.
 
 Đợt phát triển này dựa trên phân tích 21 dự án IME tiếng Việt công khai; xem
@@ -52,7 +52,10 @@ ViFastKey/
 │   ├── apps/vfk-cli/           # CLI demo + REPL
 │   ├── apps/vfk-charset/       # chuyển bảng mã
 │   ├── apps/vfk-suggest/       # gợi ý từ
-│   ├── apps/vfk-windows/       # adapter Windows prototype
+│   ├── apps/vfk-windows/       # adapter Windows hook (Replace fallback)
+├── windows/
+│   ├── tsf/                    # TSF text service (preedit, C++ + C ABI)
+│   └── installer/              # đăng ký/gỡ TSF per-user
 ├── linux/
 │   ├── ibus/                   # adapter IBus (engine Python)
 │   └── fcitx5/                 # adapter Fcitx5 (C++ + C ABI)
@@ -191,8 +194,9 @@ cargo test --workspace
 - `docs/CONFIG.md` — toàn bộ trường config và app profile.
 - `docs/IME_TEST_VECTORS.md` — bộ ví dụ hành vi dùng để port/regression.
 - `macos/README.md` — build/cài/test adapter macOS IMK.
+- `windows/tsf/README.md` — build/cài/test TSF Windows, `windows.json`, backend auto/tsf/hook.
 - `docs/PLATFORMS.md` — trạng thái adapter từng nền tảng và hợp đồng tối thiểu.
 - `THIRD_PARTY_NOTICES.md` — ghi công bảng mã bamboo-core MIT.
 - `CONTRIBUTING.md` — quy trình sửa hành vi, chạy test, đồng bộ conformance.
 - `CHANGELOG.md` — thay đổi theo phiên bản.
-- `ROADMAP.md` — việc còn lại: adapter Windows, test Wayland, macro nhiều từ, preedit nâng cao...
+- `ROADMAP.md` — việc còn lại: test runtime Windows TSF, test Wayland, macro nhiều từ, preedit nâng cao...

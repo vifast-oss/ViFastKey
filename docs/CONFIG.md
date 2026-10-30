@@ -124,3 +124,19 @@ Python tương đương: `vfk_set_config_json`, `vfk_config_json`, `vfk_config_v
 - File mới hơn (schema_version > 1): vẫn đọc các field đã biết, bỏ qua field lạ.
 - Khi đổi hành vi có chủ đích: thêm golden, chạy `python -m tools.export_conformance`,
   sync sang Rust, cập nhật `COMPATIBILITY.md` và `CHANGELOG.md`.
+
+## 7. Windows adapter
+
+Windows dùng thêm `%APPDATA%\ViFastKey\windows.json` (không thuộc engine config):
+
+```json
+{ "backend": "auto" }
+```
+
+| Giá trị | Ý nghĩa |
+|---|---|
+| `auto` | TSF xử lý khi profile active; hook pass-through khi TSF báo đang giữ foreground window/PID |
+| `tsf` | Hook luôn pass-through; chỉ TSF preedit |
+| `hook` | TSF không ăn phím; chỉ hook Replace |
+
+Chi tiết build/cài: `windows/tsf/README.md`.
