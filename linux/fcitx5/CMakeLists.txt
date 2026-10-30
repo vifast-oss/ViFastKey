@@ -36,7 +36,9 @@ if(UNIX AND NOT APPLE)
     if(DPKG_ARCHITECTURE)
         execute_process(COMMAND dpkg-architecture -qDEB_HOST_MULTIARCH
             OUTPUT_VARIABLE DEB_MULTIARCH OUTPUT_STRIP_TRAILING_WHITESPACE)
-        if(DEB_MULTIARCH)
+        # GNUInstallDirs trên Debian đã trả về lib/x86_64-linux-gnu. Chỉ thêm
+        # multiarch khi libdir vẫn là "lib" để tránh lặp đường dẫn.
+        if(DEB_MULTIARCH AND CMAKE_INSTALL_LIBDIR STREQUAL "lib")
             set(FCITX_ADDON_LIBDIR "${CMAKE_INSTALL_LIBDIR}/${DEB_MULTIARCH}")
         endif()
     endif()
