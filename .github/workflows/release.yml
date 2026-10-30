@@ -86,6 +86,9 @@ jobs:
   macos-app:
     name: macOS IMK app
     runs-on: macos-15
+    env:
+      SIGN_ID: ${{ secrets.MACOS_SIGN_ID }}
+      NOTARY_PROFILE: ${{ secrets.MACOS_NOTARY_PROFILE }}
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
