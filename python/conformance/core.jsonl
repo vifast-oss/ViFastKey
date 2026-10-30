@@ -7424,7 +7424,7 @@
 {"im": "vni", "opts": {"tone_style": "new", "spell_check": false, "w_as_u": false, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "a3du22g2t", "expected": "a3du2g2t"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "qax", "expected": "qax"}
 {"im": "simple_telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "acaiynWjtz", "expected": "acaiynWjtz"}
-{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "O]gasw", "expected": "O]gasw"}
+{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "O]gasw", "expected": "Owgasw"}
 {"im": "viqr", "opts": {"tone_style": "old", "spell_check": false, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "a0ud'dUeE", "expected": "á0uđUeE"}
 {"im": "simple_telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": true, "allow_coda_k": false}, "final": true, "keys": "yyioxsgg", "expected": "yyioxsgg"}
 {"im": "simple_telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "ogeWreajfe", "expected": "ogeWreajfe"}
@@ -8369,7 +8369,7 @@
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": false, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "wkAxqnEOhr", "expected": "wkAxqnEOhr"}
 {"im": "simple_telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": true}, "final": true, "keys": "eaiwtd", "expected": "eaiwtd"}
 {"im": "viqr", "opts": {"tone_style": "old", "spell_check": false, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "a(aUEoy.d+^io", "expected": "ặaUEôydio"}
-{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "]xauojqpDw", "expected": "]xauojqpDw"}
+{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "]xauojqpDw", "expected": "wauõjqpDw"}
 {"im": "vni", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "OqEignnh07u", "expected": "OqEignnh07u"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": false, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "tquxaS", "expected": "tquxaS"}
 {"im": "vni", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": false, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "i5h", "expected": "i5h"}
@@ -8917,7 +8917,7 @@
 {"im": "vni", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "a392Ug32i6", "expected": "a392Ug32i6"}
 {"im": "simple_telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": true, "allow_coda_k": true}, "final": true, "keys": "jWrforwzfWn", "expected": "jWrforwzfWn"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "tO", "expected": "tO"}
-{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": true, "allow_coda_k": false}, "final": false, "keys": "wfldWe]xe[t", "expected": "wfldWe]xe[t"}
+{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": true, "allow_coda_k": false}, "final": false, "keys": "wfldWe]xe[t", "expected": "wldWe]xè[t"}
 {"im": "simple_telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "sgagWAwgwx", "expected": "sgagWAwgwx"}
 {"im": "viqr", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "a(y.Oy", "expected": "a(y.Oy"}
 {"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": false, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "kOlusgjt", "expected": "kOlusgjt"}
@@ -9306,7 +9306,7 @@
 {"im": "vni", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "c0AEE", "expected": "c0AEE"}
 {"im": "simple_telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "i", "expected": "i"}
 {"im": "viqr", "opts": {"tone_style": "new", "spell_check": false, "w_as_u": false, "bracket_keys": false, "quick_telex": true, "allow_coda_k": true}, "final": true, "keys": "idi0~o~y^yd", "expected": "ĩdi0oy^yd"}
-{"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "nwwrrxWmW", "expected": "nwwrrxWmW"}
+{"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "nwwrrxWmW", "expected": "nwrrxWmW"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "DaUrE", "expected": "DaUrE"}
 {"im": "simple_telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": false, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "nc", "expected": "nc"}
 {"im": "vni", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "O9o", "expected": "O9o"}
@@ -9469,7 +9469,7 @@
 {"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "arnkginWw", "expected": "arnkginWw"}
 {"im": "viqr", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "uA", "expected": "uA"}
 {"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": false, "bracket_keys": false, "quick_telex": true, "allow_coda_k": true}, "final": false, "keys": "ppmEOp[U", "expected": "ppmEOp[U"}
-{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "wSgEWwyyz", "expected": "wSgEWwyyz"}
+{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "wSgEWwyyz", "expected": "wgEWwyýz"}
 {"im": "simple_telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "Aigzx", "expected": "Aigzx"}
 {"im": "viqr", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "EU+dA^.^OaE+", "expected": "EU+dA^.^OaE+"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": false, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "EmiawS", "expected": "EmiawS"}
@@ -9570,7 +9570,7 @@
 {"im": "viqr", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": true}, "final": true, "keys": "a?A.a?AE.A", "expected": "a?A.a?AE.A"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": false, "w_as_u": false, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "bqg", "expected": "bqg"}
 {"im": "viqr", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": true}, "final": true, "keys": "yy~E(", "expected": "yy~E("}
-{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": false, "bracket_keys": true, "quick_telex": true, "allow_coda_k": true}, "final": true, "keys": "n[[yW[aOO", "expected": "n[[yW[aOO"}
+{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": false, "bracket_keys": true, "quick_telex": true, "allow_coda_k": true}, "final": true, "keys": "n[[yW[aOO", "expected": "nơwyW[aOO"}
 {"im": "vni", "opts": {"tone_style": "new", "spell_check": false, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": true}, "final": true, "keys": "ud30927dO", "expected": "ừđdO"}
 {"im": "telex", "opts": {"tone_style": "new", "spell_check": false, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": true}, "final": true, "keys": "wy", "expected": "ưy"}
 {"im": "viqr", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "O~U0~dAdeO0~", "expected": "O~U0~dAdeO0~"}
@@ -9628,7 +9628,7 @@
 {"im": "viqr", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": true}, "final": false, "keys": "EEOd?^+iUE", "expected": "EEOd?^+iUE"}
 {"im": "simple_telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": true, "allow_coda_k": false}, "final": true, "keys": "ej", "expected": "ẹ"}
 {"im": "vni", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": false, "bracket_keys": false, "quick_telex": true, "allow_coda_k": true}, "final": true, "keys": "a3q", "expected": "a3q"}
-{"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": true, "allow_coda_k": false}, "final": true, "keys": "[qSm[hbm]bWr", "expected": "[qSm[hbm]bWr"}
+{"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": true, "allow_coda_k": false}, "final": true, "keys": "[qSm[hbm]bWr", "expected": "wqSmơhbmưbWr"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": true, "allow_coda_k": false}, "final": true, "keys": "br]aupjfsk", "expected": "br]aupjfsk"}
 {"im": "viqr", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "iiee~0ou", "expected": "iiee~0ou"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": false, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": true}, "final": true, "keys": "wycxqumnot", "expected": "ữycqumnot"}
@@ -9717,7 +9717,7 @@
 {"im": "vni", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "a64", "expected": "ẫ"}
 {"im": "simple_telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "zwfiAjf", "expected": "zwfiAjf"}
 {"im": "simple_telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "egiswrAxgce", "expected": "egiswrAxgce"}
-{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": false, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "n[iwUytlWg", "expected": "n[iwUytlWg"}
+{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": false, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "n[iwUytlWg", "expected": "nwiwUytlWg"}
 {"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "Ejj", "expected": "Ej"}
 {"im": "viqr", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "a+i?0+(A~y", "expected": "a+i?0+(A~y"}
 {"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "kd[dkhW", "expected": "kd[dkhW"}
@@ -9788,7 +9788,7 @@
 {"im": "simple_telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "zstAwxWgcAf", "expected": "zstAwxWgcAf"}
 {"im": "vni", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": false, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "a26nun606A0e", "expected": "a26nun606A0e"}
 {"im": "simple_telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "wyjexscg", "expected": "wyjexscg"}
-{"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": true, "allow_coda_k": false}, "final": false, "keys": "nwswqrqk", "expected": "nwswqrqk"}
+{"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": true, "allow_coda_k": false}, "final": false, "keys": "nwswqrqk", "expected": "nwqrqk"}
 {"im": "simple_telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "A", "expected": "A"}
 {"im": "vni", "opts": {"tone_style": "old", "spell_check": false, "w_as_u": true, "bracket_keys": false, "quick_telex": true, "allow_coda_k": false}, "final": false, "keys": "a7qi", "expected": "a7qi"}
 {"im": "simple_telex", "opts": {"tone_style": "new", "spell_check": false, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "styoo", "expected": "styoo"}
@@ -10398,7 +10398,7 @@
 {"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "dE", "expected": "dE"}
 {"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": true, "allow_coda_k": false}, "final": true, "keys": "zfuqhdEO", "expected": "zfuqhdEO"}
 {"im": "viqr", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": true}, "final": true, "keys": "aUy", "expected": "aUy"}
-{"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "gisWEwmUkz", "expected": "gisWEwmUkz"}
+{"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "gisWEwmUkz", "expected": "gíWEwmUkz"}
 {"im": "viqr", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": true}, "final": false, "keys": "Ud?O(uUE0", "expected": "Ud?O(uUE0"}
 {"im": "simple_telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "wuud", "expected": "wuud"}
 {"im": "vni", "opts": {"tone_style": "old", "spell_check": false, "w_as_u": false, "bracket_keys": true, "quick_telex": false, "allow_coda_k": true}, "final": true, "keys": "a465t8", "expected": "ặt"}
@@ -10796,7 +10796,7 @@
 {"im": "vni", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": false, "bracket_keys": false, "quick_telex": true, "allow_coda_k": true}, "final": false, "keys": "uaO0E9qO", "expected": "uaO0E9qO"}
 {"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": false, "bracket_keys": false, "quick_telex": false, "allow_coda_k": true}, "final": false, "keys": "gmel", "expected": "gmel"}
 {"im": "viqr", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "a?.a'ioey?OOO", "expected": "a?.a'ioey?OOO"}
-{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": false, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "]bmrnhksDwz", "expected": "]bmrnhksDwz"}
+{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": false, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "]bmrnhksDwz", "expected": "wbmrnhksDwz"}
 {"im": "viqr", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": false, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "a^0e(", "expected": "a^0e("}
 {"im": "simple_telex", "opts": {"tone_style": "old", "spell_check": false, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "AouWAuizA", "expected": "Âouui"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "oDqr", "expected": "oDqr"}
@@ -11766,7 +11766,7 @@
 {"im": "viqr", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "E+E.eE(i0?+", "expected": "E+E.eE(i0?+"}
 {"im": "vni", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "a739oo13qihtc", "expected": "a739oo13qihtc"}
 {"im": "vni", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": true, "allow_coda_k": false}, "final": true, "keys": "u4q2O92", "expected": "u4q2O92"}
-{"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": true}, "final": true, "keys": "wWOms", "expected": "wWOms"}
+{"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": true}, "final": true, "keys": "wWOms", "expected": "wOms"}
 {"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "UkDtqEgmamt", "expected": "UkDtqEgmamt"}
 {"im": "simple_telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "uWc", "expected": "ưc"}
 {"im": "viqr", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "a00d^~..?yu", "expected": "a00d^~..?yu"}
@@ -12942,7 +12942,7 @@
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": false, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "wh]", "expected": "wh]"}
 {"im": "viqr", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "a.0?", "expected": "ả"}
 {"im": "simple_telex", "opts": {"tone_style": "new", "spell_check": false, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "y", "expected": "y"}
-{"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "h[AWWoWnS", "expected": "h[AWWoWnS"}
+{"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "h[AWWoWnS", "expected": "hwAWWoWnS"}
 {"im": "simple_telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "xsAgefsyWu", "expected": "xsAgefsyWu"}
 {"im": "viqr", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "A^e?^ye?^O", "expected": "A^e?^ye?^O"}
 {"im": "viqr", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "a0aU??i", "expected": "a0aU??i"}
@@ -12995,7 +12995,7 @@
 {"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": true, "allow_coda_k": true}, "final": true, "keys": "fhcyf", "expected": "fhcyf"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": false, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "W[qrAtaqESy", "expected": "Ứ[qAtaqEy"}
 {"im": "simple_telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "sWzanr", "expected": "sWzanr"}
-{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "wxWlW", "expected": "wxWlW"}
+{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "wxWlW", "expected": "wlW"}
 {"im": "vni", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "a4tiaa", "expected": "a4tiaa"}
 {"im": "viqr", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": false, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "a?uO0e0A.ay(", "expected": "a?uO0e0A.ay("}
 {"im": "viqr", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "a0yOa", "expected": "a0yOa"}
@@ -13027,7 +13027,7 @@
 {"im": "vni", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "auO5gc", "expected": "auO5gc"}
 {"im": "simple_telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": true}, "final": true, "keys": "ynWcacu", "expected": "ynWcacu"}
 {"im": "vni", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "A4tdAe5yu", "expected": "A4tdAe5yu"}
-{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "]Wypnpxw", "expected": "]Wypnpxw"}
+{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "]Wypnpxw", "expected": "wypnpxw"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "]]p", "expected": "]]p"}
 {"im": "viqr", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": true, "allow_coda_k": true}, "final": true, "keys": "o0", "expected": "o0"}
 {"im": "vni", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "a6", "expected": "â"}

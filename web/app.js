@@ -10,7 +10,7 @@ import init, {
   charset_list,
 } from "./pkg/vfk_wasm.js";
 
-const STORAGE_KEY = "vifastkey.demo.config.v1";
+const STORAGE_KEY = "vifastkey.demo.config.v2";
 // Khớp MAX_RAW trong engine: vượt 24 phím thì từ chuyển sang chế độ thô.
 const MAX_RAW = 24;
 const METHODS = {
@@ -39,7 +39,7 @@ const DEFAULT_CONFIG = {
   input_method: "telex",
   tone_style: "new",
   spell_check: true,
-  w_as_u: true,
+  w_as_u: false,
   bracket_keys: false,
   quick_telex: false,
   auto_restore_english: true,
@@ -756,7 +756,7 @@ function setupEvents() {
 async function boot() {
   state.config = loadConfig();
   try {
-    await init("./pkg/vfk_wasm_bg.wasm?v=20261031e");
+    await init("./pkg/vfk_wasm_bg.wasm?v=20261031f");
     createSession();
     state.ready = true;
     syncControls();

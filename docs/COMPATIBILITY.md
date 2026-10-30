@@ -13,7 +13,7 @@ khác, phải giữ đúng các ví dụ ở đây; các khác biệt phải đ�
   Dấu câu thuộc từ khi raw khác rỗng; gõ dấu cách trước dấu câu cuối câu.
 - Bracket: `[` → ơ, `]` → ư (khi bật `bracket_keys`).
 - Quick Telex: `cc ch`, `gg gi`, `kk kh`, `nn ng`, `qq qu`, `pp ph`, `tt th` ở đầu từ.
-- `w` đứng riêng → `ư` khi `w_as_u`.
+- `w` đứng riêng → `ư` khi bật `w_as_u`; mặc định `w` là chữ `w`.
 - Chữ hoa/thường được giữ; `đ` → `Đ`.
 
 ## 2. Đặt thanh

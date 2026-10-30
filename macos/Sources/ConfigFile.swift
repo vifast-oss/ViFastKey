@@ -40,7 +40,7 @@ struct ConfigFile {
               "input_method": "telex",
               "tone_style": "new",
               "spell_check": true,
-              "w_as_u": true,
+              "w_as_u": false,
               "bracket_keys": false,
               "quick_telex": false,
               "allow_coda_k": false,

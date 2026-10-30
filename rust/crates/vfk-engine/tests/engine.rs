@@ -468,7 +468,7 @@ fn url_field_allows_search_and_is_url_safe() {
 #[test]
 fn uppercase_ww() {
     for m in MODES {
-        let mut h = make(m);
+        let mut h = make_with(m, Config { w_as_u: true, ..cfg() });
         h.type_str("WW ");
         assert_eq!(h.text(), "W ");
     }
@@ -702,7 +702,10 @@ fn type_then_backspace_all() {
         for m in MODES {
             let mut h = make_with(m, Config { edit_previous_word: false, ..cfg() });
             h.type_str(&word);
-            let o = vfk_core::TransformOptions::default();
+            let o = vfk_core::TransformOptions {
+                w_as_u: h.session.config().w_as_u,
+                ..vfk_core::TransformOptions::default()
+            };
             let expected = vfk_core::transform_str(&word, &vfk_core::TELEX, &o, false).text;
             assert_eq!(h.text(), if h.session.is_literal() { word.clone() } else { expected });
             let n = h.session.display().chars().count();
@@ -739,5 +742,23 @@ fn modes_agree_on_random_typing() {
             texts.push(h.text());
         }
         assert_eq!(texts[0], texts[1], "{seq:?}");
+    }
+}
+
+#[test]
+fn default_w_is_literal() {
+    for m in MODES {
+        let mut h = make(m);
+        h.type_str("web ww ");
+        assert_eq!(h.text(), "web ww ");
+    }
+}
+
+#[test]
+fn w_as_u_escape_continues_as_literal() {
+    for m in MODES {
+        let mut h = make_with(m, Config { w_as_u: true, ..cfg() });
+        h.type_str("ww wwe wweb ");
+        assert_eq!(h.text(), "w we web ");
     }
 }

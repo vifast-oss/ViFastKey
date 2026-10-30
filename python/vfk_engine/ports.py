@@ -72,7 +72,7 @@ class Config:
     input_method: str = "telex"             # telex | simple_telex | vni
     tone_style: ToneStyle = ToneStyle.NEW  # hoà | hòa (mặc định kiểu mới)
     spell_check: bool = True
-    w_as_u: bool = True
+    w_as_u: bool = False                    # w đứng riêng mặc định là chữ w; bật để w -> ư
     bracket_keys: bool = False              # [ -> ơ, ] -> ư
     quick_telex: bool = False               # cc=ch, gg=gi, ...
     allow_coda_k: bool = False              # âm cuối k cho tên riêng (Đắk Lắk); chỉ sắc/nặng

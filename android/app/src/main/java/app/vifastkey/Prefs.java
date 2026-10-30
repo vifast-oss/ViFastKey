@@ -48,7 +48,7 @@ public final class Prefs {
             o.put("input_method", method(c));
             o.put("tone_style", sp(c).getString("tone_style", "new"));
             o.put("spell_check", bool(c, "spell_check", true));
-            o.put("w_as_u", bool(c, "w_as_u", true));
+            o.put("w_as_u", bool(c, "w_as_u", false));
             o.put("bracket_keys", bool(c, "bracket_keys", false));
             o.put("quick_telex", bool(c, "quick_telex", false));
             o.put("allow_coda_k", bool(c, "allow_coda_k", false));

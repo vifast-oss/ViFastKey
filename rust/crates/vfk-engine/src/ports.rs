@@ -143,7 +143,7 @@ impl Default for Config {
             input_method: "telex".into(),
             tone_style: ToneStyle::New,
             spell_check: true,
-            w_as_u: true,
+            w_as_u: false,
             bracket_keys: false,
             quick_telex: false,
             allow_coda_k: false,

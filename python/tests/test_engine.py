@@ -367,7 +367,10 @@ def test_property_type_then_backspace_all():
         for mode in MODES:
             s, f, _ = make(mode, Config(edit_previous_word=False))
             f.type(s, word)
-            expected = transform(word, TELEX, TransformOptions(tone_style=s.config.tone_style)).text
+            expected = transform(
+                word, TELEX,
+                TransformOptions(tone_style=s.config.tone_style, w_as_u=s.config.w_as_u),
+            ).text
             assert f.text == (word if s.literal else expected), word
             n = len(s.display)
             f.type(s, [BS] * n)
@@ -496,10 +499,24 @@ def test_url_field_allows_search_and_is_url_safe(mode):
 
 @pytest.mark.parametrize("mode", MODES)
 def test_uppercase_ww(mode):
-    """vnkey #16: WW -> W (không ra w thường)."""
-    s, f, _ = make(mode)
+    """vnkey #16: WW -> W (không ra w thường), khi bật w -> ư."""
+    s, f, _ = make(mode, Config(w_as_u=True))
     f.type(s, "WW ")
     assert f.text == "W "
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_default_w_is_literal(mode):
+    s, f, _ = make(mode)
+    f.type(s, "web ww ")
+    assert f.text == "web ww "
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_w_as_u_escape_continues_as_literal(mode):
+    s, f, _ = make(mode, Config(w_as_u=True))
+    f.type(s, "ww wwe wweb ")
+    assert f.text == "w we web "
 
 
 def test_edit_previous_word_skips_when_normal_form_differs():

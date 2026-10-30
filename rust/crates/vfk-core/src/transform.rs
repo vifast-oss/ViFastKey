@@ -391,6 +391,8 @@ fn step(st: &mut WordState, k: char, im: &InputMethodSpec, opt: &TransformOption
                     // ư sinh từ "w" -> trả lại "w"
                     let up = st.letters[i0].upper;
                     st.letters[i0] = Letter::new(lk, up);
+                    // ww là escape literal w: các phím sau viết thẳng (wwe -> we).
+                    st.latched = true;
                     if i0 != st.letters.len() - 1 {
                         // 'windows' giữ cả 2 chữ w
                         st.letters.push_ignore(Letter::literal(k));

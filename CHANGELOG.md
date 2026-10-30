@@ -39,6 +39,9 @@
   `FF` viết hoa cho escape.
 - Backspace sau khi gõ nhầm phím lặp ở cuối từ khôi phục lại từ đã biến đổi:
   `nhuwngg` + Backspace → `nhưng`; `text` + Backspace vẫn giữ `tex`.
+- Mặc định `w` đứng riêng là chữ `w`; bật `w_as_u` mới đổi thành `ư`.
+  Khi bật, `ww` là escape literal `w` và các phím sau viết thẳng: `wwe` → `we`,
+  `wweb` → `web`. Mặc định `web` gõ trực tiếp vẫn ra `web`.
 - Auto-cap mở rộng cho `…`, ngoặc kép/đóng, newline; không cắt số thập phân.
 - `AppProfile` ghi đè `input_method`, `tone_style`, `spell_check`; thêm gợi ý `charset`.
 - `schema_version` trong config; `config_from_dict` bỏ qua field lạ.

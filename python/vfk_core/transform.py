@@ -254,6 +254,8 @@ def _step(st: WordState, k: str, im: InputMethodSpec, opt: TransformOptions) -> 
                 i0 = c[0][0]
                 if len(c) == 1 and L[i0].from_standalone:  # ư sinh từ "w" -> trả lại "w"
                     L[i0] = Letter(lk, L[i0].upper)
+                    # ww là escape literal w: các phím sau viết thẳng (wwe -> we).
+                    st.latched = True
                     if i0 != len(L) - 1:                   # 'windows' giữ cả 2 chữ w
                         L.append(_literal(k))
                     return
