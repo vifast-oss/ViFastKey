@@ -57,7 +57,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--list", action="store_true", help="liệt kê bảng mã")
     ap.add_argument("--case", choices=["upper", "lower", "title"], help="đổi hoa/thường trước khi mã hoá")
     ap.add_argument("--remove-diacritics", action="store_true", help="bỏ dấu trước khi mã hoá")
-    ap.add_argument("--version", action="version", version="ViFastKey charset 0.4.0")
+    ap.add_argument("--version", action="version", version="ViFastKey charset 0.1.0")
     args = ap.parse_args(argv)
 
     if args.list:

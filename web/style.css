@@ -1152,6 +1152,25 @@ code {
 
 /* ---------------------------------------------------------------- download */
 
+.release-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px 14px;
+  margin-bottom: 14px;
+  padding: 11px 15px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fffaf2;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.release-bar strong { color: var(--ink); font-size: 13px; }
+.release-bar .dot { width: 4px; height: 4px; border-radius: 50%; background: #c9a46a; }
+.release-bar a { color: var(--accent-dark); font-weight: 700; text-decoration: none; }
+.release-bar a:hover { text-decoration: underline; }
+
 .download-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1475,6 +1494,34 @@ code {
 
 .stat-card span { color: var(--muted); font-size: 12px; }
 .stat-card small { color: #7a5a42; font-size: 10.5px; }
+
+.stats-downloads {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.stats-downloads h3 { margin: 0 0 10px; font-size: 13px; letter-spacing: -0.1px; }
+.dl-stat-row {
+  display: grid;
+  grid-template-columns: 86px minmax(0, 1fr) 40px;
+  gap: 9px;
+  align-items: center;
+  margin: 8px 0;
+  color: var(--body);
+  font-size: 11.5px;
+}
+.dl-stat-row b { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); font-size: 11px; }
+.dl-bar { height: 8px; overflow: hidden; border-radius: 999px; background: #f1e6da; }
+.dl-bar span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--gold));
+  transition: width 0.35s ease;
+}
+.stats-empty { margin: 0; color: var(--muted); font-size: 11.5px; }
 
 .stats-note {
   margin: 14px 0 0;

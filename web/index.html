@@ -21,7 +21,7 @@
   <meta name="twitter:title" content="ViFastKey — Bộ gõ tiếng Việt">
   <meta name="twitter:description" content="Bộ gõ tiếng Việt nhỏ, nhanh, thuần logic. Gõ thử WASM và gọi API Python.">
   <meta name="twitter:image" content="https://vifastkey.hoctuthien.com/brand/og-image.png">
-  <link rel="stylesheet" href="style.css?v=20261031f">
+  <link rel="stylesheet" href="style.css?v=20261031g">
 </head>
 <body>
   <div class="topline" aria-hidden="true"></div>
@@ -279,7 +279,7 @@
 curl -s https://vifastkey.hoctuthien.com/api/type \
   -H <span class="c-str">'content-type: application/json'</span> \
   -d <span class="c-str">'{"text":"Tieengs Vieejt","method":"telex","tone":"new"}'</span></code></pre>
-            <div class="api-response" id="api-response">{"output":"Tiếng Việt","engine":"python","version":"0.4.0"}</div>
+            <div class="api-response" id="api-response">{"output":"Tiếng Việt","engine":"python","version":"0.1.0"}</div>
           </div>
           <ul class="api-facts">
             <li><strong>Đúng oracle.</strong> Cùng engine Python sinh conformance cho Rust, không phải bản rút gọn.</li>
@@ -334,34 +334,41 @@ curl -s https://vifastkey.hoctuthien.com/api/type \
     <section class="section wrap">
       <div class="section-head compact" id="tai-ve">
         <div>
-          <div class="eyebrow">Bắt đầu</div>
-          <h2>Chạy thử hôm nay.</h2>
+          <div class="eyebrow">Tải về · v0.1.0</div>
+          <h2>Bản phát hành đầu tiên.</h2>
         </div>
-        <p>Engine, CLI và API đã chạy được. Adapter macOS, Windows TSF, Linux, Android, iOS và extension nằm trong repo, build theo hướng dẫn từng thư mục.</p>
+        <p>Windows TSF x64/x86 đã đóng gói sẵn, cài per-user và không cần build. Các nền tảng khác nằm trong GitHub Release.</p>
+      </div>
+      <div class="release-bar">
+        <strong>v0.1.0</strong>
+        <span class="dot" aria-hidden="true"></span>
+        <span>Bản phát hành chính thức</span>
+        <a href="https://github.com/dvchd/ViFastKey/releases/tag/v0.1.0" target="_blank" rel="noopener">Release notes ↗</a>
+        <a href="https://github.com/dvchd/ViFastKey/releases/download/v0.1.0/SHA256SUMS.txt" target="_blank" rel="noopener">SHA256SUMS ↗</a>
       </div>
       <div class="download-grid">
-        <a class="download-card primary" href="#go-thu">
+        <a class="download-card primary" href="https://github.com/dvchd/ViFastKey/releases/download/v0.1.0/vifastkey-windows-tsf.zip" target="_blank" rel="noopener" data-download="vifastkey-windows-tsf.zip">
+          <span class="d-tag">Windows 10/11 · x64 + x86</span>
+          <strong>Tải ViFastKey TSF</strong>
+          <span>ZIP · cài per-user · không cần build</span>
+          <span class="d-arrow" aria-hidden="true">↗</span>
+        </a>
+        <a class="download-card" href="#go-thu">
           <span class="d-tag">Ngay trong trình duyệt</span>
           <strong>Gõ thử WASM</strong>
           <span>Không cài đặt · không gửi dữ liệu</span>
           <span class="d-arrow" aria-hidden="true">→</span>
         </a>
-        <a class="download-card" href="#api">
-          <span class="d-tag">Tích hợp</span>
-          <strong>API Python</strong>
-          <span>Một request · engine oracle · 16 bảng mã</span>
-          <span class="d-arrow" aria-hidden="true">→</span>
+        <a class="download-card" href="https://github.com/dvchd/ViFastKey/releases/tag/v0.1.0" target="_blank" rel="noopener">
+          <span class="d-tag">Desktop & mobile</span>
+          <strong>Tất cả nền tảng</strong>
+          <span>macOS · Linux · Android · iOS · extension</span>
+          <span class="d-arrow" aria-hidden="true">↗</span>
         </a>
         <a class="download-card" href="https://github.com/dvchd/ViFastKey" target="_blank" rel="noopener">
           <span class="d-tag">Mã nguồn</span>
           <strong>GitHub · ViFastKey</strong>
           <span>Python oracle + Rust port + C ABI</span>
-          <span class="d-arrow" aria-hidden="true">↗</span>
-        </a>
-        <a class="download-card" href="https://github.com/dvchd/ViFastKey/blob/main/docs/PLATFORMS.md" target="_blank" rel="noopener">
-          <span class="d-tag">Desktop & mobile</span>
-          <strong>Ứng dụng nền tảng</strong>
-          <span>macOS · Windows · Linux · Android · iOS · extension</span>
           <span class="d-arrow" aria-hidden="true">↗</span>
         </a>
       </div>
@@ -419,8 +426,13 @@ curl -s https://vifastkey.hoctuthien.com/api/type \
           <div class="stat-card"><strong id="stat-visitors">—</strong><span>khách ẩn danh</span></div>
           <div class="stat-card"><strong id="stat-chars">—</strong><span>ký tự đã chuyển</span></div>
           <div class="stat-card"><strong id="stat-feedback">—</strong><span>góp ý / báo lỗi</span></div>
+          <div class="stat-card"><strong id="stat-downloads">—</strong><span>lượt bấm tải</span><small id="stat-downloads-today"></small></div>
         </div>
-        <p class="stats-note">“Khách ẩn danh” là ước lượng theo hash visitor/IP; không lưu nội dung gõ thử hay IP thô. ViFastKey hiện chưa có gói tải xuống nên chưa có thống kê tải. <a href="/admin">Mở trang admin ↗</a></p>
+        <div class="stats-downloads">
+          <h3>Lượt bấm tải theo nền tảng</h3>
+          <div id="download-platforms"><p class="stats-empty">Đang tải…</p></div>
+        </div>
+        <p class="stats-note">“Khách ẩn danh” là ước lượng theo hash visitor/IP; không lưu nội dung gõ thử hay IP thô. Lượt tải chỉ đếm lúc bấm nút trên landing, không phải số file đã tải xong. <a href="/admin">Mở trang admin ↗</a></p>
       </div>
     </section>
   </main>
@@ -447,7 +459,7 @@ curl -s https://vifastkey.hoctuthien.com/api/type \
     </div>
   </footer>
 
-  <script type="module" src="app.js?v=20261031f"></script>
-  <script type="module" src="server-demo.js?v=20261031f"></script>
+  <script type="module" src="app.js?v=20261031g"></script>
+  <script type="module" src="server-demo.js?v=20261031g"></script>
 </body>
 </html>

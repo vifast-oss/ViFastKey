@@ -7,6 +7,7 @@ API chạy chính engine Python (oracle) và các tiện ích công khai:
 * ``POST /api/charset``   — chuyển bảng mã
 * ``GET  /api/meta``      — phiên bản, kiểu gõ, bảng mã, giới hạn
 * ``GET  /api/stats``     — thống kê tổng hợp, không lưu nội dung người dùng
+* ``POST /api/download``  — đếm lượt bấm nút tải theo nền tảng
 * ``POST /api/visit``     — đếm lượt xem ẩn danh
 * ``POST /api/feedback``  — góp ý/báo lỗi, chỉ admin xem
 * ``GET  /admin``         — bảng điều khiển (Basic Auth nếu có ADMIN_PASSWORD)
@@ -106,6 +107,33 @@ FEEDBACK_CATEGORIES = {
 }
 FEEDBACK_STATUS = {"new": "Chờ xem", "read": "Đã đọc", "resolved": "Đã xử lý"}
 
+# Tên file trong GitHub Release → nền tảng; server tự map để client không gửi
+# chuỗi tùy ý vào thống kê.
+DOWNLOAD_PLATFORMS = {
+    "vifastkey-windows-tsf.zip": "windows",
+    "vifastkey-windows.zip": "windows",
+    "vifastkey-macos-universal.zip": "macos",
+    "vifastkey-macos.tar.gz": "macos",
+    "vifastkey-linux.tar.gz": "linux",
+    "vifastkey-fcitx5-linux-x86_64.tar.gz": "linux",
+    "app-debug.apk": "android",
+    "app-release.apk": "android",
+    "app-release.aab": "android",
+    "ViFastKey-ios-simulator.zip": "ios",
+    "vifastkey-wasm.zip": "web",
+    "vifastkey-chrome-extension.zip": "extension",
+}
+DOWNLOAD_LABELS = {
+    "windows": "Windows",
+    "macos": "macOS",
+    "linux": "Linux",
+    "android": "Android",
+    "ios": "iOS Simulator",
+    "extension": "Chrome/Edge",
+    "web": "WASM",
+}
+DOWNLOAD_RATE_LIMIT = 60
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("vifastkey-web")
 
@@ -167,6 +195,14 @@ def _init_db() -> None:
                     updated REAL NOT NULL
                 );
                 CREATE INDEX IF NOT EXISTS feedback_status ON feedback(status);
+                CREATE TABLE IF NOT EXISTS download_clicks (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ts REAL NOT NULL,
+                    platform TEXT NOT NULL,
+                    asset TEXT NOT NULL,
+                    source TEXT NOT NULL DEFAULT 'web'
+                );
+                CREATE INDEX IF NOT EXISTS download_ts ON download_clicks(ts);
                 """
             )
             connection.commit()
@@ -260,6 +296,21 @@ def _record_demo(
             connection.close()
 
 
+def _record_download(platform: str, asset: str, source: str) -> None:
+    """Ghi một lượt bấm tải; chỉ platform/asset/source, không lưu IP/text."""
+    now = time.time()
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            connection.execute(
+                "INSERT INTO download_clicks(ts, platform, asset, source) VALUES(?,?,?,?)",
+                (now, platform, asset, source),
+            )
+            connection.commit()
+        finally:
+            connection.close()
+
+
 def _record_feedback(visitor: str, category: str, message: str, contact: str) -> int:
     now = time.time()
     with _STATS_LOCK:
@@ -330,6 +381,18 @@ def _stats_payload() -> dict:
             feedback_new = connection.execute(
                 "SELECT COUNT(*) AS n FROM feedback WHERE status='new'"
             ).fetchone()["n"]
+            downloads_total = connection.execute(
+                "SELECT COUNT(*) AS n FROM download_clicks"
+            ).fetchone()["n"]
+            downloads_today = connection.execute(
+                "SELECT COUNT(*) AS n FROM download_clicks WHERE ts >= ?", (day_start,)
+            ).fetchone()["n"]
+            downloads_by_platform = {
+                str(row["platform"]): int(row["n"])
+                for row in connection.execute(
+                    "SELECT platform, COUNT(*) AS n FROM download_clicks GROUP BY platform"
+                ).fetchall()
+            }
             recent = [
                 dict(row)
                 for row in connection.execute(
@@ -353,6 +416,9 @@ def _stats_payload() -> dict:
         "avg_ms": round(float(totals["avg_ms"]), 3),
         "feedback_total": int(feedback_total),
         "feedback_new": int(feedback_new),
+        "downloads_total": int(downloads_total),
+        "downloads_today": int(downloads_today),
+        "downloads_by_platform": downloads_by_platform,
         "recent": [
             {
                 **row,
@@ -534,6 +600,10 @@ def _admin_html(stats: dict) -> str:
         )
         or "<tr><td colspan='5'>Chưa có lượt chạy API nào.</td></tr>"
     )
+    download_summary = " · ".join(
+        f"{label} {int(stats['downloads_by_platform'].get(key, 0))}"
+        for key, label in DOWNLOAD_LABELS.items()
+    )
     auth_note = (
         "Đã bật Basic Auth."
         if ADMIN_PASSWORD
@@ -577,7 +647,11 @@ th{{background:#FDF0EB;color:#9B2C20}} a{{color:#C6281E}}
   <div class="card"><b>{stats["avg_ms"]:.2f} ms</b><span>xử lý trung bình</span></div>
   <div class="card"><b>{stats["feedback_total"]}</b><span>góp ý / báo lỗi</span></div>
   <div class="card"><b>{stats["feedback_new"]}</b><span>góp ý mới</span></div>
+  <div class="card"><b>{stats["downloads_total"]}</b><span>lượt bấm tải</span></div>
+  <div class="card"><b>{stats["downloads_today"]}</b><span>lượt bấm tải hôm nay</span></div>
 </div>
+<h2 style="margin:24px 0 4px">Lượt bấm tải theo nền tảng</h2>
+<p class="sub">{download_summary}</p>
 <h2 style="margin:24px 0 4px">Góp ý &amp; báo lỗi</h2>
 <p class="sub">{auth_note} · <a href="/admin/feedback.csv">Tải CSV</a></p>
 <table><thead><tr><th>Thời điểm</th><th>Loại</th><th>Nội dung</th><th>Liên hệ</th><th>Ẩn danh</th><th>Trạng thái</th><th>Cập nhật</th></tr></thead>
@@ -586,7 +660,8 @@ th{{background:#FDF0EB;color:#9B2C20}} a{{color:#C6281E}}
 <table><thead><tr><th>Thời điểm</th><th>Ký tự</th><th>Kiểu gõ</th><th>Dấu</th><th>Xử lý</th></tr></thead>
 <tbody>{recent_rows}</tbody></table>
 <div class="note">Chỉ lưu hash visitor/IP, số ký tự, thời gian xử lý; không lưu nội dung bạn gõ.
-Nội dung góp ý chỉ admin đã đăng nhập mới xem được. {auth_note}</div>
+Nội dung góp ý chỉ admin đã đăng nhập mới xem được. {auth_note}
+Lượt bấm tải chỉ đếm click trên landing, không xác nhận file đã tải xong.</div>
 </main></body></html>"""
 
 
@@ -681,6 +756,12 @@ class CharsetRequest(BaseModel):
 
 class VisitRequest(BaseModel):
     visitor_id: str | None = None
+
+
+class DownloadRequest(BaseModel):
+    asset: str
+    visitor_id: str | None = None
+    source: Literal["web", "api"] = "web"
 
 
 class FeedbackRequest(BaseModel):
@@ -842,7 +923,35 @@ def api_stats() -> dict:
         "demos_today": stats["demos_today"],
         "chars_total": stats["chars_total"],
         "feedback_total": stats["feedback_total"],
+        "downloads_total": stats["downloads_total"],
+        "downloads_today": stats["downloads_today"],
+        "downloads_by_platform": [
+            {
+                "platform": key,
+                "label": label,
+                "count": int(stats["downloads_by_platform"].get(key, 0)),
+            }
+            for key, label in DOWNLOAD_LABELS.items()
+        ],
     }
+
+
+@app.post("/api/download")
+def api_download(payload: DownloadRequest, request: Request) -> dict:
+    """Đếm lượt bấm nút tải; không xác nhận file đã tải xong."""
+    asset = Path(str(payload.asset)).name
+    platform = DOWNLOAD_PLATFORMS.get(asset)
+    if not platform:
+        raise HTTPException(status_code=422, detail="File tải không hợp lệ")
+    visitor = _visitor_hash(request, payload.visitor_id)
+    if not _rate_ok(f"download:{visitor}", DOWNLOAD_RATE_LIMIT):
+        raise HTTPException(status_code=429, detail="Ghi nhận quá nhanh; thử lại sau")
+    try:
+        _record_download(platform, asset, payload.source)
+    except Exception:
+        logger.exception("download stats failed")
+        raise HTTPException(status_code=500, detail="Không ghi được thống kê") from None
+    return {"ok": True, "platform": platform, "asset": asset}
 
 
 @app.post("/api/visit")

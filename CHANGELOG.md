@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased
+## 0.1.0 — 2026-10-31
+
+### Phát hành
+
+- Bản phát hành chính thức đầu tiên `v0.1.0`, kèm GitHub Release đa nền tảng,
+  `SHA256SUMS.txt` và build Windows TSF x64/x86.
+- Landing page có link tải Windows, release notes, mã kiểm tra và thống kê lượt bấm tải
+  theo nền tảng (`POST /api/download`, `/api/stats`, `/admin`).
+- CI release kiểm tra tag khớp version workspace trước khi publish.
 
 ### Web
 

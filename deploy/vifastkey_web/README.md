@@ -16,6 +16,7 @@ Website giới thiệu + playground + API Python cho ViFastKey.
 | `POST /api/charset` | Chuyển giữa 16 bảng mã |
 | `GET /api/meta` | Phiên bản, kiểu gõ, bảng mã, giới hạn |
 | `GET /api/stats` | Thống kê tổng hợp, không có nội dung người dùng |
+| `POST /api/download` | Đếm lượt bấm nút tải theo nền tảng |
 | `POST /api/visit` | Đếm lượt xem ẩn danh |
 | `POST /api/feedback` | Góp ý/báo lỗi |
 | `GET /healthz` | Healthcheck cho Docker/Traefik |

@@ -4,6 +4,7 @@
 const byId = (id) => document.getElementById(id);
 const VISITOR_KEY = "vifastkey.visitor.v1";
 const VISIT_SESSION_KEY = "vifastkey.visited.v1";
+const DOWNLOAD_URL = "/api/download";
 const number = new Intl.NumberFormat("vi-VN");
 
 function visitorId() {
@@ -68,6 +69,37 @@ async function loadMeta() {
   }
 }
 
+function renderDownloads(items) {
+  const box = byId("download-platforms");
+  if (!box) return;
+  const list = Array.isArray(items) ? items : [];
+  box.textContent = "";
+  if (!list.some((item) => Number(item.count) > 0)) {
+    const empty = document.createElement("p");
+    empty.className = "stats-empty";
+    empty.textContent = "Chưa có lượt bấm tải nào. Hãy thử nút tải phía trên.";
+    box.appendChild(empty);
+    return;
+  }
+  const max = Math.max(1, ...list.map((item) => Number(item.count) || 0));
+  for (const item of list) {
+    const row = document.createElement("div");
+    row.className = "dl-stat-row";
+    const label = document.createElement("span");
+    label.textContent = item.label || item.platform;
+    const bar = document.createElement("div");
+    bar.className = "dl-bar";
+    const fill = document.createElement("span");
+    const count = Number(item.count) || 0;
+    fill.style.width = count ? `${Math.max(4, (count / max) * 100).toFixed(1)}%` : "0";
+    bar.appendChild(fill);
+    const value = document.createElement("b");
+    value.textContent = number.format(count);
+    row.append(label, bar, value);
+    box.appendChild(row);
+  }
+}
+
 async function loadStats() {
   const node = byId("footer-stats");
   const setStat = (id, value) => {
@@ -77,18 +109,40 @@ async function loadStats() {
   try {
     const stats = await api("/api/stats");
     if (node) {
-      node.textContent = `${number.format(stats.page_views)} lượt xem · ${number.format(stats.demos)} lượt API · ${number.format(stats.chars_total)} ký tự`;
+      node.textContent = `${number.format(stats.page_views)} lượt xem · ${number.format(stats.demos)} lượt API · ${number.format(stats.downloads_total || 0)} lượt tải`;
     }
     setStat("stat-pageviews", stats.page_views);
     setStat("stat-demos", stats.demos);
     setStat("stat-visitors", stats.visitors);
     setStat("stat-chars", stats.chars_total);
     setStat("stat-feedback", stats.feedback_total);
+    setStat("stat-downloads", stats.downloads_total);
     const today = byId("stat-demos-today");
     if (today) today.textContent = `${number.format(stats.demos_today || 0)} hôm nay`;
+    const downloadsToday = byId("stat-downloads-today");
+    if (downloadsToday) downloadsToday.textContent = `${number.format(stats.downloads_today || 0)} hôm nay`;
+    renderDownloads(stats.downloads_by_platform);
   } catch {
     if (node) node.textContent = "Python API · không tải được thống kê";
   }
+}
+
+function trackDownload(asset) {
+  api(DOWNLOAD_URL, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    keepalive: true,
+    body: JSON.stringify({ asset, visitor_id: visitorId(), source: "web" }),
+  }).catch(() => {});
+}
+
+function setupDownloads() {
+  document.querySelectorAll("[data-download]").forEach((link) => {
+    link.addEventListener("click", () => {
+      trackDownload(link.dataset.download);
+      setTimeout(loadStats, 500);
+    });
+  });
 }
 
 function trackVisit() {
@@ -227,6 +281,7 @@ function setupFeedback() {
 
 setupServerDemo();
 setupFeedback();
+setupDownloads();
 loadMeta();
 loadStats();
 trackVisit();
