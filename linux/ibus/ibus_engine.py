@@ -144,6 +144,10 @@ class ViFastKeyEngine(IBus.Engine):
             if plan.kind == PlanKind.FAIL_SAFE:
                 self.core.reset()
                 self.hide_preedit_text()
+            elif self.core.field_kind in (
+                    FieldKind.PASSWORD, FieldKind.NUMBER,
+                    FieldKind.EMAIL, FieldKind.URL):
+                self.hide_preedit_text()
             return False
         if plan.kind == PlanKind.PREEDIT:
             if plan.text:
