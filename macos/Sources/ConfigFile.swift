@@ -38,7 +38,7 @@ struct ConfigFile {
             {
               "schema_version": 1,
               "input_method": "telex",
-              "tone_style": "old",
+              "tone_style": "new",
               "spell_check": true,
               "w_as_u": true,
               "bracket_keys": false,
@@ -49,12 +49,12 @@ struct ConfigFile {
               "macro_digits": false,
               "macro_undo": true,
               "macros": {"ko": "không", "vn": "Việt Nam"},
-              "auto_capitalize": true,
+              "auto_capitalize": false,
               "excluded_apps": ["minecraft"],
               "default_vietnamese": true,
               "edit_previous_word": true,
               "restore_after_space": true,
-              "smart_caps": true,
+              "smart_caps": false,
               "unicode_form": "NFC"
             }
             """

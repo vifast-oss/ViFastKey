@@ -46,7 +46,7 @@ public final class Prefs {
             JSONObject o = new JSONObject();
             o.put("schema_version", 1);
             o.put("input_method", method(c));
-            o.put("tone_style", sp(c).getString("tone_style", "old"));
+            o.put("tone_style", sp(c).getString("tone_style", "new"));
             o.put("spell_check", bool(c, "spell_check", true));
             o.put("w_as_u", bool(c, "w_as_u", true));
             o.put("bracket_keys", bool(c, "bracket_keys", false));
@@ -57,11 +57,11 @@ public final class Prefs {
             o.put("macro_digits", bool(c, "macro_digits", false));
             o.put("macro_undo", bool(c, "macro_undo", true));
             o.put("macro_in_off_mode", bool(c, "macro_in_off_mode", false));
-            o.put("auto_capitalize", bool(c, "auto_capitalize", true));
+            o.put("auto_capitalize", bool(c, "auto_capitalize", false));
             o.put("default_vietnamese", true);
             o.put("edit_previous_word", bool(c, "edit_previous_word", true));
             o.put("restore_after_space", bool(c, "restore_after_space", true));
-            o.put("smart_caps", bool(c, "smart_caps", true));
+            o.put("smart_caps", bool(c, "smart_caps", false));
             o.put("unicode_form", "NFC");
             JSONObject macros = new JSONObject();
             for (Map.Entry<String, String> e : parseMacros(macrosText(c)).entrySet()) {

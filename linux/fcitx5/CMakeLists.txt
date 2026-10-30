@@ -47,6 +47,25 @@ install(TARGETS vifastkey LIBRARY DESTINATION "${FCITX_ADDON_LIBDIR}/fcitx5")
 install(FILES vifastkey-addon.conf DESTINATION "${CMAKE_INSTALL_DATADIR}/fcitx5/addon" RENAME vifastkey.conf)
 install(FILES vifastkey.conf DESTINATION "${CMAKE_INSTALL_DATADIR}/fcitx5/inputmethod")
 
+# Icon for the input method selector and the status action. Fcitx5 resolves
+# these names through the XDG icon theme, same convention as fcitx5-bamboo.
+install(FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../resources/brand/vifastkey-icon.svg"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps"
+    RENAME vifastkey.svg)
+install(FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../resources/brand/vifastkey-icon.svg"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps"
+    RENAME org.fcitx.Fcitx5.vifastkey.svg)
+install(FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../resources/brand/vifastkey-icon-192.png"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/192x192/apps"
+    RENAME vifastkey.png)
+install(FILES
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../resources/brand/vifastkey-icon-512.png"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/512x512/apps"
+    RENAME vifastkey.png)
+
 if(BUILD_TESTING)
     add_executable(vifastkey-fcitx5-test
         tests/test_state.cpp

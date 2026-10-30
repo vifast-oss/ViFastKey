@@ -37,7 +37,7 @@ class FieldKind(Enum):
     TERMINAL = "terminal"   # adapter nên dùng PREEDIT (commit nguyên tử) cho terminal
 
 
-DISABLED_FIELDS = {FieldKind.PASSWORD, FieldKind.NUMBER, FieldKind.EMAIL, FieldKind.URL}
+DISABLED_FIELDS = {FieldKind.PASSWORD, FieldKind.NUMBER, FieldKind.EMAIL}
 
 
 class OutputMode(Enum):
@@ -108,12 +108,25 @@ class ImeSession:
         return INPUT_METHODS.get(name, TELEX)
 
     @property
+    def _url_safe(self) -> bool:
+        return self.field is FieldKind.URL
+
+    @property
+    def _macro_on(self) -> bool:
+        return self.config.macro_enabled and not self._url_safe and not self.literal
+
+    def _starts_url_segment(self) -> bool:
+        return bool(self.history) and self.history[-1] in ".@/:\\-_"
+
+    @property
     def opt(self) -> TransformOptions:
         c = self.config
         tone_style = self.profile.tone_style if self.profile.tone_style is not None else c.tone_style
         spell_check = self.profile.spell_check if self.profile.spell_check is not None else c.spell_check
-        return TransformOptions(tone_style, spell_check, c.w_as_u, c.bracket_keys,
-                                c.quick_telex, c.allow_coda_k)
+        url_safe = self._url_safe
+        return TransformOptions(tone_style, spell_check, c.w_as_u and not url_safe,
+                                c.bracket_keys and not url_safe,
+                                c.quick_telex and not url_safe, c.allow_coda_k)
 
     @property
     def display(self) -> str:
@@ -138,8 +151,14 @@ class ImeSession:
 
     def _smart_caps_literal(self) -> bool:
         r = self.raw
-        return (self.config.smart_caps and len(r) >= 2 and r[0].isupper() and r[1].isupper()
-                and not (r[0] == "D" and r[1] == "D"))
+        if not (self.config.smart_caps and len(r) >= 2 and r[0].isupper() and r[1].isupper()):
+            return False
+        # Các cặp tạo chữ Việt bằng dấu phụ vẫn phải biến đổi, kể cả all-caps:
+        # DD → Đ, AA → Â, AW → Ă, EE → Ê, OO → Ô, OW → Ơ, UW → Ư.
+        return (r[0], r[1]) not in {
+            ("D", "D"), ("A", "A"), ("A", "W"), ("E", "E"),
+            ("O", "O"), ("O", "W"), ("U", "W"),
+        }
 
     def reset(self) -> None:
         self.raw, self.word, self.literal = [], "", False
@@ -247,7 +266,7 @@ class ImeSession:
             self.off_raw = []
             self.last_macro = None
             return PassThrough()
-        macro_on = self.config.macro_enabled and self.config.macro_in_off_mode
+        macro_on = self._macro_on and self.config.macro_in_off_mode
         if ev.is_char and macro_on and ("a" <= ev.key.lower() <= "z" or ev.key.isdigit()):
             if len(self.off_raw) < MAX_RAW:
                 self.off_raw.append(ev.key)
@@ -298,6 +317,7 @@ class ImeSession:
                 ch = ch.upper()
             self.cap_next = self._pending_end = False
             self._adopt_previous_word()
+            self.literal = not self.raw and self._starts_url_segment()
         self.raw.append(ch)
         if self._composer is not None and self._composer.raw == self.raw[:-1]:
             self._composer.push(ch)                         # đường nhanh: tăng dần
@@ -368,10 +388,12 @@ class ImeSession:
         self.last_macro = None
         if not self.raw:
             self.last = None
+            if sep is not None:
+                self.history = (self.history + sep)[-256:]
             return PassThrough()
         final = self._compute(final=True)
         raw = "".join(self.raw)
-        if self.config.macro_enabled and self.mode is OutputMode.REPLACE:
+        if self._macro_on and self.mode is OutputMode.REPLACE:
             phrase = self.history + final
             hit = self._phrase_macro(phrase, raw)
             if hit is not None:
@@ -383,7 +405,7 @@ class ImeSession:
                 self.reset()
                 self.last = None
                 return Replace(len(key), expansion, pass_key=bool(sep))
-        macro = self._macro(self.word) or self._macro(raw) if self.config.macro_enabled else None
+        macro = self._macro(self.word) or self._macro(raw) if self._macro_on else None
         if macro:
             final = macro
             if sep is not None and self.config.macro_undo:
@@ -446,7 +468,8 @@ class ImeSession:
             if not k or not low.endswith(k):
                 continue
             prefix = phrase[: len(phrase) - len(k)]
-            if prefix and (prefix[-1].isalnum() or prefix[-1] == "_"):
+            if prefix and (prefix[-1].isalnum() or prefix[-1] == "_"
+                           or prefix[-1] in ".@/:\\-"):
                 continue
             candidates.append((len(k), key, prefix))
         if not candidates:

@@ -118,7 +118,7 @@ pub enum FieldKind {
 
 impl FieldKind {
     fn disabled(self) -> bool {
-        matches!(self, FieldKind::Password | FieldKind::Number | FieldKind::Email | FieldKind::Url)
+        matches!(self, FieldKind::Password | FieldKind::Number | FieldKind::Email)
     }
 }
 
@@ -279,14 +279,32 @@ impl ImeSession {
         InputMethodSpec::by_name(name).unwrap_or(&TELEX)
     }
 
+    /// URL/omnibox: vẫn cho gõ tiếng Việt (search), nhưng tắt các biến đổi
+    /// dễ phá URL (`w` → `ư`, `[`/`]`, quick telex, macro).
+    fn url_safe(&self) -> bool {
+        self.field == FieldKind::Url
+    }
+
+    fn macro_on(&self) -> bool {
+        self.config.macro_enabled && !self.url_safe() && !self.literal
+    }
+
+    /// Từ đứng ngay sau dấu phân cách URL/email (`.`, `@`, `/`, `:`, `-`, `_`)
+    /// được giữ nguyên, không áp Telex/macro. Vd: `vietnam.vn`, `foo.bar`,
+    /// `nguyen.van@example.com`, `src/main.rs`.
+    fn starts_url_segment(&self) -> bool {
+        matches!(self.history.chars().last(), Some('.' | '@' | '/' | ':' | '\\' | '-' | '_'))
+    }
+
     fn opt(&self) -> TransformOptions {
         let c = &self.config;
+        let url_safe = self.url_safe();
         TransformOptions {
             tone_style: self.profile.tone_style.unwrap_or(c.tone_style),
             spell_check: self.profile.spell_check.unwrap_or(c.spell_check),
-            w_as_u: c.w_as_u,
-            bracket_keys: c.bracket_keys,
-            quick_telex: c.quick_telex,
+            w_as_u: c.w_as_u && !url_safe,
+            bracket_keys: c.bracket_keys && !url_safe,
+            quick_telex: c.quick_telex && !url_safe,
             allow_coda_k: c.allow_coda_k,
         }
     }
@@ -330,11 +348,15 @@ impl ImeSession {
 
     fn smart_caps_literal(&self) -> bool {
         let r = &self.raw;
-        self.config.smart_caps
-            && r.len() >= 2
-            && r[0].is_uppercase()
-            && r[1].is_uppercase()
-            && !(r[0] == 'D' && r[1] == 'D')
+        if !(self.config.smart_caps && r.len() >= 2 && r[0].is_uppercase() && r[1].is_uppercase()) {
+            return false;
+        }
+        // Các cặp tạo chữ Việt bằng dấu phụ vẫn phải biến đổi, kể cả all-caps:
+        // DD → Đ, AA → Â, AW → Ă, EE → Ê, OO → Ô, OW → Ơ, UW → Ư.
+        !matches!(
+            (r[0], r[1]),
+            ('D', 'D') | ('A', 'A') | ('A', 'W') | ('E', 'E') | ('O', 'O') | ('O', 'W') | ('U', 'W')
+        )
     }
 
     /// Xoá từ đang gõ (không phát Action).
@@ -498,7 +520,7 @@ impl ImeSession {
             self.last_macro = None;
             return Action::PassThrough;
         }
-        let macro_on = self.config.macro_enabled && self.config.macro_in_off_mode;
+        let macro_on = self.macro_on() && self.config.macro_in_off_mode;
         if macro_on {
             if let Key::Char(ch) = ev.key {
                 if ch.is_alphabetic() || ch.is_ascii_digit() {
@@ -584,6 +606,7 @@ impl ImeSession {
             self.cap_next = false;
             self.pending_end = false;
             self.adopt_previous_word();
+            self.literal = self.raw.is_empty() && self.starts_url_segment();
         }
         self.raw.push(ch);
         let n = self.raw.len();
@@ -701,11 +724,18 @@ impl ImeSession {
         self.last_macro = None;
         if self.raw.is_empty() {
             self.last = None;
+            if let Some(s) = sep {
+                self.history.push(s);
+                if self.history.chars().count() > 256 {
+                    self.history =
+                        self.history.chars().rev().take(256).collect::<Vec<_>>().into_iter().rev().collect();
+                }
+            }
             return Action::PassThrough;
         }
         let mut fin = self.compute(true);
         let raw_s: String = self.raw.iter().collect();
-        if self.config.macro_enabled && self.mode == OutputMode::Replace {
+        if self.macro_on() && self.mode == OutputMode::Replace {
             let phrase = format!("{}{}", self.history, fin);
             if let Some((key, expansion, prefix)) = self.phrase_macro(&phrase) {
                 let sep_s = sep.map(|c| c.to_string()).unwrap_or_default();
@@ -720,11 +750,8 @@ impl ImeSession {
                 };
             }
         }
-        let mac = if self.config.macro_enabled {
-            self.macro_of(&self.word).or_else(|| self.macro_of(&raw_s))
-        } else {
-            None
-        };
+        let mac =
+            if self.macro_on() { self.macro_of(&self.word).or_else(|| self.macro_of(&raw_s)) } else { None };
         if let Some(m) = mac {
             if let Some(s) = sep {
                 if self.config.macro_undo {
@@ -837,7 +864,8 @@ impl ImeSession {
             }
             let prefix = &phrase[..phrase.len() - k.len()];
             if let Some(last) = prefix.chars().last() {
-                if last.is_alphanumeric() || last == '_' {
+                if last.is_alphanumeric() || last == '_' || matches!(last, '.' | '@' | '/' | ':' | '\\' | '-')
+                {
                     continue;
                 }
             }

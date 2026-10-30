@@ -7,6 +7,7 @@
 #include <fcitx-utils/capabilityflags.h>
 #include <fcitx-utils/keysym.h>
 #include <fcitx-utils/log.h>
+#include <fcitx-utils/textformatflags.h>
 #include <fcitx-utils/utf8.h>
 #include <fcitx/inputpanel.h>
 #include <fcitx/text.h>
@@ -161,8 +162,7 @@ bool VifastkeyState::hasComposition() const {
 
 bool VifastkeyState::isDisabled() const {
     return disabled_ || fieldKind_ == VFK_FIELD_PASSWORD ||
-           fieldKind_ == VFK_FIELD_NUMBER || fieldKind_ == VFK_FIELD_EMAIL ||
-           fieldKind_ == VFK_FIELD_URL;
+           fieldKind_ == VFK_FIELD_NUMBER || fieldKind_ == VFK_FIELD_EMAIL;
 }
 
 bool VifastkeyState::hasSurrounding() const {
@@ -275,15 +275,19 @@ void VifastkeyState::syncFieldKind() {
     }
 
     const auto flags = ic_->capabilityFlags();
-    bool disabled = flags.test(CapabilityFlag::Disable);
+    const bool disabled = flags.test(CapabilityFlag::Disable);
+    const bool isUrl = flags.test(CapabilityFlag::Url);
     uint32_t kind = VFK_FIELD_TEXT;
     if (disabled || flags.test(CapabilityFlag::Password) ||
-        flags.test(CapabilityFlag::Sensitive)) {
+        (flags.test(CapabilityFlag::Sensitive) && !isUrl)) {
         kind = VFK_FIELD_PASSWORD;
+    } else if (isUrl) {
+        // Chrome/Chromium omnibox is a URL *and* search box. Keep the URL kind
+        // so the engine can enable URL-safe transforms (no macros/quick telex),
+        // but do not disable the field: Vietnamese search must work.
+        kind = VFK_FIELD_URL;
     } else if (flags.test(CapabilityFlag::Email)) {
         kind = VFK_FIELD_EMAIL;
-    } else if (flags.test(CapabilityFlag::Url)) {
-        kind = VFK_FIELD_URL;
     } else if (flags.test(CapabilityFlag::Number) ||
                flags.test(CapabilityFlag::Digit) ||
                flags.test(CapabilityFlag::Dialable)) {
@@ -296,10 +300,18 @@ void VifastkeyState::syncFieldKind() {
         return;
     }
 
+    FCITX_DEBUG() << "vifastkey: field kind " << fieldKind_ << " -> " << kind
+                  << " password=" << flags.test(CapabilityFlag::Password)
+                  << " sensitive=" << flags.test(CapabilityFlag::Sensitive)
+                  << " url=" << isUrl
+                  << " email=" << flags.test(CapabilityFlag::Email)
+                  << " number=" << flags.test(CapabilityFlag::Number)
+                  << " terminal=" << flags.test(CapabilityFlag::Terminal);
+
     const bool wasDisabled = isDisabled();
     const bool nowDisabled =
         disabled || kind == VFK_FIELD_PASSWORD || kind == VFK_FIELD_NUMBER ||
-        kind == VFK_FIELD_EMAIL || kind == VFK_FIELD_URL;
+        kind == VFK_FIELD_EMAIL;
 
     const std::string before = displayText();
     const VfkAction action = vfk_set_field_kind(session_, kind);
@@ -307,7 +319,7 @@ void VifastkeyState::syncFieldKind() {
     disabled_ = disabled;
 
     if (nowDisabled && !wasDisabled) {
-        // Không commit composition cũ vào password/URL/number: tránh lộ chữ
+        // Không commit composition cũ vào password/number/email: tránh lộ chữ
         // và tránh chèn nhầm vào field mới.
         vfk_reset(session_);
         clearPreedit();
@@ -502,7 +514,8 @@ void VifastkeyState::applyPreedit(const std::string &text,
     hasPreedit_ = !text.empty();
 
     if (!text.empty()) {
-        Text preedit(text);
+        TextFormatFlags format = TextFormatFlag::Underline;
+        Text preedit(text, format);
         const size_t cursor = std::min<size_t>(
             utf16ToByteOffset(text, cursorUtf16), text.size());
         preedit.setCursor(static_cast<int>(cursor));

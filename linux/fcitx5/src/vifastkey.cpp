@@ -37,7 +37,7 @@ public:
                 "vifastkey-state", &factory_)) {
             FCITX_ERROR() << "vifastkey: cannot register input context state";
         }
-        toggleAction_->setIcon("input-keyboard");
+        toggleAction_->setIcon("vifastkey");
         toggleAction_->setShortText("Việt");
         toggleAction_->setLongText("ViFastKey: bật/tắt tiếng Việt");
         toggleConnection_ =

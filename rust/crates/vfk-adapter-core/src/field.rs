@@ -6,9 +6,10 @@
 
 use vfk_engine::FieldKind;
 
-/// Field không được đưa vào engine (password, số, email, URL).
+/// Field không được đưa vào engine (password, số, email).
+/// URL/omnibox vẫn cho gõ tiếng Việt (search); engine tự bật chế độ URL-safe.
 pub fn is_disabled(kind: FieldKind) -> bool {
-    matches!(kind, FieldKind::Password | FieldKind::Number | FieldKind::Email | FieldKind::Url)
+    matches!(kind, FieldKind::Password | FieldKind::Number | FieldKind::Email)
 }
 
 /// Terminal vẫn gõ tiếng Việt nhưng adapter nên ưu tiên preedit.
@@ -30,7 +31,7 @@ mod tests {
         assert!(is_disabled(FieldKind::Password));
         assert!(is_disabled(FieldKind::Number));
         assert!(is_disabled(FieldKind::Email));
-        assert!(is_disabled(FieldKind::Url));
+        assert!(!is_disabled(FieldKind::Url));
         assert!(!is_disabled(FieldKind::Text));
         assert!(!is_disabled(FieldKind::Terminal));
         assert!(is_sensitive(FieldKind::Password));

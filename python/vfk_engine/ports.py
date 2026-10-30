@@ -70,7 +70,7 @@ DEFAULT_APP_PROFILES: dict[str, AppProfile] = {
 class Config:
     # --- kiểu gõ
     input_method: str = "telex"             # telex | simple_telex | vni
-    tone_style: ToneStyle = ToneStyle.OLD   # hòa | hoà
+    tone_style: ToneStyle = ToneStyle.NEW  # hoà | hòa (mặc định kiểu mới)
     spell_check: bool = True
     w_as_u: bool = True
     bracket_keys: bool = False              # [ -> ơ, ] -> ư

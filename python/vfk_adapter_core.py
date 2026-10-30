@@ -19,7 +19,7 @@ from vfk_engine import (
     Replace,
 )
 
-DISABLED_FIELDS = {FieldKind.PASSWORD, FieldKind.NUMBER, FieldKind.EMAIL, FieldKind.URL}
+DISABLED_FIELDS = {FieldKind.PASSWORD, FieldKind.NUMBER, FieldKind.EMAIL}
 MIN_REPLACE_WAIT_MS = 3
 MAX_REPLACE_WAIT_MS = 60
 POST_COMMIT_DELAY_MS = 10

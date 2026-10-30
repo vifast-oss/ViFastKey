@@ -15,7 +15,7 @@ Cấu hình là JSON, dùng chung cho Python, Rust, C ABI và WASM. File mẫu:
 | Trường | Kiểu | Mặc định | Ý nghĩa |
 |---|---|---|---|
 | `input_method` | `"telex" \| "simple_telex" \| "vni" \| "viqr"` | `"telex"` | Kiểu gõ; giá trị lạ fallback Telex |
-| `tone_style` | `"old" \| "new"` | `"old"` | `hòa` / `hoà` |
+| `tone_style` | `"old" \| "new"` | `"new"` | `hoà` (mặc định) / `hòa` |
 | `spell_check` | bool | `true` | Chặn biến đổi sai chính tả, khôi phục raw |
 | `w_as_u` | bool | `true` | Telex `w` đứng riêng → `ư` |
 | `bracket_keys` | bool | `false` | `[` → `ơ`, `]` → `ư` |
@@ -44,7 +44,7 @@ Cấu hình là JSON, dùng chung cho Python, Rust, C ABI và WASM. File mẫu:
 | `edit_previous_word` | bool | `true` | Sửa từ vừa gõ bằng surrounding text (REPLACE) |
 | `app_profiles` | object | preset | Gợi ý/hành vi theo app, xem dưới |
 | `restore_after_space` | bool | `true` | Backspace sau dấu cách nạp lại từ trước |
-| `smart_caps` | bool | `false` | 2 chữ hoa đầu từ thì gõ thẳng (`JSON`, trừ `DD`) |
+| `smart_caps` | bool | `false` | 2 chữ hoa đầu từ thì gõ thẳng (`JSON`, trừ các cặp tạo chữ Việt: `DD`, `AA`, `AW`, `EE`, `OO`, `OW`, `UW`) |
 
 ### Đầu ra
 
@@ -52,6 +52,12 @@ Cấu hình là JSON, dùng chung cho Python, Rust, C ABI và WASM. File mẫu:
 |---|---|---|---|
 | `unicode_form` | `"NFC" \| "NFD"` | `"NFC"` | Dạng Unicode đầu ra |
 | `schema_version` | int | `1` | Phiên bản tài liệu cấu hình |
+
+Ghi chú URL/omnibox: field URL vẫn cho gõ tiếng Việt (ô địa chỉ trình duyệt
+đồng thời là ô tìm kiếm), nhưng engine bật chế độ URL-safe: tắt macro,
+`w_as_u`, `quick_telex`, `bracket_keys`. Từ đứng ngay sau `.`, `@`, `/`, `:`,
+`-`, `_` được giữ nguyên để không phá domain/email/path (`vietnam.vn`,
+`foo.bar`, `nguyen.van@example.com`, `src/main.rs`).
 
 ## 2. `app_profiles`
 

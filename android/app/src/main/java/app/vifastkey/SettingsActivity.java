@@ -126,12 +126,13 @@ public final class SettingsActivity extends Activity {
             if (METHODS[i].equals(method)) methodSpinner.setSelection(i);
         }
         toneSpinner.setSelection("new".equals(getSharedPreferences("vifastkey", MODE_PRIVATE)
-                .getString("tone_style", "old")) ? 1 : 0);
+                .getString("tone_style", "new")) ? 1 : 0);
         for (CheckBox check : checks) {
             String key = (String) check.getTag();
             boolean fallback = !key.equals("bracket_keys") && !key.equals("quick_telex")
                     && !key.equals("allow_coda_k") && !key.equals("macro_digits")
-                    && !key.equals("macro_in_off_mode");
+                    && !key.equals("macro_in_off_mode") && !key.equals("auto_capitalize")
+                    && !key.equals("smart_caps");
             check.setChecked(Prefs.bool(this, key, fallback));
         }
         macroEdit.setText(Prefs.macrosText(this));

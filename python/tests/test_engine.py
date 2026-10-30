@@ -5,7 +5,7 @@ import unicodedata
 import pytest
 
 from adapters import FakeTextField, MemoryConfigStore, StaticAppContext, WordListDictionary
-from vfk_core import TELEX, transform
+from vfk_core import TELEX, TransformOptions, transform
 from vfk_engine import (
     Commit,
     Config,
@@ -303,7 +303,7 @@ def test_property_type_then_backspace_all():
         for mode in MODES:
             s, f, _ = make(mode, Config(edit_previous_word=False))
             f.type(s, word)
-            expected = transform(word, TELEX).text
+            expected = transform(word, TELEX, TransformOptions(tone_style=s.config.tone_style)).text
             assert f.text == (word if s.literal else expected), word
             n = len(s.display)
             f.type(s, [BS] * n)
@@ -406,6 +406,28 @@ def test_smart_caps(mode):
     s, f, _ = make(mode, Config(smart_caps=True))
     f.type(s, "HTTPS JSON DDI Vieejt ")
     assert f.text == "HTTPS JSON ĐI Việt "
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_smart_caps_vietnamese_shape_pairs(mode):
+    s, f, _ = make(mode, Config(smart_caps=True))
+    f.type(s, "AW AWSC AA OO OW UW JSON API ")
+    assert f.text == "Ă ẮC Â Ô Ơ Ư JSON API "
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_url_like_text_keeps_raw(mode):
+    s, f, _ = make(mode)
+    f.type(s, "vietnam.vn foo.bar nguyen.van@example.com src/main.rs ")
+    assert f.text == "vietnam.vn foo.bar nguyen.van@example.com src/main.rs "
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_url_field_allows_search_and_is_url_safe(mode):
+    s, f, _ = make(mode, Config(smart_caps=True))
+    s.set_field_kind(FieldKind.URL)
+    f.type(s, "w3schools.com vietnam.vn tieengs ")
+    assert f.text == "w3schools.com vietnam.vn tiếng "
 
 
 @pytest.mark.parametrize("mode", MODES)

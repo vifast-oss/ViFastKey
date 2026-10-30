@@ -122,7 +122,7 @@ final class PreferencesWindowController: NSWindowController {
         if let index = Self.methods.firstIndex(where: { $0.0 == method }) {
             methodPopup.selectItem(at: index)
         }
-        tonePopup.selectItem(at: (dict["tone_style"] as? String == "new") ? 1 : 0)
+        tonePopup.selectItem(at: (dict["tone_style"] as? String == "old") ? 0 : 1)
         for (key, check) in checks {
             check.state = (dict[key] as? Bool ?? false) ? .on : .off
         }

@@ -35,7 +35,7 @@ const DEFAULT_MACROS = { ko: "không", vn: "Việt Nam", dc: "được" };
 
 const DEFAULT_CONFIG = {
   input_method: "telex",
-  tone_style: "old",
+  tone_style: "new",
   spell_check: true,
   w_as_u: true,
   bracket_keys: false,

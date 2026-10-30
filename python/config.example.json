@@ -1,6 +1,6 @@
 {
   "input_method": "telex",
-  "tone_style": "old",
+  "tone_style": "new",
   "spell_check": true,
   "w_as_u": true,
   "bracket_keys": false,
@@ -22,7 +22,7 @@
   "default_vietnamese": true,
   "edit_previous_word": true,
   "restore_after_space": true,
-  "smart_caps": true,
+  "smart_caps": false,
   "unicode_form": "NFC",
   "schema_version": 1
 }

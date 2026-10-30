@@ -6,7 +6,7 @@ const input = $("input"), output = $("output"), method = $("method");
 
 async function normalize() {
   await ready;
-  output.value = normalize_text(input.value, method.value, "old");
+  output.value = normalize_text(input.value, method.value, "new");
 }
 $("normalize").addEventListener("click", normalize);
 

@@ -141,7 +141,7 @@ impl Default for Config {
     fn default() -> Self {
         Config {
             input_method: "telex".into(),
-            tone_style: ToneStyle::Old,
+            tone_style: ToneStyle::New,
             spell_check: true,
             w_as_u: true,
             bracket_keys: false,

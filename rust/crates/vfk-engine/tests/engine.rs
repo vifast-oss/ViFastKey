@@ -358,6 +358,34 @@ fn smart_caps() {
 }
 
 #[test]
+fn smart_caps_vietnamese_shape_pairs() {
+    for m in MODES {
+        let mut h = make_with(m, Config { smart_caps: true, ..cfg() });
+        h.type_str("AW AWSC AA OO OW UW JSON API ");
+        assert_eq!(h.text(), "Ă ẮC Â Ô Ơ Ư JSON API ", "{m:?}");
+    }
+}
+
+#[test]
+fn url_like_text_keeps_raw() {
+    for m in MODES {
+        let mut h = make(m);
+        h.type_str("vietnam.vn foo.bar nguyen.van@example.com src/main.rs ");
+        assert_eq!(h.text(), "vietnam.vn foo.bar nguyen.van@example.com src/main.rs ", "{m:?}");
+    }
+}
+
+#[test]
+fn url_field_allows_search_and_is_url_safe() {
+    for m in MODES {
+        let mut h = make_with(m, Config { smart_caps: true, ..cfg() });
+        h.session.set_field_kind(FieldKind::Url);
+        h.type_str("w3schools.com vietnam.vn tieengs ");
+        assert_eq!(h.text(), "w3schools.com vietnam.vn tiếng ", "{m:?}");
+    }
+}
+
+#[test]
 fn uppercase_ww() {
     for m in MODES {
         let mut h = make(m);
