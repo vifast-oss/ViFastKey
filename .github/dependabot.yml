@@ -21,3 +21,9 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 3
+    ignore:
+      # gradle/actions v6 đưa caching sang component thương mại riêng.
+      - dependency-name: "gradle/actions/setup-gradle"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "gradle/actions"
+        update-types: ["version-update:semver-major"]

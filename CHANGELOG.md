@@ -135,6 +135,11 @@
 
 - `python/pyproject.toml`, cài được bằng `pip install -e ".[dev]"`, có entry point `vfk`.
 - CI chạy Python (3.10–3.13), kiểm tra conformance không lệch, và Rust trên 3 hệ điều hành.
+- Nâng GitHub Actions lên runtime Node 24/ESM: `checkout@v7`, `setup-python@v7`,
+  `upload-artifact@v7`, `download-artifact@v8`, `setup-node@v7`, `setup-java@v6`,
+  `configure-pages@v6`, `upload-pages-artifact@v5`, `deploy-pages@v5`,
+  `action-gh-release@v3`. Giữ `gradle/actions/setup-gradle@v5` vì v6 chuyển caching
+  sang component thương mại riêng.
 - Thêm `LICENSE` (MIT), `CONTRIBUTING.md`, `.editorconfig`; thống nhất giấy phép Rust về MIT.
 - `rust/tools/sync_conformance.sh` nhận biến `PYTHON`, không còn phụ thuộc lệnh `python`,
   đồng bộ cả bảng mã.

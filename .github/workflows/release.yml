@@ -180,14 +180,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android,x86_64-linux-android
-      - uses: gradle/actions/setup-gradle@v4
+      # v6 chuyển caching sang gradle-actions-caching (license riêng); giữ v5 cho CI MIT.
+      - uses: gradle/actions/setup-gradle@v5
         with:
           gradle-version: "9.8.2"
       - name: Install Android NDK
@@ -256,10 +257,10 @@ jobs:
     needs: [cli, windows-tsf, wasm, macos-app, fcitx5, android-apk, ios-app]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           path: artifacts
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           files: artifacts/**/*
           generate_release_notes: true
