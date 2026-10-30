@@ -1187,7 +1187,7 @@ code {
 }
 
 .download-card.primary .d-tag { color: #fff4dc; }
-.download-card.primary span { color: #fff1ec; }
+.download-card.primary span:not(.d-tag):not(.d-arrow) { color: #fff6f2; }
 
 .d-tag {
   color: var(--accent);
