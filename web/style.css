@@ -12,7 +12,7 @@
   --cream: #fff8ec;
   --soft: #fbf0ec;
   --ink: #1f2430;
-  --muted: #6b7280;
+  --muted: #5f6673;
   --accent: #d42a22;
   --accent-dark: #b3140f;
   --gold: #ffb800;
@@ -1186,8 +1186,8 @@ code {
   box-shadow: 0 22px 44px -26px rgba(179, 20, 15, 0.75);
 }
 
-.download-card.primary .d-tag { color: #ffe1a8; }
-.download-card.primary span { color: #ffe9e2; }
+.download-card.primary .d-tag { color: #fff4dc; }
+.download-card.primary span { color: #fff1ec; }
 
 .d-tag {
   color: var(--accent);
@@ -1285,7 +1285,7 @@ code {
 }
 
 .footer-stats {
-  color: #8a6a52 !important;
+  color: #7a5a42 !important;
   font-family: var(--mono);
   font-size: 10.5px !important;
 }
@@ -1423,7 +1423,66 @@ code {
 }
 
 .product-actions .primary-btn { padding: 10px 15px; font-size: 12.5px; }
-.product-actions .text-btn { font-size: 12px; }
+.product-actions .text-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.product-actions .text-btn:hover {
+  border-color: var(--accent);
+  background: #fff5f2;
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------- stats */
+.stats-panel {
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 17px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fffcf7;
+}
+
+.stat-card strong {
+  color: var(--accent);
+  font-size: 28px;
+  line-height: 1.1;
+  letter-spacing: -1px;
+}
+
+.stat-card span { color: var(--muted); font-size: 12px; }
+.stat-card small { color: #7a5a42; font-size: 10.5px; }
+
+.stats-note {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.55;
+}
 
 /* ---------------------------------------------------------------- feedback */
 .feedback-panel {

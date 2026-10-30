@@ -6,6 +6,7 @@
 
 - Thêm mục **Sản phẩm** lớn giới thiệu ViFastKey + ViFastTts.
 - Chuyển **Góp ý** từ popup sang mục hiển thị trên landing.
+- Thêm mục **Thống kê** cuối trang; tăng tương phản chữ phụ và chuẩn hoá nút **Tải về →**.
 
 ### Nghiên cứu & đối chiếu
 

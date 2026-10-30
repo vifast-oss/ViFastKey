@@ -70,12 +70,24 @@ async function loadMeta() {
 
 async function loadStats() {
   const node = byId("footer-stats");
-  if (!node) return;
+  const setStat = (id, value) => {
+    const el = byId(id);
+    if (el) el.textContent = number.format(value || 0);
+  };
   try {
     const stats = await api("/api/stats");
-    node.textContent = `${number.format(stats.page_views)} lượt xem · ${number.format(stats.demos)} lượt API · ${number.format(stats.chars_total)} ký tự`;
+    if (node) {
+      node.textContent = `${number.format(stats.page_views)} lượt xem · ${number.format(stats.demos)} lượt API · ${number.format(stats.chars_total)} ký tự`;
+    }
+    setStat("stat-pageviews", stats.page_views);
+    setStat("stat-demos", stats.demos);
+    setStat("stat-visitors", stats.visitors);
+    setStat("stat-chars", stats.chars_total);
+    setStat("stat-feedback", stats.feedback_total);
+    const today = byId("stat-demos-today");
+    if (today) today.textContent = `${number.format(stats.demos_today || 0)} hôm nay`;
   } catch {
-    node.textContent = "Python API · không tải được thống kê";
+    if (node) node.textContent = "Python API · không tải được thống kê";
   }
 }
 

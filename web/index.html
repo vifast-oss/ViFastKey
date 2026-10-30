@@ -403,6 +403,26 @@ curl -s https://vifastkey.hoctuthien.com/api/type \
         </form>
       </div>
     </section>
+
+    <section class="section wrap" id="thong-ke">
+      <div class="section-head compact">
+        <div>
+          <div class="eyebrow">Thống kê</div>
+          <h2>Con số ẩn danh.</h2>
+        </div>
+        <p>Số liệu tổng hợp từ API Python, tự làm mới khi tải trang. Không lưu nội dung bạn gõ.</p>
+      </div>
+      <div class="stats-panel">
+        <div class="stats-grid">
+          <div class="stat-card"><strong id="stat-pageviews">—</strong><span>lượt xem trang</span></div>
+          <div class="stat-card"><strong id="stat-demos">—</strong><span>lượt chạy API</span><small id="stat-demos-today"></small></div>
+          <div class="stat-card"><strong id="stat-visitors">—</strong><span>khách ẩn danh</span></div>
+          <div class="stat-card"><strong id="stat-chars">—</strong><span>ký tự đã chuyển</span></div>
+          <div class="stat-card"><strong id="stat-feedback">—</strong><span>góp ý / báo lỗi</span></div>
+        </div>
+        <p class="stats-note">“Khách ẩn danh” là ước lượng theo hash visitor/IP; không lưu nội dung gõ thử hay IP thô. ViFastKey hiện chưa có gói tải xuống nên chưa có thống kê tải.</p>
+      </div>
+    </section>
   </main>
 
   <footer class="site-footer">
@@ -421,6 +441,7 @@ curl -s https://vifastkey.hoctuthien.com/api/type \
         <a href="#api">API</a>
         <a href="#go-thu">Gõ thử</a>
         <a href="#gop-y">Góp ý</a>
+        <a href="#thong-ke">Số liệu</a>
       </div>
     </div>
   </footer>
