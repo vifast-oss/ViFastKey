@@ -143,6 +143,16 @@ class ImeSession:
             comp = self._composer = Composer(self.im, self.opt, self.raw)
         res = comp.result(final)
         if res.restored:
+            raw_s = "".join(self.raw)
+            if res.rendered:
+                # Gõ đôi phím thanh là escape: nếu không phải từ tiếng Anh thì
+                # hiển thị dạng đã bỏ phím escape (ViFFa -> ViFa) và tiếp tục
+                # cho engine xử lý, không dính chế độ thô.
+                english = (self.config.auto_restore_english
+                           and self.ports.dictionary.is_english(raw_s.lower())
+                           and not self.ports.dictionary.is_vietnamese(res.rendered.lower()))
+                if not english:
+                    return res.rendered
             self.literal = True                        # dính chế độ thô: text + s -> texts
         if res.restored and self.adopted:              # 'việt' + 'f' -> 'việtf', không phải 'vieetjf'
             word, n = self.adopted

@@ -83,6 +83,9 @@ class TransformResult:
     text: str
     restored: bool                # trả về phím thô do sai chính tả
     status: Status                # trạng thái chính tả của chữ hiển thị
+    # Khi restored vì gõ đôi phím thanh (FF/SS...), đây là dạng đã bỏ phím
+    # escape (ViFFa -> ViFa). Rỗng nếu không phải trường hợp này.
+    rendered: str = ""
 
 
 # ---------------------------------------------------------------- hiển thị
@@ -311,7 +314,20 @@ def _result(st: WordState, raw_s: str, opt: TransformOptions, final: bool) -> Tr
         bad = (not keep_ok and not deliberate_undo
                and (status is Status.INVALID or bad_partial))
         if bad:
-            return TransformResult(raw_s, True, status)
+            # Gõ đôi phím thanh (FF/SS...) là escape để lấy chữ thường. Với
+            # từ viết hoa kiểu tên riêng (ViFFastTts), trả dạng đã bỏ phím
+            # escape để tiếp tục gõ; từ thường/coffee vẫn giữ raw như cũ.
+            escaped = ""
+            if (st.undone and st.latched and st.undo_key == "f"
+                    and not raw_s.isupper()):
+                positions = [i for i, ch in enumerate(raw_s) if ch.lower() == "f"]
+                # Chỉ escape FF viết hoa liền nhau trong từ mixed-case kiểu
+                # ViFastTts. coffee/COFFEE và các phím thanh khác giữ raw.
+                if (len(positions) >= 2
+                        and positions[-1] == positions[-2] + 1
+                        and all(raw_s[i].isupper() for i in positions[-2:])):
+                    escaped = text
+            return TransformResult(raw_s, True, status, escaped)
     return TransformResult(text, False, status)
 
 

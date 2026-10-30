@@ -131,6 +131,20 @@ def test_double_key_english_restored_by_dictionary(mode):
 
 
 @pytest.mark.parametrize("mode", MODES)
+def test_uppercase_double_f_escape_brand(mode):
+    s, f, _ = make(mode)
+    f.type(s, "ViFFastTts ")
+    assert f.text == "ViFastTts "
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_lowercase_coffee_keeps_both_f(mode):
+    s, f, _ = make(mode)
+    f.type(s, "coffee ")
+    assert f.text == "coffee "
+
+
+@pytest.mark.parametrize("mode", MODES)
 def test_escape_restores_raw(mode):
     s, f, _ = make(mode)
     f.type(s, list("vieejt") + ["Escape"] + list(" "))

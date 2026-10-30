@@ -333,9 +333,18 @@ impl ImeSession {
             None => unreachable!(),
         };
         if res.restored {
+            if !res.rendered.is_empty() {
+                let raw_s: String = self.raw.iter().collect();
+                let english = self.config.auto_restore_english
+                    && self.ports.dictionary.is_english(&raw_s.to_lowercase())
+                    && !self.ports.dictionary.is_vietnamese(&res.rendered.to_lowercase());
+                if !english {
+                    // Escape FF viết hoa: hiển thị dạng đã bỏ phím escape và
+                    // tiếp tục xử lý (ViFFa -> ViFa), không dính chế độ thô.
+                    return res.rendered;
+                }
+            }
             self.literal = true; // dính chế độ thô: text + s -> texts
-        }
-        if res.restored {
             if let Some((word, n)) = &self.adopted {
                 // 'Việt' + 'f' -> 'Việtf', không phải 'vieetjf'
                 let mut s = word.clone();

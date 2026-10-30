@@ -105,6 +105,9 @@ pub struct TransformResult {
     pub restored: bool,
     /// Trạng thái chính tả của chữ hiển thị.
     pub status: Status,
+    /// Khi restored vì gõ đôi phím thanh escape (ViFFa), đây là dạng đã bỏ
+    /// phím escape (ViFa). Rỗng nếu không phải trường hợp này.
+    pub rendered: String,
 }
 
 type Disp = (char, Option<Mark>, bool);
@@ -458,10 +461,30 @@ fn result(st: &WordState, raw: &[char], opt: &TransformOptions, is_final: bool) 
         let keep_ok = st.keep && st.letters[st.keep_pos + 1..].iter().all(|l| !vs::is_vowel(l.base));
         let bad = !keep_ok && !deliberate_undo && (stt == Status::Invalid || bad_partial);
         if bad {
-            return TransformResult { text: raw_s, restored: true, status: stt };
+            // Escape FF viết hoa liền nhau trong từ mixed-case (ViFastTts):
+            // trả dạng đã bỏ phím escape để gõ tiếp. coffee/COFFEE giữ raw.
+            let mut rendered = String::new();
+            let has_lower = raw_s.chars().any(|c| c.is_lowercase());
+            if st.undone && st.latched && st.undo_key == Some('f') && has_lower {
+                let positions: Vec<usize> = raw_s
+                    .chars()
+                    .enumerate()
+                    .filter(|(_, c)| c.eq_ignore_ascii_case(&'f'))
+                    .map(|(i, _)| i)
+                    .collect();
+                let n = positions.len();
+                if n >= 2
+                    && positions[n - 1] == positions[n - 2] + 1
+                    && raw_s.chars().nth(positions[n - 1]).is_some_and(char::is_uppercase)
+                    && raw_s.chars().nth(positions[n - 2]).is_some_and(char::is_uppercase)
+                {
+                    rendered = text.clone();
+                }
+            }
+            return TransformResult { text: raw_s, restored: true, status: stt, rendered };
         }
     }
-    TransformResult { text, restored: false, status: stt }
+    TransformResult { text, restored: false, status: stt, rendered: String::new() }
 }
 
 /// Hàm thuần: chuỗi phím thô -> chữ.
@@ -475,10 +498,20 @@ pub fn transform(
     is_final: bool,
 ) -> TransformResult {
     if raw.len() > MAX_RAW {
-        return TransformResult { text: raw.iter().collect(), restored: false, status: Status::Invalid };
+        return TransformResult {
+            text: raw.iter().collect(),
+            restored: false,
+            status: Status::Invalid,
+            rendered: String::new(),
+        };
     }
     if let Some(lit) = vni_literal(raw, im) {
-        return TransformResult { text: lit, restored: true, status: Status::Invalid };
+        return TransformResult {
+            text: lit,
+            restored: true,
+            status: Status::Invalid,
+            rendered: String::new(),
+        };
     }
     let mut st = WordState::default();
     for &k in raw {
@@ -551,10 +584,16 @@ impl Composer {
                 text: self.raw.iter().collect(),
                 restored: false,
                 status: Status::Invalid,
+                rendered: String::new(),
             };
         }
         if let Some(lit) = vni_literal(&self.raw, self.im) {
-            return TransformResult { text: lit, restored: true, status: Status::Invalid };
+            return TransformResult {
+                text: lit,
+                restored: true,
+                status: Status::Invalid,
+                rendered: String::new(),
+            };
         }
         let st = self.states.last().expect("states luôn có ít nhất 1 phần tử");
         result(st, &self.raw, &self.opt, is_final)

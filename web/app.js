@@ -756,7 +756,7 @@ function setupEvents() {
 async function boot() {
   state.config = loadConfig();
   try {
-    await init();
+    await init("./pkg/vfk_wasm_bg.wasm?v=20261031");
     createSession();
     state.ready = true;
     syncControls();

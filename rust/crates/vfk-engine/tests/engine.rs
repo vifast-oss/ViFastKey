@@ -153,6 +153,24 @@ fn double_key_english_restored_by_dictionary() {
 }
 
 #[test]
+fn uppercase_double_f_escape_brand() {
+    for m in MODES {
+        let mut h = make(m);
+        h.type_str("ViFFastTts ");
+        assert_eq!(h.text(), "ViFastTts ");
+    }
+}
+
+#[test]
+fn lowercase_coffee_keeps_both_f() {
+    for m in MODES {
+        let mut h = make(m);
+        h.type_str("coffee ");
+        assert_eq!(h.text(), "coffee ");
+    }
+}
+
+#[test]
 fn spell_restore_without_dictionary() {
     for m in MODES {
         let mut h = make_with(m, Config { auto_restore_english: false, ..cfg() });
