@@ -39,9 +39,12 @@ Homepage = "https://github.com/dvchd/ViFastKey"
 Repository = "https://github.com/dvchd/ViFastKey"
 Documentation = "https://github.com/dvchd/ViFastKey#readme"
 
+[tool.setuptools]
+py-modules = ["vfk_adapter_core"]
+
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["vi_syllable*", "vfk_core*", "vfk_engine*", "vfk_ffi*", "vfk_adapter_core*", "vfk_suggest*", "adapters*", "apps*", "tools*"]
+include = ["vi_syllable*", "vfk_core*", "vfk_engine*", "vfk_ffi*", "vfk_suggest*", "adapters*", "apps*", "tools*"]
 exclude = ["tests*", "conformance*"]
 
 [tool.setuptools.package-data]

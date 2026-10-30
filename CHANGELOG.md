@@ -95,18 +95,28 @@
 ### Android / iOS
 
 - Android: IME Java + JNI Rust, bàn phím QWERTY, build APK và test end-to-end
-  trên emulator (`tieengs` → `tiếng`).
+  trên emulator (`tieengs` → `tiếng`); thêm `android/runtime_test.sh` để chạy lại
+  smoke test qua adb.
 - iOS: host app + keyboard extension Swift, Rust staticlib, build simulator + unit test engine.
 
 ### Linux Fcitx5 adapter
 
 - Thêm `linux/fcitx5/`: addon C++ + CMake dùng C ABI Rust; CI Ubuntu build.
 - Sửa C++20 + multiarch; đã test runtime Xvfb/Fcitx5 5.1.19 (`tieengs` → `tiếng`).
+- Thêm `linux/fcitx5/runtime_test.sh` để chạy lại smoke test X11/GTK trên Ubuntu
+  24.04/Fcitx5 5.1.7 mà không sửa config cá nhân.
 
 ### Linux IBus adapter
 
 - Thêm `linux/ibus/`: engine IBus Python, core `adapters.ibus.IbusCore`, install script,
   component XML; test core trên macOS/CI.
+- Sửa khởi tạo engine theo `IBus.Factory`: `__init__()` không tham số và
+  `GObject.__init__()`, tránh engine thiếu `core`; sửa `keyval_to_unicode` trả `str`
+  (trước đây gọi `chr(str)` làm mọi key bị pass-through).
+- Cài component vào `/usr/share/ibus/component` (IBus 1.5.29 không quét user component),
+  thêm `IBUS_COMPONENT_DIR`; `vfk_adapter_core` được khai báo `py-modules`.
+- Thêm `linux/ibus/runtime_test.sh`: IBus 1.5.29 + GTK3 X11/Xvfb,
+  `tieengs` → `tiếng`.
 
 ### Windows prototype
 

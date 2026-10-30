@@ -7,7 +7,7 @@ biên dịch C++.
 
 ```bash
 # Ubuntu/Debian
-sudo apt install ibus python3-gi gir1.2-ibus-1.0 python3-pip
+sudo apt install ibus ibus-gtk3 python3-gi gir1.2-ibus-1.0 python3-pip
 cd python && python3 -m pip install --user .
 ```
 
@@ -17,6 +17,10 @@ cd python && python3 -m pip install --user .
 ./linux/ibus/install.sh
 # hoặc PREFIX=/usr/local sudo -E ./linux/ibus/install.sh
 ```
+
+IBus 1.5.29 chỉ quét `/usr/share/ibus/component`, nên script cài component XML
+system-wide (có thể dùng `sudo`); mã engine vẫn nằm trong `PREFIX` của user. Có
+thể override bằng `IBUS_COMPONENT_DIR` nếu bản IBus của bạn hỗ trợ đường dẫn khác.
 
 Mở **IBus Preferences → Input Method → Add → Vietnamese → ViFastKey**, chọn engine
 `ViFastKey`, rồi gõ thử. Nếu chưa thấy, chạy `ibus restart` hoặc logout/login.
@@ -42,9 +46,20 @@ cd python && python3 -m pytest -q tests/test_ibus_core.py
 python3 -m py_compile linux/ibus/ibus_engine.py
 ```
 
+Runtime smoke test IBus + GTK trên X11/Xvfb (đã chạy pass trên Ubuntu 24.04):
+
+```bash
+sudo apt install ibus ibus-gtk3 xvfb openbox xdotool zenity dbus-x11
+./linux/ibus/install.sh
+./linux/ibus/runtime_test.sh
+# IBus output: tiếng
+# IBus runtime test passed
+```
+
 ## Giới hạn
 
-- Chưa test runtime trên phiên bản IBus/app cụ thể trong môi trường macOS hiện tại.
+- Đã test runtime với IBus 1.5.29 + GTK3 trên X11/Xvfb; chưa test Wayland desktop
+  và app cụ thể (Chromium/Electron/terminal).
 - Chưa có tray/preferences UI riêng; dùng file JSON.
 - Với app không hỗ trợ surrounding/delete, một số thao tác sửa từ cũ bị bỏ qua.
 - Dùng `python/vfk_adapter_core.py` (port của adapter-core) thay vì C ABI; giữ cùng

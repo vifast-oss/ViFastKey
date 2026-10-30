@@ -39,6 +39,14 @@ $ADB shell am start -n app.vifastkey/.SettingsActivity
 Mở **Mở ô gõ thử**, gõ `tieengs` → `tiếng`; thử shift, `?123`, emoji, long-press `a`,
 và chạm gợi ý.
 
+Smoke test tự động trên emulator/máy thật đang kết nối adb:
+
+```bash
+./android/runtime_test.sh
+# Android IME output: tiếng
+# Android runtime test passed
+```
+
 ## Test đã chạy
 
 - APK build arm64-v8a + x86_64.

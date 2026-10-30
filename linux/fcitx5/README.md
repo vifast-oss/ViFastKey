@@ -71,6 +71,15 @@ surrounding guard, Replace transaction và emoji/UTF-16.
 Test runtime trên desktop Wayland thật vẫn cần thiết; Xvfb/X11 không đại diện
 cho mọi frontend Wayland.
 
+Smoke test X11/GTK (tự tạo config tạm, không sửa config cá nhân):
+
+```bash
+sudo apt install fcitx5 fcitx5-frontend-gtk3 xvfb openbox xdotool zenity dbus-x11
+./linux/fcitx5/runtime_test.sh
+# Fcitx5 output: tiếng
+# Fcitx5 runtime test passed
+```
+
 ### Checklist app thật
 
 | App | Việc cần thử |

@@ -42,8 +42,10 @@ SPECIAL = {
 
 
 class ViFastKeyEngine(IBus.Engine):
-    def __init__(self, bus, object_path):
-        super().__init__(bus, object_path)
+    def __init__(self):
+        # IBus.Factory khởi tạo engine không tham số; GObject.__init__ cũng
+        # không nhận bus/object_path.
+        super().__init__()
         self.core = IbusCore(config_path="~/.config/vifastkey/config.json")
 
     # ---------- IBus callbacks ----------
@@ -64,7 +66,8 @@ class ViFastKeyEngine(IBus.Engine):
             codepoint = IBus.keyval_to_unicode(keyval)
             if not codepoint:
                 return False
-            key = chr(codepoint)
+            # PyGObject trả str; một số binding cũ trả int.
+            key = codepoint if isinstance(codepoint, str) else chr(codepoint)
 
         self._refresh_surrounding()
         return self._apply(self.core.process(key, ctrl=ctrl, alt=alt, meta=meta), before)

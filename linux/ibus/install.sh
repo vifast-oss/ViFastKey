@@ -1,17 +1,41 @@
 #!/usr/bin/env bash
 # Cài IBus engine cho user hiện tại (mặc định ~/.local).
+#
+# IBus 1.5.29 trên Ubuntu chỉ quét /usr/share/ibus/component, nên component XML
+# được cài system-wide; mã engine vẫn nằm trong PREFIX của user. Có thể override
+# bằng IBUS_COMPONENT_DIR nếu bản IBus của bạn hỗ trợ đường dẫn khác.
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 PREFIX="${PREFIX:-$HOME/.local}"
+COMP="${IBUS_COMPONENT_DIR:-/usr/share/ibus/component}"
 DEST="$PREFIX/share/vifastkey/ibus"
-COMP="$PREFIX/share/ibus/component"
-mkdir -p "$DEST" "$COMP"
+
+mkdir -p "$DEST"
 install -m 0755 "$HERE/ibus_engine.py" "$DEST/ibus_engine.py"
-sed "s|@PREFIX@|$PREFIX|g" "$HERE/vifastkey.xml.in" > "$COMP/vifastkey.xml"
 python3 -m py_compile "$DEST/ibus_engine.py"
-if command -v ibus >/dev/null 2>&1; then
-  ibus write-cache || true
-  ibus restart || true
+
+XML_TMP="$(mktemp)"
+trap 'rm -f "$XML_TMP"' EXIT
+sed "s|@PREFIX@|$PREFIX|g" "$HERE/vifastkey.xml.in" > "$XML_TMP"
+
+if [ "$(id -u)" -eq 0 ] || [ -w "$COMP" ]; then
+    mkdir -p "$COMP"
+    install -m 0644 "$XML_TMP" "$COMP/vifastkey.xml"
+else
+    sudo mkdir -p "$COMP"
+    sudo install -m 0644 "$XML_TMP" "$COMP/vifastkey.xml"
 fi
-echo "Đã cài: $COMP/vifastkey.xml"
+
+if command -v ibus >/dev/null 2>&1; then
+    if [ "$(id -u)" -eq 0 ] || [ -w "$COMP" ]; then
+        ibus write-cache --system >/dev/null 2>&1 || true
+    else
+        sudo ibus write-cache --system >/dev/null 2>&1 || true
+    fi
+    ibus write-cache >/dev/null 2>&1 || true
+    ibus restart >/dev/null 2>&1 || true
+fi
+
+echo "Đã cài engine: $DEST/ibus_engine.py"
+echo "Đã cài component: $COMP/vifastkey.xml"
 echo "Mở IBus Preferences → Input Method → Vietnamese → ViFastKey."

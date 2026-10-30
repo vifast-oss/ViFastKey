@@ -4,8 +4,8 @@
 |---|---|---|---|
 | macOS | `macos/` IMK + `package.sh` universal2 | macOS 12+, Swift/Xcode, đã build arm64/x86_64 + self-test; installer ghi AppleEnabledInputSources | ✅ dùng được; cần logout/login một lần; Developer ID/notarize cần chứng chỉ |
 | Windows | `rust/apps/vfk-windows` low-level hook + SendInput | cross-check MSVC + CI Windows build | 🟡 prototype; chưa test runtime, chưa TSF/tray/signing |
-| Linux (IBus) | `linux/ibus/` engine Python | core test trên macOS/CI; component đăng ký được trong Xvfb | 🟡 runtime key event chưa xác nhận; Fcitx5 là đường đã test |
-| Linux (Fcitx5) | `linux/fcitx5/` C++ addon | CI build + CTest adapter ✅; runtime test Ubuntu 26.04/Fcitx5 5.1.19 trong Xvfb: `tieengs` → `tiếng` | ✅ X11 + preedit/surrounding/guard/barrier; 🟡 cần test Wayland desktop và app thật |
+| Linux (IBus) | `linux/ibus/` engine Python | core test + runtime smoke test Ubuntu 24.04/IBus 1.5.29 + GTK3 Xvfb: `tieengs` → `tiếng` | ✅ X11 preedit; 🟡 cần test Wayland desktop và app thật |
+| Linux (Fcitx5) | `linux/fcitx5/` C++ addon | CI build + CTest adapter ✅; runtime test Ubuntu 24.04/Fcitx5 5.1.7 và Ubuntu 26.04/Fcitx5 5.1.19 trong Xvfb: `tieengs` → `tiếng` | ✅ X11 + preedit/surrounding/guard/barrier; 🟡 cần test Wayland desktop và app thật |
 | Android | `android/` IME Java + JNI | SDK/NDK + Gradle, APK arm64/x86_64; CI build + test emulator; release signing qua env | ✅ QWERTY full, suggestions, settings, emoji, long-press; 🟡 chưa Play Store/device matrix |
 | iOS | `ios/` host + keyboard extension | Xcode 27.1, simulator; CI build + engine unit test | ✅ build/test; 🟡 chưa test bật extension/device signing |
 | Chrome/Edge | `chrome-extension/` MV3 + WASM | build + Playwright E2E (popup normalize) | ✅ MVP; 🟡 context menu/selected text cần test thêm; chưa Web Store |
@@ -31,9 +31,29 @@ và chạy chung bộ scenario [`adapter-conformance/`](../adapter-conformance/R
 
 - macOS: Xcode 27.1 + iOS 27 simulator; Swift + Rust iOS targets đã cài.
 - Android: SDK 36, build-tools 36, NDK 28.2, `cargo-ndk`, Gradle 9.8 + JDK 21.
-- Linux: Fcitx5 dev chỉ có trên Linux; CI Ubuntu cài và build addon. IBus engine test core trên macOS.
+- Linux: Fcitx5 dev chỉ có trên Linux; CI Ubuntu cài và build addon. Runtime test IBus/Fcitx5
+  chạy headless bằng Xvfb; đã chạy trên Ubuntu 24.04 VM (Lima) và Android emulator arm64.
+- Windows: không dùng Windows container trên Docker/macOS được (container Windows cần
+  Windows kernel). Hook/TSF cần Windows thật hoặc CI Windows; runtime hook chưa xác nhận.
 - Phần lõi đã sẵn sàng: C ABI (`vfk-ffi/include/vifastkey.h`), Action model, preedit/replace,
   surrounding text, config, charset. Adapter chỉ cần chuyển Action sang API nền tảng.
+
+## Test runtime tái lập
+
+```bash
+# Android emulator/máy thật đang kết nối adb
+./android/runtime_test.sh
+
+# Linux X11/Xvfb: Fcitx5
+./linux/fcitx5/runtime_test.sh
+
+# Linux X11/Xvfb: IBus
+./linux/ibus/install.sh
+./linux/ibus/runtime_test.sh
+```
+
+Các script Linux cần gói `xvfb openbox xdotool zenity dbus-x11` (và `fcitx5-frontend-gtk3`
+hoặc `ibus-gtk3`). iOS dùng simulator + `xcodebuild test`; Windows cần môi trường Windows thật.
 
 ## Hợp đồng tối thiểu cho adapter mới
 
