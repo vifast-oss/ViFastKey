@@ -556,7 +556,7 @@ STDMETHODIMP TextService::EnumDisplayAttributeInfo(IEnumTfDisplayAttributeInfo**
     if (ppEnum == nullptr) {
         return E_POINTER;
     }
-    *ppEnum = new (std::nothrow) EnumDisplayAttributeInfo();
+    *ppEnum = new (std::nothrow) ::EnumDisplayAttributeInfo();
     return *ppEnum == nullptr ? E_OUTOFMEMORY : S_OK;
 }
 

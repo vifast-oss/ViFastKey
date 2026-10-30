@@ -43,10 +43,10 @@ HRESULT SetStringValue(HKEY key, const wchar_t* name, const std::wstring& value)
 HRESULT RegisterComServer(const std::wstring& module_path) {
     const std::wstring clsid_key = ClsidKey();
     HKEY key = nullptr;
-    LRESULT status = RegCreateKeyExW(HKEY_CURRENT_USER, clsid_key.c_str(), 0, nullptr, 0,
+    LSTATUS status = RegCreateKeyExW(HKEY_CURRENT_USER, clsid_key.c_str(), 0, nullptr, 0,
                                      KEY_WRITE, nullptr, &key, nullptr);
     if (status != ERROR_SUCCESS) {
-        return HRESULT_FROM_WIN32(status);
+        return HRESULT_FROM_WIN32(static_cast<DWORD>(status));
     }
     SetStringValue(key, nullptr, L"ViFastKey TSF");
     RegCloseKey(key);
@@ -54,7 +54,7 @@ HRESULT RegisterComServer(const std::wstring& module_path) {
     status = RegCreateKeyExW(HKEY_CURRENT_USER, (clsid_key + L"\\InprocServer32").c_str(), 0,
                              nullptr, 0, KEY_WRITE, nullptr, &key, nullptr);
     if (status != ERROR_SUCCESS) {
-        return HRESULT_FROM_WIN32(status);
+        return HRESULT_FROM_WIN32(static_cast<DWORD>(status));
     }
     SetStringValue(key, nullptr, module_path);
     SetStringValue(key, L"ThreadingModel", L"Apartment");
