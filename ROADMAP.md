@@ -18,7 +18,8 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
   - Windows: ✅ prototype low-level hook + Replace (`rust/apps/vfk-windows`); còn TSF/tray/signing.
   - Linux: ✅ IBus engine Python (`linux/ibus/`), ✅ Fcitx5 C++ addon (`linux/fcitx5/`),
     đã test runtime Fcitx5/Xvfb; còn test Wayland desktop và IBus runtime.
-  - Android: ✅ IME Java + JNI full keyboard, suggestions, settings, emoji; đã test emulator; còn Play Store/theme.
+  - Android: ✅ IME Java + JNI full keyboard, suggestions, settings, emoji; đã test emulator;
+    ✅ cấu hình release signing qua env; còn Play Store listing/theme và test máy thật.
   - iOS: ✅ host + keyboard extension Swift, build simulator + engine test; còn test bật extension/device signing.
 - **Fcitx5 production hardening** (bài học từ Areca, xem `docs/research/08-areca-ime.md`):
   ✅ field kind/password, commit trước reset, xác minh surrounding trước `Replace`, transaction
@@ -60,6 +61,7 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
 ## Đóng gói
 
 - Release binary CLI cho macOS/Linux/Windows ✅ workflow `release.yml` (CLI + WASM + header + lib);
-  npm package chính thức còn lại.
+  ✅ thêm macOS IMK app, Fcitx5 tarball, Android APK (debug + signed release nếu có secrets),
+  iOS simulator app. npm package, `.deb`/`.rpm`/AUR chính thức còn lại.
 - UniFFI cho Swift/Kotlin.
 - GitHub Pages cho `web/` ✅ `pages.yml` (cần bật Pages); trang tài liệu API còn lại.
