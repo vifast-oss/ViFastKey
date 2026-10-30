@@ -171,6 +171,15 @@ fn lowercase_coffee_keeps_both_f() {
 }
 
 #[test]
+fn double_s_escape_english_word() {
+    for m in MODES {
+        let mut h = make(m);
+        h.type_str("vissa ");
+        assert_eq!(h.text(), "visa ");
+    }
+}
+
+#[test]
 fn spell_restore_without_dictionary() {
     for m in MODES {
         let mut h = make_with(m, Config { auto_restore_english: false, ..cfg() });

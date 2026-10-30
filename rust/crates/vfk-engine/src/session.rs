@@ -12,6 +12,20 @@ use vi_syllable::upper;
 
 use crate::ports::{normalize_app_id, resolve_profile, AppProfile, Config, OutputMode, Ports, UnicodeForm};
 
+/// Escape FF viết hoa liền nhau trong từ mixed-case (ViFastTts).
+fn upper_ff_escape(raw: &str) -> bool {
+    if raw.is_empty() || raw.chars().all(|c| !c.is_lowercase()) {
+        return false;
+    }
+    let positions: Vec<usize> =
+        raw.chars().enumerate().filter(|(_, c)| c.eq_ignore_ascii_case(&'f')).map(|(i, _)| i).collect();
+    let n = positions.len();
+    n >= 2
+        && positions[n - 1] == positions[n - 2] + 1
+        && raw.chars().nth(positions[n - 1]).is_some_and(|c| c.is_uppercase())
+        && raw.chars().nth(positions[n - 2]).is_some_and(|c| c.is_uppercase())
+}
+
 // ---------------------------------------------------------------- input / output
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -335,12 +349,14 @@ impl ImeSession {
         if res.restored {
             if !res.rendered.is_empty() {
                 let raw_s: String = self.raw.iter().collect();
-                let english = self.config.auto_restore_english
-                    && self.ports.dictionary.is_english(&raw_s.to_lowercase())
-                    && !self.ports.dictionary.is_vietnamese(&res.rendered.to_lowercase());
-                if !english {
-                    // Escape FF viết hoa: hiển thị dạng đã bỏ phím escape và
-                    // tiếp tục xử lý (ViFFa -> ViFa), không dính chế độ thô.
+                let raw_english = self.config.auto_restore_english
+                    && self.ports.dictionary.is_english(&raw_s.to_lowercase());
+                let rendered_lower = res.rendered.to_lowercase();
+                if !raw_english
+                    && (self.ports.dictionary.is_english(&rendered_lower) || upper_ff_escape(&raw_s))
+                {
+                    // Escape đôi phím thanh: hiển thị dạng đã bỏ phím escape
+                    // (vissa -> visa, ViFFastTts -> ViFastTts), không dính raw.
                     return res.rendered;
                 }
             }

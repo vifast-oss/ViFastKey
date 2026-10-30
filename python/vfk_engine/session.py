@@ -77,6 +77,16 @@ SENTENCE_END = set(".!?…")
 SENTENCE_CLOSERS = set("\"')]»”’›")
 
 
+def _upper_ff_escape(raw: str) -> bool:
+    """True cho escape FF viết hoa liền nhau trong từ mixed-case (ViFastTts)."""
+    if not raw or raw.isupper():
+        return False
+    positions = [i for i, ch in enumerate(raw) if ch.lower() == "f"]
+    return (len(positions) >= 2
+            and positions[-1] == positions[-2] + 1
+            and all(raw[i].isupper() for i in positions[-2:]))
+
+
 # ---------------------------------------------------------------- session
 class ImeSession:
     """Mỗi ô nhập / input context có 1 session. Đồng bộ, không thread, không async."""
@@ -145,13 +155,15 @@ class ImeSession:
         if res.restored:
             raw_s = "".join(self.raw)
             if res.rendered:
-                # Gõ đôi phím thanh là escape: nếu không phải từ tiếng Anh thì
-                # hiển thị dạng đã bỏ phím escape (ViFFa -> ViFa) và tiếp tục
-                # cho engine xử lý, không dính chế độ thô.
-                english = (self.config.auto_restore_english
-                           and self.ports.dictionary.is_english(raw_s.lower())
-                           and not self.ports.dictionary.is_vietnamese(res.rendered.lower()))
-                if not english:
+                # Gõ đôi phím thanh là escape. Dùng dạng đã bỏ phím escape nếu
+                # nó là từ tiếng Anh (vissa -> visa), hoặc là FF viết hoa kiểu
+                # ViFastTts. coffee/COFFEE và từ lạ vẫn giữ raw như cũ.
+                rendered_lower = res.rendered.lower()
+                raw_english = (self.config.auto_restore_english
+                               and self.ports.dictionary.is_english(raw_s.lower()))
+                upper_ff = _upper_ff_escape(raw_s)
+                if not raw_english and (self.ports.dictionary.is_english(rendered_lower)
+                                        or upper_ff):
                     return res.rendered
             self.literal = True                        # dính chế độ thô: text + s -> texts
         if res.restored and self.adopted:              # 'việt' + 'f' -> 'việtf', không phải 'vieetjf'

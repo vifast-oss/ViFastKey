@@ -461,26 +461,10 @@ fn result(st: &WordState, raw: &[char], opt: &TransformOptions, is_final: bool) 
         let keep_ok = st.keep && st.letters[st.keep_pos + 1..].iter().all(|l| !vs::is_vowel(l.base));
         let bad = !keep_ok && !deliberate_undo && (stt == Status::Invalid || bad_partial);
         if bad {
-            // Escape FF viết hoa liền nhau trong từ mixed-case (ViFastTts):
-            // trả dạng đã bỏ phím escape để gõ tiếp. coffee/COFFEE giữ raw.
-            let mut rendered = String::new();
-            let has_lower = raw_s.chars().any(|c| c.is_lowercase());
-            if st.undone && st.latched && st.undo_key == Some('f') && has_lower {
-                let positions: Vec<usize> = raw_s
-                    .chars()
-                    .enumerate()
-                    .filter(|(_, c)| c.eq_ignore_ascii_case(&'f'))
-                    .map(|(i, _)| i)
-                    .collect();
-                let n = positions.len();
-                if n >= 2
-                    && positions[n - 1] == positions[n - 2] + 1
-                    && raw_s.chars().nth(positions[n - 1]).is_some_and(char::is_uppercase)
-                    && raw_s.chars().nth(positions[n - 2]).is_some_and(char::is_uppercase)
-                {
-                    rendered = text.clone();
-                }
-            }
+            // Gõ đôi phím thanh là escape. `rendered` là dạng đã bỏ phím
+            // escape; session quyết định dùng nó cho từ tiếng Anh (vissa ->
+            // visa) hoặc escape FF viết hoa (ViFastTts). Coffee/COFFEE giữ raw.
+            let rendered = if st.undone && st.latched { text.clone() } else { String::new() };
             return TransformResult { text: raw_s, restored: true, status: stt, rendered };
         }
     }

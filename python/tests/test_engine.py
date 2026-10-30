@@ -145,6 +145,13 @@ def test_lowercase_coffee_keeps_both_f(mode):
 
 
 @pytest.mark.parametrize("mode", MODES)
+def test_double_s_escape_english_word(mode):
+    s, f, _ = make(mode)
+    f.type(s, "vissa ")
+    assert f.text == "visa "
+
+
+@pytest.mark.parametrize("mode", MODES)
 def test_escape_restores_raw(mode):
     s, f, _ = make(mode)
     f.type(s, list("vieejt") + ["Escape"] + list(" "))

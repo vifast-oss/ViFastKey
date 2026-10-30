@@ -30,8 +30,8 @@
 - Sửa `đ` viết tắt (`ddc`, `vcdd`, `NDD`), undo tiếng Anh (`banana`, `coffee`, `cheese`),
   VNI literal number (`nam2024`, `ba10`), sticky restore (`text` + `s`), escape pass-key,
   open `uơ`/`ươ` theo âm đầu, nguyên âm có dấu đứng riêng (`aw`, `aws`).
-- Escape `FF` viết hoa liền nhau trong từ mixed-case: `ViFFastTts` → `ViFastTts`;
-  giữ nguyên `coffee`, `COFFEE` và các phím thanh khác.
+- Escape đôi phím thanh: `vissa` → `visa`, `ViFFastTts` → `ViFastTts`;
+  giữ nguyên `coffee`, `COFFEE` và các từ lạ cần raw.
 - Auto-cap mở rộng cho `…`, ngoặc kép/đóng, newline; không cắt số thập phân.
 - `AppProfile` ghi đè `input_method`, `tone_style`, `spell_check`; thêm gợi ý `charset`.
 - `schema_version` trong config; `config_from_dict` bỏ qua field lạ.
