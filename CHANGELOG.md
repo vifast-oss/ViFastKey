@@ -10,6 +10,9 @@
   `ViFastKey Settings` và asset cấu hình desktop riêng cho Windows/Linux.
 - Thêm gói cài **IBus Linux** (`vifastkey-ibus-linux.tar.gz`) gồm engine, component
   XML, wheel Python và `install.sh`; bổ sung vào release CI.
+- Web playground mặc định **Preedit**; Windows TSF mặc định `backend: "tsf"` (preedit),
+  `auto`/`hook` vẫn chọn được trong UI.
+- Backspace trong từ literal thử khôi phục nhiều lần: `nhuwnggg` + 2 Backspace → `nhưng`.
 
 ## 0.1.0 — 2026-10-31
 
