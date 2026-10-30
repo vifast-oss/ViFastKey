@@ -62,6 +62,8 @@ Ghi chú URL/omnibox: field URL vẫn cho gõ tiếng Việt (ô địa chỉ tr
 ## 2. `app_profiles`
 
 Mỗi app là một object; khoá được chuẩn hoá lowercase, bỏ đường dẫn/`.exe`/`.app`.
+File người dùng chỉ cần chứa app ghi đè; preset còn lại vẫn được giữ. Một entry user
+hiện thay thế toàn bộ entry preset cùng app (schema 1).
 
 | Trường | Kiểu | Ý nghĩa |
 |---|---|---|
@@ -124,6 +126,9 @@ const char *vfk_app_profile_json(VfkSession *s);
 Python tương đương: `vfk_set_config_json`, `vfk_config_json`, `vfk_config_version`,
 `vfk_app_profile_json`.
 
+Rust UI/adapter dùng `vfk-config` (`rust/crates/vfk-config`) để load/merge/validate/ghi
+atomic; crate này dùng `vfk_engine::Config` làm schema, không định nghĩa lại field.
+
 ## 6. Migration
 
 - File cũ thiếu `schema_version`/`macro_digits`/`macro_undo`/`allow_coda_k`: nhận mặc định.
@@ -136,13 +141,33 @@ Python tương đương: `vfk_set_config_json`, `vfk_config_json`, `vfk_config_v
 Windows dùng thêm `%APPDATA%\ViFastKey\windows.json` (không thuộc engine config):
 
 ```json
-{ "backend": "auto" }
+{ "backend": "tsf" }
 ```
 
 | Giá trị | Ý nghĩa |
 |---|---|
+| `tsf` (mặc định) | Chỉ TSF preedit; hook pass-through |
 | `auto` | TSF xử lý khi profile active; hook pass-through khi TSF báo đang giữ foreground window/PID |
-| `tsf` | Hook luôn pass-through; chỉ TSF preedit |
 | `hook` | TSF không ăn phím; chỉ hook Replace |
 
 Chi tiết build/cài: `windows/tsf/README.md`.
+
+## 8. UI desktop và ghi config
+
+UI cấu hình desktop dùng chung file JSON với mọi adapter. Hợp đồng ghi:
+
+- UI chỉ ghi field người dùng sửa, không serialize toàn bộ `Config`.
+- `macros`, `app_profiles`, `app_modes` merge từng key; `excluded_apps` thay toàn bộ array.
+- Key lạ được giữ nguyên (forward-compatible).
+- Ghi atomic, tạo `config.json.bak` trước khi thay; file hỏng được sao lưu
+  `config.bad.<epoch>.json` và không bị ghi đè.
+- Nếu field UI sửa cũng bị adapter sửa, UI báo conflict thay vì ghi đè.
+- Adapter chỉ được ghi runtime key (`app_modes`), không ghi toàn bộ config.
+
+`app_profiles` trong file người dùng chỉ nên chứa app đã ghi đè. Preset mặc định nằm
+trong engine; UI merge preset khi hiển thị/validate, không materialize vào file.
+
+Import thay thế toàn bộ document và giữ key lạ của file import; chỉ ghi khi bấm Lưu.
+Theme/tab cuối của UI nằm trong `settings-ui.json` cùng thư mục, không thuộc schema engine.
+
+Chi tiết UI, tab, đường dẫn và platform: [`DESKTOP_UI.md`](DESKTOP_UI.md).

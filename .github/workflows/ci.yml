@@ -72,10 +72,22 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
+      - name: Cài thư viện GUI cho settings (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libxkbcommon-dev libwayland-dev \
+            libx11-dev libxi-dev libgl1-mesa-dev libegl1-mesa-dev
       - run: cargo fmt --all -- --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
       - run: cargo test --workspace
       - run: cargo run -p vfk-cli -- --demo
+      - name: Settings UI self-test (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          printf '{"input_method":"telex"}\n' > /tmp/vfk-settings.json
+          cargo run -q -p vifastkey-settings -- --self-test --config /tmp/vfk-settings.json
+          cargo run -q -p vifastkey-settings -- --check --config /tmp/vfk-settings.json
       - name: Benchmark guard (Ubuntu)
         if: runner.os == 'Linux'
         run: python3 tools/bench_guard.py

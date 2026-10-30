@@ -10,7 +10,7 @@ Tính năng nổi bật: `allow_coda_k` (Đắk Lắk), `macro_digits` (mp3, k8s
 `đ` viết tắt (`vcdd`), 16 bảng mã (TCVN3, VNI-Windows, VISCII, VIQR, CP1258, NCR... cùng Unicode),
 app profile ghi đè kiểu gõ/kiểu dấu, preedit sửa từ đã gõ, macro nhiều từ, gợi ý từ/emoji local,
 FFI C/Python/WASM, macOS IMK universal2, Windows hook + TSF preedit, Android IME, iOS keyboard extension,
-playground Preedit + macro + bảng mã.
+playground Preedit + macro + bảng mã, UI cấu hình desktop egui (Windows/Linux).
 
 Đợt phát triển này dựa trên phân tích 21 dự án IME tiếng Việt công khai; xem
 [`docs/IME_FEATURE_RESEARCH.md`](docs/IME_FEATURE_RESEARCH.md).
@@ -46,12 +46,14 @@ ViFastKey/
 │   │   ├── vi-syllable/
 │   │   ├── vfk-core/           # transform + charset
 │   │   ├── vfk-engine/
+│   │   ├── vfk-config/         # đọc/merge/validate/atomic save config cho UI
 │   │   ├── vfk-adapter-core/   # field policy, surrounding guard, action plan, timing
 │   │   ├── vfk-ffi/            # C ABI + include/vifastkey.h
 │   │   └── vfk-wasm/           # wasm-bindgen cho web demo
 │   ├── apps/vfk-cli/           # CLI demo + REPL
 │   ├── apps/vfk-charset/       # chuyển bảng mã
 │   ├── apps/vfk-suggest/       # gợi ý từ
+│   ├── apps/vfk-settings/      # UI cấu hình desktop (egui, Windows/Linux)
 │   ├── apps/vfk-windows/       # adapter Windows hook (Replace fallback)
 ├── windows/
 │   ├── tsf/                    # TSF text service (preedit, C++ + C ABI)
@@ -115,7 +117,7 @@ adb install -r android/app/build/outputs/apk/debug/app-debug.apk
 
 ## Build bản Rust
 
-Yêu cầu Rust stable (MSRV 1.85, đã kiểm tra 1.99.1); `rust/rust-toolchain.toml` ghim stable + wasm target.
+Yêu cầu Rust stable (MSRV 1.89, đã kiểm tra 1.99.1); `rust/rust-toolchain.toml` ghim stable + wasm target.
 
 ```bash
 cd rust
@@ -126,6 +128,8 @@ cargo run -p vfk-cli
 cargo run -p vfk-cli -- --method vni --tone new --text "Vie65t Nam"
 cargo run -p vfk-charset -- --to tcvn3 --text "Tiếng Việt"
 cargo run -p vfk-suggest-cli -- nguoi
+cargo run -p vifastkey-settings        # UI cấu hình desktop
+cargo run -p vifastkey-settings -- --check --config /tmp/config.json
 ```
 
 ## macOS input method
@@ -207,6 +211,7 @@ cargo test --workspace
 - `adapter-conformance/` — scenario JSON dùng chung cho mọi port (surrounding,
   selection, emoji/NFD, pass-key, fail-safe).
 - `docs/CONFIG.md` — toàn bộ trường config và app profile.
+- `docs/DESKTOP_UI.md` — UI cấu hình desktop (egui), hợp đồng ghi config và tích hợp adapter.
 - `docs/IME_TEST_VECTORS.md` — bộ ví dụ hành vi dùng để port/regression.
 - `macos/README.md` — build/cài/test adapter macOS IMK.
 - `windows/tsf/README.md` — build/cài/test TSF Windows, `windows.json`, backend auto/tsf/hook.
@@ -214,4 +219,4 @@ cargo test --workspace
 - `THIRD_PARTY_NOTICES.md` — ghi công bảng mã bamboo-core MIT.
 - `CONTRIBUTING.md` — quy trình sửa hành vi, chạy test, đồng bộ conformance.
 - `CHANGELOG.md` — thay đổi theo phiên bản.
-- `ROADMAP.md` — việc còn lại: test runtime Windows TSF, test Wayland, macro nhiều từ, preedit nâng cao...
+- `ROADMAP.md` — việc còn lại: test runtime Windows TSF, test Wayland, preedit trên nhiều app thật, tray icon, ký/notarize...

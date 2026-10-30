@@ -80,6 +80,7 @@ from vi_syllable import ToneStyle
 ROOT = Path(__file__).resolve().parent
 STATIC = Path(os.environ.get("STATIC_DIR", ROOT / "static")).resolve()
 DATA_DIR = Path(os.environ.get("DATA_DIR", ROOT / "data"))
+DOWNLOADS_DIR = Path(os.environ.get("DOWNLOADS_DIR", ROOT / "downloads")).resolve()
 DB_PATH = Path(os.environ.get("STATS_DB", DATA_DIR / "stats.sqlite3"))
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "").strip()
 SITE_URL = os.environ.get("SITE_URL", "https://vifastkey.hoctuthien.com").rstrip("/")
@@ -116,6 +117,9 @@ DOWNLOAD_PLATFORMS = {
     "vifastkey-cli-macos.tar.gz": "macos",
     "vifastkey-cli-linux-x86_64.tar.gz": "linux",
     "vifastkey-fcitx5-linux-x86_64.tar.gz": "linux",
+    "vifastkey-ibus-linux.tar.gz": "linux",
+    "vifastkey-settings-linux-x86_64.tar.gz": "linux",
+    "vifastkey-settings-windows-x64.zip": "windows",
     "vifastkey-android-debug.apk": "android",
     "vifastkey-android-release.apk": "android",
     "vifastkey-android-release.aab": "android",
@@ -1063,6 +1067,23 @@ def admin_feedback_status(feedback_id: int, status: str, request: Request) -> Re
         finally:
             connection.close()
     return Response(status_code=303, headers={"Location": "/admin"})
+
+
+@app.get("/downloads/{version}/{filename}")
+def download_file(version: str, filename: str) -> Response:
+    """Mirror tải trực tiếp khi GitHub Release tạm không dùng được."""
+    if not re.fullmatch(r"0\.\d+\.\d+", version) or Path(filename).name != filename:
+        raise HTTPException(status_code=404, detail="Không tìm thấy file")
+    if filename not in DOWNLOAD_PLATFORMS and filename != "sha256sums.txt":
+        raise HTTPException(status_code=404, detail="Không tìm thấy file")
+    path = DOWNLOADS_DIR / version / filename
+    if not path.is_file():
+        raise HTTPException(status_code=404, detail="Chưa có file mirror")
+    return FileResponse(
+        path,
+        filename=filename,
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
 
 
 @app.get("/favicon.ico", include_in_schema=False)

@@ -44,6 +44,8 @@ class IbusCore:
                  config_store=None, dictionary: WordListDictionary | None = None,
                  mode: OutputMode = OutputMode.PREEDIT) -> None:
         path = Path(config_path).expanduser() if config_path else None
+        self._config_path = path
+        self._config_mtime = self._mtime()
         self.store = config_store or (
             JsonFileConfigStore(path) if path else MemoryConfigStore(Config())
         )
@@ -56,6 +58,24 @@ class IbusCore:
             Ports(self.store, _StaticApp(), self._surrounding, dictionary), mode
         )
         self.field_kind = FieldKind.TEXT
+
+    def _mtime(self):
+        if self._config_path is None:
+            return None
+        try:
+            return self._config_path.stat().st_mtime_ns
+        except OSError:
+            return None
+
+    def _reload_config_if_changed(self) -> None:
+        """UI cấu hình chạy process khác; poll mtime, không reload giữa từ."""
+        mtime = self._mtime()
+        if mtime == self._config_mtime:
+            return
+        if self.session.display:
+            return  # thử lại khi từ hiện tại kết thúc
+        self._config_mtime = mtime
+        self.session.reload_config()
 
     @property
     def display(self) -> str:
@@ -79,9 +99,11 @@ class IbusCore:
 
     def process(self, key: str, ctrl: bool = False, alt: bool = False,
                 meta: bool = False):
+        self._reload_config_if_changed()
         return self.session.process_key(KeyEvent(key, ctrl=ctrl, alt=alt, meta=meta))
 
     def focus_in(self, app_id: str | None = None):
+        self._reload_config_if_changed()
         self._surrounding.set(None)
         return self.session.focus_changed(app_id)
 

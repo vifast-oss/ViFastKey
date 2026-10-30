@@ -3,9 +3,10 @@
 #   make check       thêm lint/fmt/conformance
 #   make conformance sinh lại oracle và đồng bộ sang Rust
 #   make web         dựng WASM + asset cho web demo
+#   make settings    mở UI cấu hình desktop (egui)
 PYTHON ?= python3
 
-.PHONY: test test-python test-rust check conformance web macos clean
+.PHONY: test test-python test-rust check conformance web settings macos clean
 
 test: test-python test-rust
 
@@ -31,6 +32,9 @@ bench:
 
 web:
 	./web/build.sh
+
+settings:
+	cd rust && cargo run -p vifastkey-settings
 
 macos:
 	./macos/build.sh

@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+### Desktop
+
+- Thêm UI cấu hình `vifastkey-settings` (egui) cho Windows/Linux, kèm `vfk-config`
+  đọc/merge/validate/atomic save, `--self-test`/`--check`/`--import`/`--export`.
+- Release đóng gói `vifastkey-settings.exe` trong gói Windows TSF, thêm shortcut
+  `ViFastKey Settings` và asset cấu hình desktop riêng cho Windows/Linux.
+- Thêm gói cài **IBus Linux** (`vifastkey-ibus-linux.tar.gz`) gồm engine, component
+  XML, wheel Python và `install.sh`; bổ sung vào release CI.
+
 ## 0.1.0 — 2026-10-31
 
 ### Phát hành

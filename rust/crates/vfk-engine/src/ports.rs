@@ -96,6 +96,18 @@ pub fn default_app_profiles() -> HashMap<String, AppProfile> {
 }
 
 /// Cấu hình. Tên trường và giá trị JSON trùng bản Python (dùng chung config.json / conformance).
+/// File người dùng chỉ cần chứa app đã ghi đè; preset còn lại vẫn được giữ.
+/// Entry user hiện thay thế toàn bộ preset của cùng app (schema 1).
+fn deserialize_app_profiles<'de, D>(deserializer: D) -> Result<HashMap<String, AppProfile>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let user = HashMap::<String, AppProfile>::deserialize(deserializer)?;
+    let mut profiles = default_app_profiles();
+    profiles.extend(user);
+    Ok(profiles)
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Config {
@@ -125,6 +137,7 @@ pub struct Config {
     pub app_modes: HashMap<String, bool>,
     pub default_vietnamese: bool,
     pub edit_previous_word: bool,
+    #[serde(default, deserialize_with = "deserialize_app_profiles")]
     pub app_profiles: HashMap<String, AppProfile>,
     /// Backspace ngay sau dấu cách: nạp lại trạng thái từ trước (soft reset).
     pub restore_after_space: bool,

@@ -143,8 +143,11 @@ def config_from_dict(d: dict) -> Config:
     if isinstance(d.get("tone_style"), str):
         d["tone_style"] = ToneStyle(d["tone_style"])
     if isinstance(d.get("app_profiles"), dict):
-        d["app_profiles"] = {k: v if isinstance(v, AppProfile) else AppProfile(**v)
-                             for k, v in d["app_profiles"].items()}
+        # File người dùng chỉ cần chứa app ghi đè; preset còn lại vẫn giữ.
+        profiles = dict(DEFAULT_APP_PROFILES)
+        for key, value in d["app_profiles"].items():
+            profiles[key] = value if isinstance(value, AppProfile) else AppProfile(**value)
+        d["app_profiles"] = profiles
     return Config(**d)
 
 

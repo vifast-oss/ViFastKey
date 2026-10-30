@@ -1238,6 +1238,23 @@ code {
 .muted-card { opacity: 0.85; }
 .muted-card .d-tag { color: var(--muted); }
 
+.download-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px 14px;
+  margin-top: 13px;
+  padding: 10px 13px;
+  border: 1px dashed #d9c8b6;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.45);
+  color: var(--muted);
+  font-size: 11.5px;
+}
+.download-links span { font-weight: 700; color: var(--ink); }
+.download-links a { color: var(--accent-dark); font-weight: 700; text-decoration: none; }
+.download-links a:hover { text-decoration: underline; }
+
 .cli-line {
   display: flex;
   align-items: center;

@@ -36,23 +36,23 @@ std::string ParseBackend(const std::string& json) {
     const std::string key = "\"backend\"";
     size_t pos = json.find(key);
     if (pos == std::string::npos) {
-        return "auto";
+        return "tsf";
     }
     pos = json.find(':', pos + key.size());
     if (pos == std::string::npos) {
-        return "auto";
+        return "tsf";
     }
     ++pos;
     while (pos < json.size() && std::isspace(static_cast<unsigned char>(json[pos]))) {
         ++pos;
     }
     if (pos >= json.size() || json[pos] != '"') {
-        return "auto";
+        return "tsf";
     }
     ++pos;
     size_t end = json.find('"', pos);
     if (end == std::string::npos) {
-        return "auto";
+        return "tsf";
     }
     std::string value = json.substr(pos, end - pos);
     for (char& ch : value) {
@@ -61,7 +61,7 @@ std::string ParseBackend(const std::string& json) {
     if (value == "hook" || value == "tsf" || value == "auto") {
         return value;
     }
-    return "auto";
+    return "tsf";
 }
 
 }  // namespace

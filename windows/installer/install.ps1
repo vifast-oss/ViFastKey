@@ -61,6 +61,31 @@ if ($process.ExitCode -ne 0) {
 }
 
 Write-Host "Đã cài ViFastKey TSF ($arch) vào $dest"
+
+# Cài UI cấu hình nếu có trong package/build; shortcut mở tab Ứng dụng.
+$settingsCandidates = @(
+    (Join-Path $PSScriptRoot "vifastkey-settings.exe"),
+    (Join-Path $root "vifastkey-settings.exe"),
+    (Join-Path $root "rust\target\release\vifastkey-settings.exe")
+)
+$settings = $settingsCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($settings) {
+    $tools = Join-Path $env:LOCALAPPDATA "ViFastKey"
+    New-Item -ItemType Directory -Force -Path $tools | Out-Null
+    $installedSettings = Join-Path $tools "vifastkey-settings.exe"
+    Copy-Item $settings $installedSettings -Force
+
+    $startMenu = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs"
+    New-Item -ItemType Directory -Force -Path $startMenu | Out-Null
+    $shell = New-Object -ComObject WScript.Shell
+    $link = $shell.CreateShortcut((Join-Path $startMenu "ViFastKey Settings.lnk"))
+    $link.TargetPath = $installedSettings
+    $link.Arguments = "--tab apps"
+    $link.Save()
+    Write-Host "Đã cài UI cấu hình: $installedSettings"
+}
+
 Write-Host "Mở Settings > Time & language > Language & region > Vietnamese > Language options"
 Write-Host "> Add a keyboard > ViFastKey. Nếu chưa thấy, đăng xuất/đăng nhập lại."
 Write-Host "Cấu hình: $env:APPDATA\ViFastKey\config.json và windows.json"
+Write-Host "Mở UI: Ctrl+Shift+, hoặc Start Menu > ViFastKey Settings."

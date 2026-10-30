@@ -222,10 +222,12 @@ fn backspace_after_escape_restores_tone() {
 }
 
 #[test]
-fn backspace_after_duplicate_letter_restores_word() {
+fn backspace_after_duplicate_letters_restores_word() {
     for m in MODES {
         let mut h = make(m);
-        h.type_str("nhuwngg");
+        h.type_str("nhuwnggg");
+        assert_eq!(h.text(), "nhuwnggg");
+        type_mixed(&mut h, &[BS]);
         assert_eq!(h.text(), "nhuwngg");
         type_mixed(&mut h, &[BS]);
         assert_eq!(h.text(), "nhưng");
@@ -475,6 +477,19 @@ fn uppercase_ww() {
 }
 
 #[test]
+fn config_app_profiles_keep_presets() {
+    let config: Config = serde_json::from_str(
+        r#"{"app_profiles":{"kitty":{"output_mode":"replace","backspace_delay_ms":9}}}"#,
+    )
+    .unwrap();
+    assert!(config.app_profiles.contains_key("chrome"), "preset chrome phải còn");
+    assert!(config.app_profiles.contains_key("firefox"), "preset firefox phải còn");
+    let kitty = config.app_profiles.get("kitty").unwrap();
+    assert_eq!(kitty.output_mode, Some(OutputMode::Replace));
+    assert_eq!(kitty.backspace_delay_ms, 9);
+}
+
+#[test]
 fn app_profiles() {
     let c = Config::default();
     assert_eq!(resolve_profile(&c, Some("/usr/bin/kitty")).output_mode, Some(OutputMode::Preedit));
@@ -693,6 +708,24 @@ impl Lcg {
 }
 
 #[test]
+fn default_w_is_literal() {
+    for m in MODES {
+        let mut h = make(m);
+        h.type_str("web ww ");
+        assert_eq!(h.text(), "web ww ");
+    }
+}
+
+#[test]
+fn w_as_u_escape_continues_as_literal() {
+    for m in MODES {
+        let mut h = make_with(m, Config { w_as_u: true, ..cfg() });
+        h.type_str("ww wwe wweb ");
+        assert_eq!(h.text(), "w we web ");
+    }
+}
+
+#[test]
 fn type_then_backspace_all() {
     let alpha: Vec<char> = "aeiouydwsfrxjngthc".chars().collect();
     let mut rng = Lcg(3);
@@ -742,23 +775,5 @@ fn modes_agree_on_random_typing() {
             texts.push(h.text());
         }
         assert_eq!(texts[0], texts[1], "{seq:?}");
-    }
-}
-
-#[test]
-fn default_w_is_literal() {
-    for m in MODES {
-        let mut h = make(m);
-        h.type_str("web ww ");
-        assert_eq!(h.text(), "web ww ");
-    }
-}
-
-#[test]
-fn w_as_u_escape_continues_as_literal() {
-    for m in MODES {
-        let mut h = make_with(m, Config { w_as_u: true, ..cfg() });
-        h.type_str("ww wwe wweb ");
-        assert_eq!(h.text(), "w we web ");
     }
 }

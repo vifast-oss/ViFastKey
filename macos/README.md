@@ -17,7 +17,7 @@ Không có logic tiếng Việt trong Swift. Swift chỉ chuyển key, gọi eng
 ## Yêu cầu
 
 - macOS 12+ (đã build/test trên macOS 27, Apple Silicon).
-- Xcode Command Line Tools (`swiftc`), Rust 1.85+.
+- Xcode Command Line Tools (`swiftc`), Rust 1.89+.
 - Build mặc định theo kiến trúc hiện tại (`arm64` hoặc `x86_64`).
 
 ## Build
@@ -106,7 +106,8 @@ File mẫu được tạo lần chạy đầu. Các trường giống
 [`../docs/CONFIG.md`](../docs/CONFIG.md), gồm `input_method`, `tone_style`, `spell_check`,
 `allow_coda_k`, `macro_digits`, `macro_undo`, `macros`, `unicode_form`, `app_profiles`...
 
-Sau khi sửa file, chọn **Nạp lại cấu hình** trong menu; không cần khởi động lại app.
+IMK poll mtime 1 giây và tự nạp lại khi file đổi; **Nạp lại cấu hình** trong menu
+vẫn dùng được để ép reload. Không cần khởi động lại app.
 
 ## Test
 
@@ -163,7 +164,10 @@ log stream --predicate 'process == "ViFastKeyIM"' --level debug
 - Chưa có candidate window/suggestion bar (không cần cho Telex/VNI cơ bản).
 - App id lấy từ `NSWorkspace.frontmostApplication`; một số app đặc biệt có thể trả id
   không ổn định — dùng `app_profiles` với bundle id/alias.
-- Chưa có auto-update; preferences UI hiện có các tùy chọn chính + macro.
+- Chưa có auto-update; preferences AppKit có kiểu gõ/dấu, Unicode NFC/NFD, chính tả,
+  macro, auto-restore English, app loại trừ, default Việt/Anh, restore sau dấu cách.
+  App profile/charset nâng cao vẫn dùng file JSON; Windows/Linux có `vifastkey-settings`
+  đầy đủ hơn.
 - Chưa ký Developer ID/notarize; xem mục trên.
 - Lần đầu cần logout/login để macOS refresh input source.
 

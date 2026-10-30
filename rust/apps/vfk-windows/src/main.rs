@@ -16,8 +16,9 @@ fn main() {
 #[cfg(windows)]
 mod win {
     use std::cell::RefCell;
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
     use std::sync::OnceLock;
+    use std::time::{Duration, Instant, SystemTime};
 
     use serde::Deserialize;
     use vfk_adapter_core::{plan_action, AdapterAction, Plan, PlanContext, PlanKind};
@@ -50,7 +51,7 @@ mod win {
 
     #[derive(Deserialize, Default)]
     struct WindowsConfig {
-        /// hook | tsf | auto. Mặc định auto.
+        /// hook | tsf | auto. Mặc định tsf (preedit).
         #[serde(default)]
         backend: Option<String>,
     }
@@ -76,6 +77,13 @@ mod win {
         fn save(&self, config: &Config) {
             *self.0.borrow_mut() = config.clone();
         }
+    }
+
+    thread_local! {
+        static CONFIG_STORE: RefCell<Option<MemStore>> = const { RefCell::new(None) };
+        static CONFIG_MTIME: RefCell<Option<SystemTime>> = const { RefCell::new(None) };
+        static WINDOWS_MTIME: RefCell<Option<SystemTime>> = const { RefCell::new(None) };
+        static LAST_CONFIG_CHECK: RefCell<Option<Instant>> = const { RefCell::new(None) };
     }
     struct ForegroundApp;
     impl AppContext for ForegroundApp {
@@ -113,8 +121,75 @@ mod win {
             .unwrap_or_default()
     }
 
+    fn modified(path: &Path) -> Option<SystemTime> {
+        std::fs::metadata(path).ok().and_then(|metadata| metadata.modified().ok())
+    }
+
+    /// UI cấu hình chạy ở process khác; hook poll mtime thay vì cần restart.
+    /// Không reload khi đang có composition để không mất preedit.
+    fn reload_runtime_config_if_changed() {
+        let now = Instant::now();
+        let should_check = LAST_CONFIG_CHECK.with(|last| {
+            let mut last = last.borrow_mut();
+            if last.map(|t| now.duration_since(t) < Duration::from_millis(500)).unwrap_or(false) {
+                false
+            } else {
+                *last = Some(now);
+                true
+            }
+        });
+        if !should_check {
+            return;
+        }
+
+        let config_mtime = modified(&config_path());
+        let config_changed = CONFIG_MTIME.with(|mtime| {
+            let mut mtime = mtime.borrow_mut();
+            if *mtime == config_mtime {
+                false
+            } else {
+                *mtime = config_mtime;
+                true
+            }
+        });
+        if config_changed {
+            let idle = SESSION
+                .with(|s| s.borrow().as_ref().map(|session| session.display().is_empty()).unwrap_or(true));
+            if idle {
+                let config = load_config();
+                CONFIG_STORE.with(|store| {
+                    if let Some(store) = store.borrow().as_ref() {
+                        *store.0.borrow_mut() = config;
+                    }
+                });
+                SESSION.with(|s| {
+                    if let Some(session) = s.borrow_mut().as_mut() {
+                        let _ = session.reload_config();
+                    }
+                });
+            } else {
+                // Thử lại sau 500 ms khi composition kết thúc.
+                CONFIG_MTIME.with(|mtime| *mtime.borrow_mut() = None);
+            }
+        }
+
+        let windows_mtime = modified(&windows_config_path());
+        let windows_changed = WINDOWS_MTIME.with(|mtime| {
+            let mut mtime = mtime.borrow_mut();
+            if *mtime == windows_mtime {
+                false
+            } else {
+                *mtime = windows_mtime;
+                true
+            }
+        });
+        if windows_changed {
+            WINDOWS_CONFIG.with(|c| *c.borrow_mut() = load_windows_config());
+        }
+    }
+
     fn windows_backend() -> String {
-        WINDOWS_CONFIG.with(|c| c.borrow().backend.clone().unwrap_or_else(|| "auto".to_string()))
+        WINDOWS_CONFIG.with(|c| c.borrow().backend.clone().unwrap_or_else(|| "tsf".to_string()))
     }
 
     fn tsf_state_name() -> &'static [u16] {
@@ -278,6 +353,24 @@ mod win {
         }
     }
 
+    fn open_settings() {
+        let sibling = std::env::current_exe()
+            .ok()
+            .and_then(|path| path.parent().map(|dir| dir.join("vifastkey-settings.exe")));
+        if let Some(sibling) = sibling.filter(|path| path.exists()) {
+            let _ = std::process::Command::new(sibling).args(["--tab", "apps"]).spawn();
+            return;
+        }
+        let installed = std::env::var("LOCALAPPDATA")
+            .ok()
+            .map(|base| PathBuf::from(base).join("ViFastKey").join("vifastkey-settings.exe"));
+        if let Some(installed) = installed.filter(|path| path.exists()) {
+            let _ = std::process::Command::new(installed).args(["--tab", "apps"]).spawn();
+            return;
+        }
+        let _ = std::process::Command::new("vifastkey-settings").args(["--tab", "apps"]).spawn();
+    }
+
     unsafe extern "system" fn hook_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
         if code != HC_ACTION as i32 || (wparam as u32 != WM_KEYDOWN && wparam as u32 != WM_SYSKEYDOWN) {
             return CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam);
@@ -287,6 +380,7 @@ mod win {
         if kb.flags & LLKHF_INJECTED != 0 {
             return CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam);
         }
+        reload_runtime_config_if_changed();
         let ctrl = GetAsyncKeyState(VK_CONTROL as i32) < 0;
         let alt = GetAsyncKeyState(VK_MENU as i32) < 0;
         let meta = GetAsyncKeyState(VK_LWIN as i32) < 0;
@@ -310,6 +404,11 @@ mod win {
                         session.toggle_vietnamese();
                     }
                 });
+                return 1;
+            }
+            if ctrl && shift && kb.vkCode == 0xBC {
+                // Ctrl+Shift+, mở UI cấu hình (không có tray).
+                open_settings();
                 return 1;
             }
             return CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam);
@@ -382,6 +481,9 @@ mod win {
         let config = load_config();
         WINDOWS_CONFIG.with(|c| *c.borrow_mut() = load_windows_config());
         let store = MemStore(std::rc::Rc::new(RefCell::new(config)));
+        CONFIG_STORE.with(|slot| *slot.borrow_mut() = Some(store.clone()));
+        CONFIG_MTIME.with(|mtime| *mtime.borrow_mut() = modified(&config_path()));
+        WINDOWS_MTIME.with(|mtime| *mtime.borrow_mut() = modified(&windows_config_path()));
         let ports = Ports {
             config: Box::new(store),
             app: Box::new(ForegroundApp),

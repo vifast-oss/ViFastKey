@@ -1,6 +1,7 @@
 # Roadmap
 
-Trạng thái hiện tại: lõi Python + Rust, C ABI, WASM, CLI, playground và bộ conformance đã chạy được.
+Trạng thái hiện tại: lõi Python + Rust, C ABI, WASM, CLI, playground, UI cấu hình desktop
+(`vifastkey-settings`) và bộ conformance đã chạy được.
 Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng hằng ngày.
 
 ## Đã hoàn thành trong đợt nghiên cứu
@@ -19,7 +20,7 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
     (`rust/apps/vfk-windows`), backend `auto/tsf/hook`; còn test runtime Windows thật,
     tray/signing.
   - Linux: ✅ IBus engine Python (`linux/ibus/`), ✅ Fcitx5 C++ addon (`linux/fcitx5/`),
-    đã test runtime Fcitx5/Xvfb; còn test Wayland desktop và IBus runtime.
+    đã test runtime IBus + Fcitx5 trên Xvfb; còn test Wayland desktop và app thật.
   - Android: ✅ IME Java + JNI full keyboard, suggestions, settings, emoji; đã test emulator;
     ✅ cấu hình release signing qua env; còn Play Store listing/theme và test máy thật.
   - iOS: ✅ host + keyboard extension Swift, build simulator + engine test; còn test bật extension/device signing.
@@ -36,7 +37,7 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
 - **Sửa từ đã gõ trong PREEDIT**: ✅ engine trả `Replace` + adapter dùng surrounding text;
   còn kiểm thử trên nhiều app thật.
 - **Macro nhiều từ/suffix, trigger tùy chọn, macro khi tắt tiếng Việt**: ✅ macro nhiều từ + off-mode;
-  còn import/export.
+  ✅ import/export toàn config; còn file import/export riêng cho bảng macro.
 - **Từ điển lớn**: ✅ lexicon gợi ý 23k âm tiết + 20k từ tiếng Anh; dictionary auto-restore
   vẫn giữ danh sách nhỏ để tránh false positive.
 
@@ -49,8 +50,13 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
 - **Gõ tắt phụ âm** (OpenKey): `f`→`ph`, `j`→`gi`, `w`→`qu`, coda `g`→`ng`... cần kiểu gõ riêng
   để không đụng phím thanh.
 - **Tiếng Tây Nguyên** (Êđê...): thêm ký tự và `InputMethodSpec`, không đổi thuật toán.
-- **Bộ gõ tắt/macro nâng cao**: nhiều macro theo app, import/export, kiểm tra trùng.
-- **UI cấu hình desktop**: ✅ macOS preferences window; Windows/Linux GUI còn thiếu.
+- **Bộ gõ tắt/macro nâng cao**: macro theo app, import/export file macro riêng.
+  ✅ kiểm tra trùng/rỗng trong UI.
+- **UI cấu hình desktop**: ✅ macOS preferences window; ✅ `vifastkey-settings` (egui) cho
+  Windows/Linux: typing/macro/app rule, save atomic, validate, gõ thử, import/export,
+  `settings-ui.json`, tab Windows backend; ✅ watcher mtime macOS IMK + Windows hook +
+  IBus; ✅ Windows `Ctrl+Shift+,` mở settings + Start Menu shortcut. Còn tray icon
+  và test UI thật trên Windows/Linux.
 - **macOS smoothness**: ✅ input source prefs, secure input, Ctrl+Shift+F, clipboard tools.
 
 ## Hiệu năng / chất lượng
@@ -62,8 +68,9 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
 
 ## Đóng gói
 
-- Release binary CLI cho macOS/Linux/Windows ✅ workflow `release.yml` (CLI + WASM + header + lib);
-  ✅ thêm macOS IMK app, Fcitx5 tarball, Android APK (debug + signed release nếu có secrets),
-  iOS simulator app. npm package, `.deb`/`.rpm`/AUR chính thức còn lại.
+- Release binary CLI + `vifastkey-settings` cho macOS/Linux/Windows ✅ workflow `release.yml`
+  (CLI + settings + WASM + header + lib); ✅ thêm macOS IMK app, Fcitx5 tarball, Android APK
+  (debug + signed release nếu có secrets), iOS simulator app. npm package, `.deb`/`.rpm`/AUR
+  chính thức còn lại.
 - UniFFI cho Swift/Kotlin.
 - GitHub Pages cho `web/` ✅ `pages.yml` (cần bật Pages); trang tài liệu API còn lại.

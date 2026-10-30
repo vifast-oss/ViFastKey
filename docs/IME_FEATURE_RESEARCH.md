@@ -63,7 +63,7 @@ Ký hiệu: ✅ có; ◐ một phần; — không có; 🔌 thuộc adapter/OS.
 | Gợi ý / AI | — | — | — | — | ✅ | — | — | ◐ | — | roadmap |
 | Chuyển chế độ theo app | ✅ | ✅ | ✅ | ✅ | ◐ | ✅ | ✅ | ✅ | ✅ | 🔌 profile hints |
 | Wayland / uinput / libei | ✅ | — | — | ◐ | — | — | — | — | ✅ | roadmap (adapter) |
-| GUI cấu hình | ✅ | ✅ | ✅ | ✅ | — | menu bar | ✅ | ✅ | ✅ | CLI/web hiện có |
+| GUI cấu hình | ✅ | ✅ | ✅ | ✅ | — | menu bar | ✅ | ✅ | ✅ | macOS AppKit + egui Win/Linux |
 | Auto-update / signing | — | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ | ✅ | roadmap |
 
 ## 3. Phát hiện chính
@@ -171,7 +171,7 @@ Xem `ADAPTER_GUIDE.md` để biết hợp đồng từng bước.
 - Từ điển lớn 7k tiếng Việt + 20k tiếng Anh, user dictionary.
 - Gợi ý/word prediction chạy local, không gửi mạng.
 - Emoji, text tools, clipboard converter GUI.
-- Adapter thật + GUI cấu hình.
+- Adapter thật ✅; GUI cấu hình ✅ macOS AppKit + `vifastkey-settings` (egui) cho Windows/Linux.
 
 ## 7. Adapter macOS đầu tiên
 

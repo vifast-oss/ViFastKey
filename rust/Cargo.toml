@@ -5,6 +5,7 @@ members = [
     "crates/vfk-suggest",
     "crates/vfk-core",
     "crates/vfk-engine",
+    "crates/vfk-config",
     "crates/vfk-adapter-core",
     "crates/vfk-ffi",
     "crates/vfk-wasm",
@@ -13,12 +14,13 @@ members = [
     "apps/vfk-suggest",
     "apps/vfk-windows",
     "apps/vfk-jni",
+    "apps/vfk-settings",
 ]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.85"
+rust-version = "1.89"
 license = "MIT"
 repository = "https://github.com/dvchd/ViFastKey"
 
@@ -26,6 +28,7 @@ repository = "https://github.com/dvchd/ViFastKey"
 vi-syllable = { path = "crates/vi-syllable" }
 vfk-core = { path = "crates/vfk-core" }
 vfk-engine = { path = "crates/vfk-engine" }
+vfk-config = { path = "crates/vfk-config" }
 vfk-adapter-core = { path = "crates/vfk-adapter-core" }
 vfk-suggest = { path = "crates/vfk-suggest" }
 arrayvec = "0.7.8"

@@ -47,6 +47,7 @@ is generated from ViFastKey's own grammar, not copied from a dictionary.
 
 - **Be Vietnam Pro** — SIL Open Font License 1.1; see
   `resources/fonts/BeVietnamPro-OFL.txt`.
+- **egui/eframe** — MIT OR Apache-2.0; dùng cho `vifastkey-settings`.
 
 ## Research sources (behavior only)
 

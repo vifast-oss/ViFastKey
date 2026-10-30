@@ -99,8 +99,8 @@
             <button type="button" data-tone="new" class="active">Dấu mới</button>
           </div>
           <div class="segmented subtle" role="group" aria-label="Chế độ đầu ra">
-            <button type="button" data-output-mode="replace" class="active">Replace</button>
-            <button type="button" data-output-mode="preedit">Preedit</button>
+            <button type="button" data-output-mode="replace">Replace</button>
+            <button type="button" data-output-mode="preedit" class="active">Preedit</button>
           </div>
         </div>
 
@@ -344,10 +344,10 @@ curl -s https://vifastkey.hoctuthien.com/api/type \
         <span class="dot" aria-hidden="true"></span>
         <span>Bản phát hành chính thức</span>
         <a href="https://github.com/dvchd/ViFastKey/releases/tag/v0.1.0" target="_blank" rel="noopener">Release notes ↗</a>
-        <a href="https://github.com/dvchd/ViFastKey/releases/download/v0.1.0/sha256sums.txt" target="_blank" rel="noopener">SHA256SUMS ↗</a>
+        <a href="/downloads/0.1.0/sha256sums.txt" target="_blank" rel="noopener">SHA256SUMS ↗</a>
       </div>
       <div class="download-grid">
-        <a class="download-card primary" href="https://github.com/dvchd/ViFastKey/releases/download/v0.1.0/vifastkey-windows-tsf.zip" target="_blank" rel="noopener" data-download="vifastkey-windows-tsf.zip">
+        <a class="download-card primary" href="/downloads/0.1.0/vifastkey-windows-tsf.zip" target="_blank" rel="noopener" data-download="vifastkey-windows-tsf.zip">
           <span class="d-tag">Windows 10/11 · x64 + x86</span>
           <strong>Tải ViFastKey TSF</strong>
           <span>ZIP · cài per-user · không cần build</span>
@@ -371,6 +371,18 @@ curl -s https://vifastkey.hoctuthien.com/api/type \
           <span>Python oracle + Rust port + C ABI</span>
           <span class="d-arrow" aria-hidden="true">↗</span>
         </a>
+      </div>
+      <div class="download-links">
+        <span>Tải trực tiếp:</span>
+        <a href="/downloads/0.1.0/vifastkey-macos-imk-universal.zip" data-download="vifastkey-macos-imk-universal.zip">macOS</a>
+        <a href="/downloads/0.1.0/vifastkey-ibus-linux.tar.gz" data-download="vifastkey-ibus-linux.tar.gz">IBus Linux</a>
+        <a href="/downloads/0.1.0/vifastkey-fcitx5-linux-x86_64.tar.gz" data-download="vifastkey-fcitx5-linux-x86_64.tar.gz">Fcitx5 Linux</a>
+        <a href="/downloads/0.1.0/vifastkey-android-debug.apk" data-download="vifastkey-android-debug.apk">Android</a>
+        <a href="/downloads/0.1.0/vifastkey-ios-simulator.zip" data-download="vifastkey-ios-simulator.zip">iOS Simulator</a>
+        <a href="/downloads/0.1.0/vifastkey-wasm.zip" data-download="vifastkey-wasm.zip">WASM</a>
+        <a href="/downloads/0.1.0/vifastkey-chrome-extension.zip" data-download="vifastkey-chrome-extension.zip">Chrome/Edge</a>
+        <a href="/downloads/0.1.0/vifastkey-settings-windows-x64.zip" data-download="vifastkey-settings-windows-x64.zip">UI Windows</a>
+        <a href="/downloads/0.1.0/vifastkey-settings-linux-x86_64.tar.gz" data-download="vifastkey-settings-linux-x86_64.tar.gz">UI Linux</a>
       </div>
       <div class="cli-line">
         <span>Thử CLI:</span>

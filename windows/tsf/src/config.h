@@ -5,8 +5,8 @@
 struct AppConfig {
     // Nội dung %APPDATA%\ViFastKey\config.json (JSON đầy đủ hoặc một phần).
     std::string engine_json;
-    // hook | tsf | auto. Mặc định auto.
-    std::string backend = "auto";
+    // hook | tsf | auto. Mặc định tsf (preedit).
+    std::string backend = "tsf";
 };
 
 AppConfig LoadAppConfig();

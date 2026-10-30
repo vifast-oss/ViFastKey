@@ -42,3 +42,14 @@ def test_focus_out_commits_preedit():
     act = core.focus_out()
     field.apply(act, None)
     assert field.text == "việt"
+
+
+def test_reloads_config_when_file_changes(tmp_path):
+    path = tmp_path / "config.json"
+    path.write_text('{"input_method":"telex"}', encoding="utf-8")
+    core = IbusCore(config_path=path, mode=OutputMode.REPLACE)
+    assert core.session.config.input_method == "telex"
+
+    path.write_text('{"input_method":"vni"}', encoding="utf-8")
+    core.process("x")
+    assert core.session.config.input_method == "vni"

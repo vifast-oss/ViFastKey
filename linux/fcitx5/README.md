@@ -99,7 +99,7 @@ field, action gần nhất; log adapter không chứa nội dung từ.
 
 ## Giới hạn
 
-- Chưa có preferences GUI/tray riêng; sửa JSON hoặc dùng status action.
+- Chưa có tray icon; UI cấu hình dùng `vifastkey-settings`, sửa JSON hoặc status action.
 - Chưa dùng `uinput`/Libei/XTest. Nếu app không nhận surrounding text và không
   nhận `forwardKey`, adapter fallback về preedit/pass-through thay vì inject phím.
 - `~/.config/vifastkey/user_words.txt` được nạp thêm vào dictionary tiếng Việt

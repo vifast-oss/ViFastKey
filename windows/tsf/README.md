@@ -66,11 +66,12 @@ Mỗi lần chạy `install.ps1` sẽ copy DLL vào `tsf\x64` hoặc `tsf\x86` v
 
 - `%APPDATA%\ViFastKey\config.json`: cấu hình engine (Telex/VNI/VIQR, macro,
   app profile...). Xem `docs/CONFIG.md`.
+- UI cấu hình: `vifastkey-settings.exe` (Start Menu shortcut hoặc `Ctrl+Shift+,` khi hook đang chạy).
 - `%APPDATA%\ViFastKey\windows.json`:
 
 ```json
 {
-  "backend": "auto"
+  "backend": "tsf"
 }
 ```
 
@@ -78,12 +79,13 @@ Mẫu: `windows/tsf/windows.example.json`.
 
 | backend | Hành vi |
 |---|---|
-| `auto` (mặc định) | TSF xử lý khi profile đang active; hook pass-through khi TSF ghi mapping cho foreground PID |
-| `tsf` | Hook luôn pass; chỉ TSF xử lý |
+| `tsf` (mặc định) | Hook luôn pass; chỉ TSF preedit |
+| `auto` | TSF xử lý khi profile đang active; hook pass-through khi TSF ghi mapping cho foreground PID |
 | `hook` | TSF không ăn phím; chỉ hook Replace xử lý |
 
-Đổi config cần khởi động lại app/hook (TSF đọc lại khi focus đổi; engine config
-được reload khi file thay đổi).
+Không cần khởi động lại khi sửa `config.json`: TSF đọc lại khi focus đổi; hook
+hot-reload theo mtime. Đổi `windows.json` có hiệu lực ngay với hook; TSF có thể cần
+đổi focus hoặc khởi động lại text service.
 
 ## Hành vi
 
@@ -101,13 +103,14 @@ Mẫu: `windows/tsf/windows.example.json`.
 
 - Chưa test runtime trên Windows thật trong môi trường repo (macOS); CI build MSVC
   chỉ kiểm tra compile. Cần smoke test Notepad/Chrome/Office/Windows Terminal.
-- Chưa có tray/GUI/cài đặt tự động; installer chỉ đăng ký per-user.
+- Chưa có tray icon/cài đặt tự động; installer đăng ký per-user và tạo shortcut
+  `ViFastKey Settings` nếu có `vifastkey-settings.exe`.
 - Macro hiện chỉ chạy ở `REPLACE` trong engine; TSF `PREEDIT` chưa mở macro.
 - Charset legacy chưa áp ở đầu ra TSF (luôn chèn Unicode).
 - App elevated: TSF per-user thường không nạp vào process elevated; cần bản HKLM
   hoặc chạy app cùng mức quyền. Hook cũng bị UIPI giới hạn.
 - Chưa ký Authenticode; SmartScreen sẽ cảnh báo.
-- `windows.json` chưa hot-reload trong hook (khởi động lại hook sau khi sửa).
+- `windows.json` được hot-reload trong hook; TSF đọc lại khi focus đổi.
 - Nếu app không hỗ trợ TSF/không nhận composition: dùng backend `hook`.
 
 ## Kiểm thử tay

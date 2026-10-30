@@ -141,7 +141,8 @@ Module `vfk_core.charset` (Python) / `vfk_core::charset` (Rust) hỗ trợ:
 
 ## 11. Config
 
-- `schema_version` hiện là 1; file thiếu trường được hiểu là 1; field lạ bị bỏ qua.
+- `schema_version` hiện là 1; file thiếu trường được hiểu là 1; engine bỏ qua field lạ.
+- UI desktop (`vfk-config`) giữ field lạ khi ghi; adapter chỉ ghi runtime key (`app_modes`).
 - `config_from_dict`/`Config::apply_json_patch` merge JSON một phần, không reset field thiếu.
 - AppProfile có thể ghi đè `input_method`, `tone_style`, `spell_check`, gợi ý `charset`.
 - Xem `CONFIG.md` để biết toàn bộ trường.

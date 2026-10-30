@@ -12,6 +12,14 @@ cargo run -p vfk-cli                         # REPL (:telex :vni :old :new :repl
 cargo run -p vfk-cli -- --method vni --tone new --text "Vie65t Nam"
 cargo run -p vfk-charset -- --to tcvn3 --text "Tiếng Việt"
 cargo run -p vfk-core --release --example bench
+cargo run -p vifastkey-settings                # UI cấu hình desktop
+```
+
+Linux cần thêm thư viện GUI để build `vifastkey-settings`:
+
+```bash
+sudo apt-get install -y pkg-config libxkbcommon-dev libwayland-dev \
+  libx11-dev libxi-dev libgl1-mesa-dev libegl1-mesa-dev
 ```
 
 ## 1. Cấu trúc
@@ -23,12 +31,14 @@ rust/
 │   ├── vfk-core/      rules, transform, Composer, to_raw/rebuild, diff, charset, emoji
 │   ├── vfk-suggest/   lexicon gợi ý local
 │   ├── vfk-engine/    ports (Config, AppProfile, 4 trait), session (ImeSession), testing (Harness)
+│   ├── vfk-config/    load/merge/validate/atomic save config dùng chung cho UI/adapter
 │   ├── vfk-adapter-core/ field policy, surrounding guard, action plan, timing dùng chung
 │   ├── vfk-ffi/       C ABI: lib "vifastkey" (cdylib + staticlib), include/vifastkey.h
 │   └── vfk-wasm/      wasm-bindgen: Session + Action JSON cho web demo
 ├── apps/vfk-cli/      REPL + demo (bin "vfk")
 ├── apps/vfk-charset/  chuyển bảng mã (bin "vfk-charset")
 ├── apps/vfk-suggest/  gợi ý từ (bin "vfk-suggest")
+├── apps/vfk-settings/ UI cấu hình desktop egui cho Windows/Linux (bin "vifastkey-settings")
 ├── apps/vfk-windows/  adapter Windows hook Replace fallback (WH_KEYBOARD_LL)
 ├── conformance/       core.jsonl (13.337 ca), engine.jsonl (3.000 kịch bản) sinh từ Python
 ├── testdata/          golden/*.tsv, corpus_vi.txt (dùng chung với Python)
@@ -50,7 +60,8 @@ rust/
 | `tests/test_*.py` | `crates/*/tests/*.rs` |
 
 Phụ thuộc: `unicode-normalization` 0.1.26, `serde` 1.0.229, `serde_json` 1.0.154,
-`wasm-bindgen` 0.2.130, `arrayvec` 0.7.8; adapter Windows dùng `windows-sys` 0.61.2. Không dùng `rand` (test dùng LCG tự viết), không dùng `phf`
+`wasm-bindgen` 0.2.130, `arrayvec` 0.7.8; adapter Windows dùng `windows-sys` 0.61.2;
+UI settings dùng `eframe`/`egui` 0.32.3. Không dùng `rand` (test dùng LCG tự viết), không dùng `phf`
 (bảng tra sinh một lần bằng `OnceLock`). Toolchain: stable 1.99.1 (xem `rust-toolchain.toml`);
 `cargo update` không còn dependency nào lệch bản mới nhất tại thời điểm cập nhật.
 

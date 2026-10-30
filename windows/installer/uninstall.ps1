@@ -26,4 +26,14 @@ foreach ($arch in @("x64", "x86")) {
     Remove-Item $dest -Recurse -Force
 }
 
-Write-Host "Đã gỡ ViFastKey TSF."
+$settingsExe = Join-Path $env:LOCALAPPDATA "ViFastKey\vifastkey-settings.exe"
+if (Test-Path $settingsExe) {
+    Remove-Item $settingsExe -Force
+}
+
+$shortcut = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\ViFastKey Settings.lnk"
+if (Test-Path $shortcut) {
+    Remove-Item $shortcut -Force
+}
+
+Write-Host "Đã gỡ ViFastKey TSF và UI cấu hình (giữ config người dùng)."

@@ -16,6 +16,10 @@ struct ConfigFile {
         try? String(contentsOf: path, encoding: .utf8)
     }
 
+    static func modificationDate() -> Date? {
+        (try? FileManager.default.attributesOfItem(atPath: path.path))?[.modificationDate] as? Date
+    }
+
     static func loadDictionary() -> [String: Any] {
         guard let data = try? Data(contentsOf: path),
               let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {

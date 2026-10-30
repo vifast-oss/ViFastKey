@@ -62,7 +62,7 @@ Phần FastAPI/Docker nằm ở [`../deploy/vifastkey_web/`](../deploy/vifastkey
 
 ## Giới hạn
 
-- Playground là mô phỏng preedit trong `<textarea>`, không phải TSF/IMK/Fcitx5 thật.
+- Playground mặc định **Preedit**, mô phỏng preedit trong `<textarea>` (không vẽ gạch chân native); đây không phải TSF/IMK/Fcitx5 thật.
 - Bàn phím ảo Android/Gboard được xử lý qua `beforeinput` + `compositionend`
   (không phụ thuộc `keydown`); nếu bàn phím khác không phát sự kiện chuẩn, thử
   gõ bằng bàn phím vật lý.

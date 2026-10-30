@@ -5,12 +5,14 @@ services:
     restart: unless-stopped
     environment:
       DATA_DIR: "/app/data"
+      DOWNLOADS_DIR: "/app/downloads"
       SITE_URL: "https://vifastkey.hoctuthien.com"
       ALLOWED_HOSTS: "vifastkey.hoctuthien.com,localhost,127.0.0.1"
       ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
       STATS_SALT: "${STATS_SALT:-}"
     volumes:
       - ./data:/app/data
+      - ./downloads:/app/downloads:ro
     expose:
       - "8000"
     networks:

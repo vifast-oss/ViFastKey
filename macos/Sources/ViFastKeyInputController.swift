@@ -11,6 +11,8 @@ final class ViFastKeyInputController: IMKInputController {
     private let applier = ActionApplier()
     private var currentAppID: String?
     private var currentClient: AnyObject?
+    private var configTimer: Timer?
+    private var lastConfigMtime: Date?
 
     override init!(server: IMKServer!, delegate: Any!, client inputClient: Any!) {
         super.init(server: server, delegate: delegate, client: inputClient)
@@ -25,6 +27,31 @@ final class ViFastKeyInputController: IMKInputController {
                                                object: nil, queue: .main) { [weak self] _ in
             self?.reloadConfig(nil)
         }
+        startConfigWatcher()
+    }
+
+    deinit {
+        configTimer?.invalidate()
+    }
+
+    /// UI cấu hình chạy ở process khác, nên NotificationCenter không đủ.
+    /// Poll mtime 1 giây; Fcitx5 cũng dùng cùng pattern.
+    private func startConfigWatcher() {
+        lastConfigMtime = ConfigFile.modificationDate()
+        let timer = Timer(timeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.pollConfigFile()
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        configTimer = timer
+    }
+
+    private func pollConfigFile() {
+        let date = ConfigFile.modificationDate()
+        if date == lastConfigMtime {
+            return
+        }
+        lastConfigMtime = date
+        reloadConfig(nil)
     }
 
     // MARK: - IMK lifecycle
@@ -314,10 +341,17 @@ final class ViFastKeyInputController: IMKInputController {
         }
         engine = VfkEngine(configJSON: ConfigFile.load())
         _ = engine?.focusChanged(appID: currentAppID)
+        lastConfigMtime = ConfigFile.modificationDate()
     }
 
+    /// Chỉ ghi runtime state do adapter sở hữu (`app_modes`), không ghi toàn bộ
+    /// engine config: bản đầy đủ sẽ materialize preset và xoá key lạ do UI/bản mới ghi.
     private func persistEngineConfig() {
-        guard let json = engine?.configJSON else { return }
-        ConfigFile.save(json)
+        guard let json = engine?.configJSON,
+              let data = json.data(using: .utf8),
+              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let appModes = object["app_modes"] else { return }
+        ConfigFile.update { $0["app_modes"] = appModes }
+        lastConfigMtime = ConfigFile.modificationDate()
     }
 }

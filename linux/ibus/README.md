@@ -60,7 +60,8 @@ sudo apt install ibus ibus-gtk3 xvfb openbox xdotool zenity dbus-x11
 
 - Đã test runtime với IBus 1.5.29 + GTK3 trên X11/Xvfb; chưa test Wayland desktop
   và app cụ thể (Chromium/Electron/terminal).
-- Chưa có tray/preferences UI riêng; dùng file JSON.
+- Chưa có tray icon; UI cấu hình dùng `vifastkey-settings` hoặc file JSON.
+- `IbusCore` poll mtime `~/.config/vifastkey/config.json` và reload khi rảnh.
 - Với app không hỗ trợ surrounding/delete, một số thao tác sửa từ cũ bị bỏ qua.
 - Dùng `python/vfk_adapter_core.py` (port của adapter-core) thay vì C ABI; giữ cùng
   `adapter-conformance`. Có thể chuyển sang C ABI khi đóng gói extension nhị phân.

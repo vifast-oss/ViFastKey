@@ -186,9 +186,11 @@ def test_backspace_after_escape_restores_tone(mode):
 
 
 @pytest.mark.parametrize("mode", MODES)
-def test_backspace_after_duplicate_letter_restores_word(mode):
+def test_backspace_after_duplicate_letters_restores_word(mode):
     s, f, _ = make(mode)
-    f.type(s, "nhuwngg")
+    f.type(s, "nhuwnggg")
+    assert f.text == "nhuwnggg"
+    f.type(s, [BS])
     assert f.text == "nhuwngg"
     f.type(s, [BS])
     assert f.text == "nhưng"
@@ -605,6 +607,14 @@ def test_config_schema_version_default_and_forward_compatible():
     from vfk_engine.ports import config_from_dict
     assert config_from_dict({}).schema_version == CONFIG_SCHEMA_VERSION
     assert config_from_dict({"schema_version": 99}).schema_version == 99
+
+
+def test_config_app_profiles_keep_presets():
+    from vfk_engine.ports import config_from_dict
+    c = config_from_dict({"app_profiles": {"kitty": {"output_mode": "replace"}}})
+    assert "chrome" in c.app_profiles
+    assert "firefox" in c.app_profiles
+    assert c.app_profiles["kitty"].output_mode == "replace"
 
 
 def test_example_config_is_valid():

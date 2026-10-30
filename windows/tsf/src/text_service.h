@@ -112,7 +112,7 @@ class TextService final : public ITfTextInputProcessorEx,
     DWORD key_sink_cookie_ = 0;
 
     Engine engine_;
-    std::string backend_ = "auto";
+    std::string backend_ = "tsf";
     std::string loaded_config_;
     bool ending_composition_ = false;
 };

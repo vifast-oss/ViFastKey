@@ -76,7 +76,7 @@ const state = {
   enabled: true,
   config: { ...DEFAULT_CONFIG, macros: { ...DEFAULT_MACROS } },
   lastAction: null,
-  mode: "replace",
+  mode: "preedit",
   preeditActive: false,
   preeditStart: 0,
   preeditLen: 0,

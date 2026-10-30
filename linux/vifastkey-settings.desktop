@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=ViFastKey Settings
+Name[vi]=Cấu hình ViFastKey
+Comment=Configure the ViFastKey Vietnamese input method
+Comment[vi]=Cấu hình bộ gõ tiếng Việt ViFastKey
+Exec=vifastkey-settings
+Icon=vifastkey
+Terminal=false
+Categories=Settings;Utility;
+Keywords=vietnamese;ime;input;keyboard;
+StartupWMClass=vifastkey-settings

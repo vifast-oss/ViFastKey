@@ -88,7 +88,6 @@ class ImeSession:
         self.raw: list[str] = []
         self.word = ""             # NFC, chữ đang hiển thị của từ hiện tại
         self.literal = False       # từ đang ở chế độ thô (sau Backspace vào từ không tái tạo được)
-        self.literal_fresh = False # literal vừa phát sinh ở phím cuối, cho Backspace thử rebuild
         self.escaped = False       # từng gõ escape đôi phím thanh (pharr, vissa)
         self.cap_next = False      # viết hoa đầu câu
         self._pending_end = False  # vừa gõ dấu kết câu, chờ dấu cách
@@ -147,8 +146,6 @@ class ImeSession:
         if res.rendered:
             self.escaped = True
         if res.restored:
-            if not self.literal:
-                self.literal_fresh = True             # vừa bị invalid ở phím cuối
             self.literal = True                        # dính chế độ thô: text + s -> texts
         if res.restored and self.adopted:              # 'việt' + 'f' -> 'việtf', không phải 'vieetjf'
             word, n = self.adopted
@@ -168,7 +165,6 @@ class ImeSession:
 
     def reset(self) -> None:
         self.raw, self.word, self.literal, self.escaped = [], "", False, False
-        self.literal_fresh = False
         self._composer: Composer | None = None
         self.adopted: tuple[str, int] | None = None   # (từ cũ đã nạp lại, số phím thô của nó)
 
@@ -319,8 +315,6 @@ class ImeSession:
     def _letter(self, key: str) -> Action:
         ch = key
         self.last = None
-        if self.literal:
-            self.literal_fresh = False
         if not self.raw:
             if self.cap_next:
                 ch = ch.upper()
@@ -379,23 +373,29 @@ class ImeSession:
             act = self._show("")
             self.reset()
             return act
-        # Gõ nhầm một phím lặp ở cuối làm từ thành invalid (nhuwngg):
-        # bỏ phím cuối rồi thử biến đổi lại phần còn lại. Chỉ áp dụng khi
-        # literal vừa phát sinh ở phím cuối và hai phím cuối trùng nhau.
-        if (self.literal_fresh and len(self.raw) >= 2
+        # Bỏ phím lặp ở cuối từ literal và thử biến đổi phần còn lại.
+        # Làm được nhiều lần liên tiếp: nhuwnggg -> BS -> nhuwngg -> BS -> nhưng;
+        # textt -> BS -> text (vẫn literal), không biến thành tẽ.
+        if (self.literal and len(self.raw) >= 2
                 and self.raw[-1].lower() == self.raw[-2].lower()):
-            self.raw.pop()
-            self.literal = False
-            self.escaped = False
-            self.literal_fresh = False
+            candidate = list(self.raw[:-1])
+            probe = Composer(self.im, self.opt, candidate)
+            res = probe.result(False)
             self.adopted = None
             self._composer = None
-            return self._show(self._compute())
+            if not res.restored:
+                self.raw = candidate
+                self.literal = False
+                self.escaped = False
+                return self._show(self._compute())
+            self.raw = candidate
+            self.literal = True
+            self.escaped = False
+            return self._show(''.join(candidate))
         # Từ đã escape đôi phím thanh phải quay lại được dấu khi xoá và gõ tiếp
         # (phar + rr, xoá 2 r, gõ r -> phả). Từ literal thường vẫn giữ raw.
         raw = rebuild(target, self.im, self.opt) if (self.escaped or not self.literal) else None
         self.adopted = None
-        self.literal_fresh = False
         if raw is not None:
             self.raw, self.literal = raw, False
             self.escaped = False

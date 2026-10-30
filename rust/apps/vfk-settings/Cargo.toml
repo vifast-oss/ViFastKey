@@ -1,0 +1,24 @@
+[package]
+name = "vifastkey-settings"
+description = "UI cấu hình ViFastKey cho desktop (egui)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[[bin]]
+name = "vifastkey-settings"
+path = "src/main.rs"
+
+[dependencies]
+vfk-config = { workspace = true }
+vfk-engine = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+eframe = "0.32.3"
+egui = "0.32.3"
+rfd = "0.17"
+
+[dev-dependencies]
+tempfile = "3"

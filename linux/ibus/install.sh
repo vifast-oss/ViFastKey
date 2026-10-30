@@ -10,6 +10,12 @@ PREFIX="${PREFIX:-$HOME/.local}"
 COMP="${IBUS_COMPONENT_DIR:-/usr/share/ibus/component}"
 DEST="$PREFIX/share/vifastkey/ibus"
 
+# Bản phát hành đóng gói kèm wheel; cài wheel trước để engine import được.
+WHEEL="$(find "$HERE" -maxdepth 1 -name 'vifastkey-*.whl' -print -quit 2>/dev/null || true)"
+if [ -n "$WHEEL" ]; then
+    python3 -m pip install --user "$WHEEL"
+fi
+
 mkdir -p "$DEST"
 install -m 0755 "$HERE/ibus_engine.py" "$DEST/ibus_engine.py"
 python3 -m py_compile "$DEST/ibus_engine.py"

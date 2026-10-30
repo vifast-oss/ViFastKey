@@ -187,8 +187,6 @@ pub struct ImeSession {
     word: String,
     /// Từ đang ở chế độ thô (sau Backspace vào từ không tái tạo được).
     literal: bool,
-    /// Literal vừa phát sinh ở phím cuối, cho Backspace thử biến đổi lại.
-    literal_fresh: bool,
     /// Từng gõ escape đôi phím thanh (pharr, vissa).
     escaped: bool,
     /// Viết hoa đầu câu.
@@ -222,7 +220,6 @@ impl ImeSession {
             raw: Vec::new(),
             word: String::new(),
             literal: false,
-            literal_fresh: false,
             escaped: false,
             cap_next: false,
             pending_end: false,
@@ -342,9 +339,6 @@ impl ImeSession {
             self.escaped = true;
         }
         if res.restored {
-            if !self.literal {
-                self.literal_fresh = true; // vừa bị invalid ở phím cuối
-            }
             self.literal = true; // dính chế độ thô: text + s -> texts
             if let Some((word, n)) = &self.adopted {
                 // 'Việt' + 'f' -> 'Việtf', không phải 'vieetjf'
@@ -374,7 +368,6 @@ impl ImeSession {
         self.raw.clear();
         self.word.clear();
         self.literal = false;
-        self.literal_fresh = false;
         self.escaped = false;
         self.composer = None;
         self.adopted = None;
@@ -611,9 +604,6 @@ impl ImeSession {
     fn letter(&mut self, key: char) -> Action {
         let mut ch = key;
         self.last = None;
-        if self.literal {
-            self.literal_fresh = false;
-        }
         if self.raw.is_empty() {
             if self.cap_next {
                 ch = upper(ch);
@@ -710,19 +700,28 @@ impl ImeSession {
             self.reset();
             return act;
         }
-        // Gõ nhầm một phím lặp ở cuối làm từ thành invalid (nhuwngg):
-        // bỏ phím cuối rồi thử biến đổi lại phần còn lại. Chỉ áp dụng khi
-        // literal vừa phát sinh ở phím cuối và hai phím cuối trùng nhau.
-        if self.literal_fresh
+        // Bỏ phím lặp ở cuối từ literal và thử biến đổi phần còn lại.
+        // Làm được nhiều lần liên tiếp: nhuwnggg -> BS -> nhuwngg -> BS -> nhưng;
+        // textt -> BS -> text (vẫn literal), không biến thành tẽ.
+        if self.literal
             && self.raw.len() >= 2
             && self.raw[self.raw.len() - 1].eq_ignore_ascii_case(&self.raw[self.raw.len() - 2])
         {
-            self.raw.pop();
-            self.literal = false;
-            self.escaped = false;
-            self.literal_fresh = false;
+            let candidate: Vec<char> = self.raw[..self.raw.len() - 1].to_vec();
+            let probe = Composer::with_raw(self.im(), self.opt(), &candidate);
+            let res = probe.result(false);
             self.adopted = None;
             self.composer = None;
+            if !res.restored {
+                self.raw = candidate;
+                self.literal = false;
+                self.escaped = false;
+                let text = self.compute(false);
+                return self.show(text, None);
+            }
+            self.raw = candidate;
+            self.literal = true;
+            self.escaped = false;
             let text = self.compute(false);
             return self.show(text, None);
         }
@@ -730,7 +729,6 @@ impl ImeSession {
         // (pharr -> phar -> phả). Từ literal thường vẫn giữ raw.
         let raw = if self.escaped || !self.literal { rebuild(&target, self.im(), &self.opt()) } else { None };
         self.adopted = None;
-        self.literal_fresh = false;
         match raw {
             Some(r) => {
                 self.raw = r;
