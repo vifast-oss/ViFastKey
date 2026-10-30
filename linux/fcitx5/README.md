@@ -18,6 +18,14 @@ Thêm **ViFastKey** trong Fcitx5 Configuration → Input Method.
 `build.sh` build Rust staticlib, addon và chạy test adapter bằng
 `InputContext` giả lập (không cần X/Wayland).
 
+Release GitHub có artifact `vifastkey-fcitx5-linux-x86_64.tar.gz` (prefix `/usr`):
+
+```bash
+tar -tzf vifastkey-fcitx5-linux-x86_64.tar.gz
+sudo tar -xzf vifastkey-fcitx5-linux-x86_64.tar.gz -C /
+fcitx5 -r
+```
+
 Đã test runtime trên Ubuntu 26.04 + Fcitx5 5.1.19 trong Xvfb/Openbox:
 addon load `vifastkey`, gõ `tieengs` → `tiếng` qua GTK entry. CI dùng Fcitx5
 5.1.7; addon build + CTest pass trên cả hai phiên bản.

@@ -168,6 +168,28 @@ jobs:
           name: vifastkey-android-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+      - name: Build signed release if secrets are configured
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          VIFASTKEY_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          VIFASTKEY_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          VIFASTKEY_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "Android signing secrets not configured; skipping release build"
+            exit 0
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/vifastkey.jks"
+          export VIFASTKEY_KEYSTORE="$RUNNER_TEMP/vifastkey.jks"
+          ./android/build.sh release
+          gradle -p android bundleRelease --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vifastkey-android-release
+          path: |
+            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: ignore
 
   ios-app:
     name: iOS simulator app
