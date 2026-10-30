@@ -65,6 +65,9 @@ Fcitx5, macOS IMK, iOS, Android và Windows đã dùng planner này. IBus Python
 `python/vfk_adapter_core.py` — bản port cùng contract — và chạy chung
 `adapter-conformance`; có thể chuyển sang C ABI khi đóng gói extension nhị phân.
 
+Host composition / preedit lồng (Gboard, TSF/IMK, webtop → Linux) dùng một guard
+riêng trong adapter-core; xem [`HOST_COMPOSITION.md`](HOST_COMPOSITION.md).
+
 ## 2. Chọn output mode
 
 | Mode | Dùng khi | Cách áp |
