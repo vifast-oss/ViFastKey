@@ -36,7 +36,9 @@
         <a href="#go-thu">Gõ thử</a>
         <a href="#tinh-nang">Tính năng</a>
         <a href="#kien-truc">Kiến trúc</a>
+        <a href="#san-pham">Sản phẩm</a>
         <a href="#api">API Python</a>
+        <a href="#gop-y">Góp ý</a>
         <a href="#tai-ve">Tải về</a>
       </nav>
       <span class="header-live" id="header-live" title="API Python đang chạy">
@@ -289,6 +291,46 @@ curl -s https://vifastkey.hoctuthien.com/api/type \
       </div>
     </section>
 
+    <section class="section wrap" id="san-pham">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">Sản phẩm</div>
+          <h2>Hai sản phẩm,<br>một hệ sinh thái.</h2>
+        </div>
+        <p>Cùng chạy local-first, cùng mục tiêu tiếng Việt nhẹ và nhanh: một bên gõ thành chữ, một bên đọc thành tiếng.</p>
+      </div>
+      <div class="product-grid">
+        <article class="product-card current">
+          <span class="p-tag">Đang xem · Bộ gõ</span>
+          <h3>ViFastKey</h3>
+          <p>Bộ gõ tiếng Việt nhỏ, nhanh, thuần logic trên lõi Rust.</p>
+          <ul class="product-list">
+            <li>Telex, Simple Telex, VNI và VIQR</li>
+            <li>13.337 ca core + 3.000 kịch bản engine</li>
+            <li>WASM, C ABI, API Python; app desktop và mobile</li>
+          </ul>
+          <div class="product-actions">
+            <a class="primary-btn" href="#go-thu">Gõ thử</a>
+            <a class="text-btn" href="#tai-ve">Tải về <span aria-hidden="true">→</span></a>
+          </div>
+        </article>
+        <article class="product-card">
+          <span class="p-tag">Cùng hệ sinh thái · TTS</span>
+          <h3>ViFastTts</h3>
+          <p>Giọng đọc tiếng Việt non-autoregressive, ONNX CPU, 24 kHz.</p>
+          <ul class="product-list">
+            <li>Model Ngọc Huyền small 6,1M tham số</li>
+            <li>Windows, macOS, Linux, Android, iOS, extension</li>
+            <li>API REST/stream, CLI server, Python, ONNX</li>
+          </ul>
+          <div class="product-actions">
+            <a class="primary-btn" href="https://vifasttts.hoctuthien.com/" target="_blank" rel="noopener">Mở ViFastTts <span aria-hidden="true">↗</span></a>
+            <a class="text-btn" href="https://github.com/dvchd/ViFastTts" target="_blank" rel="noopener">GitHub <span aria-hidden="true">↗</span></a>
+          </div>
+        </article>
+      </div>
+    </section>
+
     <section class="section wrap" id="tai-ve">
       <div class="section-head compact">
         <div>
@@ -329,9 +371,36 @@ curl -s https://vifastkey.hoctuthien.com/api/type \
         <span>hoặc</span>
         <code>python -m apps.vfk_cli --text "Tieengs Vieejt"</code>
       </div>
-      <div class="cli-line">
-        <span>Dự án liên quan:</span>
-        <a href="https://vifasttts.hoctuthien.com/" target="_blank" rel="noopener"><strong>ViFastTts</strong> — giọng đọc tiếng Việt 6,1M, 24 kHz, ONNX CPU ↗</a>
+    </section>
+    <section class="section wrap" id="gop-y">
+      <div class="feedback-panel">
+        <div class="feedback-copy">
+          <div class="eyebrow">Góp ý</div>
+          <h2>Nói cho mình biết.</h2>
+          <p>Báo lỗi, đề xuất tính năng hoặc góp ý nội dung. Nội dung và liên hệ chỉ admin xem, không hiển thị công khai.</p>
+          <ul>
+            <li>Lỗi gõ, lỗi cài đặt hoặc lỗi trên một ứng dụng cụ thể.</li>
+            <li>Đề xuất tính năng, kiểu gõ hoặc bảng mã mới.</li>
+            <li>Góp ý cho ViFastTts? Gửi ở trang ViFastTts.</li>
+          </ul>
+        </div>
+        <form class="feedback-form" id="feedback-form">
+          <label class="feedback-label" for="feedback-category">Loại</label>
+          <select class="select" id="feedback-category" name="category">
+            <option value="gop_y">Góp ý chung</option>
+            <option value="cai_tien">Đề xuất cải tiến</option>
+            <option value="bao_loi">Báo lỗi</option>
+          </select>
+          <label class="feedback-label" for="feedback-message">Nội dung</label>
+          <textarea class="feedback-message" id="feedback-message" name="message" rows="4" minlength="5" maxlength="1000" required placeholder="Ví dụ: gõ “tieengs” trên Firefox ra sai dấu…"></textarea>
+          <label class="feedback-label" for="feedback-contact">Liên hệ (không bắt buộc)</label>
+          <input class="feedback-input" id="feedback-contact" name="contact" type="text" maxlength="120" autocomplete="email" placeholder="Email hoặc cách liên hệ">
+          <input class="feedback-hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="feedback-actions">
+            <span class="feedback-status" id="feedback-status" role="status"></span>
+            <button class="primary-btn" type="submit" id="feedback-submit">Gửi góp ý</button>
+          </div>
+        </form>
       </div>
     </section>
   </main>
@@ -348,42 +417,15 @@ curl -s https://vifastkey.hoctuthien.com/api/type \
         <a href="https://github.com/dvchd/ViFastKey" target="_blank" rel="noopener">GitHub</a>
         <a href="https://github.com/dvchd/ViFastKey#readme" target="_blank" rel="noopener">Tài liệu</a>
         <a href="https://vifasttts.hoctuthien.com/" target="_blank" rel="noopener">ViFastTts</a>
+        <a href="#san-pham">Sản phẩm</a>
         <a href="#api">API</a>
         <a href="#go-thu">Gõ thử</a>
-        <button class="footer-link-btn" type="button" id="open-feedback">Góp ý</button>
+        <a href="#gop-y">Góp ý</a>
       </div>
     </div>
   </footer>
 
-  <dialog class="feedback-dialog" id="feedback-dialog" aria-labelledby="feedback-title">
-    <form class="feedback-form" id="feedback-form">
-      <div class="feedback-head">
-        <div>
-          <div class="eyebrow">Góp ý</div>
-          <h2 id="feedback-title">Nói cho mình biết</h2>
-        </div>
-        <button class="feedback-close" type="button" id="close-feedback" aria-label="Đóng">×</button>
-      </div>
-      <p class="feedback-lede">Báo lỗi, đề xuất tính năng hoặc góp ý nội dung. Nội dung chỉ admin xem, không hiển thị công khai.</p>
-      <label class="feedback-label" for="feedback-category">Loại</label>
-      <select class="select" id="feedback-category" name="category">
-        <option value="gop_y">Góp ý chung</option>
-        <option value="cai_tien">Đề xuất cải tiến</option>
-        <option value="bao_loi">Báo lỗi</option>
-      </select>
-      <label class="feedback-label" for="feedback-message">Nội dung</label>
-      <textarea class="feedback-message" id="feedback-message" name="message" rows="4" minlength="5" maxlength="1000" required placeholder="Ví dụ: gõ “tieengs” trên Firefox ra sai dấu…"></textarea>
-      <label class="feedback-label" for="feedback-contact">Liên hệ (không bắt buộc)</label>
-      <input class="feedback-input" id="feedback-contact" name="contact" type="text" maxlength="120" autocomplete="email" placeholder="Email hoặc cách liên hệ">
-      <input class="feedback-hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-      <div class="feedback-actions">
-        <span class="feedback-status" id="feedback-status" role="status"></span>
-        <button class="primary-btn" type="submit" id="feedback-submit">Gửi góp ý</button>
-      </div>
-    </form>
-  </dialog>
-
-  <script type="module" src="app.js?v=20261030d"></script>
-  <script type="module" src="server-demo.js?v=20261030d"></script>
+  <script type="module" src="app.js?v=20261030e"></script>
+  <script type="module" src="server-demo.js?v=20261030e"></script>
 </body>
 </html>

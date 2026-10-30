@@ -163,33 +163,10 @@ function setupServerDemo() {
 }
 
 function setupFeedback() {
-  const dialog = byId("feedback-dialog");
   const form = byId("feedback-form");
-  const open = byId("open-feedback");
-  const close = byId("close-feedback");
   const status = byId("feedback-status");
   const submit = byId("feedback-submit");
-  if (!dialog || !form || !open) return;
-
-  const openDialog = () => {
-    if (typeof dialog.showModal === "function") dialog.showModal();
-    else dialog.setAttribute("open", "");
-    byId("feedback-message")?.focus();
-  };
-  const closeDialog = () => {
-    if (typeof dialog.close === "function") dialog.close();
-    else dialog.removeAttribute("open");
-    if (status) {
-      status.textContent = "";
-      status.className = "feedback-status";
-    }
-  };
-
-  open.addEventListener("click", openDialog);
-  close?.addEventListener("click", closeDialog);
-  dialog.addEventListener("click", (event) => {
-    if (event.target === dialog) closeDialog();
-  });
+  if (!form) return;
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -223,7 +200,6 @@ function setupFeedback() {
         status.className = "feedback-status ok";
       }
       form.reset();
-      setTimeout(closeDialog, 1400);
     } catch (error) {
       if (status) {
         status.textContent = error.message || "Gửi chưa được; thử lại sau.";
@@ -234,7 +210,7 @@ function setupFeedback() {
     }
   });
 
-  if (location.hash === "#gop-y") openDialog();
+  if (location.hash === "#gop-y") byId("feedback-message")?.focus();
 }
 
 setupServerDemo();

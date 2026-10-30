@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Web
+
+- Thêm mục **Sản phẩm** lớn giới thiệu ViFastKey + ViFastTts.
+- Chuyển **Góp ý** từ popup sang mục hiển thị trên landing.
+
 ### Nghiên cứu & đối chiếu
 
 - Phân tích 20 dự án IME tiếng Việt công khai (SKey, UniKey, OpenKey, VnKey, Vigo, GõViệt,
@@ -34,6 +39,23 @@
   config JSON một phần, app profile, dictionary, phiên bản.
 - Rust/WASM: `Config::apply_json_patch` dùng chung; C ABI giờ thật sự nhận JSON cấu hình một phần
   (trước đây JSON thiếu trường bị thay bằng mặc định).
+
+### Desktop UI
+
+- Thêm `vfk-config`: đọc/merge/validate/ghi atomic config, giữ key lạ, backup và phát hiện conflict.
+- Thêm `vifastkey-settings` (egui 0.32.3): tab Tổng quan/Kiểu gõ/Macro/Ứng dụng/Nâng cao/Chẩn đoán,
+  gõ thử bằng engine, `--check` và `--self-test`.
+- UI chỉ ghi field đã sửa; không materialize preset `app_profiles`; `app_modes` là runtime state.
+- Engine merge `app_profiles` người dùng lên preset theo từng app; preset khác không bị mất.
+- macOS preferences thêm Unicode NFC/NFD, app loại trừ, auto-restore English, macro enabled,
+  default Việt/Anh, restore sau dấu cách; nội dung cuộn được.
+- Import/export JSON qua file dialog + CLI `--import`/`--export`; lưu theme/tab vào
+  `settings-ui.json`; tab Windows backend (`windows.json`).
+- macOS `persistEngineConfig` chỉ merge `app_modes`, không ghi đè toàn bộ config.
+- macOS IMK, Windows hook và IBus poll mtime để reload config không cần restart.
+- Windows hook: `Ctrl+Shift+,` mở settings; installer tạo Start Menu shortcut.
+- Thêm `docs/DESKTOP_UI.md`, desktop entry Linux và build settings trong CI/release.
+- Workspace MSRV 1.85 → 1.89 do dependency transitive của eframe/egui 0.32.3.
 
 ### CLI
 
