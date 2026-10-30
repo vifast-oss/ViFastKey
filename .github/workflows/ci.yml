@@ -103,7 +103,7 @@ jobs:
             -DVFK_RUST_PROFILE=release `
             -DVFK_FFI_LIB_DIR="$PWD/rust/target/i686-pc-windows-msvc/release"
           cmake --build build/tsf-x86 --config Release
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ViFastKey-windows-tsf
           path: |
@@ -177,7 +177,7 @@ jobs:
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: ./android/build.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ViFastKey-android-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
@@ -199,7 +199,7 @@ jobs:
         run: |
           DEVICE=$(xcrun simctl list devices available | awk -F '[()]' '/iPhone/ {print $2; exit}')
           xcodebuild -project ios/ViFastKey.xcodeproj -scheme ViFastKeyHost             -sdk iphonesimulator -destination "id=$DEVICE"             -derivedDataPath ios/build ARCHS=arm64 ONLY_ACTIVE_ARCH=YES             CODE_SIGNING_ALLOWED=NO -only-testing:ViFastKeyHostTests test
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ViFastKey-ios-simulator
           path: ios/build/Build/Products/Debug-iphonesimulator/ViFastKeyHost.app
@@ -236,7 +236,7 @@ jobs:
       - name: Build app + self-test
         run: ./macos/build.sh
       - name: Upload app bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ViFastKey-macos-app
           path: macos/build/ViFastKey.app

@@ -46,7 +46,7 @@ jobs:
           else
             tar -czf "vifastkey-$(echo '${{ runner.os }}' | tr '[:upper:]' '[:lower:]').tar.gz" -C dist .
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vifastkey-${{ runner.os }}
           path: |
@@ -89,7 +89,7 @@ jobs:
           Copy-Item windows/installer/install.ps1 windows-package
           Copy-Item windows/installer/uninstall.ps1 windows-package
           Compress-Archive -Path windows-package\* -DestinationPath vifastkey-windows-tsf.zip
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vifastkey-windows-tsf
           path: vifastkey-windows-tsf.zip
@@ -116,7 +116,7 @@ jobs:
           ./chrome-extension/build.sh
           cd chrome-extension
           zip -r ../vifastkey-chrome-extension.zip dist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vifastkey-WASM
           path: |
@@ -137,7 +137,7 @@ jobs:
         run: |
           rustup target add x86_64-apple-darwin
           ./macos/package.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vifastkey-macos-app
           path: macos/build/ViFastKey-macos-universal.zip
@@ -169,7 +169,7 @@ jobs:
           MULTIARCH="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
           test -f "fcitx5-root/usr/lib/${MULTIARCH}/fcitx5/libvifastkey.so"
           tar -czf vifastkey-fcitx5-linux-x86_64.tar.gz -C fcitx5-root .
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vifastkey-fcitx5
           path: vifastkey-fcitx5-linux-x86_64.tar.gz
@@ -204,7 +204,7 @@ jobs:
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: ./android/build.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vifastkey-android-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
@@ -224,7 +224,7 @@ jobs:
           export VIFASTKEY_KEYSTORE="$RUNNER_TEMP/vifastkey.jks"
           ./android/build.sh release
           gradle -p android bundleRelease --no-daemon
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vifastkey-android-release
           path: |
@@ -244,7 +244,7 @@ jobs:
           rustup target add aarch64-apple-ios-sim
       - name: Build simulator app
         run: ./ios/package.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vifastkey-ios-app
           path: ios/build/ViFastKey-ios-simulator.zip
