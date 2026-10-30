@@ -1484,6 +1484,14 @@ code {
   line-height: 1.55;
 }
 
+.stats-note a {
+  color: var(--accent-dark);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.stats-note a:hover { text-decoration: underline; }
+
 /* ---------------------------------------------------------------- feedback */
 .feedback-panel {
   display: grid;
