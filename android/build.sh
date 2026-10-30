@@ -12,5 +12,11 @@ mkdir -p "$HERE/app/src/main/jniLibs"
 (cd "$ROOT/rust" && cargo ndk -t arm64-v8a -t x86_64 \
   -o "$HERE/app/src/main/jniLibs" build --release -p vfk-jni)
 printf 'sdk.dir=%s\n' "$ANDROID_HOME" > "$HERE/local.properties"
-gradle -p "$HERE" assembleDebug --no-daemon
-echo "APK: $HERE/app/build/outputs/apk/debug/app-debug.apk"
+MODE="${1:-debug}"
+if [ "$MODE" = "release" ]; then
+  gradle -p "$HERE" assembleRelease --no-daemon
+  echo "APK: $HERE/app/build/outputs/apk/release/app-release.apk"
+else
+  gradle -p "$HERE" assembleDebug --no-daemon
+  echo "APK: $HERE/app/build/outputs/apk/debug/app-debug.apk"
+fi

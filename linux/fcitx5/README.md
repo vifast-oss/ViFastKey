@@ -85,7 +85,8 @@ field, action gần nhất; log adapter không chứa nội dung từ.
 - Chưa có preferences GUI/tray riêng; sửa JSON hoặc dùng status action.
 - Chưa dùng `uinput`/Libei/XTest. Nếu app không nhận surrounding text và không
   nhận `forwardKey`, adapter fallback về preedit/pass-through thay vì inject phím.
-- Chưa nạp `user_words.txt`/dictionary file; engine dùng dictionary mặc định.
+- `~/.config/vifastkey/user_words.txt` được nạp thêm vào dictionary tiếng Việt
+  (có thể override bằng `VIFASTKEY_USER_WORDS`).
 - Chưa áp `AppProfile.charset` khi commit; Fcitx5 nhận UTF-8. Dùng `vfk-charset`
   cho chuyển đổi clipboard/file hoặc app legacy có adapter riêng.
 - `output_mode=replace` là opt-in theo app và cần surrounding text; mặc định vẫn

@@ -41,7 +41,7 @@ Documentation = "https://github.com/dvchd/ViFastKey#readme"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["vi_syllable*", "vfk_core*", "vfk_engine*", "vfk_ffi*", "vfk_suggest*", "adapters*", "apps*", "tools*"]
+include = ["vi_syllable*", "vfk_core*", "vfk_engine*", "vfk_ffi*", "vfk_adapter_core*", "vfk_suggest*", "adapters*", "apps*", "tools*"]
 exclude = ["tests*", "conformance*"]
 
 [tool.setuptools.package-data]
@@ -61,4 +61,4 @@ exclude = ["conformance"]
 select = ["E9", "F", "W", "I"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["vi_syllable", "vfk_core", "vfk_engine", "vfk_ffi", "vfk_suggest", "adapters", "apps", "tools"]
+known-first-party = ["vi_syllable", "vfk_core", "vfk_engine", "vfk_ffi", "vfk_adapter_core", "vfk_suggest", "adapters", "apps", "tools"]

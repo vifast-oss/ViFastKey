@@ -19,7 +19,8 @@ except (ImportError, ValueError) as exc:  # pragma: no cover - phụ thuộc Lin
     raise SystemExit(1)
 
 from adapters.ibus import IbusCore  # noqa: E402
-from vfk_engine import Commit, PassThrough, Preedit, Replace  # noqa: E402
+from vfk_adapter_core import PlanKind, plan_action  # noqa: E402
+from vfk_engine import FieldKind  # noqa: E402
 
 
 SPECIAL = {
@@ -49,11 +50,13 @@ class ViFastKeyEngine(IBus.Engine):
     def do_process_key_event(self, keyval, keycode, state):
         if state & IBus.ModifierType.RELEASE_MASK:
             return False
+        self._sync_field_kind()
         ctrl = bool(state & IBus.ModifierType.CONTROL_MASK)
         alt = bool(state & IBus.ModifierType.MOD1_MASK)
         meta = bool(state & (IBus.ModifierType.SUPER_MASK | IBus.ModifierType.META_MASK))
+        before = self.core.display
         if ctrl and not alt and not meta and keyval == IBus.KEY_F:
-            self._apply(self.core.toggle())
+            self._apply(self.core.toggle(), before)
             return True
 
         key = SPECIAL.get(keyval)
@@ -64,23 +67,55 @@ class ViFastKeyEngine(IBus.Engine):
             key = chr(codepoint)
 
         self._refresh_surrounding()
-        return self._apply(self.core.process(key, ctrl=ctrl, alt=alt, meta=meta))
+        return self._apply(self.core.process(key, ctrl=ctrl, alt=alt, meta=meta), before)
 
     def do_focus_in(self):
+        self._sync_field_kind()
         try:
             app_id = self.get_program()
         except Exception:  # pragma: no cover - tùy phiên bản IBus
             app_id = None
-        self._apply(self.core.focus_in(app_id))
+        before = self.core.display
+        self._apply(self.core.focus_in(app_id), before)
 
     def do_focus_out(self):
-        self._apply(self.core.focus_out())
+        before = self.core.display
+        self._apply(self.core.focus_out(), before)
 
     def do_reset(self):
         self.core.reset()
         self.hide_preedit_text()
 
     # ---------- helpers ----------
+    def _sync_field_kind(self):
+        try:
+            purpose = self.get_input_purpose()
+        except Exception:  # pragma: no cover - tùy phiên bản IBus
+            return
+        purpose_enum = getattr(IBus, "InputPurpose", None)
+        if purpose_enum is None:
+            return
+        password = getattr(purpose_enum, "PASSWORD", None)
+        url = getattr(purpose_enum, "URL", None)
+        email = getattr(purpose_enum, "EMAIL", None)
+        number = getattr(purpose_enum, "NUMBER", None)
+        digits = getattr(purpose_enum, "DIGITS", None)
+        phone = getattr(purpose_enum, "PHONE", None)
+        kind = FieldKind.TEXT
+        if password is not None and purpose == password:
+            kind = FieldKind.PASSWORD
+        elif url is not None and purpose == url:
+            kind = FieldKind.URL
+        elif email is not None and purpose == email:
+            kind = FieldKind.EMAIL
+        elif (number is not None and purpose == number) or (
+                digits is not None and purpose == digits) or (
+                phone is not None and purpose == phone):
+            kind = FieldKind.NUMBER
+        if kind != self.core.field_kind:
+            before = self.core.display
+            self._apply(self.core.set_field_kind(kind), before)
+
     def _refresh_surrounding(self):
         try:
             result = self.get_surrounding_text()
@@ -91,37 +126,49 @@ class ViFastKeyEngine(IBus.Engine):
             self.core.set_surrounding(None)
             return
         try:
-            text_obj, cursor, _anchor = result
+            text_obj, cursor, anchor = result
             text = text_obj.get_text() if hasattr(text_obj, "get_text") else str(text_obj)
-            self.core.set_surrounding(text[:cursor] if cursor >= 0 else text)
+            self.core.set_surrounding(text, cursor, anchor)
         except Exception:
             self.core.set_surrounding(None)
 
-    def _apply(self, action) -> bool:
-        if isinstance(action, PassThrough):
+    def _apply(self, action, before_display: str) -> bool:
+        plan = plan_action(
+            action,
+            self.core.field_kind,
+            before_display,
+            self.core.surrounding_snapshot,
+            self.core.profile,
+        )
+        if plan.kind in (PlanKind.PASS, PlanKind.FAIL_SAFE):
+            if plan.kind == PlanKind.FAIL_SAFE:
+                self.core.reset()
+                self.hide_preedit_text()
             return False
-        if isinstance(action, Preedit):
-            if action.text:
-                self.update_preedit_text(IBus.Text.new_from_string(action.text),
-                                         action.cursor, True)
+        if plan.kind == PlanKind.PREEDIT:
+            if plan.text:
+                self.update_preedit_text(
+                    IBus.Text.new_from_string(plan.text), plan.cursor_utf16, True
+                )
                 self.show_preedit_text()
             else:
                 self.hide_preedit_text()
             return True
-        if isinstance(action, Commit):
-            self.commit_text(IBus.Text.new_from_string(action.text))
+        if plan.kind == PlanKind.COMMIT:
+            self.commit_text(IBus.Text.new_from_string(plan.text))
             self.hide_preedit_text()
-            return not action.pass_key
-        if isinstance(action, Replace):
-            if action.delete_before:
+            return not plan.pass_key
+        if plan.kind == PlanKind.REPLACE:
+            if plan.delete_chars:
                 try:
-                    self.delete_surrounding_text(-action.delete_before, action.delete_before)
+                    self.delete_surrounding_text(-plan.delete_chars, plan.delete_chars)
                 except Exception:
-                    # IBus/app không hỗ trợ surrounding: không thể Replace an toàn.
+                    self.core.reset()
+                    self.hide_preedit_text()
                     return False
-            self.commit_text(IBus.Text.new_from_string(action.insert))
+            self.commit_text(IBus.Text.new_from_string(plan.text))
             self.hide_preedit_text()
-            return not action.pass_key
+            return not plan.pass_key
         return False
 
 

@@ -240,6 +240,20 @@ void VifastkeyState::syncConfig(bool force) {
     }
 }
 
+void VifastkeyState::syncUserWords() {
+    if (!session_ || !config_) {
+        return;
+    }
+    if (config_->userWordsGeneration() == userWordsGeneration_) {
+        return;
+    }
+    const std::string &words = config_->userWords();
+    if (!words.empty()) {
+        vfk_add_dictionary_words(session_, words.c_str(), true);
+    }
+    userWordsGeneration_ = config_->userWordsGeneration();
+}
+
 void VifastkeyState::syncProgram() {
     if (!session_ || !ic_) {
         return;
@@ -326,6 +340,7 @@ void VifastkeyState::syncProfileMode() {
 
 void VifastkeyState::syncContext(bool forceConfig) {
     syncConfig(forceConfig);
+    syncUserWords();
     syncProgram();
     syncFieldKind();
     if (!isDisabled()) {
@@ -338,6 +353,7 @@ void VifastkeyState::activate(const std::string &program) {
         return;
     }
     syncConfig(true);
+    syncUserWords();
     const std::string before = displayText();
     const VfkAction action =
         vfk_focus_changed(session_, program.empty() ? nullptr : program.c_str());

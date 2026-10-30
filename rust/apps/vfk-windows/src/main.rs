@@ -37,6 +37,7 @@ mod win {
 
     thread_local! {
         static SESSION: RefCell<Option<ImeSession>> = const { RefCell::new(None) };
+        static LAST_APP: RefCell<Option<String>> = const { RefCell::new(None) };
     }
 
     #[derive(Clone)]
@@ -237,6 +238,22 @@ mod win {
         let mut swallowed = false;
         SESSION.with(|s| {
             if let Some(session) = s.borrow_mut().as_mut() {
+                let app = process_name();
+                let changed = LAST_APP.with(|last| {
+                    let is_changed = {
+                        let last_ref = last.borrow();
+                        last_ref.as_deref() != app.as_deref()
+                    };
+                    if is_changed {
+                        *last.borrow_mut() = app.clone();
+                    }
+                    is_changed
+                });
+                if changed {
+                    // Cập nhật app profile/excluded_apps khi đổi foreground
+                    // window. REPLACE mode flush trả Pass nên không mất chữ.
+                    let _ = session.focus_changed(app.as_deref());
+                }
                 let before = session.display();
                 let action = session.process_key(&KeyEvent::parse(&key));
                 let adapter_action = AdapterAction::from(action);

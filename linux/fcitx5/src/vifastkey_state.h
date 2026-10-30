@@ -63,6 +63,7 @@ private:
     std::string displayText() const;
     void refreshSurrounding();
     void syncConfig(bool force);
+    void syncUserWords();
     void syncProgram();
     void syncFieldKind();
     void syncProfileMode();
@@ -97,6 +98,7 @@ private:
     VfkSession *session_ = nullptr;
 
     uint64_t configGeneration_ = 0;
+    uint64_t userWordsGeneration_ = 0;
     std::string program_;
     uint32_t fieldKind_ = VFK_FIELD_TEXT;
     uint32_t mode_ = VFK_MODE_PREEDIT;

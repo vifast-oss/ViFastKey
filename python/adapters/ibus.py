@@ -7,7 +7,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from vfk_engine import Config, ImeSession, KeyEvent, OutputMode, Ports
+from vfk_adapter_core import SurroundingSnapshot
+from vfk_engine import Config, FieldKind, ImeSession, KeyEvent, OutputMode, Ports
 
 from . import JsonFileConfigStore, MemoryConfigStore, WordListDictionary
 
@@ -15,14 +16,25 @@ from . import JsonFileConfigStore, MemoryConfigStore, WordListDictionary
 class _Surrounding:
     def __init__(self) -> None:
         self.text: str | None = None
+        self.cursor: int = 0
+        self.anchor: int = 0
 
-    def set(self, text: str | None) -> None:
+    def set(self, text: str | None, cursor: int | None = None,
+            anchor: int | None = None) -> None:
         self.text = text
+        self.cursor = len(text) if cursor is None and text is not None else (cursor or 0)
+        self.anchor = self.cursor if anchor is None else anchor
 
     def before_cursor(self, n: int) -> str | None:
         if self.text is None:
             return None
-        return self.text[-n:]
+        cursor = max(0, min(self.cursor, len(self.text)))
+        return self.text[:cursor][-n:]
+
+    def snapshot(self) -> SurroundingSnapshot | None:
+        if self.text is None:
+            return None
+        return SurroundingSnapshot(self.text, self.cursor, self.anchor)
 
 
 class IbusCore:
@@ -43,9 +55,27 @@ class IbusCore:
         self.session = ImeSession(
             Ports(self.store, _StaticApp(), self._surrounding, dictionary), mode
         )
+        self.field_kind = FieldKind.TEXT
 
-    def set_surrounding(self, text: str | None) -> None:
-        self._surrounding.set(text)
+    @property
+    def display(self) -> str:
+        return self.session.display
+
+    @property
+    def profile(self):
+        return self.session.profile
+
+    @property
+    def surrounding_snapshot(self) -> SurroundingSnapshot | None:
+        return self._surrounding.snapshot()
+
+    def set_surrounding(self, text: str | None, cursor: int | None = None,
+                        anchor: int | None = None) -> None:
+        self._surrounding.set(text, cursor, anchor)
+
+    def set_field_kind(self, kind: FieldKind):
+        self.field_kind = kind
+        return self.session.set_field_kind(kind)
 
     def process(self, key: str, ctrl: bool = False, alt: bool = False,
                 meta: bool = False):

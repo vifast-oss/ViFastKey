@@ -127,6 +127,8 @@ const char *vfk_config_json(VfkSession *s);
 uint64_t vfk_config_version(VfkSession *s);
 const char *vfk_app_profile_json(VfkSession *s);
 void vfk_load_dictionary(VfkSession *s, const char *english /* nullable */, const char *vietnamese /* nullable */);
+/* Thêm từ (mỗi từ cách nhau khoảng trắng/xuống dòng) vào dictionary của session. */
+void vfk_add_dictionary_words(VfkSession *s, const char *words, bool vietnamese);
 
 /* Bảng mã: mỗi dòng "key\tTên hiển thị". */
 const char *vfk_charset_list(void);

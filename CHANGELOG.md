@@ -75,6 +75,9 @@
   action planner, timing; C ABI `vfk_plan_action`, `vfk_char_to_utf16_offset`,
   `vfk_is_word_codepoint`. Fcitx5/Windows/macOS/iOS dùng planner; Android JNI có
   `NativeEngine.plan`; bộ `adapter-conformance/*.jsonl` giữ hợp đồng hành vi.
+- IBus dùng `python/vfk_adapter_core.py` (cùng contract) và conformance Python.
+- Fcitx5 nạp `user_words.txt`; release workflow thêm macOS app, Fcitx5 tarball,
+  Android APK và iOS simulator app; Android có cấu hình release signing qua env.
 
 ### Chrome extension
 

@@ -61,10 +61,9 @@ codepoint (Fcitx5/IBus); `plan.delete_utf16` dùng cho API UTF-16
 Scenario dùng chung nằm ở [`adapter-conformance/`](../adapter-conformance/README.md).
 Port không nên tự quyết định xoá bao nhiêu ký tự hoặc có được xoá không.
 
-Fcitx5, macOS IMK, iOS, Android và Windows đã dùng planner này. IBus Python hiện
-vẫn dùng engine Python trực tiếp; khi cần đồng bộ tuyệt đối, gọi C ABI
-`vfk_plan_action` qua ctypes hoặc chuyển IBus sang Rust C ABI. Trước mắt, dùng
-`adapter-conformance` làm hợp đồng kiểm thử cho IBus.
+Fcitx5, macOS IMK, iOS, Android và Windows đã dùng planner này. IBus Python dùng
+`python/vfk_adapter_core.py` — bản port cùng contract — và chạy chung
+`adapter-conformance`; có thể chuyển sang C ABI khi đóng gói extension nhị phân.
 
 ## 2. Chọn output mode
 

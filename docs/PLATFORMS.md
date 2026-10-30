@@ -24,9 +24,8 @@ field kind, test bằng `InputContext` giả lập): `docs/research/08-areca-ime
 - timing `wait_ms` từ AppProfile.
 
 Đã dùng ở Fcitx5, macOS IMK, iOS keyboard, Android JNI và Windows hook. IBus Python
-vẫn dùng engine Python trực tiếp; giữ tương thích qua bộ scenario
-[`adapter-conformance/`](../adapter-conformance/README.md), và có thể chuyển sang
-C ABI khi cần đồng bộ tuyệt đối.
+dùng bản port `python/vfk_adapter_core.py` của cùng logic (field policy, guard, plan),
+và chạy chung bộ scenario [`adapter-conformance/`](../adapter-conformance/README.md).
 
 ## Môi trường build hiện tại
 

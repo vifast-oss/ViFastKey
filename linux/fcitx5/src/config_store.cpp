@@ -16,7 +16,8 @@ constexpr auto kRefreshInterval = std::chrono::milliseconds(500);
 } // namespace
 
 ConfigStore::ConfigStore(std::string path)
-    : path_(path.empty() ? defaultPath() : std::move(path)) {
+    : path_(path.empty() ? defaultPath() : std::move(path)),
+      userWordsPath_(defaultUserWordsPath(path_)) {
     refresh(true);
 }
 
@@ -34,6 +35,18 @@ std::string ConfigStore::defaultPath() {
     return {};
 }
 
+std::string ConfigStore::defaultUserWordsPath(const std::string &configPath) {
+    if (const char *overridePath = std::getenv("VIFASTKEY_USER_WORDS");
+        overridePath && *overridePath) {
+        return overridePath;
+    }
+    if (configPath.empty()) {
+        return {};
+    }
+    return (std::filesystem::path(configPath).parent_path() / "user_words.txt")
+        .string();
+}
+
 bool ConfigStore::readFile(const std::string &path, std::string &out) {
     if (path.empty()) {
         return false;
@@ -47,8 +60,62 @@ bool ConfigStore::readFile(const std::string &path, std::string &out) {
     return true;
 }
 
+void ConfigStore::refreshUserWords(bool force) {
+    if (userWordsPath_.empty()) {
+        return;
+    }
+    const auto now = std::chrono::steady_clock::now();
+    if (!force && now - lastUserWordsCheck_ < kRefreshInterval) {
+        return;
+    }
+    lastUserWordsCheck_ = now;
+
+    std::error_code ec;
+    const auto mtime =
+        std::filesystem::last_write_time(std::filesystem::path(userWordsPath_), ec);
+    if (ec) {
+        if (ec == std::errc::no_such_file_or_directory) {
+            if (!userWords_.empty()) {
+                userWords_.clear();
+                ++userWordsGeneration_;
+                FCITX_INFO() << "vifastkey: user_words removed";
+            }
+            lastUserWordsReadFailed_ = false;
+        } else if (!lastUserWordsReadFailed_) {
+            lastUserWordsReadFailed_ = true;
+            FCITX_WARN() << "vifastkey: cannot stat user_words path="
+                         << userWordsPath_ << " error=" << ec.message();
+        }
+        return;
+    }
+    if (!force && mtime == userWordsMtime_) {
+        return;
+    }
+
+    std::string content;
+    if (!readFile(userWordsPath_, content)) {
+        if (!lastUserWordsReadFailed_) {
+            lastUserWordsReadFailed_ = true;
+            FCITX_WARN() << "vifastkey: cannot read user_words path="
+                         << userWordsPath_;
+        }
+        return;
+    }
+    lastUserWordsReadFailed_ = false;
+    userWordsMtime_ = mtime;
+    if (content == userWords_) {
+        return;
+    }
+    userWords_ = std::move(content);
+    ++userWordsGeneration_;
+    FCITX_INFO() << "vifastkey: user_words loaded path=" << userWordsPath_
+                 << " bytes=" << userWords_.size()
+                 << " generation=" << userWordsGeneration_;
+}
+
 void ConfigStore::refresh(bool force) {
     const auto now = std::chrono::steady_clock::now();
+    refreshUserWords(force);
     if (!force && now - lastCheck_ < kRefreshInterval) {
         return;
     }

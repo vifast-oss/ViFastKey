@@ -14,6 +14,7 @@ Bàn phím Android dùng engine Rust qua JNI, không dùng mạng.
 - Hỗ trợ bàn phím vật lý qua `onKeyDown`; cursor/selection guard.
 - Haptic feedback; app icon; suggestion bar giữ chiều cao cố định (không nhảy layout).
 - APK arm64-v8a + x86_64; debug signing.
+- Release build có thể ký bằng keystore qua biến môi trường (xem dưới).
 
 ## Build
 
@@ -46,8 +47,25 @@ và chạm gợi ý.
 - Suggestion bar hiển thị và JNI `suggest` trả dữ liệu.
 - SettingsActivity hiển thị đầy đủ tùy chọn; lưu vào SharedPreferences và engine reload.
 
+## Release / Play Store
+
+Tạo keystore và đặt biến môi trường:
+
+```bash
+keytool -genkeypair -v -keystore vifastkey.jks -alias vifastkey \
+  -keyalg RSA -keysize 2048 -validity 10000
+export VIFASTKEY_KEYSTORE="$PWD/vifastkey.jks"
+export VIFASTKEY_KEYSTORE_PASSWORD=...
+export VIFASTKEY_KEY_ALIAS=vifastkey
+export VIFASTKEY_KEY_PASSWORD=...
+./android/build.sh release
+# -> app/build/outputs/apk/release/app-release.apk
+```
+
+Không commit keystore/password. Nếu chưa có keystore, dùng debug APK để test.
+
 ## Còn lại
 
 - Chưa có theme/size tùy biến, clipboard history, swipe typing.
-- Chưa ký release/Play Store; dùng debug APK để test.
+- Chưa phát hành Play Store; cần signing key, store listing và test trên máy thật.
 - Chưa test trên nhiều hãng/máy thật.

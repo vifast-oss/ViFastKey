@@ -27,7 +27,9 @@ Mở **IBus Preferences → Input Method → Add → Vietnamese → ViFastKey**,
 - Telex/VNI/VIQR, macro, auto-restore tiếng Anh, config
   `~/.config/vifastkey/config.json`.
 - `~/.config/vifastkey/user_words.txt`: thêm từ tiếng Việt cho auto-restore.
-- Surrounding text được lấy từ IBus khi app hỗ trợ; edit previous word dùng `Replace`.
+- Surrounding text đầy đủ (cursor/anchor) được lấy từ IBus khi app hỗ trợ; edit previous
+  word dùng `Replace` qua `vfk_adapter_core` bản Python.
+- Field policy: password/URL/email/number pass-through nếu IBus cung cấp input purpose.
 - `Ctrl+F` (không Shift/Ctrl khác) tạm toggle Việt/Anh. `Ctrl+Shift+F` cũng dùng được
   qua engine nếu IBus không nuốt.
 
@@ -45,4 +47,5 @@ python3 -m py_compile linux/ibus/ibus_engine.py
 - Chưa test runtime trên phiên bản IBus/app cụ thể trong môi trường macOS hiện tại.
 - Chưa có tray/preferences UI riêng; dùng file JSON.
 - Với app không hỗ trợ surrounding/delete, một số thao tác sửa từ cũ bị bỏ qua.
-- Fcitx5 là adapter tiếp theo; dùng chung C ABI/engine.
+- Dùng `python/vfk_adapter_core.py` (port của adapter-core) thay vì C ABI; giữ cùng
+  `adapter-conformance`. Có thể chuyển sang C ABI khi đóng gói extension nhị phân.

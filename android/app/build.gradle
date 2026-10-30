@@ -19,9 +19,24 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
+    signingConfigs {
+        release {
+            def storePath = System.getenv("VIFASTKEY_KEYSTORE")
+            if (storePath) {
+                storeFile file(storePath)
+                storePassword System.getenv("VIFASTKEY_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("VIFASTKEY_KEY_ALIAS")
+                keyPassword System.getenv("VIFASTKEY_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled false
+            if (System.getenv("VIFASTKEY_KEYSTORE")) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }

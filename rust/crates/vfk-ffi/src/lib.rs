@@ -617,6 +617,28 @@ pub unsafe extern "C" fn vfk_app_profile_json(h: *mut VfkSession) -> *const c_ch
     })
 }
 
+/// Thêm từ vào dictionary dùng chung (copy-on-write cho session này).
+/// `vietnamese` true: thêm vào danh sách tiếng Việt; false: tiếng Anh.
+#[no_mangle]
+pub unsafe extern "C" fn vfk_add_dictionary_words(
+    h: *mut VfkSession,
+    words: *const c_char,
+    vietnamese: bool,
+) {
+    let Some(text) = opt_str(words) else { return };
+    with_session(h, (), |s| {
+        let mut sh = s.shared.0.borrow_mut();
+        let dict = Arc::make_mut(&mut sh.dictionary);
+        let target = if vietnamese { &mut dict.vietnamese } else { &mut dict.english };
+        for word in text.split_whitespace() {
+            let word = word.trim().to_lowercase();
+            if !word.is_empty() {
+                target.insert(word);
+            }
+        }
+    })
+}
+
 /// Nạp từ điển (danh sách từ cách nhau bởi khoảng trắng/xuống dòng). NULL = giữ nguyên danh sách đó.
 #[no_mangle]
 pub unsafe extern "C" fn vfk_load_dictionary(
