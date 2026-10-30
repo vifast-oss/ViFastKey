@@ -1234,6 +1234,14 @@ code {
   flex-wrap: wrap;
 }
 
+.cli-line a {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.cli-line a:hover { text-decoration: underline; }
+
 .cli-line code {
   background: #1f2430;
   border: 0;
