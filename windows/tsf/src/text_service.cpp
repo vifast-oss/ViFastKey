@@ -22,6 +22,11 @@ namespace {
 
 constexpr LONG kMaxSurrounding = 128;
 
+// GUID_PROP_INPUTSCOPE từ inputscope.h. Khai báo tại đây để DLL không phụ thuộc
+// inputscope.lib/uuid.lib của từng bản Windows SDK.
+constexpr GUID kGuidPropInputScope = {
+    0x1713dd5a, 0x68e7, 0x4a5b, {0x9a, 0xf6, 0x59, 0x2a, 0x59, 0x5c, 0x77, 0x8d}};
+
 bool IsControlDown() {
     return (GetKeyState(VK_CONTROL) & 0x8000) != 0;
 }
@@ -1012,7 +1017,7 @@ uint32_t TextService::ReadFieldKind(ITfContext* context, TfEditCookie ec) const 
     }
 
     ITfProperty* property = nullptr;
-    if (FAILED(context->GetProperty(GUID_PROP_INPUTSCOPE, &property)) || property == nullptr) {
+    if (FAILED(context->GetProperty(kGuidPropInputScope, &property)) || property == nullptr) {
         if (IsTerminalApp(AppIdFromForeground())) {
             result = VFK_FIELD_TERMINAL;
         }
