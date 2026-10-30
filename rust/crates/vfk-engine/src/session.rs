@@ -12,20 +12,6 @@ use vi_syllable::upper;
 
 use crate::ports::{normalize_app_id, resolve_profile, AppProfile, Config, OutputMode, Ports, UnicodeForm};
 
-/// Escape FF viết hoa liền nhau trong từ mixed-case (ViFastTts).
-fn upper_ff_escape(raw: &str) -> bool {
-    if raw.is_empty() || raw.chars().all(|c| !c.is_lowercase()) {
-        return false;
-    }
-    let positions: Vec<usize> =
-        raw.chars().enumerate().filter(|(_, c)| c.eq_ignore_ascii_case(&'f')).map(|(i, _)| i).collect();
-    let n = positions.len();
-    n >= 2
-        && positions[n - 1] == positions[n - 2] + 1
-        && (raw.chars().nth(positions[n - 2]).is_some_and(|c| c.is_uppercase())
-            || raw.chars().nth(positions[n - 1]).is_some_and(|c| c.is_uppercase()))
-}
-
 // ---------------------------------------------------------------- input / output
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -201,6 +187,8 @@ pub struct ImeSession {
     word: String,
     /// Từ đang ở chế độ thô (sau Backspace vào từ không tái tạo được).
     literal: bool,
+    /// Literal vừa phát sinh ở phím cuối, cho Backspace thử biến đổi lại.
+    literal_fresh: bool,
     /// Từng gõ escape đôi phím thanh (pharr, vissa).
     escaped: bool,
     /// Viết hoa đầu câu.
@@ -234,6 +222,7 @@ impl ImeSession {
             raw: Vec::new(),
             word: String::new(),
             literal: false,
+            literal_fresh: false,
             escaped: false,
             cap_next: false,
             pending_end: false,
@@ -353,18 +342,8 @@ impl ImeSession {
             self.escaped = true;
         }
         if res.restored {
-            if !res.rendered.is_empty() {
-                let raw_s: String = self.raw.iter().collect();
-                let raw_english = self.config.auto_restore_english
-                    && self.ports.dictionary.is_english(&raw_s.to_lowercase());
-                let rendered_lower = res.rendered.to_lowercase();
-                if !raw_english
-                    && (self.ports.dictionary.is_english(&rendered_lower) || upper_ff_escape(&raw_s))
-                {
-                    // Escape đôi phím thanh: hiển thị dạng đã bỏ phím escape
-                    // (vissa -> visa, ViFFastTts -> ViFastTts), không dính raw.
-                    return res.rendered;
-                }
+            if !self.literal {
+                self.literal_fresh = true; // vừa bị invalid ở phím cuối
             }
             self.literal = true; // dính chế độ thô: text + s -> texts
             if let Some((word, n)) = &self.adopted {
@@ -395,6 +374,7 @@ impl ImeSession {
         self.raw.clear();
         self.word.clear();
         self.literal = false;
+        self.literal_fresh = false;
         self.escaped = false;
         self.composer = None;
         self.adopted = None;
@@ -631,6 +611,9 @@ impl ImeSession {
     fn letter(&mut self, key: char) -> Action {
         let mut ch = key;
         self.last = None;
+        if self.literal {
+            self.literal_fresh = false;
+        }
         if self.raw.is_empty() {
             if self.cap_next {
                 ch = upper(ch);
@@ -727,11 +710,28 @@ impl ImeSession {
             self.reset();
             return act;
         }
-        // Luôn thử rebuild: từ literal do escape đôi phím thanh vẫn phải quay
-        // lại được dấu khi gõ tiếp (pharr -> phar -> phả). Từ literal thường
-        // không phải escape vẫn giữ raw như cũ.
+        // Gõ nhầm một phím lặp ở cuối làm từ thành invalid (nhuwngg):
+        // bỏ phím cuối rồi thử biến đổi lại phần còn lại. Chỉ áp dụng khi
+        // literal vừa phát sinh ở phím cuối và hai phím cuối trùng nhau.
+        if self.literal_fresh
+            && self.raw.len() >= 2
+            && self.raw[self.raw.len() - 1].to_ascii_lowercase()
+                == self.raw[self.raw.len() - 2].to_ascii_lowercase()
+        {
+            self.raw.pop();
+            self.literal = false;
+            self.escaped = false;
+            self.literal_fresh = false;
+            self.adopted = None;
+            self.composer = None;
+            let text = self.compute(false);
+            return self.show(text, None);
+        }
+        // Từ đã escape đôi phím thanh phải quay lại được dấu khi xoá và gõ tiếp
+        // (pharr -> phar -> phả). Từ literal thường vẫn giữ raw.
         let raw = if self.escaped || !self.literal { rebuild(&target, self.im(), &self.opt()) } else { None };
         self.adopted = None;
+        self.literal_fresh = false;
         match raw {
             Some(r) => {
                 self.raw = r;
@@ -801,6 +801,7 @@ impl ImeSession {
             fin = m;
         } else if self.config.auto_restore_english
             && !self.literal
+            && !self.escaped
             && fin != raw_s
             && self.ports.dictionary.is_english(&raw_s.to_lowercase())
             && !self.ports.dictionary.is_vietnamese(&fin.to_lowercase())

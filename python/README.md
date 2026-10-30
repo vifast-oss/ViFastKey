@@ -68,7 +68,7 @@ PARTIAL có tính đến việc thêm dấu sau, nhờ vậy gõ dấu tự do k
 | Chọn ứng viên đầu tiên không sai chính tả | `muaw` ra `mưa` |
 | `d` ở bất kỳ đâu biến `d` đầu từ thành `đ`; `d` sau phụ âm tạo đ viết tắt | `duowngfd` ra `đường`, `vcdd` ra `vcđ`, `ddc` ra `đc` |
 | Gõ lặp lại để hoàn tác | `aaa` ra `aa`, `ass` ra `as`, `ww` ra `w`, `ddd` ra `dd` |
-| Hoàn tác giữa từ tiếng Anh thì khôi phục raw | `coffee`, `banana`, `cheese`, `daddy` giữ nguyên |
+| Hai phím thanh liền kề là escape: bỏ dấu và lấy một ký tự literal; ba phím mới lấy hai ký tự | `coffee` ra `cofee`, `cofffee` ra `coffee`; `serrver` ra `server` |
 | Hoàn tác **thanh** thì phần còn lại của từ gõ thẳng. Hoàn tác **dấu phụ** chỉ khoá đúng phím đó | `xooongj` ra `xoọng` |
 | Thanh bị từ chối nếu sai chính tả | `batf` ra `batf` |
 | `z` xoá thanh. Nếu không có thanh thì `z` xoá dấu phụ | `tieengsz` ra `tiêng` |
@@ -77,8 +77,8 @@ PARTIAL có tính đến việc thêm dấu sau, nhờ vậy gõ dấu tự do k
 | Tuỳ chọn phím `[` `]` | `m]a` ra `mưa` |
 
 ### 2.5 Khôi phục từ tiếng Anh (2 tầng)
-1. **Core**: đang gõ mà từ trở thành INVALID thì hiện phím thô (`text`, `windows`). Khi kết thúc từ, PARTIAL có âm đầu cũng bị khôi phục (`law`, không thành `lă`), trừ nguyên âm có dấu đứng một mình (`aw` → `ă`) và họ `ươ/uơ` (`duow` → `dươ`). Từ đã chủ động hoàn tác ở cuối từ thì core giữ ý người gõ (`ass` ra `as`); hoàn tác nằm giữa từ tiếng Anh thì khôi phục raw (`coffee`).
-2. **Engine** (port `Dictionary`): khôi phục khi phím thô là từ tiếng Anh **và** kết quả không phải từ Việt thông dụng. Ví dụ `data` (ra `dât`), `boss`, `server` được khôi phục. Còn `this` ra `thí`, `did` ra `đi` vẫn giữ tiếng Việt.
+1. **Core**: đang gõ mà từ trở thành INVALID thì hiện phím thô (`text`, `windows`). Khi kết thúc từ, PARTIAL có âm đầu cũng bị khôi phục (`law`, không thành `lă`), trừ nguyên âm có dấu đứng một mình (`aw` → `ă`) và họ `ươ/uơ` (`duow` → `dươ`). Từ đã chủ động hoàn tác ở cuối từ thì core giữ ý người gõ (`ass` ra `as`). Hai phím thanh **liền kề** là escape chuẩn Telex: `coffee` ra `cofee`, `cofffee` ra `coffee`; không dùng từ điển cho trường hợp này.
+2. **Engine** (port `Dictionary`): khôi phục khi phím thô là từ tiếng Anh **và** kết quả không phải từ Việt thông dụng, miễn là từ không có escape đôi phím thanh. Ví dụ `data` (ra `dât`), `server`, `text` được khôi phục; còn `this` ra `thí`, `did` ra `đi` vẫn giữ tiếng Việt.
 
 ### 2.6 Engine
 - **Backspace xoá 1 ký tự hiển thị** và giữ dấu của phần còn lại (`tiếng` thành `tiến`), giống UniKey/OpenKey. Nếu từ còn lại không tái tạo được từ phím (vd `tex` sau khi khôi phục `text`) thì chuyển sang chế độ thô.

@@ -77,16 +77,6 @@ SENTENCE_END = set(".!?…")
 SENTENCE_CLOSERS = set("\"')]»”’›")
 
 
-def _upper_ff_escape(raw: str) -> bool:
-    """True cho escape FF/Ff/fF liền nhau trong từ mixed-case kiểu ViFast."""
-    if not raw or raw.isupper():
-        return False
-    positions = [i for i, ch in enumerate(raw) if ch.lower() == "f"]
-    return (len(positions) >= 2
-            and positions[-1] == positions[-2] + 1
-            and (raw[positions[-2]].isupper() or raw[positions[-1]].isupper()))
-
-
 # ---------------------------------------------------------------- session
 class ImeSession:
     """Mỗi ô nhập / input context có 1 session. Đồng bộ, không thread, không async."""
@@ -98,6 +88,7 @@ class ImeSession:
         self.raw: list[str] = []
         self.word = ""             # NFC, chữ đang hiển thị của từ hiện tại
         self.literal = False       # từ đang ở chế độ thô (sau Backspace vào từ không tái tạo được)
+        self.literal_fresh = False # literal vừa phát sinh ở phím cuối, cho Backspace thử rebuild
         self.escaped = False       # từng gõ escape đôi phím thanh (pharr, vissa)
         self.cap_next = False      # viết hoa đầu câu
         self._pending_end = False  # vừa gõ dấu kết câu, chờ dấu cách
@@ -156,18 +147,8 @@ class ImeSession:
         if res.rendered:
             self.escaped = True
         if res.restored:
-            raw_s = "".join(self.raw)
-            if res.rendered:
-                # Gõ đôi phím thanh là escape. Dùng dạng đã bỏ phím escape nếu
-                # nó là từ tiếng Anh (vissa -> visa), hoặc là FF viết hoa kiểu
-                # ViFastTts. coffee/COFFEE và từ lạ vẫn giữ raw như cũ.
-                rendered_lower = res.rendered.lower()
-                raw_english = (self.config.auto_restore_english
-                               and self.ports.dictionary.is_english(raw_s.lower()))
-                upper_ff = _upper_ff_escape(raw_s)
-                if not raw_english and (self.ports.dictionary.is_english(rendered_lower)
-                                        or upper_ff):
-                    return res.rendered
+            if not self.literal:
+                self.literal_fresh = True             # vừa bị invalid ở phím cuối
             self.literal = True                        # dính chế độ thô: text + s -> texts
         if res.restored and self.adopted:              # 'việt' + 'f' -> 'việtf', không phải 'vieetjf'
             word, n = self.adopted
@@ -187,6 +168,7 @@ class ImeSession:
 
     def reset(self) -> None:
         self.raw, self.word, self.literal, self.escaped = [], "", False, False
+        self.literal_fresh = False
         self._composer: Composer | None = None
         self.adopted: tuple[str, int] | None = None   # (từ cũ đã nạp lại, số phím thô của nó)
 
@@ -337,6 +319,8 @@ class ImeSession:
     def _letter(self, key: str) -> Action:
         ch = key
         self.last = None
+        if self.literal:
+            self.literal_fresh = False
         if not self.raw:
             if self.cap_next:
                 ch = ch.upper()
@@ -395,10 +379,23 @@ class ImeSession:
             act = self._show("")
             self.reset()
             return act
+        # Gõ nhầm một phím lặp ở cuối làm từ thành invalid (nhuwngg):
+        # bỏ phím cuối rồi thử biến đổi lại phần còn lại. Chỉ áp dụng khi
+        # literal vừa phát sinh ở phím cuối và hai phím cuối trùng nhau.
+        if (self.literal_fresh and len(self.raw) >= 2
+                and self.raw[-1].lower() == self.raw[-2].lower()):
+            self.raw.pop()
+            self.literal = False
+            self.escaped = False
+            self.literal_fresh = False
+            self.adopted = None
+            self._composer = None
+            return self._show(self._compute())
         # Từ đã escape đôi phím thanh phải quay lại được dấu khi xoá và gõ tiếp
         # (phar + rr, xoá 2 r, gõ r -> phả). Từ literal thường vẫn giữ raw.
         raw = rebuild(target, self.im, self.opt) if (self.escaped or not self.literal) else None
         self.adopted = None
+        self.literal_fresh = False
         if raw is not None:
             self.raw, self.literal = raw, False
             self.escaped = False
@@ -438,7 +435,8 @@ class ImeSession:
             final = macro
             if sep is not None and self.config.macro_undo:
                 self.last_macro = (self._out(macro) + sep, raw + sep)
-        elif (self.config.auto_restore_english and not self.literal and final != raw
+        elif (self.config.auto_restore_english and not self.literal and not self.escaped
+              and final != raw
               and self.ports.dictionary.is_english(raw.lower())
               and not self.ports.dictionary.is_vietnamese(final.lower())):
             final = raw                     # 'data' -> 'dât' -> 'data'; nhưng 'thí' (this) giữ nguyên

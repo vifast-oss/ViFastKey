@@ -29,12 +29,16 @@
 - Gợi ý từ local 23k âm tiết + 20k tiếng Anh (`vfk-suggest`), emoji CLI (`vfk-emoji`),
   clipboard conversion (`vfk-charset --clipboard`).
 - `WordState.letters` dùng `ArrayVec`; thêm Case conversion.
-- Sửa `đ` viết tắt (`ddc`, `vcdd`, `NDD`), undo tiếng Anh (`banana`, `coffee`, `cheese`),
+- Sửa `đ` viết tắt (`ddc`, `vcdd`, `NDD`), undo tiếng Anh (`banana`, `cheese`),
   VNI literal number (`nam2024`, `ba10`), sticky restore (`text` + `s`), escape pass-key,
   open `uơ`/`ươ` theo âm đầu, nguyên âm có dấu đứng riêng (`aw`, `aws`).
-- Escape đôi phím thanh: `vissa` → `visa`, `ViFFastTts` → `ViFastTts`;
-  xoá sau escape trả lại dấu (`phar` + `rr`, xoá 2 `r`, gõ `r` → `phả`).
-  Giữ nguyên `coffee`, `COFFEE` và các từ lạ cần raw.
+- Escape đôi phím thanh **liền kề** theo Telex chuẩn: `vissa` → `visa`,
+  `serrver` → `server`, `ViFFastTts` → `ViFastTts`; xoá sau escape trả lại dấu
+  (`phar` + `rr`, xoá 2 `r`, gõ `r` → `phả`). Hai `f` chỉ ra một `f` (`coffee` →
+  `cofee`); gõ ba `f` mới ra hai `f` (`cofffee` → `coffee`). Bỏ heuristic từ điển/
+  `FF` viết hoa cho escape.
+- Backspace sau khi gõ nhầm phím lặp ở cuối từ khôi phục lại từ đã biến đổi:
+  `nhuwngg` + Backspace → `nhưng`; `text` + Backspace vẫn giữ `tex`.
 - Auto-cap mở rộng cho `…`, ngoặc kép/đóng, newline; không cắt số thập phân.
 - `AppProfile` ghi đè `input_method`, `tone_style`, `spell_check`; thêm gợi ý `charset`.
 - `schema_version` trong config; `config_from_dict` bỏ qua field lạ.

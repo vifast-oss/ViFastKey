@@ -96,6 +96,8 @@ pub struct WordState {
     pub keep: bool,
     /// Vị trí của đ được bảo vệ.
     pub keep_pos: usize,
+    /// Phím thô trước đó, để nhận diện escape liền kề.
+    pub last_key: Option<char>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -256,6 +258,8 @@ fn is_applied(l: &[Letter], c: &[(usize, Mark)]) -> bool {
 
 fn step(st: &mut WordState, k: char, im: &InputMethodSpec, opt: &TransformOptions) {
     let lk = lower(k);
+    let prev = st.last_key;
+    st.last_key = Some(lk);
     if st.latched || st.locked.contains(&lk) {
         st.letters.push_ignore(Letter::literal(k));
         return;
@@ -285,12 +289,15 @@ fn step(st: &mut WordState, k: char, im: &InputMethodSpec, opt: &TransformOption
     if let Some(t) = im.tone_of(lk) {
         if has_vowel {
             if st.tone == t {
-                // ass -> as
-                st.tone = 0;
-                st.undone = true;
-                st.undo_key = Some(lk);
-                st.latched = true;
-                st.letters.push_ignore(Letter::literal(k));
+                if prev == Some(lk) {
+                    // ass -> as; serrver -> server
+                    st.tone = 0;
+                    st.undone = true;
+                    st.undo_key = Some(lk);
+                    st.latched = true;
+                    st.letters.push_ignore(Letter::literal(k));
+                }
+                // Cùng thanh nhưng không liền kề (server): giữ nguyên.
                 return;
             }
             let lowered = toneless_lower(&st.letters);
@@ -460,9 +467,13 @@ fn result(st: &WordState, raw: &[char], opt: &TransformOptions, is_final: bool) 
         let bad_partial = is_final && stt == Status::Partial && end > start && start > 0 && !open_uo;
         let keep_ok = st.keep && st.letters[st.keep_pos + 1..].iter().all(|l| !vs::is_vowel(l.base));
         let bad = !keep_ok && !deliberate_undo && (stt == Status::Invalid || bad_partial);
-        // Gõ đôi phím thanh là escape. `rendered` là dạng đã bỏ phím escape,
-        // kể cả khi kết quả cuối không bị restore raw (pharr).
+        // Gõ đôi phím thanh liền kề luôn là escape chuẩn Telex: bỏ thanh và
+        // giữ một ký tự literal; gõ ba phím mới ra hai ký tự (cofffee -> coffee).
+        // Không dùng từ điển/heuristic riêng cho coffee hay FF viết hoa.
         let rendered = if st.undone && st.latched { text.clone() } else { String::new() };
+        if !rendered.is_empty() {
+            return TransformResult { text: rendered.clone(), restored: false, status: stt, rendered };
+        }
         if bad {
             return TransformResult { text: raw_s, restored: true, status: stt, rendered };
         }

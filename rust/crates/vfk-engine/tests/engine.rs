@@ -144,11 +144,14 @@ fn dictionary_restore() {
 }
 
 #[test]
-fn double_key_english_restored_by_dictionary() {
+fn double_tone_key_uses_standard_escape() {
     for m in MODES {
         let mut h = make(m);
         h.type_str("server boss pass miss ass ");
-        assert_eq!(h.text(), "server boss pass miss as ");
+        assert_eq!(h.text(), "server bos pas mis as ");
+        let mut h = make(m);
+        h.type_str("bosss passs misss asss ");
+        assert_eq!(h.text(), "boss pass miss ass ");
     }
 }
 
@@ -162,10 +165,13 @@ fn uppercase_double_f_escape_brand() {
 }
 
 #[test]
-fn lowercase_coffee_keeps_both_f() {
+fn lowercase_double_f_uses_standard_escape() {
     for m in MODES {
         let mut h = make(m);
         h.type_str("coffee ");
+        assert_eq!(h.text(), "cofee ");
+        let mut h = make(m);
+        h.type_str("cofffee ");
         assert_eq!(h.text(), "coffee ");
     }
 }
@@ -176,6 +182,15 @@ fn double_s_escape_english_word() {
         let mut h = make(m);
         h.type_str("vissa ");
         assert_eq!(h.text(), "visa ");
+    }
+}
+
+#[test]
+fn double_r_escape_english_word() {
+    for m in MODES {
+        let mut h = make(m);
+        h.type_str("serrver ");
+        assert_eq!(h.text(), "server ");
     }
 }
 
@@ -203,6 +218,17 @@ fn backspace_after_escape_restores_tone() {
         let mut h = make(m);
         type_mixed(&mut h, &["phar", "r", "r", BS, BS, "r", " "]);
         assert_eq!(h.text(), "phả ");
+    }
+}
+
+#[test]
+fn backspace_after_duplicate_letter_restores_word() {
+    for m in MODES {
+        let mut h = make(m);
+        h.type_str("nhuwngg");
+        assert_eq!(h.text(), "nhuwngg");
+        type_mixed(&mut h, &[BS]);
+        assert_eq!(h.text(), "nhưng");
     }
 }
 

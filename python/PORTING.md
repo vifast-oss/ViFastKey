@@ -29,6 +29,7 @@ pub struct WordState {
     letters: Vec<Letter>,        // bản hiện tại; ArrayVec<Letter, 24> là tối ưu sau
     tone: u8,
     undone: bool, latched: bool, transformed: bool,
+    last_key: Option<char>,      // nhận diện escape đôi phím thanh liền kề
     locked: u32,                 // bitset theo phím a-z (thay cho set Python)
 }
 pub struct Composer { raw: Vec<char>, states: Vec<WordState>, im: &'static InputMethodSpec, opt: TransformOptions }

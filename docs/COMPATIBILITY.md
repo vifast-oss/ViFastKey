@@ -37,10 +37,10 @@ Khi `spell_check=true`, biến đổi làm INVALID bị chặn và từ có th�
 
 ## 4. Undo, khôi phục, backspace
 
-- Gõ lặp cùng phím thanh/dấu là hoàn tác: `ass → as`, `aaa → aa`, `DDD → DD`.
-- Hoàn tác chỉ được coi là có chủ đích khi phím lặp nằm ở cuối từ hoặc là cụm ba
-  (`aaa`, `aaan`, `ass`). Nếu phím lặp nằm giữa từ tiếng Anh, từ được khôi phục raw:
-  `coffee → coffee`, `banana → banana`, `cheese → cheese`, `daddy → daddy`.
+- Gõ lặp cùng phím thanh/dấu liền kề là hoàn tác: `ass → as`, `aaa → aa`, `DDD → DD`.
+- Hai phím thanh liền kề luôn là escape chuẩn Telex: bỏ dấu và giữ một ký tự literal;
+  ba phím mới giữ hai ký tự: `coffee → cofee`, `cofffee → coffee`,
+  `mission → mision`, `misssion → mission`, `serrver → server`.
 - `ass → as` và `chuss → chus` được giữ (không khôi phục `ass`/`chuss`) vì người dùng
   chủ động hoàn tác ở cuối từ.
 - Khôi phục tiếng Anh: core trả raw khi INVALID; engine còn dùng `Dictionary` khi kết thúc từ.

@@ -124,10 +124,13 @@ def test_spell_restore_without_dictionary(mode):
 
 
 @pytest.mark.parametrize("mode", MODES)
-def test_double_key_english_restored_by_dictionary(mode):
+def test_double_tone_key_uses_standard_escape(mode):
     s, f, _ = make(mode)
     f.type(s, "server boss pass miss ass ")
-    assert f.text == "server boss pass miss as "
+    assert f.text == "server bos pas mis as "
+    s, f, _ = make(mode)
+    f.type(s, "bosss passs misss asss ")
+    assert f.text == "boss pass miss ass "
 
 
 @pytest.mark.parametrize("mode", MODES)
@@ -138,9 +141,12 @@ def test_uppercase_double_f_escape_brand(mode):
 
 
 @pytest.mark.parametrize("mode", MODES)
-def test_lowercase_coffee_keeps_both_f(mode):
+def test_lowercase_double_f_uses_standard_escape(mode):
     s, f, _ = make(mode)
     f.type(s, "coffee ")
+    assert f.text == "cofee "
+    s, f, _ = make(mode)
+    f.type(s, "cofffee ")
     assert f.text == "coffee "
 
 
@@ -149,6 +155,13 @@ def test_double_s_escape_english_word(mode):
     s, f, _ = make(mode)
     f.type(s, "vissa ")
     assert f.text == "visa "
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_double_r_escape_english_word(mode):
+    s, f, _ = make(mode)
+    f.type(s, "serrver ")
+    assert f.text == "server "
 
 
 @pytest.mark.parametrize("mode", MODES)
@@ -170,6 +183,15 @@ def test_backspace_after_escape_restores_tone(mode):
     s, f, _ = make(mode)
     f.type(s, list("phar") + ["r", "r", BS, BS, "r", " "])
     assert f.text == "phả "
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_backspace_after_duplicate_letter_restores_word(mode):
+    s, f, _ = make(mode)
+    f.type(s, "nhuwngg")
+    assert f.text == "nhuwngg"
+    f.type(s, [BS])
+    assert f.text == "nhưng"
 
 
 @pytest.mark.parametrize("mode", MODES)

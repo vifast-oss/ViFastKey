@@ -76,6 +76,7 @@ class WordState:
     transformed: bool = False     # có ít nhất 1 biến đổi tiếng Việt
     keep: bool = False            # giữ nguyên dù sai chính tả (đ ở giữa từ: vcđ, nđm)
     keep_pos: int = -1            # vị trí đ được bảo vệ
+    last_key: str | None = None   # phím thô trước đó, để nhận diện escape liền kề
 
 
 @dataclass(frozen=True)
@@ -169,6 +170,8 @@ def _literal(k: str) -> Letter:
 def _step(st: WordState, k: str, im: InputMethodSpec, opt: TransformOptions) -> None:
     L = st.letters
     lk = k.lower()
+    prev = st.last_key
+    st.last_key = lk
     if st.latched or lk in st.locked:
         L.append(_literal(k))
         return
@@ -186,11 +189,12 @@ def _step(st: WordState, k: str, im: InputMethodSpec, opt: TransformOptions) -> 
     # 1) Thanh
     if lk in im.tones and has_vowel:
         t = im.tones[lk]
-        if st.tone == t:                                   # ass -> as
-            st.tone, st.undone, st.latched = 0, True, True
-            st.undo_key = lk
-            L.append(_literal(k))
-            return
+        if st.tone == t:
+            if prev == lk:                                # ass -> as; serrver -> server
+                st.tone, st.undone, st.latched = 0, True, True
+                st.undo_key = lk
+                L.append(_literal(k))
+            return                                        # cùng thanh nhưng không liền kề: giữ nguyên
         lowered = _toneless_lower(L)
         if opt.spell_check and (not vs.tone_allowed(lowered, t, opt.allow_coda_k)
                                 or vs.check(lowered, t, opt.allow_coda_k) is Status.INVALID):
@@ -287,7 +291,7 @@ def _clone(st: WordState) -> WordState:
                               for l in st.letters],
                      tone=st.tone, undone=st.undone, undo_key=st.undo_key,
                      latched=st.latched, transformed=st.transformed, locked=set(st.locked),
-                     keep=st.keep, keep_pos=st.keep_pos)
+                     keep=st.keep, keep_pos=st.keep_pos, last_key=st.last_key)
 
 
 def _result(st: WordState, raw_s: str, opt: TransformOptions, final: bool) -> TransformResult:
@@ -313,9 +317,12 @@ def _result(st: WordState, raw_s: str, opt: TransformOptions, final: bool) -> Tr
         keep_ok = st.keep and not any(l.base in vs.VOWELS for l in st.letters[st.keep_pos + 1:])
         bad = (not keep_ok and not deliberate_undo
                and (status is Status.INVALID or bad_partial))
-        # Gõ đôi phím thanh (FF/SS/...) là escape: `rendered` là dạng đã bỏ
-        # phím escape, kể cả khi kết quả cuối không bị restore raw (pharr).
+        # Gõ đôi phím thanh (FF/SS/...) luôn là escape chuẩn Telex: bỏ thanh và
+        # giữ một ký tự literal; gõ ba phím mới ra hai ký tự (cofffee -> coffee).
+        # Không dùng từ điển/heuristic riêng cho coffee hay FF viết hoa.
         escaped = text if st.undone and st.latched else ""
+        if escaped:
+            return TransformResult(escaped, False, status, escaped)
         if bad:
             return TransformResult(raw_s, True, status, escaped)
         return TransformResult(text, False, status, escaped)

@@ -49,11 +49,21 @@ def test_triple_d_escapes_to_literal_dd():
 
 # ---------------------------------------------------------------- English / undo
 @pytest.mark.parametrize("raw", [
-    "banana", "Canada", "coffee", "cheese", "daddy", "airport", "mission",
-    "database", "necessary", "paragraph", "acacia", "address", "toffee",
+    "banana", "Canada", "cheese", "daddy", "airport",
+    "database", "paragraph", "acacia", "address",
 ])
 def test_english_words_keep_every_letter(raw):
     assert transform(raw, TELEX, TransformOptions(), final=True).text == raw
+
+
+@pytest.mark.parametrize("raw,expected", [
+    ("coffee", "cofee"), ("cofffee", "coffee"),
+    ("mission", "mision"), ("misssion", "mission"),
+    ("toffee", "tofee"), ("tofffee", "toffee"),
+    ("boss", "bos"), ("bosss", "boss"),
+])
+def test_double_tone_key_standard_escape(raw, expected):
+    assert transform(raw, TELEX, TransformOptions(), final=True).text == expected
 
 
 def test_single_key_undo_is_preserved():
@@ -131,8 +141,8 @@ def test_engine_is_sticky_after_restore(mode):
 
 @pytest.mark.parametrize("mode", [OutputMode.REPLACE, OutputMode.PREEDIT])
 def test_engine_restores_english_before_word_end(mode):
-    _, field = _type(mode, "coffees ")
-    assert field.text == "coffees "
+    _, field = _type(mode, "servers ")
+    assert field.text == "servers "
 
 
 @pytest.mark.parametrize("mode", [OutputMode.REPLACE, OutputMode.PREEDIT])

@@ -35,13 +35,14 @@ không chép code hay dữ liệu GPL.
 | `DDD` | DD | escape hoa |
 | `banana` | banana | không mất chữ |
 | `Canada` | Canada | |
-| `coffee` | coffee | |
+| `coffee` | cofee | hai `f` liền kề là escape |
+| `cofffee` | coffee | ba `f` mới ra hai `f` |
 | `cheese` | cheese | |
 | `daddy` | daddy | |
-| `airport` | airport | |
-| `mission` | mission | |
-| `necessary` | necessary | |
-| `soffa` | soffa | khác Telebit (`sofa`) — ưu tiên an toàn raw |
+| `airport` | airport | hai `r` không liền kề |
+| `mission` | mision | hai `s` liền kề là escape |
+| `misssion` | mission | ba `s` mới ra hai `s` |
+| `soffa` | sofa | escape `ff` → một `f` |
 | `text` | text | |
 | `texts` | texts | sticky restore ở engine |
 | `boss` | boss | engine dictionary (core: bos) |
