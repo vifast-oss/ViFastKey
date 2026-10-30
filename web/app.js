@@ -11,6 +11,8 @@ import init, {
 } from "./pkg/vfk_wasm.js";
 
 const STORAGE_KEY = "vifastkey.demo.config.v1";
+// Khớp MAX_RAW trong engine: vượt 24 phím thì từ chuyển sang chế độ thô.
+const MAX_RAW = 24;
 const METHODS = {
   telex: "Telex",
   simple_telex: "Simple Telex",
@@ -78,6 +80,10 @@ const state = {
   preeditActive: false,
   preeditStart: 0,
   preeditLen: 0,
+  composing: false,
+  compositionBase: null,
+  longLiteral: false,
+  skipAdopt: false,
 };
 
 let session = null;
@@ -142,6 +148,7 @@ function updateMeta() {
   if (!state.ready) return;
   const raw = session ? session.raw() : "";
   state.raw = raw;
+  state.longLiteral = raw.length > MAX_RAW;
   rawLine.textContent = `Phím thô: ${raw || "—"}`;
   if (state.lastAction) {
     actionLine.textContent = describeAction(state.lastAction);
@@ -249,9 +256,99 @@ function createSession() {
 function processKey(keyName, typedChar = null) {
   if (!state.ready) return;
   const before = chars(state.text).slice(0, state.cursor).join("");
-  session.set_surrounding(before);
+  const isChar = keyName.length === 1;
+  // Sau khi cắt từ quá dài, không cho engine "adopt" phần chữ còn sót lại;
+  // nếu không phím đầu tiên của từ mới sẽ bị ghép vào từ cũ. Giữ cờ này qua
+  // các phím xoá/dấu cách, chỉ nhả khi bắt đầu ký tự của từ mới.
+  session.set_surrounding(state.skipAdopt && isChar ? "" : before);
+  if (state.skipAdopt && isChar) state.skipAdopt = false;
   const action = JSON.parse(session.process_key(keyName, false, false, false));
   applyAction(action, { typedChar, keyName });
+}
+
+function handleBackspace() {
+  if (deleteSelection()) return;
+  const wasLong = state.longLiteral;
+  processKey("Backspace", null);
+  // Từ > MAX_RAW bị engine giữ ở chế độ thô vĩnh viễn. Sau khi xoá, reset
+  // session để từ tiếp theo gõ tiếng Việt được, kể cả khi còn chữ sót lại.
+  if (wasLong && session) {
+    session.reset();
+    state.skipAdopt = true;
+    state.longLiteral = false;
+    clearPreeditState();
+    state.raw = "";
+    state.lastAction = null;
+    updateMeta();
+  }
+}
+
+// Bàn phím ảo Android/Gboard thường không phát keydown cho từng phím, hoặc
+// phát keyCode 229. Các hàm dưới xử lý qua beforeinput/compositionend.
+function isRawAscii(value) {
+  return /^[\x20-\x7E]+$/.test(value);
+}
+
+function processTextAsKeys(value) {
+  for (const ch of chars(value)) {
+    if (ch === "\n") {
+      processKey("Enter", null);
+    } else {
+      processKey(ch, ch);
+    }
+  }
+}
+
+function syncLiteralFromPad() {
+  state.text = pad.value;
+  state.cursor = utf16ToCp(pad.value, pad.selectionEnd ?? pad.value.length);
+  if (session) session.reset();
+  clearPreeditState();
+  // Chữ đã do host/app commit là văn bản cuối, không phải raw để engine adopt.
+  state.skipAdopt = true;
+  state.raw = "";
+  state.lastAction = null;
+  updateMeta();
+}
+
+function restoreBase(base) {
+  state.text = base.text;
+  state.cursor = base.cursor;
+  pad.value = base.text;
+  if (base.start !== base.end) {
+    pad.setSelectionRange(base.start, base.end);
+    deleteSelection();
+  } else {
+    const pos = cpToUtf16(base.text, base.cursor);
+    pad.setSelectionRange(pos, pos);
+  }
+}
+
+function handleCompositionEnd(inserted) {
+  const base = state.compositionBase;
+  state.composing = false;
+  state.compositionBase = null;
+  if (!base) return;
+
+  if (!inserted) {
+    restoreBase(base);
+    render();
+    return;
+  }
+
+  // Gboard tiếng Việt đã commit chữ có dấu. Giữ nguyên văn bản trình duyệt đã
+  // đưa vào, không ghi lại value (dễ làm Gboard mất composition). Đây là văn
+  // bản cuối, không phải phím thô: reset nội bộ và không adopt lại.
+  if (!isRawAscii(inserted) || inserted.length > 64) {
+    syncLiteralFromPad();
+    return;
+  }
+
+  // Chữ thô ASCII (Telex/VNI): trả textarea về trạng thái trước composition
+  // rồi cho engine xử lý đúng chuỗi phím.
+  restoreBase(base);
+  if (inserted === "\n" || inserted === "\r") processKey("Enter", null);
+  else processTextAsKeys(inserted);
 }
 
 function flushSession() {
@@ -484,8 +581,70 @@ function setupCharsetTool() {
 }
 
 function setupEvents() {
+  pad.addEventListener("beforeinput", (event) => {
+    if (!state.ready || event.isComposing || state.composing || !event.cancelable) return;
+    const type = event.inputType;
+    if (type === "insertText") {
+      const data = event.data ?? event.dataTransfer?.getData("text/plain") ?? "";
+      if (!data) return;
+      // Chữ có dấu (Gboard tiếng Việt, dán, gợi ý) để trình duyệt tự chèn;
+      // input handler sẽ đồng bộ nguyên văn và reset từ đang gõ.
+      if (!isRawAscii(data)) return;
+      event.preventDefault();
+      deleteSelection();
+      if (data === "\n" || data === "\r") processKey("Enter", null);
+      else processTextAsKeys(data);
+      return;
+    }
+    if (type === "deleteContentBackward") {
+      event.preventDefault();
+      handleBackspace();
+      return;
+    }
+    if (type === "deleteContentForward") {
+      event.preventDefault();
+      if (!deleteSelection()) processKey("Delete", null);
+      return;
+    }
+    if (type === "insertLineBreak" || type === "insertParagraph") {
+      event.preventDefault();
+      deleteSelection();
+      processKey("Enter", null);
+    }
+  });
+
+  pad.addEventListener("compositionstart", () => {
+    if (!state.ready) return;
+    state.composing = true;
+    state.compositionBase = {
+      text: state.text,
+      cursor: state.cursor,
+      start: pad.selectionStart ?? cpToUtf16(state.text, state.cursor),
+      end: pad.selectionEnd ?? cpToUtf16(state.text, state.cursor),
+    };
+  });
+
+  pad.addEventListener("compositionend", (event) => {
+    if (!state.ready) return;
+    const base = state.compositionBase;
+    const committedValue = pad.value;
+    let inserted = "";
+    if (base) {
+      const before = base.text.slice(0, base.start);
+      const after = base.text.slice(base.end);
+      if (committedValue.startsWith(before) && committedValue.endsWith(after)) {
+        inserted = committedValue.slice(
+          before.length,
+          committedValue.length - after.length,
+        );
+      }
+    }
+    if (!inserted) inserted = event.data ?? "";
+    handleCompositionEnd(inserted);
+  });
+
   pad.addEventListener("keydown", (event) => {
-    if (event.isComposing || event.keyCode === 229) return;
+    if (event.isComposing || state.composing || event.keyCode === 229) return;
     if (event.ctrlKey || event.metaKey || event.altKey || event.getModifierState?.("AltGraph")) return;
 
     const key = event.key;
@@ -498,8 +657,7 @@ function setupEvents() {
 
     if (key === "Backspace") {
       event.preventDefault();
-      deleteSelection();
-      processKey("Backspace", null);
+      handleBackspace();
       return;
     }
     if (key === "Enter") {
@@ -515,11 +673,13 @@ function setupEvents() {
     }
     if (key === "Delete") {
       event.preventDefault();
-      deleteSelection();
-      processKey("Delete", null);
+      if (!deleteSelection()) processKey("Delete", null);
       return;
     }
     if (key.length === 1) {
+      // Chữ có dấu sẵn (Gboard tiếng Việt, bàn phím layout Việt) để trình duyệt
+      // chèn như văn bản thường; beforeinput/input sẽ đồng bộ lại.
+      if (key.codePointAt(0) > 0x7f) return;
       event.preventDefault();
       deleteSelection();
       processKey(key, key);
@@ -537,15 +697,17 @@ function setupEvents() {
   pad.addEventListener("click", () => syncFromPad());
   pad.addEventListener("blur", () => flushSession());
 
-  pad.addEventListener("input", () => {
-    // Paste / autofill / undo: đồng bộ lại văn bản và reset từ đang gõ.
-    state.text = pad.value;
-    state.cursor = utf16ToCp(pad.value, pad.selectionEnd ?? pad.value.length);
-    if (session) session.reset();
-    clearPreeditState();
-    state.raw = "";
-    state.lastAction = null;
-    updateMeta();
+  pad.addEventListener("input", (event) => {
+    // Trong lúc composition, textarea đang chứa chữ thô; compositionend sẽ xử lý.
+    if (event.isComposing || state.composing) return;
+    // beforeinput đã xử lý và render xong: bỏ qua input lặp.
+    if (pad.value === state.text) {
+      state.cursor = utf16ToCp(pad.value, pad.selectionEnd ?? pad.value.length);
+      return;
+    }
+    // Paste / autofill / undo / xoá cả từ / chữ có dấu: đồng bộ nguyên văn
+    // và reset từ đang gõ.
+    syncLiteralFromPad();
   });
 
   for (const button of document.querySelectorAll("[data-method]")) {

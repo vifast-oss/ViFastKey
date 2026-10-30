@@ -25,3 +25,8 @@ node_modules/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Web deploy (FastAPI)
+deploy/vifastkey_web/.env
+deploy/vifastkey_web/data/
+deploy/vifastkey_web/static/

@@ -147,17 +147,32 @@ menu Telex/VNI, macro undo; chưa ký Developer ID/notarize nên bản phát hà
 
 ## Web demo
 
+Bản đang chạy: **<https://vifastkey.hoctuthien.com/>**
+
 Playground gõ thử chạy engine Rust qua WASM, không cần server API:
 
 ```bash
 rustup target add wasm32-unknown-unknown
-cargo install wasm-bindgen-cli --version 0.2.129
+cargo install wasm-bindgen-cli --version 0.2.130
 ./web/build.sh
 python3 -m http.server 8080 -d web
 # mở http://127.0.0.1:8080/
 ```
 
-Playground mô phỏng cả `REPLACE` và `PREEDIT`, có macro, NFC/NFD và các tuỳ chọn mới. Chi tiết hành vi, giới hạn và cách deploy tĩnh: `web/README.md`.
+Playground mô phỏng cả `REPLACE` và `PREEDIT`, có macro, NFC/NFD và các tuỳ chọn mới.
+Trang production còn có **API Python** (`/api/type`, `/api/charset`) chạy engine oracle,
+thống kê ẩn danh và góp ý; xem `deploy/vifastkey_web/README.md`.
+
+```bash
+# chạy đầy đủ landing page + API Python
+python3 -m venv /private/tmp/vifastkey-venv
+/private/tmp/vifastkey-venv/bin/pip install -r deploy/vifastkey_web/requirements.txt
+PYTHONPATH=python STATIC_DIR=web \
+  /private/tmp/vifastkey-venv/bin/uvicorn app:app \
+  --app-dir deploy/vifastkey_web --reload --port 8091
+```
+
+Chi tiết hành vi, giới hạn và cách deploy tĩnh: `web/README.md`.
 
 ## Kiểm tra nhanh
 

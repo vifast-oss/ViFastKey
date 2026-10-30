@@ -1,0 +1,1012 @@
+"""ViFastKey web: landing page + API Python.
+
+Trang tĩnh trong ``static/`` là landing page/playground (WASM). FastAPI bổ sung
+API chạy chính engine Python (oracle) và các tiện ích công khai:
+
+* ``POST /api/type``      — chuỗi phím thô -> chữ tiếng Việt
+* ``POST /api/charset``   — chuyển bảng mã
+* ``GET  /api/meta``      — phiên bản, kiểu gõ, bảng mã, giới hạn
+* ``GET  /api/stats``     — thống kê tổng hợp, không lưu nội dung người dùng
+* ``POST /api/visit``     — đếm lượt xem ẩn danh
+* ``POST /api/feedback``  — góp ý/báo lỗi, chỉ admin xem
+* ``GET  /admin``         — bảng điều khiển (Basic Auth nếu có ADMIN_PASSWORD)
+
+Chỉ dùng thư viện chuẩn của ViFastKey + FastAPI/uvicorn. Không gọi mạng.
+"""
+
+from __future__ import annotations
+
+import base64
+import csv
+import hashlib
+import hmac
+import html
+import io
+import logging
+import os
+import re
+import secrets
+import sqlite3
+import threading
+import time
+from collections import defaultdict, deque
+from contextlib import asynccontextmanager
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from typing import Literal
+
+from adapters import (
+    FakeTextField,
+    MemoryConfigStore,
+    StaticAppContext,
+    WordListDictionary,
+)
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    JSONResponse,
+    PlainTextResponse,
+)
+from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, ConfigDict, Field
+from vfk_core.charset import (
+    DISPLAY_NAMES as CHARSET_NAMES,
+)
+from vfk_core.charset import (
+    SINGLE_BYTE,
+    normalize_charset,
+)
+from vfk_core.charset import (
+    convert as convert_charset,
+)
+from vfk_engine import (
+    Commit,
+    Config,
+    ImeSession,
+    KeyEvent,
+    OutputMode,
+    PassThrough,
+    Ports,
+    Preedit,
+    Replace,
+)
+from vfk_ffi import VERSION
+from vi_syllable import ToneStyle
+
+ROOT = Path(__file__).resolve().parent
+STATIC = Path(os.environ.get("STATIC_DIR", ROOT / "static")).resolve()
+DATA_DIR = Path(os.environ.get("DATA_DIR", ROOT / "data"))
+DB_PATH = Path(os.environ.get("STATS_DB", DATA_DIR / "stats.sqlite3"))
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "").strip()
+SITE_URL = os.environ.get("SITE_URL", "https://vifastkey.hoctuthien.com").rstrip("/")
+MAX_TYPE_CHARS = 500
+MAX_CHARSET_CHARS = 2000
+MAX_FEEDBACK_CHARS = 1000
+MAX_CONTACT_CHARS = 120
+RATE_WINDOW = 60.0
+TYPE_RATE_LIMIT = 60
+CHARSET_RATE_LIMIT = 60
+FEEDBACK_RATE_LIMIT = 5
+VN_TZ = timezone(timedelta(hours=7))
+
+DEFAULT_MACROS = {"ko": "không", "vn": "Việt Nam", "dc": "được"}
+METHODS = {
+    "telex": "Telex",
+    "simple_telex": "Simple Telex",
+    "vni": "VNI",
+    "viqr": "VIQR",
+}
+FEEDBACK_CATEGORIES = {
+    "gop_y": "Góp ý chung",
+    "cai_tien": "Đề xuất cải tiến",
+    "bao_loi": "Báo lỗi",
+}
+FEEDBACK_STATUS = {"new": "Chờ xem", "read": "Đã đọc", "resolved": "Đã xử lý"}
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger("vifastkey-web")
+
+# Từ điển dùng chung, chỉ đọc sau khi khởi tạo nên an toàn với nhiều request.
+DICTIONARY = WordListDictionary()
+_LOCK = threading.Lock()
+_RATE_LOCK = threading.Lock()
+_RATE_BUCKETS: dict[str, deque[float]] = defaultdict(deque)
+_STATS_LOCK = threading.Lock()
+_SALT: str | None = None
+_STARTED = time.time()
+
+
+# ---------------------------------------------------------------- cơ sở dữ liệu
+def _connect() -> sqlite3.Connection:
+    connection = sqlite3.connect(str(DB_PATH), timeout=10)
+    connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA busy_timeout=3000")
+    return connection
+
+
+def _init_db() -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            connection.executescript(
+                """
+                PRAGMA journal_mode=WAL;
+                CREATE TABLE IF NOT EXISTS meta (
+                    key TEXT PRIMARY KEY,
+                    value TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS visitors (
+                    visitor TEXT PRIMARY KEY,
+                    first_seen REAL NOT NULL,
+                    last_seen REAL NOT NULL,
+                    page_views INTEGER NOT NULL DEFAULT 0,
+                    demo_count INTEGER NOT NULL DEFAULT 0
+                );
+                CREATE TABLE IF NOT EXISTS demos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ts REAL NOT NULL,
+                    visitor TEXT NOT NULL,
+                    chars INTEGER NOT NULL,
+                    method TEXT NOT NULL,
+                    tone TEXT NOT NULL,
+                    elapsed_ms REAL NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS demos_ts ON demos(ts);
+                CREATE TABLE IF NOT EXISTS feedback (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    ts REAL NOT NULL,
+                    visitor TEXT NOT NULL,
+                    category TEXT NOT NULL,
+                    message TEXT NOT NULL,
+                    contact TEXT NOT NULL DEFAULT '',
+                    status TEXT NOT NULL DEFAULT 'new',
+                    updated REAL NOT NULL
+                );
+                CREATE INDEX IF NOT EXISTS feedback_status ON feedback(status);
+                """
+            )
+            connection.commit()
+        finally:
+            connection.close()
+
+
+def _get_salt() -> str:
+    global _SALT
+    if _SALT:
+        return _SALT
+    configured = os.environ.get("STATS_SALT", "").strip()
+    if configured:
+        _SALT = configured
+        return _SALT
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            row = connection.execute(
+                "SELECT value FROM meta WHERE key='salt'"
+            ).fetchone()
+            if row:
+                _SALT = str(row["value"])
+            else:
+                _SALT = secrets.token_hex(16)
+                connection.execute(
+                    "INSERT INTO meta(key, value) VALUES('salt', ?)", (_SALT,)
+                )
+                connection.commit()
+        finally:
+            connection.close()
+    return _SALT
+
+
+def _client_ip(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for", "")
+    return forwarded.split(",")[0].strip() or (
+        request.client.host if request.client else "unknown"
+    )
+
+
+def _ip_hash(request: Request) -> str:
+    return hashlib.sha256(
+        f"{_get_salt()}:ip:{_client_ip(request)}".encode()
+    ).hexdigest()[:24]
+
+
+def _visitor_hash(request: Request, visitor_id: str | None = None) -> str:
+    if visitor_id and re.fullmatch(r"[A-Za-z0-9_-]{8,80}", visitor_id):
+        material = f"id:{visitor_id}"
+    else:
+        material = f"ip:{_client_ip(request)}"
+    return hashlib.sha256(f"{_get_salt()}:{material}".encode()).hexdigest()[:24]
+
+
+def _record_page(visitor: str) -> None:
+    now = time.time()
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            connection.execute(
+                "INSERT INTO visitors(visitor, first_seen, last_seen, page_views) VALUES(?,?,?,1) "
+                "ON CONFLICT(visitor) DO UPDATE SET last_seen=excluded.last_seen, "
+                "page_views=visitors.page_views+1",
+                (visitor, now, now),
+            )
+            connection.commit()
+        finally:
+            connection.close()
+
+
+def _record_demo(
+    visitor: str, chars: int, method: str, tone: str, elapsed_ms: float
+) -> None:
+    now = time.time()
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            connection.execute(
+                "INSERT INTO demos(ts, visitor, chars, method, tone, elapsed_ms) VALUES(?,?,?,?,?,?)",
+                (now, visitor, chars, method, tone, elapsed_ms),
+            )
+            connection.execute(
+                "INSERT INTO visitors(visitor, first_seen, last_seen, demo_count) VALUES(?,?,?,1) "
+                "ON CONFLICT(visitor) DO UPDATE SET last_seen=excluded.last_seen, "
+                "demo_count=visitors.demo_count+1",
+                (visitor, now, now),
+            )
+            connection.commit()
+        finally:
+            connection.close()
+
+
+def _record_feedback(visitor: str, category: str, message: str, contact: str) -> int:
+    now = time.time()
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            cursor = connection.execute(
+                "INSERT INTO feedback(ts, visitor, category, message, contact, status, updated) "
+                "VALUES(?,?,?,?,?,'new',?)",
+                (now, visitor, category, message, contact, now),
+            )
+            connection.commit()
+            return int(cursor.lastrowid)
+        finally:
+            connection.close()
+
+
+def _feedback_rows(limit: int = 100) -> list[dict]:
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            rows = connection.execute(
+                "SELECT id, ts, visitor, category, message, contact, status "
+                "FROM feedback ORDER BY id DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+        finally:
+            connection.close()
+    return [
+        {
+            **dict(row),
+            "time": datetime.fromtimestamp(float(row["ts"]), VN_TZ).strftime(
+                "%d/%m %H:%M"
+            ),
+        }
+        for row in rows
+    ]
+
+
+def _stats_payload() -> dict:
+    now = time.time()
+    local_now = datetime.fromtimestamp(now, VN_TZ)
+    day_start = local_now.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            users = connection.execute("SELECT COUNT(*) AS n FROM visitors").fetchone()[
+                "n"
+            ]
+            pages = connection.execute(
+                "SELECT COALESCE(SUM(page_views),0) AS n FROM visitors"
+            ).fetchone()["n"]
+            demos = connection.execute("SELECT COUNT(*) AS n FROM demos").fetchone()[
+                "n"
+            ]
+            demos_today = connection.execute(
+                "SELECT COUNT(*) AS n FROM demos WHERE ts >= ?", (day_start,)
+            ).fetchone()["n"]
+            users_today = connection.execute(
+                "SELECT COUNT(*) AS n FROM visitors WHERE last_seen >= ?", (day_start,)
+            ).fetchone()["n"]
+            totals = connection.execute(
+                "SELECT COALESCE(SUM(chars),0) AS chars, COALESCE(AVG(chars),0) AS avg_chars, "
+                "COALESCE(AVG(elapsed_ms),0) AS avg_ms FROM demos"
+            ).fetchone()
+            feedback_total = connection.execute(
+                "SELECT COUNT(*) AS n FROM feedback"
+            ).fetchone()["n"]
+            feedback_new = connection.execute(
+                "SELECT COUNT(*) AS n FROM feedback WHERE status='new'"
+            ).fetchone()["n"]
+            recent = [
+                dict(row)
+                for row in connection.execute(
+                    "SELECT ts, chars, method, tone, elapsed_ms FROM demos ORDER BY id DESC LIMIT 12"
+                ).fetchall()
+            ]
+        finally:
+            connection.close()
+    return {
+        "generated_at": datetime.fromtimestamp(now, VN_TZ).strftime(
+            "%Y-%m-%d %H:%M:%S"
+        ),
+        "timezone": "UTC+07:00",
+        "page_views": int(pages),
+        "visitors": int(users),
+        "visitors_today": int(users_today),
+        "demos": int(demos),
+        "demos_today": int(demos_today),
+        "chars_total": int(totals["chars"]),
+        "avg_chars": round(float(totals["avg_chars"]), 1),
+        "avg_ms": round(float(totals["avg_ms"]), 3),
+        "feedback_total": int(feedback_total),
+        "feedback_new": int(feedback_new),
+        "recent": [
+            {
+                **row,
+                "time": datetime.fromtimestamp(float(row["ts"]), VN_TZ).strftime(
+                    "%d/%m %H:%M:%S"
+                ),
+                "chars": int(row["chars"]),
+                "elapsed_ms": round(float(row["elapsed_ms"]), 3),
+            }
+            for row in recent
+        ],
+    }
+
+
+# ---------------------------------------------------------------- rate limit
+def _rate_ok(bucket: str, limit: int) -> bool:
+    now = time.monotonic()
+    with _RATE_LOCK:
+        if len(_RATE_BUCKETS) > 4096:
+            stale = []
+            for key, queue in _RATE_BUCKETS.items():
+                while queue and now - queue[0] > RATE_WINDOW:
+                    queue.popleft()
+                if not queue:
+                    stale.append(key)
+            for key in stale:
+                _RATE_BUCKETS.pop(key, None)
+        queue = _RATE_BUCKETS[bucket]
+        while queue and now - queue[0] > RATE_WINDOW:
+            queue.popleft()
+        if len(queue) >= limit:
+            return False
+        queue.append(now)
+        return True
+
+
+# ---------------------------------------------------------------- engine
+def _clean_macros(raw: dict[str, str] | None) -> dict[str, str]:
+    if not raw:
+        return {}
+    if len(raw) > 50:
+        raise HTTPException(status_code=422, detail="Tối đa 50 macro")
+    clean: dict[str, str] = {}
+    for key, value in raw.items():
+        key, value = str(key).strip().lower(), str(value).strip()
+        if not key or not value:
+            continue
+        if len(key) > 40 or len(value) > 120:
+            raise HTTPException(status_code=422, detail="Macro sai độ dài")
+        if any(ord(ch) < 32 for ch in key + value):
+            raise HTTPException(status_code=422, detail="Macro chứa ký tự điều khiển")
+        clean[key] = value
+    return clean
+
+
+def _summary(action) -> str:
+    if isinstance(action, PassThrough):
+        return "pass"
+    if isinstance(action, Preedit):
+        return f"preedit {len(action.text)}"
+    if isinstance(action, Replace):
+        return f"replace −{action.delete_before} +{len(action.insert)}"
+    if isinstance(action, Commit):
+        return f"commit {len(action.text)}"
+    return "action"
+
+
+def _type_text(
+    text: str,
+    method: str,
+    tone: str,
+    mode: str,
+    spell_check: bool,
+    allow_coda_k: bool,
+    macro_digits: bool,
+    auto_restore_english: bool,
+    unicode_form: str,
+    macros: dict[str, str],
+    trace: bool = False,
+) -> tuple[str, list[dict], float]:
+    """Chạy engine Python trên một chuỗi phím thô.
+
+    ``<`` = Backspace, ``~`` = Escape, ``|`` = Enter (giống CLI của dự án).
+    Trả về (text, trace, elapsed_ms).
+    """
+    started = time.perf_counter()
+    config = Config(
+        input_method=method,
+        tone_style=ToneStyle(tone),
+        spell_check=spell_check,
+        allow_coda_k=allow_coda_k,
+        macro_digits=macro_digits,
+        auto_restore_english=auto_restore_english,
+        unicode_form=unicode_form,
+        macros={**DEFAULT_MACROS, **macros},
+    )
+    field = FakeTextField()
+    session = ImeSession(
+        Ports(MemoryConfigStore(config), StaticAppContext("web"), field, DICTIONARY),
+        OutputMode(mode),
+    )
+    steps: list[dict] = []
+    special = {"<": "Backspace", "~": "Escape", "|": "Enter"}
+    for char in text:
+        key = special.get(char, char)
+        event = KeyEvent(key)
+        action = session.process_key(event)
+        field.apply(action, event)
+        if trace:
+            steps.append({"key": key, "action": _summary(action), "text": field.text})
+    final_action = session.process_key(KeyEvent("Enter"))
+    field.apply(final_action)
+    if trace:
+        steps.append(
+            {"key": "Enter", "action": _summary(final_action), "text": field.text}
+        )
+    return field.text, steps, (time.perf_counter() - started) * 1000
+
+
+# ---------------------------------------------------------------- admin
+def _admin_authorized(request: Request) -> bool:
+    if not ADMIN_PASSWORD:
+        return True
+    header = request.headers.get("authorization", "")
+    expected = "Basic " + base64.b64encode(f"admin:{ADMIN_PASSWORD}".encode()).decode(
+        "ascii"
+    )
+    return hmac.compare_digest(header, expected)
+
+
+def _admin_denied() -> Response:
+    return Response(
+        status_code=401,
+        content="Cần đăng nhập admin.",
+        headers={"WWW-Authenticate": 'Basic realm="vifastkey-admin"'},
+    )
+
+
+def _csv_cell(value: object) -> str:
+    text = str(value)
+    return "'" + text if text[:1] in ("=", "+", "-", "@") else text
+
+
+def _admin_html(stats: dict) -> str:
+    feedback = _feedback_rows()
+    rows = []
+    for item in feedback:
+        message = html.escape(str(item["message"])).replace("\n", "<br>")
+        contact = html.escape(str(item["contact"])) or "—"
+        category = html.escape(
+            FEEDBACK_CATEGORIES.get(str(item["category"]), str(item["category"]))
+        )
+        status = FEEDBACK_STATUS.get(str(item["status"]), str(item["status"]))
+        status_key = str(item["status"])
+        actions = []
+        if status_key != "read":
+            actions.append(
+                f"<form method='post' action='/admin/feedback/{item['id']}/read' style='display:inline'>"
+                f"<button class='tiny'>Đã đọc</button></form>"
+            )
+        if status_key != "resolved":
+            actions.append(
+                f"<form method='post' action='/admin/feedback/{item['id']}/resolved' style='display:inline'>"
+                f"<button class='tiny ok'>Đã xử lý</button></form>"
+            )
+        if not actions:
+            actions.append("<span class='done'>Đã xử lý</span>")
+        rows.append(
+            f"<tr><td>{item['time']}</td><td><span class='cat'>{category}</span></td>"
+            f"<td class='msg'>{message}</td><td>{contact}</td><td>{html.escape(str(item['visitor']))[:10]}</td>"
+            f"<td><span class='st st-{status_key}'>{status}</span></td><td>{' '.join(actions)}</td></tr>"
+        )
+    feedback_rows = "".join(rows) or "<tr><td colspan='7'>Chưa có góp ý nào.</td></tr>"
+    recent_rows = (
+        "".join(
+            f"<tr><td>{item['time']}</td><td>{item['chars']}</td><td>{html.escape(str(item['method']))}</td>"
+            f"<td>{html.escape(str(item['tone']))}</td><td>{item['elapsed_ms']:.3f}s</td></tr>"
+            for item in stats["recent"]
+        )
+        or "<tr><td colspan='5'>Chưa có lượt chạy API nào.</td></tr>"
+    )
+    auth_note = (
+        "Đã bật Basic Auth."
+        if ADMIN_PASSWORD
+        else "Đang mở công khai, chưa đặt ADMIN_PASSWORD."
+    )
+    return f"""<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="refresh" content="60">
+<title>ViFastKey · Quản trị</title>
+<link rel="icon" href="/brand/favicon.ico" sizes="any">
+<style>
+body{{font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;background:#FBF6EE;color:#1F2430;margin:0;padding:28px}}
+main{{max-width:1040px;margin:0 auto}} h1{{letter-spacing:-.03em;margin:0 0 4px;display:flex;align-items:center;gap:9px}}
+.mark{{width:38px;height:38px;border-radius:9px;flex:0 0 auto}}
+.sub{{color:#637083;margin:0 0 20px}} .grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}}
+.card{{background:#fff;border:1px solid #dbe3ea;border-radius:12px;padding:14px}}
+.card b{{display:block;font-size:1.55rem;color:#C6281E}} .card span{{color:#637083;font-size:.84rem}}
+table{{width:100%;border-collapse:collapse;background:#fff;border:1px solid #dbe3ea;border-radius:12px;overflow:hidden;margin-top:18px}}
+th,td{{text-align:left;padding:9px 12px;border-bottom:1px solid #edf1f3;font-size:.86rem}}
+th{{background:#FDF0EB;color:#9B2C20}} a{{color:#C6281E}}
+.note{{background:#fff8e8;border:1px solid #f0d49a;padding:10px 12px;border-radius:10px;color:#7a4b00;font-size:.86rem;margin-top:16px}}
+.tiny{{padding:4px 8px;font-size:.78rem;border-radius:7px;border:1px solid #cbd6df;background:#f4f7f8;cursor:pointer}}
+.tiny.ok{{background:#e5f5ec;border-color:#b8e2c8;color:#166534}}
+.msg{{max-width:390px;white-space:normal;line-height:1.45;overflow-wrap:anywhere}}
+.cat,.st{{display:inline-block;padding:2px 7px;border-radius:999px;font-size:.76rem;white-space:nowrap}}
+.cat{{background:#FDF0EB;color:#9B2C20}} .st-new{{background:#FFF4D6;color:#7A4B00}}
+.st-read{{background:#EAF2FF;color:#1D4ED8}} .st-resolved{{background:#E5F5EC;color:#166534}}
+.done{{color:#166534;font-size:.8rem;font-weight:700}}
+@media(max-width:700px){{.grid{{grid-template-columns:repeat(2,1fr)}} table{{display:block;overflow-x:auto}}}}
+</style></head><body><main>
+<h1><img class="mark" src="/brand/vifastkey-icon-192.png" alt=""> ViFastKey · Quản trị</h1>
+<p class="sub">Cập nhật {stats["generated_at"]} ({stats["timezone"]}) · tự làm mới 60 giây · <a href="/">về trang chủ</a></p>
+<div class="grid">
+  <div class="card"><b>{stats["page_views"]}</b><span>lượt xem trang</span></div>
+  <div class="card"><b>{stats["visitors"]}</b><span>khách ẩn danh (hash)</span></div>
+  <div class="card"><b>{stats["demos"]}</b><span>lượt chạy API Python</span></div>
+  <div class="card"><b>{stats["demos_today"]}</b><span>lượt chạy hôm nay</span></div>
+  <div class="card"><b>{stats["visitors_today"]}</b><span>khách hôm nay</span></div>
+  <div class="card"><b>{stats["chars_total"]}</b><span>ký tự đã chuyển</span></div>
+  <div class="card"><b>{stats["avg_chars"]}</b><span>ký tự / lượt</span></div>
+  <div class="card"><b>{stats["avg_ms"]:.2f} ms</b><span>xử lý trung bình</span></div>
+  <div class="card"><b>{stats["feedback_total"]}</b><span>góp ý / báo lỗi</span></div>
+  <div class="card"><b>{stats["feedback_new"]}</b><span>góp ý mới</span></div>
+</div>
+<h2 style="margin:24px 0 4px">Góp ý &amp; báo lỗi</h2>
+<p class="sub">{auth_note} · <a href="/admin/feedback.csv">Tải CSV</a></p>
+<table><thead><tr><th>Thời điểm</th><th>Loại</th><th>Nội dung</th><th>Liên hệ</th><th>Ẩn danh</th><th>Trạng thái</th><th>Cập nhật</th></tr></thead>
+<tbody>{feedback_rows}</tbody></table>
+<h2 style="margin:24px 0 4px">Lượt chạy API gần đây</h2>
+<table><thead><tr><th>Thời điểm</th><th>Ký tự</th><th>Kiểu gõ</th><th>Dấu</th><th>Xử lý</th></tr></thead>
+<tbody>{recent_rows}</tbody></table>
+<div class="note">Chỉ lưu hash visitor/IP, số ký tự, thời gian xử lý; không lưu nội dung bạn gõ.
+Nội dung góp ý chỉ admin đã đăng nhập mới xem được. {auth_note}</div>
+</main></body></html>"""
+
+
+# ---------------------------------------------------------------- app
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    _init_db()
+    _get_salt()
+    logger.info("ViFastKey web ready, version=%s", VERSION)
+    yield
+
+
+app = FastAPI(
+    title="ViFastKey web",
+    version=VERSION,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+    lifespan=lifespan,
+)
+app.add_middleware(GZipMiddleware, minimum_size=700)
+hosts = [
+    h.strip()
+    for h in os.environ.get(
+        "ALLOWED_HOSTS",
+        "vifastkey.hoctuthien.com,localhost,127.0.0.1,testserver",
+    ).split(",")
+    if h.strip()
+]
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=hosts or ["*"])
+
+
+@app.middleware("http")
+async def security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
+    response.headers.setdefault(
+        "Permissions-Policy", "camera=(), microphone=(), geolocation=()"
+    )
+    response.headers.setdefault(
+        "Content-Security-Policy",
+        "default-src 'self'; img-src 'self' data:; font-src 'self'; "
+        "style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'; "
+        "connect-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'",
+    )
+    path = request.url.path
+    suffix = Path(path).suffix.lower()
+    if suffix in {".css", ".js"}:
+        response.headers.setdefault("Cache-Control", "no-cache")
+    elif path.startswith(("/brand/", "/fonts/", "/pkg/")) or suffix in {
+        ".wasm",
+        ".png",
+        ".ico",
+        ".ttf",
+        ".webmanifest",
+        ".svg",
+    }:
+        response.headers.setdefault("Cache-Control", "public, max-age=604800")
+    elif path.startswith(("/api/", "/admin")) or path == "/healthz":
+        response.headers.setdefault("Cache-Control", "no-store")
+    elif path == "/" or path.endswith(".html"):
+        response.headers.setdefault("Cache-Control", "no-cache")
+    return response
+
+
+# ---------------------------------------------------------------- models
+class TypeRequest(BaseModel):
+    text: str = Field(..., max_length=MAX_TYPE_CHARS)
+    method: Literal["telex", "simple_telex", "vni", "viqr"] = "telex"
+    tone: Literal["old", "new"] = "new"
+    mode: Literal["replace", "preedit"] = "replace"
+    spell_check: bool = True
+    allow_coda_k: bool = False
+    macro_digits: bool = False
+    auto_restore_english: bool = True
+    unicode_form: Literal["NFC", "NFD"] = "NFC"
+    macros: dict[str, str] | None = None
+    visitor_id: str | None = None
+    trace: bool = False
+
+
+class CharsetRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    text: str = Field(..., max_length=MAX_CHARSET_CHARS)
+    from_charset: str = Field("unicode", alias="from")
+    to_charset: str = Field("tcvn3", alias="to")
+
+
+class VisitRequest(BaseModel):
+    visitor_id: str | None = None
+
+
+class FeedbackRequest(BaseModel):
+    category: str = "gop_y"
+    message: str
+    contact: str | None = None
+    visitor_id: str | None = None
+    website: str | None = None
+
+
+# ---------------------------------------------------------------- routes
+@app.get("/", response_class=HTMLResponse)
+def index() -> Response:
+    return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/healthz")
+def healthz() -> dict:
+    db_ok = True
+    try:
+        with _STATS_LOCK:
+            connection = _connect()
+            try:
+                connection.execute("SELECT 1").fetchone()
+            finally:
+                connection.close()
+    except Exception:
+        logger.exception("health db check failed")
+        db_ok = False
+    return {
+        "ok": db_ok,
+        "version": VERSION,
+        "engine": "python",
+        "db": db_ok,
+        "uptime_seconds": round(time.time() - _STARTED, 1),
+    }
+
+
+@app.get("/api/meta")
+def api_meta() -> dict:
+    charsets = [
+        {"key": key, "name": name, "single_byte": key in SINGLE_BYTE}
+        for key, name in CHARSET_NAMES.items()
+    ]
+    return {
+        "version": VERSION,
+        "engine": "python-oracle",
+        "max_type_chars": MAX_TYPE_CHARS,
+        "max_charset_chars": MAX_CHARSET_CHARS,
+        "methods": METHODS,
+        "tones": {"old": "Dấu cũ", "new": "Dấu mới"},
+        "charsets": charsets,
+        "default_macros": DEFAULT_MACROS,
+        "special_keys": {"<": "Backspace", "~": "Escape", "|": "Enter"},
+        "site": SITE_URL,
+    }
+
+
+@app.post("/api/type")
+def api_type(payload: TypeRequest, request: Request) -> dict:
+    text = payload.text.replace("\x00", " ")
+    if not text.strip():
+        raise HTTPException(status_code=422, detail="Nhập chuỗi phím cần chuyển")
+    visitor = _visitor_hash(request, payload.visitor_id)
+    if not _rate_ok(f"type:{_ip_hash(request)}", TYPE_RATE_LIMIT):
+        raise HTTPException(
+            status_code=429,
+            detail="Chạy quá nhiều; thử lại sau 1 phút",
+            headers={"Retry-After": "60"},
+        )
+    macros = _clean_macros(payload.macros)
+    try:
+        if not _LOCK.acquire(timeout=5):
+            raise HTTPException(status_code=503, detail="Máy đang bận; thử lại sau")
+        try:
+            output, steps, elapsed_ms = _type_text(
+                text,
+                payload.method,
+                payload.tone,
+                payload.mode,
+                payload.spell_check,
+                payload.allow_coda_k,
+                payload.macro_digits,
+                payload.auto_restore_english,
+                payload.unicode_form,
+                macros,
+                payload.trace,
+            )
+        finally:
+            _LOCK.release()
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except Exception as exc:
+        logger.exception("type failed")
+        raise HTTPException(
+            status_code=500, detail="Lỗi chuyển chữ; thử chuỗi khác"
+        ) from exc
+    try:
+        _record_demo(visitor, len(text), payload.method, payload.tone, elapsed_ms)
+    except Exception:
+        logger.exception("record demo failed")
+    result = {
+        "output": output,
+        "input": text,
+        "method": payload.method,
+        "tone": payload.tone,
+        "mode": payload.mode,
+        "engine": "python",
+        "version": VERSION,
+        "elapsed_ms": round(elapsed_ms, 3),
+    }
+    if payload.trace:
+        result["trace"] = steps
+    return result
+
+
+@app.post("/api/charset")
+def api_charset(payload: CharsetRequest, request: Request) -> dict:
+    if not payload.text:
+        raise HTTPException(status_code=422, detail="Nhập chuỗi cần chuyển bảng mã")
+    if not _rate_ok(f"charset:{_ip_hash(request)}", CHARSET_RATE_LIMIT):
+        raise HTTPException(
+            status_code=429,
+            detail="Chạy quá nhiều; thử lại sau 1 phút",
+            headers={"Retry-After": "60"},
+        )
+    try:
+        source = normalize_charset(payload.from_charset)
+        target = normalize_charset(payload.to_charset)
+        output = convert_charset(payload.text, source, target)
+        hex_text = None
+        if target in SINGLE_BYTE:
+            try:
+                hex_text = " ".join(f"{byte:02x}" for byte in output.encode("latin-1"))
+            except UnicodeEncodeError:
+                hex_text = None
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {
+        "output": output,
+        "hex": hex_text,
+        "from": source,
+        "to": target,
+        "engine": "python",
+        "version": VERSION,
+    }
+
+
+@app.get("/api/stats")
+def api_stats() -> dict:
+    stats = _stats_payload()
+    return {
+        "generated_at": stats["generated_at"],
+        "page_views": stats["page_views"],
+        "visitors": stats["visitors"],
+        "demos": stats["demos"],
+        "demos_today": stats["demos_today"],
+        "chars_total": stats["chars_total"],
+        "feedback_total": stats["feedback_total"],
+    }
+
+
+@app.post("/api/visit")
+def api_visit(payload: VisitRequest, request: Request) -> dict:
+    try:
+        visitor = _visitor_hash(request, payload.visitor_id)
+        if not _rate_ok(f"visit:{_ip_hash(request)}", 30):
+            return {"ok": True}
+        _record_page(visitor)
+    except Exception:
+        logger.exception("visit failed")
+        return {"ok": False}
+    return {"ok": True}
+
+
+@app.post("/api/feedback")
+def api_feedback(payload: FeedbackRequest, request: Request) -> dict:
+    if (payload.website or "").strip():
+        return {"ok": True, "queued": 0}
+    category = payload.category if payload.category in FEEDBACK_CATEGORIES else "gop_y"
+    message = re.sub(
+        r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]", "", payload.message or ""
+    ).strip()
+    if len(message) < 5:
+        raise HTTPException(status_code=422, detail="Nội dung cần ít nhất 5 ký tự")
+    if len(message) > MAX_FEEDBACK_CHARS:
+        raise HTTPException(
+            status_code=422, detail=f"Nội dung tối đa {MAX_FEEDBACK_CHARS} ký tự"
+        )
+    contact = re.sub(r"[\x00-\x1f\x7f]", "", payload.contact or "").strip()
+    if len(contact) > MAX_CONTACT_CHARS:
+        raise HTTPException(
+            status_code=422, detail=f"Liên hệ tối đa {MAX_CONTACT_CHARS} ký tự"
+        )
+    visitor = _visitor_hash(request, payload.visitor_id)
+    if not _rate_ok(f"feedback:{_ip_hash(request)}", FEEDBACK_RATE_LIMIT):
+        raise HTTPException(
+            status_code=429,
+            detail="Gửi quá nhiều; thử lại sau 1 phút",
+            headers={"Retry-After": "60"},
+        )
+    feedback_id = _record_feedback(visitor, category, message, contact)
+    logger.info("feedback stored id=%d category=%s", feedback_id, category)
+    return {"ok": True, "queued": 1}
+
+
+@app.get("/admin", response_class=HTMLResponse)
+def admin(request: Request) -> Response:
+    if not _admin_authorized(request):
+        return _admin_denied()
+    return HTMLResponse(
+        _admin_html(_stats_payload()), headers={"Cache-Control": "no-store"}
+    )
+
+
+@app.get("/admin.json")
+def admin_json(request: Request) -> Response:
+    if not _admin_authorized(request):
+        return _admin_denied()
+    return JSONResponse(_stats_payload(), headers={"Cache-Control": "no-store"})
+
+
+@app.get("/admin/feedback.csv")
+def admin_feedback_csv(request: Request) -> Response:
+    if not _admin_authorized(request):
+        return _admin_denied()
+    buffer = io.StringIO()
+    buffer.write("\ufeff")
+    writer = csv.writer(buffer)
+    writer.writerow(
+        ["id", "thoi_gian", "loai", "noi_dung", "lien_he", "an_danh", "trang_thai"]
+    )
+    for item in _feedback_rows(limit=10000):
+        writer.writerow(
+            [
+                item["id"],
+                item["time"],
+                FEEDBACK_CATEGORIES.get(item["category"], item["category"]),
+                _csv_cell(item["message"]),
+                _csv_cell(item["contact"]),
+                item["visitor"],
+                FEEDBACK_STATUS.get(item["status"], item["status"]),
+            ]
+        )
+    return Response(
+        content=buffer.getvalue(),
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": 'attachment; filename="vifastkey-feedback.csv"',
+            "Cache-Control": "no-store",
+        },
+    )
+
+
+@app.post("/admin/feedback/{feedback_id}/{status}")
+def admin_feedback_status(feedback_id: int, status: str, request: Request) -> Response:
+    if not _admin_authorized(request):
+        return _admin_denied()
+    if status not in FEEDBACK_STATUS:
+        raise HTTPException(status_code=400, detail="Trạng thái không hợp lệ")
+    with _STATS_LOCK:
+        connection = _connect()
+        try:
+            connection.execute(
+                "UPDATE feedback SET status=?, updated=? WHERE id=?",
+                (status, time.time(), feedback_id),
+            )
+            connection.commit()
+        finally:
+            connection.close()
+    return Response(status_code=303, headers={"Location": "/admin"})
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon() -> Response:
+    return FileResponse(
+        STATIC / "brand" / "favicon.ico",
+        media_type="image/x-icon",
+        headers={"Cache-Control": "public, max-age=604800"},
+    )
+
+
+@app.get("/robots.txt", include_in_schema=False)
+def robots() -> PlainTextResponse:
+    return PlainTextResponse(
+        f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+@app.get("/sitemap.xml", include_in_schema=False)
+def sitemap() -> Response:
+    body = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"  <url><loc>{html.escape(SITE_URL)}/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>\n"
+        "</urlset>\n"
+    )
+    return Response(
+        content=body,
+        media_type="application/xml",
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
+
+
+@app.exception_handler(404)
+async def not_found(request: Request, _exc):
+    if request.url.path.startswith("/api/") or request.url.path in {
+        "/healthz",
+        "/admin.json",
+    }:
+        return JSONResponse({"detail": "Not found"}, status_code=404)
+    if "text/html" not in request.headers.get("accept", ""):
+        return PlainTextResponse("Not found", status_code=404)
+    return HTMLResponse(
+        """<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Không tìm thấy · ViFastKey</title>
+<style>body{font-family:system-ui,Arial,sans-serif;background:#FBF6EE;color:#1F2430;display:grid;
+place-items:center;min-height:100vh;margin:0}main{text-align:center;padding:32px}h1{font-size:42px;margin:0 0 8px}
+a{color:#D42A22;font-weight:700}</style></head><body><main><h1>404</h1>
+<p>Trang này không tồn tại.</p><p><a href="/">Về ViFastKey</a></p></main></body></html>""",
+        status_code=404,
+    )
+
+
+# Mount cuối cùng: mọi route API/admin ở trên được ưu tiên.
+app.mount("/", StaticFiles(directory=STATIC, html=True), name="static")

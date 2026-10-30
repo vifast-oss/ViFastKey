@@ -4,18 +4,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ViFastKey — Bộ gõ tiếng Việt nhỏ, nhanh, thuần logic</title>
-  <meta name="description" content="ViFastKey là bộ gõ tiếng Việt Telex, Simple Telex và VNI: lõi Rust nhỏ, chạy local, có C ABI và WASM. Gõ thử ngay trong trình duyệt.">
+  <meta name="description" content="ViFastKey là bộ gõ tiếng Việt Telex, Simple Telex, VNI và VIQR: lõi Rust nhỏ, chạy local, có C ABI, WASM và API Python. Gõ thử ngay trong trình duyệt.">
   <meta name="theme-color" content="#FFF8EC">
+  <link rel="canonical" href="https://vifastkey.hoctuthien.com/">
   <link rel="icon" href="brand/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="brand/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="brand/favicon-16.png">
   <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
   <link rel="manifest" href="brand/site.webmanifest">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://vifastkey.hoctuthien.com/">
   <meta property="og:title" content="ViFastKey — Bộ gõ tiếng Việt">
-  <meta property="og:description" content="Telex, Simple Telex, VNI, VIQR. Lõi Rust nhỏ, chạy local, có C ABI và WASM.">
-  <meta property="og:image" content="brand/og-image.png">
-  <link rel="stylesheet" href="style.css">
+  <meta property="og:description" content="Telex, Simple Telex, VNI, VIQR. Lõi Rust nhỏ, chạy local, có C ABI, WASM và API Python.">
+  <meta property="og:image" content="https://vifastkey.hoctuthien.com/brand/og-image.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ViFastKey — Bộ gõ tiếng Việt">
+  <meta name="twitter:description" content="Bộ gõ tiếng Việt nhỏ, nhanh, thuần logic. Gõ thử WASM và gọi API Python.">
+  <meta name="twitter:image" content="https://vifastkey.hoctuthien.com/brand/og-image.png">
+  <link rel="stylesheet" href="style.css?v=20261030d">
 </head>
 <body>
   <div class="topline" aria-hidden="true"></div>
@@ -30,8 +36,12 @@
         <a href="#go-thu">Gõ thử</a>
         <a href="#tinh-nang">Tính năng</a>
         <a href="#kien-truc">Kiến trúc</a>
+        <a href="#api">API Python</a>
         <a href="#tai-ve">Tải về</a>
       </nav>
+      <span class="header-live" id="header-live" title="API Python đang chạy">
+        <span class="header-live-dot" aria-hidden="true"></span> API Python
+      </span>
       <a class="ghost-btn" href="https://github.com/dvchd/ViFastKey" target="_blank" rel="noopener">
         <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 .7a11.3 11.3 0 0 0-3.57 22.02c.57.1.78-.25.78-.55v-2.13c-3.18.69-3.85-1.35-3.85-1.35-.52-1.32-1.27-1.67-1.27-1.67-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.02 1.75 2.68 1.24 3.33.95.1-.74.4-1.24.72-1.53-2.54-.29-5.21-1.27-5.21-5.65 0-1.25.45-2.27 1.18-3.07-.12-.29-.51-1.45.11-3.02 0 0 .96-.31 3.15 1.17a10.9 10.9 0 0 1 5.74 0c2.18-1.48 3.14-1.17 3.14-1.17.63 1.57.24 2.73.12 3.02.74.8 1.18 1.82 1.18 3.07 0 4.39-2.68 5.35-5.23 5.64.41.35.77 1.05.77 2.12v3.14c0 .3.2.66.79.55A11.3 11.3 0 0 0 12 .7Z"/></svg>
         GitHub
@@ -44,13 +54,14 @@
       <div class="hero-copy">
         <div class="eyebrow"><span class="spark">★</span> Bộ gõ tiếng Việt · mã nguồn mở</div>
         <h1>Gõ tiếng Việt,<br><span class="mark">mượt như ý.</span></h1>
-        <p class="lede">Telex, Simple Telex và VNI trên một lõi Rust nhỏ, thuần logic. Không mạng, không tài khoản, không dữ liệu rời khỏi máy.</p>
+        <p class="lede">Telex, Simple Telex, VNI và VIQR trên một lõi Rust nhỏ, thuần logic. Gõ thử bằng WASM trong trình duyệt, hoặc gọi API Python để tích hợp vào công cụ của bạn.</p>
         <div class="hero-actions">
           <a class="primary-btn" href="#go-thu">Gõ thử ngay</a>
-          <a class="text-btn" href="https://github.com/dvchd/ViFastKey" target="_blank" rel="noopener">Xem mã nguồn <span aria-hidden="true">↗</span></a>
+          <a class="text-btn" href="#api">Xem API Python <span aria-hidden="true">→</span></a>
         </div>
         <ul class="hero-facts" aria-label="Điểm chính">
-          <li><strong>3</strong> kiểu gõ</li>
+          <li><strong>4</strong> kiểu gõ</li>
+          <li><strong>16</strong> bảng mã</li>
           <li><strong>0</strong> phụ thuộc runtime</li>
           <li><strong>WASM</strong> + C ABI</li>
         </ul>
@@ -67,7 +78,7 @@
         </div>
 
         <div class="pg-screen">
-          <textarea id="pad" rows="4" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="Gõ thử: Tieengs Vieejt laf ngoon ngwx..."></textarea>
+          <textarea id="pad" rows="4" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder="Gõ thử: Tieengs Vieejt laf ngoon ngwx..."></textarea>
           <div class="pg-meta">
             <span id="raw-line">Phím thô: —</span>
             <span id="action-line" class="action-line">sẵn sàng</span>
@@ -220,13 +231,71 @@
       </div>
     </section>
 
+    <section class="section wrap" id="api">
+      <div class="section-head">
+        <div>
+          <div class="eyebrow">API Python</div>
+          <h2>Gọi engine bằng<br><span class="accent">một request.</span></h2>
+        </div>
+        <p>Playground chạy WASM ngay trong trình duyệt. API Python chạy bản oracle của dự án — cùng engine dùng để sinh bộ conformance cho bản Rust — nên bạn có thể kiểm tra, tự động hoá hoặc tích hợp mà không cần cài gì.</p>
+      </div>
+
+      <div class="api-panel">
+        <div class="api-demo">
+          <div class="api-demo-head">
+            <span class="api-dot" aria-hidden="true"></span>
+            <strong>POST /api/type</strong>
+            <span class="api-latency" id="api-latency">sẵn sàng</span>
+          </div>
+          <label class="api-label" for="api-raw">Phím thô</label>
+          <textarea id="api-raw" class="api-raw" rows="3" spellcheck="false" autocomplete="off">Tieengs Vieejt laf ngoon ngwx raats hay.</textarea>
+          <div class="api-controls">
+            <select id="api-method" class="select api-select" aria-label="Kiểu gõ">
+              <option value="telex">Telex</option>
+              <option value="simple_telex">Simple Telex</option>
+              <option value="vni">VNI</option>
+              <option value="viqr">VIQR</option>
+            </select>
+            <select id="api-tone" class="select api-select" aria-label="Kiểu đặt dấu">
+              <option value="new">Dấu mới</option>
+              <option value="old">Dấu cũ</option>
+            </select>
+            <button id="api-run" class="api-btn" type="button">Chuyển bằng Python</button>
+          </div>
+          <div class="api-result">
+            <span>Kết quả</span>
+            <output id="api-out" class="api-out" aria-live="polite">Tiếng Việt là ngôn ngữ rất hay.</output>
+            <span id="api-meta" class="api-meta"></span>
+          </div>
+          <p class="api-hint">Hỗ trợ <code>&lt;</code> Backspace, <code>|</code> Enter, <code>~</code> Escape. Không lưu nội dung bạn gõ.</p>
+        </div>
+
+        <div class="api-side">
+          <div class="api-code">
+            <div class="code-head"><span></span><span></span><span></span><em>curl</em></div>
+            <pre><code><span class="c-muted"># chuỗi phím thô → chữ Việt</span>
+curl -s https://vifastkey.hoctuthien.com/api/type \
+  -H <span class="c-str">'content-type: application/json'</span> \
+  -d <span class="c-str">'{"text":"Tieengs Vieejt","method":"telex","tone":"new"}'</span></code></pre>
+            <div class="api-response" id="api-response">{"output":"Tiếng Việt","engine":"python","version":"0.4.0"}</div>
+          </div>
+          <ul class="api-facts">
+            <li><strong>Đúng oracle.</strong> Cùng engine Python sinh conformance cho Rust, không phải bản rút gọn.</li>
+            <li><strong>16 bảng mã.</strong> <code>/api/charset</code> chuyển Unicode, TCVN3, VNI-Windows, VISCII, VIQR, CP1258, NCR...</li>
+            <li><strong>Nhẹ.</strong> Không gọi mạng, không model, chạy trong container Python 3.12.</li>
+          </ul>
+          <a class="text-btn" href="https://github.com/dvchd/ViFastKey" target="_blank" rel="noopener">Mã nguồn &amp; tài liệu <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </section>
+
     <section class="section wrap" id="tai-ve">
       <div class="section-head compact">
         <div>
           <div class="eyebrow">Bắt đầu</div>
           <h2>Chạy thử hôm nay.</h2>
         </div>
-        <p>Engine và CLI đã chạy được. App desktop, extension và bàn phím mobile đang được phát triển trên cùng lõi này.</p>
+        <p>Engine, CLI và API đã chạy được. Adapter macOS, Windows TSF, Linux, Android, iOS và extension nằm trong repo, build theo hướng dẫn từng thư mục.</p>
       </div>
       <div class="download-grid">
         <a class="download-card primary" href="#go-thu">
@@ -235,22 +304,30 @@
           <span>Không cài đặt · không gửi dữ liệu</span>
           <span class="d-arrow" aria-hidden="true">→</span>
         </a>
+        <a class="download-card" href="#api">
+          <span class="d-tag">Tích hợp</span>
+          <strong>API Python</strong>
+          <span>Một request · engine oracle · 16 bảng mã</span>
+          <span class="d-arrow" aria-hidden="true">→</span>
+        </a>
         <a class="download-card" href="https://github.com/dvchd/ViFastKey" target="_blank" rel="noopener">
           <span class="d-tag">Mã nguồn</span>
           <strong>GitHub · ViFastKey</strong>
           <span>Python oracle + Rust port + C ABI</span>
           <span class="d-arrow" aria-hidden="true">↗</span>
         </a>
-        <div class="download-card muted-card">
-          <span class="d-tag">Desktop & extension</span>
-          <strong>Sắp có</strong>
-          <span>Theo dõi release để nhận bản đầu tiên</span>
-          <span class="d-arrow" aria-hidden="true">·</span>
-        </div>
+        <a class="download-card" href="https://github.com/dvchd/ViFastKey/blob/main/docs/PLATFORMS.md" target="_blank" rel="noopener">
+          <span class="d-tag">Desktop & mobile</span>
+          <strong>Ứng dụng nền tảng</strong>
+          <span>macOS · Windows · Linux · Android · iOS · extension</span>
+          <span class="d-arrow" aria-hidden="true">↗</span>
+        </a>
       </div>
       <div class="cli-line">
         <span>Thử CLI:</span>
         <code>cargo run -p vfk-cli -- --demo</code>
+        <span>hoặc</span>
+        <code>python -m apps.vfk_cli --text "Tieengs Vieejt"</code>
       </div>
     </section>
   </main>
@@ -262,14 +339,46 @@
         <span><strong>ViFastKey</strong> · Bộ gõ tiếng Việt</span>
       </div>
       <p>MIT · Rust + Python · Logo do chủ dự án cung cấp</p>
+      <p class="footer-stats" id="footer-stats">Python API · đang tải thống kê…</p>
       <div class="footer-links">
         <a href="https://github.com/dvchd/ViFastKey" target="_blank" rel="noopener">GitHub</a>
         <a href="https://github.com/dvchd/ViFastKey#readme" target="_blank" rel="noopener">Tài liệu</a>
+        <a href="#api">API</a>
         <a href="#go-thu">Gõ thử</a>
+        <button class="footer-link-btn" type="button" id="open-feedback">Góp ý</button>
       </div>
     </div>
   </footer>
 
-  <script type="module" src="app.js"></script>
+  <dialog class="feedback-dialog" id="feedback-dialog" aria-labelledby="feedback-title">
+    <form class="feedback-form" id="feedback-form">
+      <div class="feedback-head">
+        <div>
+          <div class="eyebrow">Góp ý</div>
+          <h2 id="feedback-title">Nói cho mình biết</h2>
+        </div>
+        <button class="feedback-close" type="button" id="close-feedback" aria-label="Đóng">×</button>
+      </div>
+      <p class="feedback-lede">Báo lỗi, đề xuất tính năng hoặc góp ý nội dung. Nội dung chỉ admin xem, không hiển thị công khai.</p>
+      <label class="feedback-label" for="feedback-category">Loại</label>
+      <select class="select" id="feedback-category" name="category">
+        <option value="gop_y">Góp ý chung</option>
+        <option value="cai_tien">Đề xuất cải tiến</option>
+        <option value="bao_loi">Báo lỗi</option>
+      </select>
+      <label class="feedback-label" for="feedback-message">Nội dung</label>
+      <textarea class="feedback-message" id="feedback-message" name="message" rows="4" minlength="5" maxlength="1000" required placeholder="Ví dụ: gõ “tieengs” trên Firefox ra sai dấu…"></textarea>
+      <label class="feedback-label" for="feedback-contact">Liên hệ (không bắt buộc)</label>
+      <input class="feedback-input" id="feedback-contact" name="contact" type="text" maxlength="120" autocomplete="email" placeholder="Email hoặc cách liên hệ">
+      <input class="feedback-hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <div class="feedback-actions">
+        <span class="feedback-status" id="feedback-status" role="status"></span>
+        <button class="primary-btn" type="submit" id="feedback-submit">Gửi góp ý</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="app.js?v=20261030d"></script>
+  <script type="module" src="server-demo.js?v=20261030d"></script>
 </body>
 </html>
