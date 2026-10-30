@@ -61,7 +61,6 @@ target_compile_definitions(vifastkey_tsf PRIVATE
 target_link_libraries(vifastkey_tsf PRIVATE
   "${VFK_FFI_IMPORT_LIB}"
   advapi32
-  msctf
   ole32
   oleaut32
   shell32
