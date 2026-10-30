@@ -103,5 +103,7 @@ nên nếu muốn phục vụ từ Coolify của `jp` phải sửa router passth
 - Chỉ lưu hash visitor/IP (salt ngẫu nhiên), số ký tự, kiểu gõ, thời gian xử lý.
 - Không lưu nội dung gõ thử. Nội dung góp ý nằm ở `/admin`; mặc định mở công khai,
   đặt `ADMIN_PASSWORD` để bật Basic Auth.
+- Lượt bấm tải chỉ lưu `platform`, `asset`, `source`, thời gian và hash visitor;
+  không lưu IP thô hay nội dung trang.
 - `/admin/feedback.csv` xuất CSV; `/admin.json` trả JSON thống kê.
 - Volume phải ghi được bởi UID `10001` (user `app` trong container).
