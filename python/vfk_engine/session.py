@@ -78,13 +78,13 @@ SENTENCE_CLOSERS = set("\"')]»”’›")
 
 
 def _upper_ff_escape(raw: str) -> bool:
-    """True cho escape FF/Ff liền nhau, F đầu viết hoa, trong từ mixed-case."""
+    """True cho escape FF/Ff/fF liền nhau trong từ mixed-case kiểu ViFast."""
     if not raw or raw.isupper():
         return False
     positions = [i for i, ch in enumerate(raw) if ch.lower() == "f"]
     return (len(positions) >= 2
             and positions[-1] == positions[-2] + 1
-            and raw[positions[-2]].isupper())
+            and (raw[positions[-2]].isupper() or raw[positions[-1]].isupper()))
 
 
 # ---------------------------------------------------------------- session

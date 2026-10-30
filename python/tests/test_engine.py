@@ -159,6 +159,13 @@ def test_escape_follows_second_key_case(mode):
 
 
 @pytest.mark.parametrize("mode", MODES)
+def test_escape_f_accepts_lower_then_upper(mode):
+    s, f, _ = make(mode)
+    f.type(s, "VifFa ")
+    assert f.text == "ViFa "
+
+
+@pytest.mark.parametrize("mode", MODES)
 def test_backspace_after_escape_restores_tone(mode):
     s, f, _ = make(mode)
     f.type(s, list("phar") + ["r", "r", BS, BS, "r", " "])

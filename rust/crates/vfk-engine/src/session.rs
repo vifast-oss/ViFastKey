@@ -22,7 +22,8 @@ fn upper_ff_escape(raw: &str) -> bool {
     let n = positions.len();
     n >= 2
         && positions[n - 1] == positions[n - 2] + 1
-        && raw.chars().nth(positions[n - 2]).is_some_and(|c| c.is_uppercase())
+        && (raw.chars().nth(positions[n - 2]).is_some_and(|c| c.is_uppercase())
+            || raw.chars().nth(positions[n - 1]).is_some_and(|c| c.is_uppercase()))
 }
 
 // ---------------------------------------------------------------- input / output

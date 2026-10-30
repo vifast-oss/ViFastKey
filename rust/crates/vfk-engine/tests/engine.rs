@@ -189,6 +189,15 @@ fn escape_follows_second_key_case() {
 }
 
 #[test]
+fn escape_f_accepts_lower_then_upper() {
+    for m in MODES {
+        let mut h = make(m);
+        h.type_str("VifFa ");
+        assert_eq!(h.text(), "ViFa ");
+    }
+}
+
+#[test]
 fn backspace_after_escape_restores_tone() {
     for m in MODES {
         let mut h = make(m);
