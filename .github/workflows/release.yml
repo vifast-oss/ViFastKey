@@ -41,11 +41,11 @@ jobs:
              target/release/libvifastkey.so target/release/vifastkey.lib \
              target/release/vifastkey.dll dist/ 2>/dev/null || true
           cp README.md dist/ 2>/dev/null || true
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            (cd dist && 7z a ../vifastkey-windows.zip .)
-          else
-            tar -czf "vifastkey-$(echo '${{ runner.os }}' | tr '[:upper:]' '[:lower:]').tar.gz" -C dist .
-          fi
+          case "${{ runner.os }}" in
+            Windows) (cd dist && 7z a ../vifastkey-cli-windows-x64.zip .) ;;
+            macOS) tar -czf ../vifastkey-cli-macos.tar.gz -C dist . ;;
+            Linux) tar -czf ../vifastkey-cli-linux-x86_64.tar.gz -C dist . ;;
+          esac
       - uses: actions/upload-artifact@v7
         with:
           name: vifastkey-${{ runner.os }}
@@ -137,10 +137,12 @@ jobs:
         run: |
           rustup target add x86_64-apple-darwin
           ./macos/package.sh
+      - name: Rename release asset
+        run: cp macos/build/ViFastKey-macos-universal.zip vifastkey-macos-imk-universal.zip
       - uses: actions/upload-artifact@v7
         with:
           name: vifastkey-macos-app
-          path: macos/build/ViFastKey-macos-universal.zip
+          path: vifastkey-macos-imk-universal.zip
           if-no-files-found: error
 
   fcitx5:
@@ -205,10 +207,12 @@ jobs:
           ANDROID_HOME: /usr/local/lib/android/sdk
           ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
         run: ./android/build.sh
+      - name: Rename debug APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk vifastkey-android-debug.apk
       - uses: actions/upload-artifact@v7
         with:
           name: vifastkey-android-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: vifastkey-android-debug.apk
           if-no-files-found: error
       - name: Build signed release if secrets are configured
         env:
@@ -225,12 +229,20 @@ jobs:
           export VIFASTKEY_KEYSTORE="$RUNNER_TEMP/vifastkey.jks"
           ./android/build.sh release
           gradle -p android bundleRelease --no-daemon
+      - name: Rename release assets
+        run: |
+          if [ -f android/app/build/outputs/apk/release/app-release.apk ]; then
+            cp android/app/build/outputs/apk/release/app-release.apk vifastkey-android-release.apk
+          fi
+          if [ -f android/app/build/outputs/bundle/release/app-release.aab ]; then
+            cp android/app/build/outputs/bundle/release/app-release.aab vifastkey-android-release.aab
+          fi
       - uses: actions/upload-artifact@v7
         with:
           name: vifastkey-android-release
           path: |
-            android/app/build/outputs/apk/release/app-release.apk
-            android/app/build/outputs/bundle/release/app-release.aab
+            vifastkey-android-release.apk
+            vifastkey-android-release.aab
           if-no-files-found: ignore
 
   ios-app:
@@ -245,10 +257,12 @@ jobs:
           rustup target add aarch64-apple-ios-sim
       - name: Build simulator app
         run: ./ios/package.sh
+      - name: Rename release asset
+        run: cp ios/build/ViFastKey-ios-simulator.zip vifastkey-ios-simulator.zip
       - uses: actions/upload-artifact@v7
         with:
           name: vifastkey-ios-app
-          path: ios/build/ViFastKey-ios-simulator.zip
+          path: vifastkey-ios-simulator.zip
           if-no-files-found: error
 
   publish:
@@ -277,7 +291,7 @@ jobs:
 
           files = [p for p in Path("artifacts").rglob("*") if p.is_file()]
           files.sort(key=lambda p: p.name)
-          with open("SHA256SUMS.txt", "w", encoding="utf-8") as out:
+          with open("sha256sums.txt", "w", encoding="utf-8") as out:
               for path in files:
                   digest = hashlib.sha256(path.read_bytes()).hexdigest()
                   out.write(f"{digest}  {path.name}\n")
@@ -290,14 +304,14 @@ jobs:
 
             **Windows:** tải `vifastkey-windows-tsf.zip`, giải nén và chạy `install.ps1`.
             **Web/WASM:** `vifastkey-wasm.zip`.
-            **macOS:** `ViFastKey-macos-universal.zip`.
+            **macOS:** `vifastkey-macos-imk-universal.zip`.
             **Linux:** `vifastkey-fcitx5-linux-x86_64.tar.gz`.
             **Android/iOS/extension:** xem các asset còn lại.
 
-            Kiểm tra file bằng `SHA256SUMS.txt` trước khi cài.
+            Kiểm tra file bằng `sha256sums.txt` trước khi cài.
           files: |
             artifacts/**/*
-            SHA256SUMS.txt
+            sha256sums.txt
           fail_on_unmatched_files: true
           generate_release_notes: false
           make_latest: true

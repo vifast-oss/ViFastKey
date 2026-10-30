@@ -111,15 +111,15 @@ FEEDBACK_STATUS = {"new": "Chờ xem", "read": "Đã đọc", "resolved": "Đã 
 # chuỗi tùy ý vào thống kê.
 DOWNLOAD_PLATFORMS = {
     "vifastkey-windows-tsf.zip": "windows",
-    "vifastkey-windows.zip": "windows",
-    "vifastkey-macos-universal.zip": "macos",
-    "vifastkey-macos.tar.gz": "macos",
-    "vifastkey-linux.tar.gz": "linux",
+    "vifastkey-cli-windows-x64.zip": "windows",
+    "vifastkey-macos-imk-universal.zip": "macos",
+    "vifastkey-cli-macos.tar.gz": "macos",
+    "vifastkey-cli-linux-x86_64.tar.gz": "linux",
     "vifastkey-fcitx5-linux-x86_64.tar.gz": "linux",
-    "app-debug.apk": "android",
-    "app-release.apk": "android",
-    "app-release.aab": "android",
-    "ViFastKey-ios-simulator.zip": "ios",
+    "vifastkey-android-debug.apk": "android",
+    "vifastkey-android-release.apk": "android",
+    "vifastkey-android-release.aab": "android",
+    "vifastkey-ios-simulator.zip": "ios",
     "vifastkey-wasm.zip": "web",
     "vifastkey-chrome-extension.zip": "extension",
 }
