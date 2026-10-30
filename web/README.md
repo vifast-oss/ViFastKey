@@ -16,7 +16,7 @@ python3 -m http.server 8080 -d web
 
 ```bash
 rustup target add wasm32-unknown-unknown
-cargo install wasm-bindgen-cli --version 0.2.129
+cargo install wasm-bindgen-cli --version 0.2.130
 ```
 
 ## Cấu trúc

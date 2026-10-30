@@ -50,7 +50,7 @@ rust/
 | `tests/test_*.py` | `crates/*/tests/*.rs` |
 
 Phụ thuộc: `unicode-normalization` 0.1.26, `serde` 1.0.229, `serde_json` 1.0.154,
-`wasm-bindgen` 0.2.129, `arrayvec` 0.7.8; adapter Windows dùng `windows-sys` 0.61.2. Không dùng `rand` (test dùng LCG tự viết), không dùng `phf`
+`wasm-bindgen` 0.2.130, `arrayvec` 0.7.8; adapter Windows dùng `windows-sys` 0.61.2. Không dùng `rand` (test dùng LCG tự viết), không dùng `phf`
 (bảng tra sinh một lần bằng `OnceLock`). Toolchain: stable 1.99.1 (xem `rust-toolchain.toml`);
 `cargo update` không còn dependency nào lệch bản mới nhất tại thời điểm cập nhật.
 
