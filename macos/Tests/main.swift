@@ -53,7 +53,7 @@ func run(_ name: String, config: String?, keys: String, want: String) {
 
 run("telex", config: nil, keys: "Tieengs Vieejt", want: "Tiếng Việt")
 run("d-stroke", config: nil, keys: "vcdd ddc NDD", want: "vcđ đc NĐ")
-run("english", config: nil, keys: "coffee banana", want: "coffee banana")
+run("english", config: nil, keys: "coffee cofffee banana", want: "cofee coffee banana")
 run("open-uo", config: nil, keys: "duow thuow", want: "dươ thuơ")
 run("shaped-vowel", config: nil, keys: "aw aws", want: "ă ắ")
 run("vni", config: "{\"input_method\":\"vni\"}", keys: "Vie65t nam2024", want: "Việt nam2024")
