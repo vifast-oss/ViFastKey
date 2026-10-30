@@ -289,11 +289,19 @@ STDMETHODIMP TextService::Activate(ITfThreadMgr* ptim, TfClientId tid) {
 }
 
 STDMETHODIMP TextService::ActivateEx(ITfThreadMgr* ptim, TfClientId tid, DWORD) {
-    if (thread_mgr_ != nullptr) {
-        return E_UNEXPECTED;
-    }
     if (ptim == nullptr) {
         return E_INVALIDARG;
+    }
+    if (thread_mgr_ != nullptr) {
+        if (ptim != thread_mgr_) {
+            Deactivate();
+        } else {
+            // TSF có thể gọi ActivateEx lại khi đổi input method mà không
+            // phát Deactivate. Không trả E_UNEXPECTED; chỉ refresh context.
+            ReloadConfigIfNeeded();
+            EnsureContext();
+            return S_OK;
+        }
     }
 
     thread_mgr_ = ptim;
@@ -319,6 +327,8 @@ STDMETHODIMP TextService::ActivateEx(ITfThreadMgr* ptim, TfClientId tid, DWORD) 
         client_id_ = TF_CLIENTID_NULL;
         return hr;
     }
+    // Đổi input method có thể không phát OnSetFocus; lấy context hiện tại ngay.
+    EnsureContext();
     return S_OK;
 }
 
@@ -413,24 +423,7 @@ STDMETHODIMP TextService::OnSetFocus(ITfDocumentMgr* pdimFocus, ITfDocumentMgr*)
         return S_OK;
     }
 
-    ITfContext* context = nullptr;
-    if (FAILED(pdimFocus->GetTop(&context)) || context == nullptr) {
-        ClearRouting();
-        return S_OK;
-    }
-
-    context_ = context;  // GetTop đã AddRef
-    doc_mgr_ = pdimFocus;
-    doc_mgr_->AddRef();
-
-    ReloadConfigIfNeeded();
-    UpdateAppAndField();
-
-    if (BackendAllowsTsf()) {
-        PublishRouting();
-    } else {
-        ClearRouting();
-    }
+    AttachContext(pdimFocus);
     return S_OK;
 }
 
@@ -456,7 +449,7 @@ STDMETHODIMP TextService::OnTestKeyDown(ITfContext*, WPARAM wParam, LPARAM, BOOL
         return E_POINTER;
     }
     *pfEaten = FALSE;
-    if (context_ == nullptr || !BackendAllowsTsf()) {
+    if (!BackendAllowsTsf() || !EnsureContext()) {
         return S_OK;
     }
 
@@ -481,7 +474,7 @@ STDMETHODIMP TextService::OnKeyDown(ITfContext* pic, WPARAM wParam, LPARAM lPara
         return E_POINTER;
     }
     *pfEaten = FALSE;
-    if (pic == nullptr || context_ == nullptr || !BackendAllowsTsf()) {
+    if (pic == nullptr || !BackendAllowsTsf() || !EnsureContext()) {
         return S_OK;
     }
 
@@ -591,6 +584,47 @@ void TextService::ReleaseContext() {
         doc_mgr_->Release();
         doc_mgr_ = nullptr;
     }
+}
+
+bool TextService::AttachContext(ITfDocumentMgr* pdimFocus) {
+    if (thread_mgr_ == nullptr || pdimFocus == nullptr) {
+        return false;
+    }
+    ITfContext* context = nullptr;
+    if (FAILED(pdimFocus->GetTop(&context)) || context == nullptr) {
+        ClearRouting();
+        return false;
+    }
+
+    context_ = context;  // GetTop đã AddRef
+    doc_mgr_ = pdimFocus;
+    doc_mgr_->AddRef();
+
+    ReloadConfigIfNeeded();
+    UpdateAppAndField();
+
+    if (BackendAllowsTsf()) {
+        PublishRouting();
+    } else {
+        ClearRouting();
+    }
+    return true;
+}
+
+bool TextService::EnsureContext() {
+    if (context_ != nullptr) {
+        return true;
+    }
+    if (thread_mgr_ == nullptr) {
+        return false;
+    }
+    ITfDocumentMgr* doc = nullptr;
+    if (FAILED(thread_mgr_->GetFocus(&doc)) || doc == nullptr) {
+        return false;
+    }
+    const bool ok = AttachContext(doc);
+    doc->Release();
+    return ok;
 }
 
 void TextService::PublishRouting() {
@@ -845,11 +879,33 @@ HRESULT TextService::CommitText(ITfContext* context, TfEditCookie ec,
     }
     const wchar_t* data = text.empty() ? L"" : text.c_str();
     hr = range->SetText(ec, 0, data, static_cast<LONG>(text.size()));
-    range->Release();
     if (FAILED(hr)) {
+        range->Release();
         return hr;
     }
-    return EndComposition(ec);
+
+    // Notepad (RichEdit) đưa caret về đầu composition khi EndComposition. Giữ
+    // một range độc lập bao text vừa commit, kết thúc composition rồi đặt caret
+    // về cuối range đó. Edge/VSCode không cần nhưng thao tác này vô hại.
+    ITfRange* after = nullptr;
+    hr = range->Clone(&after);
+    range->Release();
+    if (FAILED(hr) || after == nullptr) {
+        return EndComposition(ec);
+    }
+
+    after->Collapse(ec, TF_ANCHOR_END);
+    TF_SELECTION before_end = {after, TF_AE_END};
+    context->SetSelection(ec, 1, &before_end);
+
+    const HRESULT end_hr = EndComposition(ec);
+    if (SUCCEEDED(end_hr)) {
+        after->Collapse(ec, TF_ANCHOR_END);
+        TF_SELECTION out = {after, TF_AE_END};
+        context->SetSelection(ec, 1, &out);
+    }
+    after->Release();
+    return end_hr;
 }
 
 HRESULT TextService::EndComposition(TfEditCookie ec) {

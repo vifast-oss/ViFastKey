@@ -70,6 +70,8 @@ class TextService final : public ITfTextInputProcessorEx,
     HRESULT AdviseSinks();
     void UnadviseSinks();
     void ReleaseContext();
+    bool AttachContext(ITfDocumentMgr* pdimFocus);
+    bool EnsureContext();
     void PublishRouting();
     void ClearRouting();
     bool BackendAllowsTsf() const;

@@ -138,6 +138,9 @@
   `Local\ViFastKeyTsfState`, hook pass-through theo foreground window/PID để không double input.
 - Hook bỏ qua phím injected (`LLKHF_INJECTED`), không fake preedit.
 - Installer per-user `windows/installer/`; CI build TSF x64/x86 bằng MSVC.
+- TSF: đặt caret về cuối text sau commit (Notepad/RichEdit không còn đảo chữ);
+  `ActivateEx` idempotent và tự lấy lại context khi đổi input method
+  (ViFastKey ↔ Vietnamese Telex ↔ English).
 
 ### Hạ tầng
 
