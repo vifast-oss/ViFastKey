@@ -14,9 +14,11 @@
       <language>vi</language>
       <license>MIT</license>
       <author>ViFastKey contributors</author>
+      <icon>vifastkey</icon>
       <layout>us</layout>
       <longname>ViFastKey</longname>
-      <description>Telex / VNI / VIQR</description>
+      <description>Bộ gõ tiếng Việt — Telex / VNI / VIQR</description>
+      <symbol>vi</symbol>
       <rank>50</rank>
     </engine>
   </engines>

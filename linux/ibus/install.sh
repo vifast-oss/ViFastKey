@@ -26,6 +26,17 @@ else
     sudo install -m 0644 "$XML_TMP" "$COMP/vifastkey.xml"
 fi
 
+# Icon for the IBus panel / input source picker.
+ICON_DIR="$PREFIX/share/icons/hicolor/scalable/apps"
+ICON_SRC="$HERE/../../resources/brand/vifastkey-icon.svg"
+if [ -f "$ICON_SRC" ]; then
+    mkdir -p "$ICON_DIR"
+    install -m 0644 "$ICON_SRC" "$ICON_DIR/vifastkey.svg"
+    if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+        gtk-update-icon-cache -f -t "$PREFIX/share/icons/hicolor" >/dev/null 2>&1 || true
+    fi
+fi
+
 if command -v ibus >/dev/null 2>&1; then
     if [ "$(id -u)" -eq 0 ] || [ -w "$COMP" ]; then
         ibus write-cache --system >/dev/null 2>&1 || true
