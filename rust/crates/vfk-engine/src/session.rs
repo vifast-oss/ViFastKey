@@ -715,8 +715,7 @@ impl ImeSession {
         // literal vừa phát sinh ở phím cuối và hai phím cuối trùng nhau.
         if self.literal_fresh
             && self.raw.len() >= 2
-            && self.raw[self.raw.len() - 1].to_ascii_lowercase()
-                == self.raw[self.raw.len() - 2].to_ascii_lowercase()
+            && self.raw[self.raw.len() - 1].eq_ignore_ascii_case(&self.raw[self.raw.len() - 2])
         {
             self.raw.pop();
             self.literal = false;
