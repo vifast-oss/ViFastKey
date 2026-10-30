@@ -460,13 +460,13 @@ fn result(st: &WordState, raw: &[char], opt: &TransformOptions, is_final: bool) 
         let bad_partial = is_final && stt == Status::Partial && end > start && start > 0 && !open_uo;
         let keep_ok = st.keep && st.letters[st.keep_pos + 1..].iter().all(|l| !vs::is_vowel(l.base));
         let bad = !keep_ok && !deliberate_undo && (stt == Status::Invalid || bad_partial);
+        // Gõ đôi phím thanh là escape. `rendered` là dạng đã bỏ phím escape,
+        // kể cả khi kết quả cuối không bị restore raw (pharr).
+        let rendered = if st.undone && st.latched { text.clone() } else { String::new() };
         if bad {
-            // Gõ đôi phím thanh là escape. `rendered` là dạng đã bỏ phím
-            // escape; session quyết định dùng nó cho từ tiếng Anh (vissa ->
-            // visa) hoặc escape FF viết hoa (ViFastTts). Coffee/COFFEE giữ raw.
-            let rendered = if st.undone && st.latched { text.clone() } else { String::new() };
             return TransformResult { text: raw_s, restored: true, status: stt, rendered };
         }
+        return TransformResult { text, restored: false, status: stt, rendered };
     }
     TransformResult { text, restored: false, status: stt, rendered: String::new() }
 }

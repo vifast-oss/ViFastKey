@@ -22,7 +22,6 @@ fn upper_ff_escape(raw: &str) -> bool {
     let n = positions.len();
     n >= 2
         && positions[n - 1] == positions[n - 2] + 1
-        && raw.chars().nth(positions[n - 1]).is_some_and(|c| c.is_uppercase())
         && raw.chars().nth(positions[n - 2]).is_some_and(|c| c.is_uppercase())
 }
 
@@ -201,6 +200,8 @@ pub struct ImeSession {
     word: String,
     /// Từ đang ở chế độ thô (sau Backspace vào từ không tái tạo được).
     literal: bool,
+    /// Từng gõ escape đôi phím thanh (pharr, vissa).
+    escaped: bool,
     /// Viết hoa đầu câu.
     cap_next: bool,
     /// Vừa gõ dấu kết câu, chờ dấu cách.
@@ -232,6 +233,7 @@ impl ImeSession {
             raw: Vec::new(),
             word: String::new(),
             literal: false,
+            escaped: false,
             cap_next: false,
             pending_end: false,
             enabled: true,
@@ -346,6 +348,9 @@ impl ImeSession {
             Some(c) => c.result(is_final),
             None => unreachable!(),
         };
+        if !res.rendered.is_empty() {
+            self.escaped = true;
+        }
         if res.restored {
             if !res.rendered.is_empty() {
                 let raw_s: String = self.raw.iter().collect();
@@ -389,6 +394,7 @@ impl ImeSession {
         self.raw.clear();
         self.word.clear();
         self.literal = false;
+        self.escaped = false;
         self.composer = None;
         self.adopted = None;
     }
@@ -720,12 +726,16 @@ impl ImeSession {
             self.reset();
             return act;
         }
-        let raw = if self.literal { None } else { rebuild(&target, self.im(), &self.opt()) };
+        // Luôn thử rebuild: từ literal do escape đôi phím thanh vẫn phải quay
+        // lại được dấu khi gõ tiếp (pharr -> phar -> phả). Từ literal thường
+        // không phải escape vẫn giữ raw như cũ.
+        let raw = if self.escaped || !self.literal { rebuild(&target, self.im(), &self.opt()) } else { None };
         self.adopted = None;
         match raw {
             Some(r) => {
                 self.raw = r;
                 self.literal = false;
+                self.escaped = false;
             }
             None => {
                 self.raw = t;

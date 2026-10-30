@@ -78,13 +78,13 @@ SENTENCE_CLOSERS = set("\"')]»”’›")
 
 
 def _upper_ff_escape(raw: str) -> bool:
-    """True cho escape FF viết hoa liền nhau trong từ mixed-case (ViFastTts)."""
+    """True cho escape FF/Ff liền nhau, F đầu viết hoa, trong từ mixed-case."""
     if not raw or raw.isupper():
         return False
     positions = [i for i, ch in enumerate(raw) if ch.lower() == "f"]
     return (len(positions) >= 2
             and positions[-1] == positions[-2] + 1
-            and all(raw[i].isupper() for i in positions[-2:]))
+            and raw[positions[-2]].isupper())
 
 
 # ---------------------------------------------------------------- session
@@ -98,6 +98,7 @@ class ImeSession:
         self.raw: list[str] = []
         self.word = ""             # NFC, chữ đang hiển thị của từ hiện tại
         self.literal = False       # từ đang ở chế độ thô (sau Backspace vào từ không tái tạo được)
+        self.escaped = False       # từng gõ escape đôi phím thanh (pharr, vissa)
         self.cap_next = False      # viết hoa đầu câu
         self._pending_end = False  # vừa gõ dấu kết câu, chờ dấu cách
         self.enabled = True
@@ -152,6 +153,8 @@ class ImeSession:
         if comp is None or comp.raw != self.raw:            # raw bị thay thế (rebuild/soft reset)
             comp = self._composer = Composer(self.im, self.opt, self.raw)
         res = comp.result(final)
+        if res.rendered:
+            self.escaped = True
         if res.restored:
             raw_s = "".join(self.raw)
             if res.rendered:
@@ -183,7 +186,7 @@ class ImeSession:
         }
 
     def reset(self) -> None:
-        self.raw, self.word, self.literal = [], "", False
+        self.raw, self.word, self.literal, self.escaped = [], "", False, False
         self._composer: Composer | None = None
         self.adopted: tuple[str, int] | None = None   # (từ cũ đã nạp lại, số phím thô của nó)
 
@@ -392,10 +395,13 @@ class ImeSession:
             act = self._show("")
             self.reset()
             return act
-        raw = None if self.literal else rebuild(target, self.im, self.opt)
+        # Từ đã escape đôi phím thanh phải quay lại được dấu khi xoá và gõ tiếp
+        # (phar + rr, xoá 2 r, gõ r -> phả). Từ literal thường vẫn giữ raw.
+        raw = rebuild(target, self.im, self.opt) if (self.escaped or not self.literal) else None
         self.adopted = None
         if raw is not None:
             self.raw, self.literal = raw, False
+            self.escaped = False
         else:
             self.raw, self.literal = list(target), True
         return self._show(self._compute())

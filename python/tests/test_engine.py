@@ -152,6 +152,20 @@ def test_double_s_escape_english_word(mode):
 
 
 @pytest.mark.parametrize("mode", MODES)
+def test_escape_follows_second_key_case(mode):
+    s, f, _ = make(mode)
+    f.type(s, "ViFfa ")
+    assert f.text == "Vifa "
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_backspace_after_escape_restores_tone(mode):
+    s, f, _ = make(mode)
+    f.type(s, list("phar") + ["r", "r", BS, BS, "r", " "])
+    assert f.text == "phả "
+
+
+@pytest.mark.parametrize("mode", MODES)
 def test_escape_restores_raw(mode):
     s, f, _ = make(mode)
     f.type(s, list("vieejt") + ["Escape"] + list(" "))

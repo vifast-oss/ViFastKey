@@ -313,13 +313,12 @@ def _result(st: WordState, raw_s: str, opt: TransformOptions, final: bool) -> Tr
         keep_ok = st.keep and not any(l.base in vs.VOWELS for l in st.letters[st.keep_pos + 1:])
         bad = (not keep_ok and not deliberate_undo
                and (status is Status.INVALID or bad_partial))
+        # Gõ đôi phím thanh (FF/SS/...) là escape: `rendered` là dạng đã bỏ
+        # phím escape, kể cả khi kết quả cuối không bị restore raw (pharr).
+        escaped = text if st.undone and st.latched else ""
         if bad:
-            # Gõ đôi phím thanh (FF/SS...) là escape để lấy chữ thường.
-            # `rendered` là dạng đã bỏ phím escape; session quyết định dùng nó
-            # khi kết quả là từ tiếng Anh (vissa -> visa) hoặc escape FF viết
-            # hoa kiểu ViFastTts. Các từ như coffee/COFFEE vẫn giữ raw.
-            escaped = text if st.undone and st.latched else ""
             return TransformResult(raw_s, True, status, escaped)
+        return TransformResult(text, False, status, escaped)
     return TransformResult(text, False, status)
 
 

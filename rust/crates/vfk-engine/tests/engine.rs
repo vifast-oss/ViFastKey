@@ -180,6 +180,24 @@ fn double_s_escape_english_word() {
 }
 
 #[test]
+fn escape_follows_second_key_case() {
+    for m in MODES {
+        let mut h = make(m);
+        h.type_str("ViFfa ");
+        assert_eq!(h.text(), "Vifa ");
+    }
+}
+
+#[test]
+fn backspace_after_escape_restores_tone() {
+    for m in MODES {
+        let mut h = make(m);
+        type_mixed(&mut h, &["phar", "r", "r", BS, BS, "r", " "]);
+        assert_eq!(h.text(), "phả ");
+    }
+}
+
+#[test]
 fn spell_restore_without_dictionary() {
     for m in MODES {
         let mut h = make_with(m, Config { auto_restore_english: false, ..cfg() });

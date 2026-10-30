@@ -31,7 +31,8 @@
   VNI literal number (`nam2024`, `ba10`), sticky restore (`text` + `s`), escape pass-key,
   open `uơ`/`ươ` theo âm đầu, nguyên âm có dấu đứng riêng (`aw`, `aws`).
 - Escape đôi phím thanh: `vissa` → `visa`, `ViFFastTts` → `ViFastTts`;
-  giữ nguyên `coffee`, `COFFEE` và các từ lạ cần raw.
+  xoá sau escape trả lại dấu (`phar` + `rr`, xoá 2 `r`, gõ `r` → `phả`).
+  Giữ nguyên `coffee`, `COFFEE` và các từ lạ cần raw.
 - Auto-cap mở rộng cho `…`, ngoặc kép/đóng, newline; không cắt số thập phân.
 - `AppProfile` ghi đè `input_method`, `tone_style`, `spell_check`; thêm gợi ý `charset`.
 - `schema_version` trong config; `config_from_dict` bỏ qua field lạ.
