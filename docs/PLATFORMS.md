@@ -55,8 +55,8 @@ và chạy chung bộ scenario [`adapter-conformance/`](../adapter-conformance/R
 powershell -ExecutionPolicy Bypass -File windows/installer/install.ps1 -BuildDir build/tsf
 ```
 
-Các script Linux cần gói `xvfb openbox xdotool zenity dbus-x11` (và `fcitx5-frontend-gtk3`
-hoặc `ibus-gtk3`). iOS dùng simulator + `xcodebuild test`; Windows cần môi trường Windows thật.
+Các script Linux cần gói `xvfb openbox xdotool zenity dbus-x11` (và `fcitx5-frontend-gtk3`/`gtk4`
+hoặc `ibus-gtk3`/`ibus-gtk4`). iOS dùng simulator + `xcodebuild test`; Windows cần môi trường Windows thật.
 
 ## Hợp đồng tối thiểu cho adapter mới
 

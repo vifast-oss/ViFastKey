@@ -7,7 +7,7 @@ biên dịch C++.
 
 ```bash
 # Ubuntu/Debian
-sudo apt install ibus ibus-gtk3 python3-gi gir1.2-ibus-1.0 python3-pip
+sudo apt install ibus ibus-gtk3 ibus-gtk4 python3-gi gir1.2-ibus-1.0 python3-pip
 cd python && python3 -m pip install --user .
 ```
 

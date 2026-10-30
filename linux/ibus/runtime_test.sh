@@ -3,7 +3,7 @@
 #
 # Yêu cầu:
 #   - đã chạy ./linux/ibus/install.sh (component nằm trong /usr/share/ibus/component)
-#   - ibus, ibus-gtk3, python3-gi, Xvfb, openbox, xdotool, zenity, dbus-x11
+#   - ibus, ibus-gtk3, ibus-gtk4, python3-gi, Xvfb, openbox, xdotool, zenity, dbus-x11
 #
 # Script tự tạo XDG_CONFIG_HOME/XDG_CACHE_HOME tạm nên không sửa cấu hình IBus
 # của bạn.
