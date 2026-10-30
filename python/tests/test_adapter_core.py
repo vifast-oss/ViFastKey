@@ -3,12 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from vfk_adapter_core import (
-    PlanKind,
-    ReplaceUtf16,
-    SurroundingSnapshot,
-    plan_action,
-)
+from vfk_adapter_core import ReplaceUtf16, SurroundingSnapshot, plan_action
 from vfk_engine import AppProfile, Commit, FieldKind, PassThrough, Preedit
 
 ROOT = Path(__file__).resolve().parents[2]
