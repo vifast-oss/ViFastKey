@@ -84,8 +84,8 @@ class TransformResult:
     text: str
     restored: bool                # trả về phím thô do sai chính tả
     status: Status                # trạng thái chính tả của chữ hiển thị
-    # Khi restored vì gõ đôi phím thanh (FF/SS...), đây là dạng đã bỏ phím
-    # escape (ViFFa -> ViFa). Rỗng nếu không phải trường hợp này.
+    # Khi gõ đôi phím thanh liền kề (FF/SS...), đây là dạng đã bỏ phím escape
+    # (ViFFa -> ViFa). Rỗng nếu không phải trường hợp này.
     rendered: str = ""
 
 

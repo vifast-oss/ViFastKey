@@ -107,8 +107,8 @@ pub struct TransformResult {
     pub restored: bool,
     /// Trạng thái chính tả của chữ hiển thị.
     pub status: Status,
-    /// Khi restored vì gõ đôi phím thanh escape (ViFFa), đây là dạng đã bỏ
-    /// phím escape (ViFa). Rỗng nếu không phải trường hợp này.
+    /// Khi gõ đôi phím thanh liền kề (ViFFa), đây là dạng đã bỏ phím escape
+    /// (ViFa). Rỗng nếu không phải trường hợp này.
     pub rendered: String,
 }
 
