@@ -17,7 +17,7 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
   - macOS: ✅ IMK (Swift), ✅ universal2 (`package.sh`); còn Developer ID/notarize
     (script đã có, cần chứng chỉ) và event-tap fallback.
   - Windows: ✅ TSF preedit (`windows/tsf/`, C++ COM + C ABI) mặc định + hook Replace
-    fallback (`rust/apps/vfk-windows`); UI quản lý Preedit/Replace, hook nền + Run key;
+    fallback (`rust/apps/vfk-windows`, binary `vifastkey-replace.exe`); UI quản lý Preedit/Replace, hook nền + Run key;
     ✅ cài x64/x86 + switch chế độ + close-to-tray trên Windows 11; còn test gõ thật
     trong game/app anti-cheat và signing.
   - Linux: ✅ IBus engine Python (`linux/ibus/`), ✅ Fcitx5 C++ addon (`linux/fcitx5/`),

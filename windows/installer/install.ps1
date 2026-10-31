@@ -63,20 +63,26 @@ if ($process.ExitCode -ne 0) {
 Write-Host "Đã cài ViFastKey TSF ($arch) vào $dest"
 
 # Hook Replace: chỉ chạy khi người dùng chọn Replace; installer chỉ copy binary.
+# Tên mới: vifastkey-replace.exe; vfk-windows.exe là tên cũ, chỉ dùng để nâng cấp.
 $hookCandidates = @(
+    (Join-Path $PSScriptRoot "vifastkey-replace.exe"),
+    (Join-Path $root "vifastkey-replace.exe"),
+    (Join-Path $root "rust\target\release\vifastkey-replace.exe"),
     (Join-Path $PSScriptRoot "vfk-windows.exe"),
-    (Join-Path $root "vfk-windows.exe"),
     (Join-Path $root "rust\target\release\vfk-windows.exe")
 )
 $hook = $hookCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
 if ($hook) {
     $tools = Join-Path $env:LOCALAPPDATA "ViFastKey"
     New-Item -ItemType Directory -Force -Path $tools | Out-Null
-    $installedHook = Join-Path $tools "vfk-windows.exe"
+    $installedHook = Join-Path $tools "vifastkey-replace.exe"
     Copy-Item $hook $installedHook -Force
+    # Dọn bản cũ để không còn process/Run key trỏ vfk-windows.exe.
+    Get-Process vfk-windows -ErrorAction SilentlyContinue | Stop-Process -Force
+    Remove-Item (Join-Path $tools "vfk-windows.exe") -Force -ErrorAction SilentlyContinue
     Write-Host "Đã cài hook Replace: $installedHook (bật khi chọn Replace trong cài đặt)"
 } else {
-    Write-Warning "Không thấy vfk-windows.exe; chế độ Replace sẽ chưa chạy được."
+    Write-Warning "Không thấy vifastkey-replace.exe; chế độ Replace sẽ chưa chạy được."
 }
 
 # Mặc định Preedit (TSF), không ghi đè lựa chọn đã có.

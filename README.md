@@ -55,7 +55,7 @@ ViFastKey/
 │   ├── apps/vfk-charset/       # chuyển bảng mã
 │   ├── apps/vfk-suggest/       # gợi ý từ
 │   ├── apps/vfk-settings/      # UI cấu hình desktop (egui, Windows/Linux)
-│   ├── apps/vfk-windows/       # adapter Windows hook (Replace fallback)
+│   ├── apps/vfk-windows/       # adapter Windows hook (binary vifastkey-replace.exe)
 ├── windows/
 │   ├── tsf/                    # TSF text service (preedit, C++ + C ABI)
 │   └── installer/              # đăng ký/gỡ TSF per-user

@@ -41,7 +41,7 @@ jobs:
           cp target/release/vfk-cli* target/release/vfk-charset* target/release/vfk-suggest* \
              target/release/vifastkey-settings* dist/ 2>/dev/null || true
           if [ "${{ runner.os }}" = "Windows" ]; then
-            cp target/release/vfk-windows.exe dist/ 2>/dev/null || true
+            cp target/release/vifastkey-replace.exe dist/ 2>/dev/null || true
           fi
           if [ "${{ runner.os }}" = "Linux" ]; then
             cp ../linux/vifastkey-settings.desktop dist/
@@ -114,7 +114,7 @@ jobs:
           Copy-Item build/tsf-x64/Release/vifastkey.dll windows-package\x64
           Copy-Item build/tsf-x86/Release/vifastkey_tsf.dll windows-package\x86
           Copy-Item build/tsf-x86/Release/vifastkey.dll windows-package\x86
-          Copy-Item rust/target/release/vfk-windows.exe windows-package
+          Copy-Item rust/target/release/vifastkey-replace.exe windows-package
           Copy-Item rust/target/release/vifastkey-settings.exe windows-package
           Copy-Item packaging/windows/README.md windows-package\README.md
           Copy-Item windows/tsf/README.md windows-package\DEVELOPER.md

@@ -28,7 +28,7 @@ cargo run -p vifastkey-settings -- --no-tray   # tắt tray
 ## Windows: Preedit / Replace
 
 - Mặc định **Preedit (TSF)**; hook nền không chạy.
-- Chọn **Replace (Hook)** trong tab **Nâng cao** sẽ chạy `vfk-windows.exe` và thêm
+- Chọn **Replace (Hook)** trong tab **Nâng cao** sẽ chạy `vifastkey-replace.exe` và thêm
   Run key cho user hiện tại; chọn lại **Preedit (TSF)** sẽ dừng hook và xoá Run key.
 - `auto` cũ không còn trong UI; file cũ được đọc như Preedit.
 

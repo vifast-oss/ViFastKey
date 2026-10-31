@@ -26,7 +26,7 @@ foreach ($arch in @("x64", "x86")) {
     Remove-Item $dest -Recurse -Force
 }
 
-Get-Process vfk-windows -ErrorAction SilentlyContinue | Stop-Process -Force
+Get-Process vifastkey-replace,vfk-windows -ErrorAction SilentlyContinue | Stop-Process -Force
 $runKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
 Remove-ItemProperty -Path $runKey -Name "ViFastKeyHook" -ErrorAction SilentlyContinue
 
@@ -34,9 +34,13 @@ $settingsExe = Join-Path $env:LOCALAPPDATA "ViFastKey\vifastkey-settings.exe"
 if (Test-Path $settingsExe) {
     Remove-Item $settingsExe -Force
 }
-$hookExe = Join-Path $env:LOCALAPPDATA "ViFastKey\vfk-windows.exe"
+$hookExe = Join-Path $env:LOCALAPPDATA "ViFastKey\vifastkey-replace.exe"
 if (Test-Path $hookExe) {
     Remove-Item $hookExe -Force
+}
+$legacyHook = Join-Path $env:LOCALAPPDATA "ViFastKey\vfk-windows.exe"
+if (Test-Path $legacyHook) {
+    Remove-Item $legacyHook -Force
 }
 $windowsJson = Join-Path $env:APPDATA "ViFastKey\windows.json"
 if (Test-Path $windowsJson) {

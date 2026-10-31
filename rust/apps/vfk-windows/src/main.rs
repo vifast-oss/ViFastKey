@@ -3,7 +3,7 @@
 //! Preedit thật nằm ở `windows/tsf/` (TSF text service). Adapter này dùng cho
 //! app/game không hỗ trợ TSF hoặc khi `windows.json` đặt `backend: "hook"`.
 //! Config đọc từ `%APPDATA%\ViFastKey\config.json`; dùng SendInput Unicode/backspace.
-//! Build trên Windows bằng `cargo build -p vfk-windows --release`.
+//! Build trên Windows bằng `cargo build -p vfk-windows --release` (binary `vifastkey-replace.exe`).
 //!
 //! Giới hạn: low-level hook yêu cầu app chạy trong desktop session và một số app
 //! chống hook; TSF là hướng production. Không chạy được trên macOS/Linux.
@@ -12,7 +12,7 @@
 
 #[cfg(not(windows))]
 fn main() {
-    eprintln!("vfk-windows chỉ chạy trên Windows.");
+    eprintln!("vifastkey-replace chỉ chạy trên Windows.");
 }
 
 #[cfg(windows)]

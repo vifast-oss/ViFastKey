@@ -49,16 +49,23 @@ pub fn save_windows_backend(config_path: &Path, backend: &str) -> io::Result<()>
     std::fs::write(path, bytes)
 }
 
+/// Tên process/binary Replace. `vfk-windows` cũ là tên legacy cần dọn khi nâng cấp.
+#[cfg(target_os = "windows")]
+const HOOK_EXE: &str = "vifastkey-replace.exe";
+#[cfg(target_os = "windows")]
+const LEGACY_HOOK_EXE: &str = "vfk-windows.exe";
+
 /// Bật Replace: chạy hook nền và thêm vào Run key của user hiện tại.
 #[cfg(target_os = "windows")]
 pub fn ensure_replace_mode() -> Result<(), String> {
     use std::process::Command;
     use std::time::Duration;
 
+    stop_process(LEGACY_HOOK_EXE);
     let exe = std::env::current_exe().map_err(|err| format!("không tìm được exe: {err}"))?;
-    let hook = exe.with_file_name("vfk-windows.exe");
+    let hook = exe.with_file_name(HOOK_EXE);
     if !hook.exists() {
-        return Err(format!("Không thấy {}; cài lại gói ViFastKey có vfk-windows.exe.", hook.display()));
+        return Err(format!("Không thấy {}; cài lại gói ViFastKey có {HOOK_EXE}.", hook.display()));
     }
 
     if !hook_running() {
@@ -69,31 +76,37 @@ pub fn ensure_replace_mode() -> Result<(), String> {
     Ok(())
 }
 
-/// Tắt Replace: bỏ Run key và dừng hook nền.
+/// Tắt Replace: bỏ Run key và dừng hook nền (kể cả process legacy).
 #[cfg(target_os = "windows")]
 pub fn disable_replace_mode() -> Result<(), String> {
-    use std::process::Command;
-
     set_hook_autostart(None)?;
-    let output = Command::new("taskkill")
-        .args(["/IM", "vfk-windows.exe", "/F"])
-        .output()
-        .map_err(|err| format!("không dừng được hook: {err}"))?;
-    if !output.status.success() && hook_running() {
-        return Err("không dừng được vfk-windows.exe; mở Task Manager để kết thúc.".into());
+    stop_process(HOOK_EXE);
+    stop_process(LEGACY_HOOK_EXE);
+    if hook_running() {
+        return Err(format!("không dừng được {HOOK_EXE}; mở Task Manager để kết thúc."));
     }
     Ok(())
 }
 
 #[cfg(target_os = "windows")]
 pub fn hook_running() -> bool {
+    process_running(HOOK_EXE)
+}
+
+#[cfg(target_os = "windows")]
+fn process_running(image: &str) -> bool {
     std::process::Command::new("tasklist")
-        .args(["/FI", "IMAGENAME eq vfk-windows.exe", "/NH"])
+        .args(["/FI", &format!("IMAGENAME eq {image}"), "/NH"])
         .output()
         .map(|output| {
-            String::from_utf8_lossy(&output.stdout).to_ascii_lowercase().contains("vfk-windows.exe")
+            String::from_utf8_lossy(&output.stdout).to_ascii_lowercase().contains(&image.to_ascii_lowercase())
         })
         .unwrap_or(false)
+}
+
+#[cfg(target_os = "windows")]
+fn stop_process(image: &str) {
+    let _ = std::process::Command::new("taskkill").args(["/IM", image, "/F"]).output();
 }
 
 #[cfg(target_os = "windows")]

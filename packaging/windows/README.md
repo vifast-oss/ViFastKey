@@ -22,7 +22,7 @@ UI cấu hình và hook Replace.
 x64/                    TSF + engine cho app 64-bit
 x86/                    TSF + engine cho app 32-bit
 vifastkey-settings.exe  UI cấu hình
-vfk-windows.exe         hook Replace (chỉ chạy khi chọn Replace)
+vifastkey-replace.exe  hook Replace (chỉ chạy khi chọn Replace)
 install.ps1             cài per-user + đăng ký TSF
 uninstall.ps1           gỡ cài đặt
 windows.example.json    mẫu cấu hình backend
@@ -80,7 +80,7 @@ Mặc định sau khi cài là **Preedit (TSF)**. Không có hook nền chạy �
 - Chỉ bật khi app/game cụ thể không nhận Preedit. Không bật hook nền mặc định.
 
 Cách đổi: **ViFastKey Settings → Nâng cao → Windows: Preedit / Replace**.
-- Chọn **Replace (Hook)**: app chạy `vfk-windows.exe` và thêm Run key cho user.
+- Chọn **Replace (Hook)**: app chạy `vifastkey-replace.exe` và thêm Run key cho user.
 - Chọn lại **Preedit (TSF)**: app dừng hook và xoá Run key.
 - Đổi chế độ có hiệu lực trong khoảng 0,5 giây; nếu đang có preedit dở, bấm ra ngoài một lần.
 
@@ -109,7 +109,7 @@ Muốn xoá sạch, xoá thêm `%APPDATA%\ViFastKey`.
 | Không thấy ViFastKey trong danh sách bàn phím | Đăng xuất/đăng nhập; cài lại đúng x64/x86; kiểm tra `%LOCALAPPDATA%\ViFastKey\tsf\x64\vifastkey_tsf.dll` |
 | Có ViFastKey nhưng gõ không ra tiếng Việt | Kiểm tra đang chọn ViFastKey; thử Notepad; xem `windows.json` là `tsf` |
 | Game không nhận preedit | Chuyển Replace (Hook), hoặc tắt bộ gõ nếu game có anti-cheat mạnh |
-| Replace không gõ được | Mở Nâng cao → **Kiểm tra hook**; kiểm tra `vfk-windows.exe` còn trong `%LOCALAPPDATA%\ViFastKey` |
+| Replace không gõ được | Mở Nâng cao → **Kiểm tra hook**; kiểm tra `vifastkey-replace.exe` còn trong `%LOCALAPPDATA%\ViFastKey` |
 | SmartScreen cảnh báo | Bản phát hành chưa ký Authenticode; chọn “More info → Run anyway” nếu tin nguồn |
 | App chạy Administrator không nhận TSF | TSF per-user không nạp vào app elevated; chạy app cùng mức quyền hoặc dùng bản HKLM |
 

@@ -7,7 +7,7 @@ rust-version.workspace = true
 license.workspace = true
 
 [[bin]]
-name = "vfk-windows"
+name = "vifastkey-replace"
 path = "src/main.rs"
 
 [dependencies]

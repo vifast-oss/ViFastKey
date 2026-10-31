@@ -28,7 +28,7 @@ try {
     }
 
     $release = Join-Path $repo "rust\target\release"
-    Copy-Item (Join-Path $release "vfk-windows.exe") $pkg -Force
+    Copy-Item (Join-Path $release "vifastkey-replace.exe") $pkg -Force
     Copy-Item (Join-Path $release "vifastkey-settings.exe") $pkg -Force
     Copy-Item (Join-Path $repo "packaging\windows\README.md") "$pkg\README.md" -Force
     Copy-Item (Join-Path $repo "windows\tsf\README.md") "$pkg\DEVELOPER.md" -Force

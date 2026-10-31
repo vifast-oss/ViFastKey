@@ -9,6 +9,8 @@
 - **Windows Preedit/Replace**: mặc định `tsf` (Preedit); UI chỉ còn Preedit/Replace.
   Chọn Replace chạy hook nền + Run key, chọn Preedit dừng hook + xoá Run key; bỏ
   lựa chọn `auto` khỏi UI (giá trị cũ đọc như Preedit).
+- Đổi tên binary Replace từ `vfk-windows.exe` sang **`vifastkey-replace.exe`** cho dễ hiểu;
+  installer/settings tự dọn process và file tên cũ khi nâng cấp.
 - Gói phát hành Windows/Linux có `README.md` hướng dẫn cài đặt/giới thiệu tính năng,
   `DEVELOPER.md`, `LICENSE`, third-party notices; Linux thêm `install.sh`/`uninstall.sh`.
 - **Tray icon**: Windows/macOS dùng `tray-icon`, Linux dùng StatusNotifierItem
