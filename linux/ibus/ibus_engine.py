@@ -54,10 +54,12 @@ class ViFastKeyEngine(IBus.Engine):
             return False
         self._sync_field_kind()
         ctrl = bool(state & IBus.ModifierType.CONTROL_MASK)
+        shift = bool(state & IBus.ModifierType.SHIFT_MASK)
         alt = bool(state & IBus.ModifierType.MOD1_MASK)
         meta = bool(state & (IBus.ModifierType.SUPER_MASK | IBus.ModifierType.META_MASK))
         before = self.core.display
-        if ctrl and not alt and not meta and keyval == IBus.KEY_F:
+        # Ctrl+Shift+F, không phải Ctrl+F: tránh cướp Find của app.
+        if ctrl and shift and not alt and not meta and keyval == IBus.KEY_F:
             self._apply(self.core.toggle(), before)
             return True
 
