@@ -251,7 +251,8 @@ Best patterns observed:
 - **Onboarding.** Funput's 4 steps (welcome → enable input source/Accessibility → choose method → ready + launch at login) with a live status indicator is a good minimum. OpenKey/VKey also show permission instructions. Include a “test typing” field in the final step.
 - **Debug view.** XKey's debug window logs every key, engine buffer, action, injection, secure-input changes and app context. For ViFastKey, a compact “event → engine action → injection” trace with redaction of text content (privacy) is enough; the CLI already has `--trace`.
 - **Status surfaces.** Menu bar icon states: V/E, locked (🔒/hard), TSF “T”, paused, error. VKey's floating V/E icon solves fullscreen; XKey's floating toolbar solves temp-off. Do not overdo OSD; one compact indicator plus toasts is enough.
-- **Bilingual UI.** XKey ships vi/en/zh; VKey vi/en. ViFastKey's docs are Vietnamese; product UI should be vi/en at minimum, with all strings externalized from day one.
+- **Language.** XKey ships vi/en/zh; VKey vi/en. ViFastKey chọn UI tiếng Việt và
+  **không làm i18n**; vẫn nên gom string vào một chỗ nếu sau này đổi quyết định.
 - **Accessibility.** Test keyboard-only navigation, VoiceOver/Narrator labels on every switch, Reduce Motion, high contrast, and large text. XKey/Funput document these manual checks; most IMEs fail them.
 
 ### 3.7 Data and text tools

@@ -3,6 +3,11 @@
 Đây là 8 báo cáo do các sub agent lập trong đợt đối chiếu 21 dự án IME tiếng Việt.
 Bản tổng hợp và quyết định triển khai nằm ở [`../IME_FEATURE_RESEARCH.md`](../IME_FEATURE_RESEARCH.md).
 
+Các báo cáo là **ảnh chụp tại thời điểm khảo sát**; câu “ViFastKey currently lacks/gap”
+có thể đã lỗi thời. Trạng thái hiện tại xem [`../PLATFORMS.md`](../PLATFORMS.md),
+[`../../ROADMAP.md`](../../ROADMAP.md), [`../DESKTOP_UI.md`](../DESKTOP_UI.md) và
+`CHANGELOG.md`.
+
 | File | Nội dung |
 |---|---|
 | `01-skey-unikey.md` | SKey, SKey Engine, bamboo-core, UniKey 3.62, x-unikey: engine, charset, undo, macro, adapter |

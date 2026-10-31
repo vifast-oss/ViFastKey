@@ -906,15 +906,15 @@ These are behavior-level test cases worth porting to ViFastKey's fake host/adapt
 
 ### 5.3 UX/config gaps
 
-- No desktop GUI or fcitx config page; only CLI demo, REPL, JSON, web playground.
-- No CLI `doctor`, `status`, `set-method`, `set-mode`, `set-app`, `list-presets`, `restart`.
-- No config schema version/migration (only an in-memory counter).
-- No config backup/import/export.
-- No app profile editor with search/icons/mode cards/delay spinboxes.
-- No macro/dictionary/keymap editors.
-- No status icon / mode notification.
-- No i18n of config labels.
-- No packaging (fcitx5 addon, udev/systemd if uinput, Flatpak/Snap notes).
+- Desktop GUI ✅ `vifastkey-settings` (egui, Windows/Linux); fcitx config page chưa có.
+- CLI `doctor/status/set-method/set-mode/set-app/list-presets` vẫn còn thiếu.
+- Config `schema_version` ✅; migration tooling vẫn mỏng (đọc best-effort).
+- Config backup/import/export ✅ (`vfk-config` + `vifastkey-settings`).
+- App profile editor + delay/ACK/charset ✅ trong `vifastkey-settings`; chưa có search/icon.
+- Macro editor ✅ (validate trùng/rỗng); dictionary/keymap editor chưa.
+- Status icon/tray chưa có; mode toggle qua menu/hotkey.
+- i18n: **không làm** theo quyết định sản phẩm; UI tiếng Việt.
+- Fcitx5 addon build/runtime ✅; Flatpak/Snap packaging chưa.
 
 ---
 

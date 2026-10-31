@@ -230,7 +230,7 @@ ViFastTts pins the important moving parts:
 
 **ViFastKey takeaway:**
 
-- Add a `rust-toolchain.toml` or pin the toolchain in CI; current ViFastKey CI uses `dtolnay/rust-toolchain@stable` (`ci.yml:71`) while `rust-version = 1.75` (`rust/Cargo.toml:11`). Pin exact versions for reproducible adapter builds.
+- Add a `rust-toolchain.toml` or pin the toolchain in CI; current ViFastKey CI uses `dtolnay/rust-toolchain@stable` (`ci.yml`) while workspace `rust-version = 1.89` (`rust/Cargo.toml`). Pin exact versions for reproducible adapter builds.
 - Pin Xcode version and XcodeGen version in CI; `xcodebuild -version` is not enough if the project generator changes.
 - Generate an `engine_manifest.json` containing `engine_version`, `abi_version`, `config_schema_version`, `git_commit`, `rustc`, target, build date. Show it in diagnostics and assert it in self-test.
 - Derive `CFBundleShortVersionString`/`CFBundleVersion` from one source; do not hardcode them in `Info.plist` as TTS does (`package-macos.sh:71-89`).
@@ -1169,7 +1169,7 @@ Legend:
 | P2-6 | Homebrew Cask / `.dmg` / release channels | D | Distribution after notarization |
 | P2-7 | App Store sandbox variant | A/D | Only if IMK-only and review-compatible; verify event tap incompatibility |
 | P2-8 | Advanced keyboard layouts (AZERTY/Dvorak/dead keys) | A | International users; pass-through when unsure |
-| P2-9 | Localisation (vi/en), accessibility polish, reduced motion | A/D | Product quality |
+| P2-9 | Accessibility polish, reduced motion | A/D | Product quality (UI tiếng Việt, không i18n) |
 | P2-10 | SBOM/dSYM/support bundle automation | D | Release/security maturity |
 
 ### 8.4 Rough sizing
