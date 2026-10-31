@@ -9,6 +9,9 @@
 
 ### Desktop
 
+- **Hotkey Việt/Anh mặc định `Alt+,`** trên Windows TSF/Replace, macOS IMK,
+  Fcitx5 và IBus; tránh `Ctrl+Shift+F` (tìm kiếm toàn project trong IDE) và
+  `Ctrl+Space` (chuyển input method của hệ điều hành).
 - Thêm UI cấu hình `vifastkey-settings` (egui) cho Windows/Linux, kèm `vfk-config`
   đọc/merge/validate/atomic save, `--self-test`/`--check`/`--import`/`--export`.
 - **Windows Preedit/Replace**: mặc định `tsf` (Preedit); UI chỉ còn Preedit/Replace.

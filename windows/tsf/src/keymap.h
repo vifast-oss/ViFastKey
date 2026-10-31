@@ -11,5 +11,5 @@ std::string KeyFromVk(WPARAM vk, LPARAM lParam);
 // Có phải phím mà engine có thể xử lý (kể cả phím đặc biệt)?
 bool IsEngineKey(WPARAM vk);
 
-// Ctrl+Shift+F: toggle Việt/Anh.
-bool IsToggleKey(WPARAM vk, bool ctrl, bool shift);
+// Alt+,: toggle Việt/Anh.
+bool IsToggleKey(WPARAM vk, bool ctrl, bool shift, bool alt, bool meta);

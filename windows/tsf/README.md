@@ -116,7 +116,7 @@ lại **Preedit (TSF)** sẽ dừng hook và xoá Run key. Không cần bật `a
 - Password/PIN/URL/email/số bị tắt qua `ITfInputScope`; terminal nhận field
   `Terminal`.
 - Display attribute: gạch chân xanh cho composition.
-- Ctrl+Shift+F toggle Việt/Anh (khi TSF đang xử lý context).
+- `Alt+,` toggle Việt/Anh (khi TSF đang xử lý context).
 
 ## Giới hạn / còn lại
 

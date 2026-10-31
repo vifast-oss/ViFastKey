@@ -15,8 +15,8 @@ bool IsOemKey(WPARAM vk) {
 
 }  // namespace
 
-bool IsToggleKey(WPARAM vk, bool ctrl, bool shift) {
-    return ctrl && shift && vk == 'F';
+bool IsToggleKey(WPARAM vk, bool ctrl, bool shift, bool alt, bool meta) {
+    return alt && !ctrl && !shift && !meta && vk == VK_OEM_COMMA;
 }
 
 bool IsEngineKey(WPARAM vk) {

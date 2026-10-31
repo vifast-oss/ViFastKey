@@ -197,6 +197,32 @@ void testPasswordPassThrough() {
     CHECK(context.inputPanel().clientPreedit().empty());
 }
 
+void testToggleHotkeyIsAltComma() {
+    fcitx::EventLoop loop;
+    fcitx::InputContextManager manager;
+    TestInputContext context(manager);
+    context.setCapabilityFlags(fcitx::CapabilityFlag::Preedit);
+
+    auto config = makeConfig();
+    fcitx::VifastkeyState state(loop, &context, config);
+    state.activate("test");
+    CHECK(state.enabled());
+
+    // Tổ hợp cũ không còn toggle.
+    auto oldHotkey = keyEvent(
+        context, FcitxKey_F,
+        fcitx::KeyStates{fcitx::KeyState::Ctrl, fcitx::KeyState::Shift});
+    state.keyEvent(oldHotkey);
+    CHECK(!oldHotkey.filtered());
+    CHECK(state.enabled());
+
+    auto toggle = keyEvent(context, FcitxKey_comma,
+                           fcitx::KeyStates{fcitx::KeyState::Alt});
+    state.keyEvent(toggle);
+    CHECK(toggle.filtered());
+    CHECK(!state.enabled());
+}
+
 void testPasswordTransitionDropsComposition() {
     fcitx::EventLoop loop;
     fcitx::InputContextManager manager;
@@ -502,6 +528,7 @@ int main() {
     testResetCommitsComposition();
     testFocusOutDoesNotDoubleCommitClientPreedit();
     testPasswordPassThrough();
+    testToggleHotkeyIsAltComma();
     testPasswordTransitionDropsComposition();
     testInvalidConfigFallsBackToDefaults();
     testReplaceUsesSurroundingAndCommits();

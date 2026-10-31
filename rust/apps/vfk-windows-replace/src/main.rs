@@ -397,11 +397,11 @@ mod win {
         let tsf_owns = backend == "tsf" || tsf_active_for(foreground_pid, foreground_window);
 
         if ctrl || alt || meta {
-            if ctrl && shift && kb.vkCode == 0x46 {
+            if alt && !ctrl && !shift && !meta && kb.vkCode == 0xBC {
                 if tsf_owns {
                     return CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam);
                 }
-                // Ctrl+Shift+F toggle (chỉ khi TSF không xử lý context này).
+                // Alt+, (VK_OEM_COMMA) toggle (chỉ khi TSF không xử lý context này).
                 SESSION.with(|s| {
                     if let Some(session) = s.borrow_mut().as_mut() {
                         session.toggle_vietnamese();

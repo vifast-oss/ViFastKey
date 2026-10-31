@@ -61,7 +61,7 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
   ✅ Windows `Ctrl+Shift+,` mở settings + Start Menu shortcut; ✅ test UI macOS,
   Ubuntu 26.04 X11/Xvfb + Wayland/Weston headless, tray qua D-Bus; ✅ Windows 11 render 6 tab
   + close-to-tray. Còn test tương tác menu tray trên Windows.
-- **macOS smoothness**: ✅ input source prefs, secure input, Ctrl+Shift+F, clipboard tools.
+- **macOS smoothness**: ✅ input source prefs, secure input, `Alt+,`, clipboard tools.
 
 ## Hiệu năng / chất lượng
 

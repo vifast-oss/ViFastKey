@@ -86,7 +86,7 @@ Kiểm tra:
 ## Dùng
 
 - Gõ Telex/Simple Telex/VNI như engine.
-- **Ctrl+Shift+F**: bật/tắt tiếng Việt (lưu theo app).
+- **Alt+,**: bật/tắt tiếng Việt (lưu theo app).
 - Menu input method:
   - Bật/tắt tiếng Việt.
   - Chọn Telex / Simple Telex / VNI / VIQR.

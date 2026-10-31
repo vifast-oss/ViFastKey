@@ -50,7 +50,7 @@ addon load `vifastkey`, gõ `tieengs` → `tiếng` qua GTK entry. CI dùng Fcit
   Replace; `output_mode=replace` chỉ được bật khi app có surrounding text.
 - **Config reload**: `~/.config/vifastkey/config.json` được theo dõi mtime và
   nạp lại khi không có composition. Có thể override bằng `VIFASTKEY_CONFIG`.
-- **Ctrl+Shift+F** hoặc click status action để bật/tắt tiếng Việt.
+- **Alt+,** hoặc click status action để bật/tắt tiếng Việt.
 - Config `~/.config/vifastkey/config.json` dùng chung schema với macOS/IBus.
 
 ## Kiểm thử

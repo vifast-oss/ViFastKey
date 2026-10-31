@@ -456,11 +456,13 @@ STDMETHODIMP TextService::OnTestKeyDown(ITfContext*, WPARAM wParam, LPARAM, BOOL
 
     const bool ctrl = IsControlDown();
     const bool shift = IsShiftDown();
-    if (IsToggleKey(wParam, ctrl, shift)) {
+    const bool alt = IsAltDown();
+    const bool meta = IsMetaDown();
+    if (IsToggleKey(wParam, ctrl, shift, alt, meta)) {
         *pfEaten = TRUE;
         return S_OK;
     }
-    if (ctrl || IsAltDown() || IsMetaDown()) {
+    if (ctrl || alt || meta) {
         return S_OK;
     }
     if (IsEngineKey(wParam)) {
@@ -484,7 +486,7 @@ STDMETHODIMP TextService::OnKeyDown(ITfContext* pic, WPARAM wParam, LPARAM lPara
     const bool shift = IsShiftDown();
     const bool alt = IsAltDown();
     const bool meta = IsMetaDown();
-    if (IsToggleKey(wParam, ctrl, shift)) {
+    if (IsToggleKey(wParam, ctrl, shift, alt, meta)) {
         if (SUCCEEDED(ExecuteToggle())) {
             *pfEaten = TRUE;
         }

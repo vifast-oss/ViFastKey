@@ -94,6 +94,7 @@ final class ViFastKeyInputController: IMKInputController {
 
         let flags = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         let ctrl = flags.contains(.control)
+        let shift = flags.contains(.shift)
         let alt = flags.contains(.option)
         let meta = flags.contains(.command)
 
@@ -110,9 +111,8 @@ final class ViFastKeyInputController: IMKInputController {
             return false
         }
 
-        // Ctrl+Shift+F: toggle Việt/Anh ngay trong app; không cho engine xử lý f.
-        if ctrl && !alt && !meta && flags.contains(.shift),
-           event.charactersIgnoringModifiers?.lowercased() == "f" {
+        // Alt+,: toggle Việt/Anh ngay trong app; không cho engine xử lý phím này.
+        if alt && !ctrl && !shift && !meta && event.keyCode == kVK_ANSI_Comma {
             toggleVietnamese(nil)
             return true
         }
@@ -195,8 +195,8 @@ final class ViFastKeyInputController: IMKInputController {
         let menu = NSMenu(title: "ViFastKey")
         let enabled = engine?.isEnabled ?? true
         let toggle = NSMenuItem(title: enabled ? "Tắt tiếng Việt" : "Bật tiếng Việt",
-                                action: #selector(toggleVietnamese(_:)), keyEquivalent: "f")
-        toggle.keyEquivalentModifierMask = [.control, .shift]
+                                action: #selector(toggleVietnamese(_:)), keyEquivalent: ",")
+        toggle.keyEquivalentModifierMask = [.option]
         toggle.target = self
         menu.addItem(toggle)
 

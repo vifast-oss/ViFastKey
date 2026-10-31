@@ -482,9 +482,9 @@ void VifastkeyState::processKey(const std::string &key, bool ctrl, bool alt,
 
     refreshSurrounding();
 
-    if (rawKey && ctrl && !alt && !meta &&
-        rawKey->states().test(KeyState::Shift) &&
-        rawKey->sym() == FcitxKey_F) {
+    if (rawKey && alt && !ctrl && !meta &&
+        !rawKey->states().test(KeyState::Shift) &&
+        rawKey->sym() == FcitxKey_comma) {
         toggleVietnamese();
         if (event) {
             event->filterAndAccept();

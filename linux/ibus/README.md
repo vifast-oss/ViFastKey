@@ -34,8 +34,8 @@ Mở **IBus Preferences → Input Method → Add → Vietnamese → ViFastKey**,
 - Surrounding text đầy đủ (cursor/anchor) được lấy từ IBus khi app hỗ trợ; edit previous
   word dùng `Replace` qua `vfk_adapter_core` bản Python.
 - Field policy: password/URL/email/number pass-through nếu IBus cung cấp input purpose.
-- `Ctrl+F` (không Shift/Ctrl khác) tạm toggle Việt/Anh. `Ctrl+Shift+F` cũng dùng được
-  qua engine nếu IBus không nuốt.
+- `Alt+,` toggle Việt/Anh trong engine; không dùng `Ctrl+Space` (IBus dành cho
+  chuyển input method).
 
 ## Kiểm thử
 

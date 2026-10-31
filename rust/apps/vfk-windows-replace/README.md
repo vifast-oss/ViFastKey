@@ -26,7 +26,7 @@ Yêu cầu Windows 10/11 x64, Rust stable. Chạy exe trong desktop session; hoo
 - Backspace/Enter/Tab/Esc/arrow được map sang engine.
 - Action REPLACE: gửi backspace + text Unicode qua `SendInput`.
 - Bỏ qua phím injected (`LLKHF_INJECTED`) để không xử lý lại chính SendInput.
-- Ctrl/Alt/Win được pass; `Ctrl+Shift+F` toggle Việt/Anh khi hook đang xử lý context.
+- Ctrl/Alt/Win được pass; `Alt+,` toggle Việt/Anh khi hook đang xử lý context.
 - `Ctrl+Shift+,` mở `vifastkey-settings.exe --tab apps`.
 - Hook đọc và hot-reload `config.json` + `windows.json` theo mtime, không cần restart.
 - Password/secure field và app-specific delay chưa xử lý; TSF là hướng production.

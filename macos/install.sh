@@ -25,7 +25,7 @@ echo
 echo "Bước tiếp theo:"
 echo "  1. Đăng xuất/đăng nhập một lần để macOS làm mới danh sách input source"
 echo "  2. System Settings → Keyboard → Input Sources → chọn ViFastKey"
-echo "  3. Ctrl+Shift+F bật/tắt tiếng Việt trong app"
+echo "  3. Alt+, bật/tắt tiếng Việt trong app"
 echo "  4. Cấu hình: $HOME/Library/Application Support/ViFastKey/config.json"
 echo
 open "x-apple.systempreferences:com.apple.Keyboard-Settings.extension" 2>/dev/null || true

@@ -9,7 +9,7 @@ UI cấu hình và hook Replace.
 - Telex, Simple Telex, VNI, VIQR; kiểu đặt dấu cũ/mới.
 - Preedit thật bằng TSF: gạch chân, sửa trong composition, commit khi Space/Enter/dấu câu.
 - Sửa từ đã gõ, macro nhiều từ, macro số (`mp3`, `k8s`), macro undo.
-- Tự khôi phục tiếng Anh, viết hoa đầu câu, bảo vệ chữ HOA.
+- Gõ tiếng Anh bằng escape Telex, viết hoa đầu câu, bảo vệ chữ HOA.
 - App profile: output, delay/ACK, charset, kiểu gõ/chính tả theo app.
 - UI cấu hình egui: gõ thử, import/export có preview diff, reset từng nhóm,
   tìm app, theme sáng/tối, tray.
@@ -61,7 +61,7 @@ Mặc định sau khi cài là **Preedit (TSF)**. Không có hook nền chạy �
 
 ## Sử dụng
 
-- Chuyển Việt/Anh bằng language bar hoặc `Ctrl+Shift+F` khi ViFastKey đang xử lý.
+- Chuyển Việt/Anh bằng language bar hoặc `Alt+,` khi ViFastKey đang xử lý.
 - Mở cấu hình: Start Menu → **ViFastKey Settings**, hoặc `Ctrl+Shift+,` khi hook đang chạy.
 - Tray: chuột phải để mở cấu hình/tải lại/thoát; click trái để mở cửa sổ.
 - Đóng cửa sổ cấu hình sẽ ẩn xuống tray (tắt được trong tab **Nâng cao**).

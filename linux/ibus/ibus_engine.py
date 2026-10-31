@@ -58,8 +58,8 @@ class ViFastKeyEngine(IBus.Engine):
         alt = bool(state & IBus.ModifierType.MOD1_MASK)
         meta = bool(state & (IBus.ModifierType.SUPER_MASK | IBus.ModifierType.META_MASK))
         before = self.core.display
-        # Ctrl+Shift+F, không phải Ctrl+F: tránh cướp Find của app.
-        if ctrl and shift and not alt and not meta and keyval == IBus.KEY_F:
+        # Alt+,: toggle nội bộ Việt/Anh; không dùng Ctrl+Space của IBus.
+        if alt and not ctrl and not shift and not meta and keyval == IBUS.KEY_comma:
             self._apply(self.core.toggle(), before)
             return True
 
