@@ -76,6 +76,7 @@ class TextService final : public ITfTextInputProcessorEx,
     void ClearRouting();
     bool BackendAllowsTsf() const;
     void ReloadConfigIfNeeded();
+    void ReloadConfigIfNeededThrottled();
 
     HRESULT ApplyActionOn(ITfContext* context, const ActionData& action);
     HRESULT FlushCurrentContext();
@@ -114,5 +115,6 @@ class TextService final : public ITfTextInputProcessorEx,
     Engine engine_;
     std::string backend_ = "tsf";
     std::string loaded_config_;
+    ULONGLONG last_config_check_ = 0;
     bool ending_composition_ = false;
 };

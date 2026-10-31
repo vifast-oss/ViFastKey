@@ -97,9 +97,9 @@ Mẫu: `windows/tsf/windows.example.json`.
 | `tsf` (mặc định) | Hook luôn pass; chỉ TSF preedit |
 | `hook` | TSF không ăn phím; chỉ hook Replace xử lý |
 
-Không cần khởi động lại khi sửa `config.json`: TSF đọc lại khi focus đổi; hook
-hot-reload theo mtime. Đổi `windows.json` có hiệu lực ngay với hook; TSF có thể cần
-đổi focus hoặc khởi động lại text service.
+Không cần khởi động lại khi sửa `config.json`/`windows.json`: TSF kiểm tra lại mỗi
+500 ms khi có phím và khi focus đổi; hook hot-reload theo mtime. Nếu đang có preedit
+dở, bấm ra ngoài một lần để chốt trước khi đổi chế độ.
 
 **Mặc định là Preedit (TSF).** Để dùng Replace cho game/app không nhận TSF, mở
 `vifastkey-settings` → tab **Nâng cao** → **Windows: Preedit / Replace** → chọn

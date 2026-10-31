@@ -1477,7 +1477,7 @@ impl SettingsApp {
             }
             ui.label(
                 egui::RichText::new(
-                    "Preedit hợp với Office/trình duyệt/terminal; Replace dùng cho app hoặc game không nhận TSF. Đổi chế độ có thể cần đổi focus hoặc đăng nhập lại.",
+                    "Preedit hợp với Office/trình duyệt/terminal; Replace dùng cho app hoặc game không nhận TSF. Đổi chế độ có hiệu lực trong khoảng 0,5 giây; nếu đang có preedit dở, bấm ra ngoài một lần.",
                 )
                 .small()
                 .color(theme::MUTED),

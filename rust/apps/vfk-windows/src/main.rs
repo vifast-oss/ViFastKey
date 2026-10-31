@@ -392,8 +392,9 @@ mod win {
             return CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam);
         };
         let backend = windows_backend();
-        let tsf_owns =
-            backend == "tsf" || (backend == "auto" && tsf_active_for(foreground_pid, foreground_window));
+        // backend=tsf: TSF luôn xử lý. hook/auto: pass-through nếu TSF còn giữ
+        // context hiện tại (tránh double khi vừa đổi chế độ, TSF đổi focus mới nhả).
+        let tsf_owns = backend == "tsf" || tsf_active_for(foreground_pid, foreground_window);
 
         if ctrl || alt || meta {
             if ctrl && shift && kb.vkCode == 0x46 {

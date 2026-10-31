@@ -449,6 +449,7 @@ STDMETHODIMP TextService::OnTestKeyDown(ITfContext*, WPARAM wParam, LPARAM, BOOL
         return E_POINTER;
     }
     *pfEaten = FALSE;
+    ReloadConfigIfNeededThrottled();
     if (!BackendAllowsTsf() || !EnsureContext()) {
         return S_OK;
     }
@@ -474,6 +475,7 @@ STDMETHODIMP TextService::OnKeyDown(ITfContext* pic, WPARAM wParam, LPARAM lPara
         return E_POINTER;
     }
     *pfEaten = FALSE;
+    ReloadConfigIfNeededThrottled();
     if (pic == nullptr || !BackendAllowsTsf() || !EnsureContext()) {
         return S_OK;
     }
@@ -639,9 +641,28 @@ bool TextService::BackendAllowsTsf() const {
     return backend_ != "hook";
 }
 
+void TextService::ReloadConfigIfNeededThrottled() {
+    const ULONGLONG now = GetTickCount64();
+    if (now - last_config_check_ < 500) {
+        return;
+    }
+    last_config_check_ = now;
+    ReloadConfigIfNeeded();
+}
+
 void TextService::ReloadConfigIfNeeded() {
     AppConfig config = LoadAppConfig();
+    const bool backend_changed = backend_ != config.backend;
     backend_ = config.backend;
+    if (backend_changed) {
+        // Đổi Preedit/Replace phải có hiệu lực ngay, không đợi focus đổi:
+        // tránh hook và TSF cùng xử lý hoặc cả hai cùng pass-through.
+        if (BackendAllowsTsf()) {
+            PublishRouting();
+        } else {
+            ClearRouting();
+        }
+    }
     if (config.engine_json.empty() || config.engine_json == loaded_config_) {
         return;
     }
