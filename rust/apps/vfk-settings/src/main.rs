@@ -47,12 +47,12 @@ fn run() -> Result<ExitCode, String> {
     }
 
     let inner_size = args.window_size.unwrap_or([1040.0, 720.0]);
-    let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default()
-            .with_inner_size(inner_size)
-            .with_min_inner_size([900.0, 600.0]),
-        ..Default::default()
-    };
+    let mut viewport =
+        egui::ViewportBuilder::default().with_inner_size(inner_size).with_min_inner_size([900.0, 600.0]);
+    if let Some(icon) = tray::icon_data() {
+        viewport = viewport.with_icon(icon);
+    }
+    let options = eframe::NativeOptions { viewport, ..Default::default() };
 
     let tab = args.tab.clone();
     let tray = args.tray;

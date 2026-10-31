@@ -30,6 +30,7 @@ App: `ios/build/Build/Products/Debug-iphonesimulator/ViFastKeyHost.app`.
 
 - ✅ Build host + keyboard extension; Rust engine test trên simulator pass.
 - ✅ Keyboard UI QWERTY + số + VI toggle/space/backspace/enter.
+- ✅ AppIcon asset catalog (iPhone/iPad/1024) dựng từ `resources/brand/vifastkey-ios-1024.png`.
 - 🟡 Chưa test thao tác bật keyboard extension bằng UI automation; cần bật thủ công.
 - Chưa có App Group/config UI/theme/suggestion bar; chưa ký device/TestFlight.
 - Link staticlib simulator hiện tại arm64; máy Intel cần build thêm target

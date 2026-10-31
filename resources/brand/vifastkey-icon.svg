@@ -2,8 +2,8 @@
   <title id="vifastkey-icon-title">ViFastKey</title>
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#E5352B"/>
-      <stop offset="1" stop-color="#B3140F"/>
+      <stop offset="0" stop-color="#E8352B"/>
+      <stop offset="1" stop-color="#B3150F"/>
     </linearGradient>
     <linearGradient id="y" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#FFE14D"/>
@@ -11,20 +11,25 @@
     </linearGradient>
   </defs>
   <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <g stroke="#FFC93C" stroke-width="16" stroke-linecap="round">
-    <line x1="40" y1="190" x2="92" y2="190"/>
-    <line x1="56" y1="232" x2="92" y2="232"/>
-    <line x1="40" y1="274" x2="92" y2="274"/>
+  <!-- speed lines, cùng nhịp với icon ViFastTts -->
+  <g stroke="#FFD84D" stroke-width="14" stroke-linecap="round" opacity="0.85">
+    <line x1="40" y1="215" x2="92" y2="215"/>
+    <line x1="58" y1="262" x2="92" y2="262"/>
+    <line x1="40" y1="309" x2="92" y2="309"/>
   </g>
-  <polygon points="196.0,132.0 219.5,199.6 291.1,201.1 234.0,244.4 254.8,312.9 196.0,272.0 137.2,312.9 158.0,244.4 100.9,201.1 172.5,199.6" fill="url(#y)" stroke="#F7E08A" stroke-width="3" stroke-linejoin="round"/>
-  <rect x="280" y="158" width="40" height="40" rx="9" fill="#fff"/>
-  <rect x="332" y="158" width="40" height="40" rx="9" fill="#fff" opacity="0.75"/>
-  <rect x="384" y="158" width="40" height="40" rx="9" fill="#fff" opacity="0.45"/>
-  <rect x="302" y="214" width="40" height="40" rx="9" fill="#fff"/>
-  <rect x="354" y="214" width="40" height="40" rx="9" fill="#fff" opacity="0.75"/>
-  <rect x="406" y="214" width="40" height="40" rx="9" fill="#fff" opacity="0.45"/>
-  <rect x="280" y="270" width="40" height="40" rx="9" fill="#fff"/>
-  <rect x="332" y="270" width="40" height="40" rx="9" fill="#fff" opacity="0.75"/>
-  <rect x="384" y="270" width="40" height="40" rx="9" fill="#fff" opacity="0.45"/>
-  <rect x="280" y="326" width="146" height="22" rx="10" fill="#fff" opacity="0.85"/>
+  <!-- ngôi sao vàng, cùng tỉ lệ/vị trí với ViFastTts -->
+  <polygon points="210.0,144.0 236.5,225.5 322.2,225.5 252.9,275.9 279.4,357.5 210.0,307.1 140.6,357.5 167.1,275.9 97.8,225.5 183.5,225.5" fill="url(#y)" stroke="#FFE680" stroke-width="4" stroke-linejoin="round"/>
+  <!-- bàn phím: 3x3 phím + phím cách -->
+  <g fill="#FFFFFF">
+    <rect x="348" y="176" width="34" height="34" rx="8"/>
+    <rect x="391" y="176" width="34" height="34" rx="8" opacity="0.78"/>
+    <rect x="434" y="176" width="34" height="34" rx="8" opacity="0.5"/>
+    <rect x="348" y="219" width="34" height="34" rx="8"/>
+    <rect x="391" y="219" width="34" height="34" rx="8" opacity="0.78"/>
+    <rect x="434" y="219" width="34" height="34" rx="8" opacity="0.5"/>
+    <rect x="348" y="262" width="34" height="34" rx="8"/>
+    <rect x="391" y="262" width="34" height="34" rx="8" opacity="0.78"/>
+    <rect x="434" y="262" width="34" height="34" rx="8" opacity="0.5"/>
+    <rect x="348" y="314" width="120" height="22" rx="10" opacity="0.85"/>
+  </g>
 </svg>

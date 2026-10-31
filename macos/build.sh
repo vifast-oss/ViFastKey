@@ -16,6 +16,7 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$HERE/Info.plist" "$APP/Contents/Info.plist"
 sips -s format tiff "$ROOT/resources/brand/vifastkey-icon-192.png" --out "$APP/Contents/Resources/ViFastKey.tiff" >/dev/null
 cp "$ROOT/resources/brand/vifastkey-icon-192.png" "$APP/Contents/Resources/ViFastKey.png"
+"$HERE/make_icns.sh" "$APP/Contents/Resources/ViFastKey.icns"
 printf 'APPL????' > "$APP/Contents/PkgInfo"
 
 swiftc -O -target "$TARGET" \

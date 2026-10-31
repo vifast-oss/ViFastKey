@@ -50,6 +50,8 @@ Nếu còn dùng app 32-bit, cài thêm:
 ```
 
 4. Khởi động lại các app đang mở (hoặc đăng xuất/đăng nhập) để Windows nạp DLL TSF mới.
+   Khi nâng cấp, nếu TSF DLL đang được dùng, installer giữ bản cũ và cảnh báo; hãy
+   đăng xuất/khởi động lại rồi chạy lại installer để cập nhật DLL.
 5. Thêm bàn phím:
    **Settings → Time & language → Language & region → Vietnamese → Language options
    → Add a keyboard → ViFastKey**.

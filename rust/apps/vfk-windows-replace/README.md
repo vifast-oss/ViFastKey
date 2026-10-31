@@ -1,6 +1,6 @@
 # ViFastKey Windows Replace hook
 
-Binary phát hành: **`vifastkey-replace.exe`** (package/crate nội bộ vẫn tên `vfk-windows`).
+Binary phát hành: **`vifastkey-replace.exe`** (crate/package nội bộ: `vfk-windows-replace`).
 
 Adapter Windows dùng **WH_KEYBOARD_LL + SendInput Unicode**. Engine là
 `vfk-engine` (Rust), không phụ thuộc Python. Đây là backend **không có preedit**:
@@ -14,7 +14,7 @@ hook đọc mapping và pass-through khi foreground window/PID trùng để trá
 
 ```powershell
 cd rust
-cargo build -p vfk-windows --release
+cargo build -p vfk-windows-replace --release
 # -> target\release\vifastkey-replace.exe
 ```
 

@@ -79,6 +79,14 @@ def transparent_lockup() -> Image.Image:
     return Image.fromarray(arr, "RGBA")
 
 
+def full_bleed(icon: Image.Image, size: int) -> Image.Image:
+    """Icon nền đỏ kín viền (iOS/Apple tự bo góc)."""
+    base = Image.new("RGBA", (size, size), RED)
+    scaled = icon.resize((size, size), Image.Resampling.LANCZOS)
+    base.alpha_composite(scaled)
+    return base.convert("RGB")
+
+
 def og_image(lockup: Image.Image) -> Image.Image:
     im = Image.new("RGB", (1200, 630), CREAM)
     d = ImageDraw.Draw(im)
@@ -97,19 +105,21 @@ def og_image(lockup: Image.Image) -> Image.Image:
 
 def main() -> None:
     icon = rounded_icon(1024)
+    icon.save(ROOT / "vifastkey-icon-1024.png")
     icon.resize((512, 512), Image.Resampling.LANCZOS).save(ROOT / "vifastkey-icon-512.png")
     icon.resize((192, 192), Image.Resampling.LANCZOS).save(ROOT / "vifastkey-icon-192.png")
+    icon.resize((128, 128), Image.Resampling.LANCZOS).save(ROOT / "favicon-128.png")
+    icon.resize((48, 48), Image.Resampling.LANCZOS).save(ROOT / "favicon-48.png")
     icon.resize((32, 32), Image.Resampling.LANCZOS).save(ROOT / "favicon-32.png")
     icon.resize((16, 16), Image.Resampling.LANCZOS).save(ROOT / "favicon-16.png")
+    full_bleed(icon, 1024).save(ROOT / "vifastkey-ios-1024.png")
     icon.resize((256, 256), Image.Resampling.LANCZOS).save(
         ROOT / "favicon.ico", format="ICO",
         sizes=[(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)],
     )
 
     # Apple touch icon: nền đỏ full-bleed, Apple tự bo góc.
-    apple = Image.new("RGB", (180, 180), RED)
-    apple.paste(icon.resize((180, 180), Image.Resampling.LANCZOS), (0, 0), icon.resize((180, 180), Image.Resampling.LANCZOS))
-    apple.save(ROOT / "apple-touch-icon.png")
+    full_bleed(icon, 180).save(ROOT / "apple-touch-icon.png")
 
     lockup = transparent_lockup()
     lockup.save(ROOT / "vifastkey-lockup.png")

@@ -12,7 +12,7 @@ Hướng dẫn và script đóng gói cho người dùng cuối:
 
 ```powershell
 # Sau khi build:
-#   cargo build --release -p vfk-ffi -p vfk-windows -p vifastkey-settings
+#   cargo build --release -p vfk-ffi -p vfk-windows-replace -p vifastkey-settings
 #   cmake -S windows/tsf -B build/tsf-x64 -A x64 -DVFK_RUST_PROFILE=release
 #   cmake --build build/tsf-x64 --config Release
 #   (tương tự build/tsf-x86)

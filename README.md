@@ -55,10 +55,11 @@ ViFastKey/
 │   ├── apps/vfk-charset/       # chuyển bảng mã
 │   ├── apps/vfk-suggest/       # gợi ý từ
 │   ├── apps/vfk-settings/      # UI cấu hình desktop (egui, Windows/Linux)
-│   ├── apps/vfk-windows/       # adapter Windows hook (binary vifastkey-replace.exe)
+│   ├── apps/vfk-windows-replace/ # adapter Windows hook (binary vifastkey-replace.exe)
 ├── windows/
 │   ├── tsf/                    # TSF text service (preedit, C++ + C ABI)
-│   └── installer/              # đăng ký/gỡ TSF per-user
+│   ├── installer/              # đăng ký/gỡ TSF per-user
+│   └── README.md               # tổng quan component Windows
 ├── linux/
 │   ├── ibus/                   # adapter IBus (engine Python)
 │   └── fcitx5/                 # adapter Fcitx5 (C++ + C ABI)

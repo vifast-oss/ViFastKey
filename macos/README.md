@@ -36,7 +36,7 @@ Build gồm:
 
 1. `cargo build --release -p vfk-ffi` → `libvifastkey.a`.
 2. `swiftc` compile `Sources/*.swift`, link staticlib + `Cocoa` + `InputMethodKit`.
-3. Copy `Info.plist`, icon TIFF/PNG vào bundle.
+3. Copy `Info.plist`, icon `.icns` + TIFF/PNG vào bundle (`make_icns.sh`).
 4. Chạy self-test.
 
 ## Đóng gói universal2 / phát hành

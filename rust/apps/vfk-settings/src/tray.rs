@@ -79,6 +79,10 @@ impl Tray {
     }
 }
 
+pub(crate) fn icon_data() -> Option<egui::IconData> {
+    load_icon_rgba().ok().map(|(width, height, rgba)| egui::IconData { rgba, width, height })
+}
+
 fn load_icon_rgba() -> Result<(u32, u32, Vec<u8>), String> {
     let decoder = png::Decoder::new(Cursor::new(TRAY_ICON_PNG));
     let mut reader = decoder.read_info().map_err(|err| format!("không đọc được icon tray: {err}"))?;

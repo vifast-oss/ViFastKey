@@ -33,7 +33,7 @@ jobs:
         run: |
           cargo build --release -p vfk-cli -p vfk-charset -p vfk-suggest-cli -p vfk-ffi -p vifastkey-settings
           if [ "${{ runner.os }}" = "Windows" ]; then
-            cargo build --release -p vfk-windows
+            cargo build --release -p vfk-windows-replace
           fi
       - name: Package
         run: |
@@ -96,7 +96,7 @@ jobs:
       - name: Build Rust artifacts
         run: |
           cd rust
-          cargo build --release -p vfk-ffi -p vfk-windows -p vifastkey-settings
+          cargo build --release -p vfk-ffi -p vfk-windows-replace -p vifastkey-settings
           cargo build --release -p vfk-ffi --target i686-pc-windows-msvc
       - name: Build TSF DLLs
         run: |

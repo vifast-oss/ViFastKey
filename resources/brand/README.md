@@ -11,9 +11,11 @@ Logo chính thức của dự án. Tên hiển thị luôn viết **ViFastKey** 
 | `vifastkey-lockup-transparent.svg` | logo ngang nền trong suốt (nguồn dựng PNG) |
 | `vifastkey-lockup.png` | logo ngang nền trong suốt |
 | `vifastkey-lockup-cream.png` | README, web, tài liệu (nền kem, đọc được ở dark mode) |
+| `vifastkey-icon-1024.png` | nguồn macOS `.icns` / iOS icon |
 | `vifastkey-icon-512.png` | app icon, avatar, manifest |
-| `vifastkey-icon-192.png` | manifest / PWA |
-| `favicon.ico`, `favicon-16.png`, `favicon-32.png` | favicon |
+| `vifastkey-icon-192.png` | manifest / PWA / Android launcher |
+| `vifastkey-ios-1024.png` | icon iOS full-bleed (Apple tự bo góc) |
+| `favicon.ico`, `favicon-16.png`, `favicon-32.png`, `favicon-48.png`, `favicon-128.png` | favicon / extension icons |
 | `apple-touch-icon.png` | iOS home screen, nền đỏ full-bleed |
 | `og-image.png` | Open Graph / Twitter card 1200×630 |
 | `site.webmanifest` | manifest PWA |
@@ -26,10 +28,10 @@ file cần thiết sang `web/brand/` và `web/fonts/` trước khi deploy tĩnh.
 
 | Vai trò | Màu |
 |---|---|
-| Đỏ logo (gradient) | `#E5352B` → `#B3140F` |
+| Đỏ logo (gradient) | `#E8352B` → `#B3150F` |
 | Đỏ wordmark / accent | `#D42A22` |
 | Vàng sao (gradient) | `#FFE14D` → `#FFB800` |
-| Vàng speed line | `#FFC93C` |
+| Vàng speed line | `#FFD84D` |
 | Chữ chính | `#1F2430` |
 | Chữ phụ | `#6B7280` |
 | Nền kem | `#FFF8EC` |

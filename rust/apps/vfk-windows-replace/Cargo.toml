@@ -1,5 +1,5 @@
 [package]
-name = "vfk-windows"
+name = "vfk-windows-replace"
 description = "Adapter Windows hook Replace fallback: low-level keyboard hook + engine ViFastKey."
 version.workspace = true
 edition.workspace = true
@@ -26,3 +26,6 @@ windows-sys = { version = "0.61.2", features = [
   "Win32_UI_Input_KeyboardAndMouse",
   "Win32_UI_WindowsAndMessaging",
 ] }
+
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1"

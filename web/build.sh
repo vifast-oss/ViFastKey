@@ -22,6 +22,8 @@ cp resources/brand/vifastkey-icon-192.png \
    resources/brand/favicon.ico \
    resources/brand/favicon-16.png \
    resources/brand/favicon-32.png \
+   resources/brand/favicon-48.png \
+   resources/brand/favicon-128.png \
    resources/brand/apple-touch-icon.png \
    resources/brand/og-image.png \
    resources/brand/site.webmanifest \

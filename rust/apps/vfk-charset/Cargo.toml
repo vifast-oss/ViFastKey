@@ -12,3 +12,6 @@ path = "src/main.rs"
 
 [dependencies]
 vfk-core = { workspace = true }
+
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1"

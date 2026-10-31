@@ -51,8 +51,17 @@ if ($is32 -and [Environment]::Is64BitOperatingSystem) {
 
 $dest = Join-Path $env:LOCALAPPDATA "ViFastKey\tsf\$arch"
 New-Item -ItemType Directory -Force -Path $dest | Out-Null
-Copy-Item $tsf (Join-Path $dest "vifastkey_tsf.dll") -Force
-Copy-Item $engine (Join-Path $dest "vifastkey.dll") -Force
+try {
+    Copy-Item $tsf (Join-Path $dest "vifastkey_tsf.dll") -Force -ErrorAction Stop
+    Copy-Item $engine (Join-Path $dest "vifastkey.dll") -Force -ErrorAction Stop
+} catch {
+    $dllPath = Join-Path $dest "vifastkey_tsf.dll"
+    $enginePath = Join-Path $dest "vifastkey.dll"
+    if (-not (Test-Path $dllPath) -or -not (Test-Path $enginePath)) {
+        throw "Không ghi được DLL TSF ($arch): $($_.Exception.Message)"
+    }
+    Write-Warning "TSF DLL đang được app sử dụng; giữ bản hiện có. Đăng xuất/khởi động lại để nạp bản mới ($arch)."
+}
 
 $dll = Join-Path $dest "vifastkey_tsf.dll"
 $process = Start-Process -FilePath $regsvr -ArgumentList @("/s", "`"$dll`"") -Wait -PassThru

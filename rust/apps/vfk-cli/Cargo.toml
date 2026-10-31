@@ -14,3 +14,6 @@ path = "src/main.rs"
 [dependencies]
 vfk-engine = { workspace = true }
 vi-syllable = { workspace = true }
+
+[target.'cfg(windows)'.build-dependencies]
+winres = "0.1"

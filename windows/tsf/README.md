@@ -4,7 +4,7 @@ Text service TSF cho Windows: composition/preedit thật (vùng gạch chân), c
 nguyên tử, sửa từ đã gõ qua surrounding text. DLL gọi C ABI `vfk-ffi` nên dùng
 chung engine, adapter-core và conformance với các nền tảng khác.
 
-Adapter hook (`rust/apps/vfk-windows`) vẫn là fallback Replace cho app không dùng
+Adapter hook (`rust/apps/vfk-windows-replace`) vẫn là fallback Replace cho app không dùng
 TSF. Hai backend không xử lý cùng một context: TSF ghi named mapping
 `Local\ViFastKeyTsfState`, hook đọc mapping và pass-through khi PID trùng.
 

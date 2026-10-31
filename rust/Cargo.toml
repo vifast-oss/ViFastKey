@@ -12,7 +12,7 @@ members = [
     "apps/vfk-cli",
     "apps/vfk-charset",
     "apps/vfk-suggest",
-    "apps/vfk-windows",
+    "apps/vfk-windows-replace",
     "apps/vfk-jni",
     "apps/vfk-settings",
 ]

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Core & engine
+
+- Thêm `tô` vào từ điển tiếng Việt thông dụng: gõ Telex `too` + dấu cách
+  ra `tô ` thay vì bị khôi phục thành từ tiếng Anh `too`.
+
 ### Desktop
 
 - Thêm UI cấu hình `vifastkey-settings` (egui) cho Windows/Linux, kèm `vfk-config`
@@ -9,6 +14,11 @@
 - **Windows Preedit/Replace**: mặc định `tsf` (Preedit); UI chỉ còn Preedit/Replace.
   Chọn Replace chạy hook nền + Run key, chọn Preedit dừng hook + xoá Run key; bỏ
   lựa chọn `auto` khỏi UI (giá trị cũ đọc như Preedit).
+- **Icon**: cân lại icon ViFastKey theo tỉ lệ ViFastTts (cùng sao/speed lines, bàn phím
+  tách khỏi sao), regenerate toàn bộ PNG/ICO/ICNS; thêm icon cho Windows exe/window,
+  macOS `.icns`, iOS AppIcon, Chrome extension, Linux window; Android dùng icon mới.
+- **Crate Windows Replace** đổi tên `vfk-windows` → `vfk-windows-replace`, thư mục
+  `rust/apps/vfk-windows-replace`; binary vẫn `vifastkey-replace.exe`.
 - Đổi tên binary Replace từ `vfk-windows.exe` sang **`vifastkey-replace.exe`** cho dễ hiểu;
   installer/settings tự dọn process và file tên cũ khi nâng cấp.
 - Gói phát hành Windows/Linux có `README.md` hướng dẫn cài đặt/giới thiệu tính năng,
