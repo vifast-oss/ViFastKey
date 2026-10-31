@@ -10,7 +10,8 @@ Tính năng nổi bật: `allow_coda_k` (Đắk Lắk), `macro_digits` (mp3, k8s
 `đ` viết tắt (`vcdd`), 16 bảng mã (TCVN3, VNI-Windows, VISCII, VIQR, CP1258, NCR... cùng Unicode),
 app profile ghi đè kiểu gõ/kiểu dấu, preedit sửa từ đã gõ, macro nhiều từ, gợi ý từ/emoji local,
 FFI C/Python/WASM, macOS IMK universal2, Windows hook + TSF preedit, Android IME, iOS keyboard extension,
-playground Preedit + macro + bảng mã, UI cấu hình desktop egui (Windows/Linux).
+playground Preedit + macro + bảng mã, UI cấu hình desktop egui (Windows/Linux) có tray,
+import preview diff và chụp ảnh giao diện bằng `--screenshots`.
 
 Đợt phát triển này dựa trên phân tích 21 dự án IME tiếng Việt công khai; xem
 [`docs/IME_FEATURE_RESEARCH.md`](docs/IME_FEATURE_RESEARCH.md).
@@ -128,8 +129,9 @@ cargo run -p vfk-cli
 cargo run -p vfk-cli -- --method vni --tone new --text "Vie65t Nam"
 cargo run -p vfk-charset -- --to tcvn3 --text "Tiếng Việt"
 cargo run -p vfk-suggest-cli -- nguoi
-cargo run -p vifastkey-settings        # UI cấu hình desktop
+cargo run -p vifastkey-settings        # UI cấu hình desktop (Windows/Linux)
 cargo run -p vifastkey-settings -- --check --config /tmp/config.json
+cargo run -p vifastkey-settings -- --screenshots /tmp/vfk-shots
 ```
 
 ## macOS input method
@@ -219,4 +221,4 @@ cargo test --workspace
 - `THIRD_PARTY_NOTICES.md` — ghi công bảng mã bamboo-core MIT.
 - `CONTRIBUTING.md` — quy trình sửa hành vi, chạy test, đồng bộ conformance.
 - `CHANGELOG.md` — thay đổi theo phiên bản.
-- `ROADMAP.md` — việc còn lại: test runtime Windows TSF, test Wayland, preedit trên nhiều app thật, tray icon, ký/notarize...
+- `ROADMAP.md` — việc còn lại: test runtime Windows TSF, test Wayland desktop/app thật, preedit trên nhiều app thật, ký/notarize...

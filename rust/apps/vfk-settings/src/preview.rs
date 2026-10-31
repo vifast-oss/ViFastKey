@@ -57,7 +57,7 @@ fn press(harness: &mut Harness, name: &str, actions: &mut Vec<String>) {
 
 fn push_action(actions: &mut Vec<String>, key: impl std::fmt::Display, action: &Action) {
     if actions.len() < 40 {
-        actions.push(format!("{key} → {}", action_name(action)));
+        actions.push(format!("{key} -> {}", action_name(action)));
     }
 }
 

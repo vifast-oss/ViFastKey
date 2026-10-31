@@ -53,10 +53,13 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
 - **Bộ gõ tắt/macro nâng cao**: macro theo app, import/export file macro riêng.
   ✅ kiểm tra trùng/rỗng trong UI.
 - **UI cấu hình desktop**: ✅ macOS preferences window; ✅ `vifastkey-settings` (egui) cho
-  Windows/Linux: typing/macro/app rule, save atomic, validate, gõ thử, import/export,
-  `settings-ui.json`, tab Windows backend; ✅ watcher mtime macOS IMK + Windows hook +
-  IBus; ✅ Windows `Ctrl+Shift+,` mở settings + Start Menu shortcut. Còn tray icon
-  và test UI thật trên Windows/Linux.
+  Windows/Linux: typing/macro/app rule, save atomic, validate, gõ thử, import preview diff,
+  reset từng nhóm, theme sáng/tối, `settings-ui.json`, tab Windows backend; ✅ tray
+  (Windows/macOS `tray-icon`, Linux StatusNotifierItem `ksni`) + ẩn xuống tray;
+  ✅ `--screenshots` headless; ✅ watcher mtime macOS IMK + Windows hook + IBus;
+  ✅ Windows `Ctrl+Shift+,` mở settings + Start Menu shortcut; ✅ test UI macOS,
+  Ubuntu 26.04 X11/Xvfb + Wayland/Weston headless, tray qua D-Bus; ✅ Windows 11 render 6 tab
+  + close-to-tray. Còn test tương tác menu tray trên Windows.
 - **macOS smoothness**: ✅ input source prefs, secure input, Ctrl+Shift+F, clipboard tools.
 
 ## Hiệu năng / chất lượng
@@ -70,7 +73,7 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
 
 - Release binary CLI + `vifastkey-settings` cho macOS/Linux/Windows ✅ workflow `release.yml`
   (CLI + settings + WASM + header + lib); ✅ thêm macOS IMK app, Fcitx5 tarball, Android APK
-  (debug + signed release nếu có secrets), iOS simulator app. npm package, `.deb`/`.rpm`/AUR
-  chính thức còn lại.
+  (debug + signed release nếu có secrets), iOS simulator app. Linux tray dùng D-Bus,
+  không thêm dependency GTK/AppIndicator. npm package, `.deb`/`.rpm`/AUR chính thức còn lại.
 - UniFFI cho Swift/Kotlin.
 - GitHub Pages cho `web/` ✅ `pages.yml` (cần bật Pages); trang tài liệu API còn lại.

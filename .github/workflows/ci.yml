@@ -88,6 +88,23 @@ jobs:
           printf '{"input_method":"telex"}\n' > /tmp/vfk-settings.json
           cargo run -q -p vifastkey-settings -- --self-test --config /tmp/vfk-settings.json
           cargo run -q -p vifastkey-settings -- --check --config /tmp/vfk-settings.json
+      - name: Settings UI screenshots (Linux headless)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb
+          rm -rf /tmp/vfk-shots
+          LIBGL_ALWAYS_SOFTWARE=1 xvfb-run -a -s "-screen 0 1280x800x24" \
+            cargo run -q -p vifastkey-settings -- --screenshots /tmp/vfk-shots --config /tmp/vfk-settings.json
+          test -s /tmp/vfk-shots/overview.png
+          test -s /tmp/vfk-shots/advanced.png
+      - name: Settings UI self-test (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          printf '{"input_method":"telex"}\n' > "$TEMP/vfk-settings.json"
+          cargo run -q -p vifastkey-settings -- --self-test --config "$TEMP/vfk-settings.json"
+          cargo run -q -p vifastkey-settings -- --check --config "$TEMP/vfk-settings.json"
       - name: Benchmark guard (Ubuntu)
         if: runner.os == 'Linux'
         run: python3 tools/bench_guard.py

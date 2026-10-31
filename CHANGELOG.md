@@ -6,6 +6,24 @@
 
 - Thêm UI cấu hình `vifastkey-settings` (egui) cho Windows/Linux, kèm `vfk-config`
   đọc/merge/validate/atomic save, `--self-test`/`--check`/`--import`/`--export`.
+- **Tray icon**: Windows/macOS dùng `tray-icon`, Linux dùng StatusNotifierItem
+  (`ksni`, không cần GTK/AppIndicator trong binary); menu mở cấu hình/tải lại/thoát,
+  click trái mở cửa sổ, đóng cửa sổ ẩn xuống tray (tắt được trong tab Nâng cao).
+- **Import preview diff**: so sánh giá trị hiệu lực trước/sau, hiện đường dẫn field,
+  số lỗi/cảnh báo và chặn nhập khi có lỗi; giữ nguyên key lạ.
+- **Khôi phục mặc định từng nhóm** (kiểu gõ, tùy chọn macro, ứng dụng, nâng cao);
+  reset nhóm macro không xoá bảng macro, reset app giữ `app_modes`.
+- Tìm app trong tab Ứng dụng; sửa app profile áp dụng vào bản nháp ngay, bỏ nút
+  “Áp dụng” gây mất thay đổi khi chuyển app.
+- Theme sáng/tối cố định theo lựa chọn (không bị theme hệ thống ghi đè); sửa màu
+  chữ nút Lưu/Khôi phục và tab đang chọn; sửa bảng macro bị co cột.
+- `--screenshots <dir>`/`--screenshot <png>` chụp framebuffer 6 tab (macOS, X11,
+  Wayland headless, Windows) để kiểm thử giao diện; `--self-test` dựng đủ 6 tab.
+- `vfk-config` nhận file JSON có UTF-8 BOM (PowerShell 5.1/editor Windows) thay vì báo hỏng.
+- Đã kiểm thử UI trên macOS, Ubuntu 26.04 X11/Xvfb, Wayland/Weston headless và
+  Windows 11 (render 6 tab qua scheduled task, close-to-tray); tray Linux test qua
+  D-Bus (menu mở/tải lại/thoát), tray Windows xác nhận cửa sổ Shell_NotifyIcon.
+  Còn test tương tác menu tray trên Windows.
 - Release đóng gói `vifastkey-settings.exe` trong gói Windows TSF, thêm shortcut
   `ViFastKey Settings` và asset cấu hình desktop riêng cho Windows/Linux.
 - Thêm gói cài **IBus Linux** (`vifastkey-ibus-linux.tar.gz`) gồm engine, component

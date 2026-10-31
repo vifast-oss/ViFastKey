@@ -16,7 +16,11 @@ pub const WARNING: Color32 = Color32::from_rgb(0xB4, 0x53, 0x09);
 pub const ERROR: Color32 = Color32::from_rgb(0xB9, 0x1C, 0x1C);
 
 pub fn apply(ctx: &egui::Context, dark: bool) {
-    let mut style = (*ctx.style()).clone();
+    let theme = if dark { egui::Theme::Dark } else { egui::Theme::Light };
+    // Phải chọn theme trước khi ghi style: `set_style` chỉ ghi style của theme
+    // đang hoạt động, nên nếu chỉ set_style thì eframe có thể quay lại theme hệ thống.
+    ctx.set_theme(theme);
+    let mut style = (*ctx.style_of(theme)).clone();
     style.visuals = if dark { dark_visuals() } else { light_visuals() };
     style.spacing.item_spacing = egui::vec2(8.0, 8.0);
     style.spacing.button_padding = egui::vec2(12.0, 6.0);
@@ -29,7 +33,7 @@ pub fn apply(ctx: &egui::Context, dark: bool) {
     style.text_styles.insert(TextStyle::Heading, FontId::new(20.0, FontFamily::Proportional));
     style.text_styles.insert(TextStyle::Monospace, FontId::new(13.0, FontFamily::Monospace));
 
-    ctx.set_style(style);
+    ctx.set_style_of(theme, style);
 }
 
 fn light_visuals() -> egui::Visuals {
@@ -94,5 +98,24 @@ pub fn severity_color(severity: vfk_config::Severity) -> Color32 {
         vfk_config::Severity::Error => ERROR,
         vfk_config::Severity::Warning => WARNING,
         vfk_config::Severity::Info => MUTED,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn apply_switches_between_dark_and_light_styles() {
+        let ctx = egui::Context::default();
+        apply(&ctx, true);
+        assert_eq!(ctx.theme(), egui::Theme::Dark);
+        assert!(ctx.style().visuals.dark_mode);
+        assert_eq!(ctx.style().visuals.panel_fill, Color32::from_rgb(0x1A, 0x1D, 0x24));
+
+        apply(&ctx, false);
+        assert_eq!(ctx.theme(), egui::Theme::Light);
+        assert!(!ctx.style().visuals.dark_mode);
+        assert_eq!(ctx.style().visuals.panel_fill, BG);
     }
 }

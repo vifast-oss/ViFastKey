@@ -49,19 +49,22 @@ rust/crates/vfk-config/
   src/paths.rs      # path theo nền tảng + VIFASTKEY_CONFIG
   src/raw.rs        # JSON gốc, fingerprint, backup file hỏng
   src/draft.rs      # bản nháp + dirty fields
-  src/document.rs   # load/save/patch/merge/conflict
+  src/document.rs   # load/save/patch/merge/conflict + import preview
+  src/diff.rs       # diff JSON cho preview import
   src/store.rs      # atomic write: temp -> fsync -> backup -> rename
   src/validate.rs   # lỗi/cảnh báo cross-field
   src/meta.rs       # FieldId
 
 rust/apps/vfk-settings/
-  src/main.rs       # eframe; --config/--tab/--check/--self-test/--import/--export
-  src/app.rs        # state + tabs + dialogs
-  src/theme.rs      # design/tokens.json -> egui
+  src/main.rs       # eframe; CLI check/self-test/import/export/screenshot
+  src/app.rs        # state + tabs + dialogs + tray actions
+  src/tray.rs       # tray Windows/macOS (tray-icon), Linux (ksni)
+  src/screenshot.rs # chụp PNG qua ViewportCommand::Screenshot
+  src/theme.rs      # design/tokens.json -> egui, sáng/tối
   src/fonts.rs      # Be Vietnam Pro
   src/preview.rs    # gõ thử bằng engine
   src/platform.rs   # mở thư mục/file + windows.json
-  src/ui_prefs.rs   # settings-ui.json (theme, tab cuối)
+  src/ui_prefs.rs   # settings-ui.json (theme, tab, tray, close-to-tray)
 ```
 
 ## 3. Đường dẫn config
@@ -134,10 +137,16 @@ người dùng sửa `input_method` thì cả hai đều được giữ.
 ### 4.6. Import / export
 
 - Export ghi **config hiệu lực** (preset + user) ra JSON; dùng để backup/chia sẻ.
+  UI có mục “Xem JSON hiệu lực” trước khi xuất.
 - Import thay thế toàn bộ bản nháp, giữ key lạ của file import; chưa ghi file cho đến
   khi người dùng bấm Lưu. File cũ được backup ở bước ghi.
+- Trước khi nạp, UI hiện **preview diff** theo giá trị hiệu lực (đường dẫn field,
+  trước → sau), số lỗi/cảnh báo; lỗi validate chặn nút Nhập.
 - Có cả CLI headless:
   `--export <path>`, `--import <path>`.
+- “Khôi phục mặc định” từng nhóm: kiểu gõ, tuỳ chọn macro, ứng dụng, nâng cao.
+  Reset nhóm macro không xoá bảng macro; reset nhóm ứng dụng xoá `app_profiles` +
+  `excluded_apps` nhưng giữ `app_modes` (runtime state).
 
 ### 4.7. `app_modes`
 
@@ -155,8 +164,8 @@ Không cho sửa trực tiếp để tránh tranh chấp với adapter.
 | Tổng quan | Trạng thái file, kiểu gõ hiệu lực, số macro/app, gõ thử, lỗi |
 | Kiểu gõ | Method, tone, chính tả, Telex nâng cao, từ/câu, ngữ cảnh |
 | Macro | Bật/tắt, macro số/undo/off-mode, bảng key-value, copy JSON |
-| Ứng dụng | Preset/user rule, loại trừ, output, delay/ACK, charset, app_modes |
-| Nâng cao | Auto restore English, NFC/NFD, path, import/export, reload, reset, theme, Windows backend |
+| Ứng dụng | Tìm app, preset/user rule, loại trừ, output, delay/ACK, charset, app_modes |
+| Nâng cao | Auto restore English, NFC/NFD, path, import/export + xem JSON, reload, reset nhóm, theme, tray, Windows backend |
 | Chẩn đoán | OS/version/path/fingerprint, validate, gõ thử, copy diagnostics |
 
 ### Quy tắc disable
@@ -211,7 +220,9 @@ và action trace. Preview chỉ kiểm tra engine, không kiểm tra adapter/app
 - Hook poll mtime config + `windows.json` mỗi 500 ms; không reload khi đang có preedit.
 - Tab “Windows backend” ghi `windows.json` (`tsf` mặc định, `auto`/`hook` nếu cần).
 - `Ctrl+Shift+,` trong hook mở `vifastkey-settings.exe --tab apps`; installer tạo
-  Start Menu shortcut. Tray icon vẫn là P1.
+  Start Menu shortcut.
+- Tray `tray-icon` (Win32): chuột phải mở menu (cấu hình, tải lại, thoát); click trái mở cửa sổ;
+  đóng cửa sổ ẩn xuống tray nếu không có thay đổi chưa lưu.
 
 ### Linux
 
@@ -219,6 +230,10 @@ và action trace. Preview chỉ kiểm tra engine, không kiểm tra adapter/app
 - IBus `IbusCore` poll mtime, reload khi không có preedit.
 - Desktop entry: `linux/vifastkey-settings.desktop`.
 - Wayland: nhận diện app có thể không chính xác; hiển thị cảnh báo.
+- Tray dùng StatusNotifierItem qua `ksni` (thuần D-Bus, không cần GTK/AppIndicator
+  trong binary). Desktop cần StatusNotifierWatcher; GNOME cần extension AppIndicator.
+- Đã test UI X11 (Xvfb) và Wayland (Weston headless); tray test qua D-Bus menu
+  (mở/tải lại/thoát) trên Ubuntu 26.04.
 
 ## 8. Build và chạy
 
@@ -231,6 +246,9 @@ cargo run -p vifastkey-settings -- --check --config /tmp/config.json
 cargo run -p vifastkey-settings -- --self-test --config /tmp/config.json
 cargo run -p vifastkey-settings -- --export /tmp/vifastkey-config.json
 cargo run -p vifastkey-settings -- --import /tmp/vifastkey-config.json
+cargo run -p vifastkey-settings -- --screenshot /tmp/settings.png --tab advanced
+cargo run -p vifastkey-settings -- --screenshots /tmp/settings-shots
+cargo run -p vifastkey-settings -- --tray     # macOS mặc định tắt tray
 ```
 
 Linux cần:
@@ -243,22 +261,25 @@ sudo apt-get install -y pkg-config libxkbcommon-dev libwayland-dev \
 ## 9. Test
 
 - `cargo test -p vfk-config`: path, atomic write, backup, unknown key, macro merge,
-  app profile preset, conflict, import/export, reset.
-- `cargo test -p vifastkey-settings`: render headless + đọc/ghi `settings-ui.json`.
+  app profile preset, conflict, import/export, preview diff, reset từng nhóm.
+- `cargo test -p vifastkey-settings`: render headless mọi tab/dialog, theme sáng/tối,
+  screenshot PNG, đọc/ghi `settings-ui.json`.
 - `--check`: CI/support, exit 1 nếu có lỗi.
-- `--self-test`: load config + dựng UI một frame, không cần cửa sổ.
+- `--self-test`: load config + dựng UI lần lượt 6 tab, không cần cửa sổ.
 - `--import` / `--export`: test headless, không cần dialog.
-- Manual: Windows DPI 150%, Ubuntu Wayland/X11, gõ tiếng Việt vào ô macro, file
-  sửa bên ngoài khi UI mở, file read-only, file hỏng.
+- `--screenshots <dir>`: chụp framebuffer 6 tab; đã chạy trên macOS, X11/Xvfb,
+  Wayland (Weston headless) và Windows 11 (scheduled task trong session desktop).
+- Manual: Windows DPI 150%, gõ tiếng Việt vào ô macro, file sửa bên ngoài khi UI mở,
+  file read-only, file hỏng, tray menu trên GNOME/KDE.
 
 ## 10. Giai đoạn tiếp theo
 
 | Ưu tiên | Việc |
 |---|---|
-| P1 | Tray icon; test UI thật trên Windows/Linux |
-| P1 | Import/export có preview diff; reset từng nhóm |
+| P1 | ✅ Tray icon; ✅ test UI Linux (X11 + Wayland headless); ✅ Windows 11 render/close-to-tray; còn tương tác menu tray Windows |
+| P1 | ✅ Import preview diff; ✅ reset từng nhóm |
 | P2 | `app_profiles` merge từng field (schema 2) |
-| P2 | Theme theo hệ thống; accessibility test; preview diff khi import |
+| P2 | Theme theo hệ thống; accessibility audit; diff chi tiết trong export |
 | P3 | Windows native shell (Win32/WinUI) dùng chung `vfk-config` nếu cần |
 | P3 | macOS SwiftUI preferences dùng chung validation qua C ABI |
 

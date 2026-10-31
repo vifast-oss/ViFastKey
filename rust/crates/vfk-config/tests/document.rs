@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::fs;
 
 use serde_json::{json, Value};
-use vfk_config::{ConfigDocument, Error, FieldId};
+use vfk_config::{ConfigDocument, Error, FieldId, SettingsGroup};
 use vfk_engine::AppProfile;
 
 fn write(path: &std::path::Path, json: &str) {
@@ -238,4 +238,126 @@ fn validation_warns_dependencies() {
     let issues = doc.validate();
     assert!(issues.iter().any(|i| i.message.contains("Quick Telex")));
     assert!(issues.iter().any(|i| i.message.contains("Macro có chữ số")));
+}
+
+#[test]
+fn import_preview_reports_diff_without_touching_draft() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("config.json");
+    write(&path, r#"{"input_method":"telex","macros":{"ko":"không"}}"#);
+
+    let doc = ConfigDocument::load(&path).unwrap();
+    let preview = doc
+        .preview_import(r#"{"input_method":"vni","macros":{"ko":"không","vn":"Việt Nam"},"future":{"x":1}}"#)
+        .unwrap();
+
+    assert_eq!(preview.change_count(), 2);
+    assert!(preview.changes.iter().any(|c| c.path == "input_method"));
+    assert!(preview.changes.iter().any(|c| c.path == "macros.vn"));
+    assert!(!preview.has_errors());
+    assert!(!doc.is_dirty(), "preview không được sửa bản nháp");
+    assert_eq!(doc.config().input_method, "telex");
+
+    let mut doc = doc;
+    doc.apply_import(preview).unwrap();
+    assert_eq!(doc.config().input_method, "vni");
+    assert!(doc.is_dirty());
+    doc.save().unwrap().unwrap();
+    let saved = read(&path);
+    assert_eq!(saved["input_method"], json!("vni"));
+    assert_eq!(saved["future"], json!({"x": 1}));
+}
+
+#[test]
+fn import_preview_reports_validation_errors() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("config.json");
+    write(&path, r#"{"input_method":"telex"}"#);
+
+    let doc = ConfigDocument::load(&path).unwrap();
+    let preview =
+        doc.preview_import(r#"{"input_method":"nope","app_profiles":{"x":{"input_method":"bad"}}}"#).unwrap();
+    assert!(preview.has_errors());
+    assert!(preview.issues.iter().any(|i| i.message.contains("không hợp lệ")));
+}
+
+#[test]
+fn reset_typing_group_writes_defaults_but_keeps_macros() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("config.json");
+    write(
+        &path,
+        r#"{"input_method":"vni","tone_style":"old","spell_check":false,"quick_telex":true,"macros":{"ko":"không"}}"#,
+    );
+
+    let mut doc = ConfigDocument::load(&path).unwrap();
+    let changes = doc.reset_group(SettingsGroup::Typing);
+    assert!(changes >= 4);
+    assert_eq!(doc.config().input_method, "telex");
+    assert_eq!(doc.config().tone_style, vfk_config::ToneStyle::New);
+    assert!(doc.config().spell_check);
+    assert!(!doc.config().quick_telex);
+    assert_eq!(doc.config().macros.get("ko").map(String::as_str), Some("không"));
+
+    doc.save().unwrap().unwrap();
+    let saved = read(&path);
+    assert_eq!(saved["input_method"], json!("telex"));
+    assert_eq!(saved["macros"]["ko"], json!("không"));
+}
+
+#[test]
+fn reset_apps_group_removes_overrides_but_keeps_runtime_modes() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("config.json");
+    write(
+        &path,
+        r#"{"app_profiles":{"kitty":{"output_mode":"preedit"}},"excluded_apps":["minecraft"],"app_modes":{"chrome":false}}"#,
+    );
+
+    let mut doc = ConfigDocument::load(&path).unwrap();
+    let changes = doc.reset_group(SettingsGroup::Apps);
+    assert_eq!(changes, 2);
+    assert!(doc.profiles().is_empty());
+    assert!(doc.config().excluded_apps.is_empty());
+    assert_eq!(doc.config().app_modes.get("chrome"), Some(&false));
+
+    doc.save().unwrap().unwrap();
+    let saved = read(&path);
+    assert!(saved.get("app_profiles").is_none());
+    assert_eq!(saved["excluded_apps"], json!([]));
+    assert_eq!(saved["app_modes"]["chrome"], json!(false));
+}
+
+#[test]
+fn reset_macro_options_keeps_macro_table() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("config.json");
+    write(&path, r#"{"macro_enabled":false,"macro_digits":true,"macro_undo":false,"macros":{"ko":"không"}}"#);
+
+    let mut doc = ConfigDocument::load(&path).unwrap();
+    doc.reset_group(SettingsGroup::Macros);
+    assert!(doc.config().macro_enabled);
+    assert!(!doc.config().macro_digits);
+    assert!(doc.config().macro_undo);
+    assert_eq!(doc.config().macros.len(), 1);
+}
+
+#[test]
+fn loads_utf8_bom_config_from_windows_editor() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("config.json");
+    let mut bytes = b"\xEF\xBB\xBF".to_vec();
+    bytes.extend_from_slice(r#"{"input_method":"vni","macros":{"ko":"không"}}"#.as_bytes());
+    fs::write(&path, bytes).unwrap();
+
+    let mut doc = ConfigDocument::load(&path).unwrap();
+    assert_eq!(doc.config().input_method, "vni");
+    doc.draft_mut().config.spell_check = false;
+    doc.mark(FieldId::SpellCheck);
+    doc.save().unwrap().unwrap();
+
+    let saved = fs::read(&path).unwrap();
+    assert!(!saved.starts_with(b"\xEF\xBB\xBF"), "file ghi lại không còn BOM");
+    let saved: Value = serde_json::from_slice(&saved).unwrap();
+    assert_eq!(saved["macros"]["ko"], json!("không"));
 }

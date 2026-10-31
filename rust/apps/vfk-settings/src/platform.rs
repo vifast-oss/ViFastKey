@@ -3,8 +3,6 @@
 use std::io;
 use std::path::{Path, PathBuf};
 
-use serde_json::Value;
-
 pub fn open_path(path: &Path) -> io::Result<()> {
     #[cfg(target_os = "macos")]
     {
@@ -30,8 +28,8 @@ pub fn load_windows_backend(config_path: &Path) -> String {
     let path = windows_backend_path(config_path);
     std::fs::read(&path)
         .ok()
-        .and_then(|bytes| serde_json::from_slice::<Value>(&bytes).ok())
-        .and_then(|value| value.get("backend").and_then(Value::as_str).map(str::to_string))
+        .and_then(|bytes| vfk_config::raw::parse_object(&bytes).ok())
+        .and_then(|value| value.get("backend").and_then(|v| v.as_str()).map(str::to_string))
         .unwrap_or_else(|| "tsf".to_string())
 }
 
@@ -56,5 +54,8 @@ mod tests {
         assert_eq!(load_windows_backend(&config), "tsf");
         save_windows_backend(&config, "tsf").unwrap();
         assert_eq!(load_windows_backend(&config), "tsf");
+
+        std::fs::write(windows_backend_path(&config), b"\xEF\xBB\xBF{\"backend\":\"hook\"}").unwrap();
+        assert_eq!(load_windows_backend(&config), "hook");
     }
 }

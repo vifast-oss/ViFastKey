@@ -9,7 +9,7 @@
 | Android | `android/` IME Java + JNI | SDK/NDK + Gradle, APK arm64/x86_64; CI build + test emulator; release signing qua env | ✅ QWERTY full, suggestions, settings, emoji, long-press; 🟡 chưa Play Store/device matrix |
 | iOS | `ios/` host + keyboard extension | Xcode 27.1, simulator; CI build + engine unit test | ✅ build/test; 🟡 chưa test bật extension/device signing |
 | Chrome/Edge | `chrome-extension/` MV3 + WASM | build + Playwright E2E (popup normalize) | ✅ MVP; 🟡 context menu/selected text cần test thêm; chưa Web Store |
-| Desktop settings | `rust/apps/vfk-settings` egui 0.32.3 | build + `--self-test`/`--check`/`--import`/`--export`; CI Linux deps | ✅ Windows/Linux; macOS giữ preferences AppKit; ✅ watcher macOS/Windows/IBus; 🟡 tray/test UI thật |
+| Desktop settings | `rust/apps/vfk-settings` egui 0.32.3 | build + `--self-test` 6 tab/`--check`/`--import`/`--export`/`--screenshots`; CI Linux deps; UI test macOS + Ubuntu 26.04 X11/Wayland + Windows 11 framebuffer; tray test D-Bus/close-to-tray Win32 | ✅ Windows/Linux (tray, import diff, reset nhóm); macOS giữ preferences AppKit, egui có `--tray` (chưa test runtime menu bar); 🟡 test tương tác menu tray Windows |
 
 Bài học adapter Fcitx5 từ Areca (queue/barrier, trust probe surrounding text, timing/ACK,
 field kind, test bằng `InputContext` giả lập): `docs/research/08-areca-ime.md`.

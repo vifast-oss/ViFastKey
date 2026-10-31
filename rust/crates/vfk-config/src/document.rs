@@ -4,12 +4,50 @@ use std::path::{Path, PathBuf};
 use serde_json::{json, Map, Value};
 use vfk_engine::{default_app_profiles, AppProfile, Config, CONFIG_SCHEMA_VERSION};
 
+use crate::diff::{self, Change};
 use crate::draft::Draft;
 use crate::error::Error;
 use crate::meta::{DirtySet, FieldId};
 use crate::raw::{self, Fingerprint, RawConfig};
 use crate::store::{self, SaveOutcome};
 use crate::validate::{self, Issue};
+
+/// Nhóm field dùng cho "khôi phục mặc định" từng phần trong UI.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SettingsGroup {
+    Typing,
+    Macros,
+    Apps,
+    Advanced,
+}
+
+/// Kết quả đọc thử một file import: diff + lỗi validate, chưa đụng bản nháp.
+#[derive(Clone, Debug)]
+pub struct ImportPreview {
+    raw: Map<String, Value>,
+    config: Config,
+    pub changes: Vec<Change>,
+    pub issues: Vec<Issue>,
+    pub bytes: usize,
+}
+
+impl ImportPreview {
+    pub fn change_count(&self) -> usize {
+        self.changes.len()
+    }
+
+    pub fn error_count(&self) -> usize {
+        self.issues.iter().filter(|issue| issue.severity == crate::validate::Severity::Error).count()
+    }
+
+    pub fn warning_count(&self) -> usize {
+        self.issues.iter().filter(|issue| issue.severity == crate::validate::Severity::Warning).count()
+    }
+
+    pub fn has_errors(&self) -> bool {
+        self.error_count() > 0
+    }
+}
 
 /// Tài liệu config đang mở: baseline trên đĩa + bản nháp + preset.
 #[derive(Clone, Debug)]
@@ -221,20 +259,103 @@ impl ConfigDocument {
         self.allow_corrupt_overwrite = true;
     }
 
-    /// Nạp file JSON để thay thế toàn bộ bản nháp. Không ghi file ngay; người dùng
-    /// vẫn phải bấm Lưu (và file cũ được backup ở bước ghi).
-    pub fn import_json(&mut self, text: &str) -> Result<(), Error> {
+    /// Đọc thử file import: parse + validate + diff với config hiệu lực hiện tại.
+    /// Không thay đổi bản nháp; UI dùng để hiện preview trước khi người dùng xác nhận.
+    pub fn preview_import(&self, text: &str) -> Result<ImportPreview, Error> {
         let map = raw::parse_object(text.as_bytes())?;
-        let config: Config = serde_json::from_value(Value::Object(map.clone()))
+        let mut config: Config = serde_json::from_value(Value::Object(map.clone()))
             .map_err(|err| Error::Invalid { message: err.to_string() })?;
-        let mut draft_config = config;
-        draft_config.app_profiles.clear();
-        self.draft = Draft::from_config(draft_config, &map);
-        self.replace_with = Some(map);
+        config.app_profiles.clear();
+
+        let draft = Draft::from_config(config.clone(), &map);
+        let before = serde_json::to_value(self.effective_config())
+            .map_err(|err| Error::Invalid { message: err.to_string() })?;
+        let after = serde_json::to_value(draft.effective_config(&self.presets))
+            .map_err(|err| Error::Invalid { message: err.to_string() })?;
+        let issues = validate::validate(&draft, &self.presets);
+
+        Ok(ImportPreview {
+            raw: map,
+            config,
+            changes: diff::diff_json(&before, &after),
+            issues,
+            bytes: text.len(),
+        })
+    }
+
+    /// Áp preview import vào bản nháp. Không ghi file ngay; người dùng vẫn phải
+    /// bấm Lưu (và file cũ được backup ở bước ghi).
+    pub fn apply_import(&mut self, preview: ImportPreview) -> Result<(), Error> {
+        self.draft = Draft::from_config(preview.config, &preview.raw);
+        self.replace_with = Some(preview.raw);
         self.force_write = true;
         self.clear_on_save = false;
         self.allow_corrupt_overwrite = true;
         Ok(())
+    }
+
+    /// Nạp file JSON để thay thế toàn bộ bản nháp (tiện cho CLI/tests).
+    pub fn import_json(&mut self, text: &str) -> Result<(), Error> {
+        let preview = self.preview_import(text)?;
+        self.apply_import(preview)
+    }
+
+    /// Khôi phục mặc định một nhóm field. Trả về số field/entry đã đổi.
+    ///
+    /// `Macros` chỉ reset các cờ macro, không xoá bảng macro; `Apps` xoá override
+    /// `app_profiles` + `excluded_apps` nhưng giữ `app_modes` (runtime state).
+    pub fn reset_group(&mut self, group: SettingsGroup) -> usize {
+        let defaults = Config::default();
+        let mut changes = 0;
+        macro_rules! reset_scalar {
+            ($field:ident, $id:ident) => {
+                if self.draft.config.$field != defaults.$field {
+                    self.draft.config.$field = defaults.$field.clone();
+                    self.draft.mark(FieldId::$id);
+                    changes += 1;
+                }
+            };
+        }
+
+        match group {
+            SettingsGroup::Typing => {
+                reset_scalar!(input_method, InputMethod);
+                reset_scalar!(tone_style, ToneStyle);
+                reset_scalar!(spell_check, SpellCheck);
+                reset_scalar!(w_as_u, WAsU);
+                reset_scalar!(bracket_keys, BracketKeys);
+                reset_scalar!(quick_telex, QuickTelex);
+                reset_scalar!(allow_coda_k, AllowCodaK);
+            }
+            SettingsGroup::Macros => {
+                reset_scalar!(macro_enabled, MacroEnabled);
+                reset_scalar!(macro_digits, MacroDigits);
+                reset_scalar!(macro_undo, MacroUndo);
+                reset_scalar!(macro_in_off_mode, MacroInOffMode);
+            }
+            SettingsGroup::Apps => {
+                if !self.draft.app_profiles.is_empty() {
+                    changes += self.draft.app_profiles.len();
+                    self.draft.app_profiles.clear();
+                    self.draft.mark(FieldId::AppProfiles);
+                }
+                if !self.draft.config.excluded_apps.is_empty() {
+                    changes += self.draft.config.excluded_apps.len();
+                    self.draft.config.excluded_apps.clear();
+                    self.draft.mark(FieldId::ExcludedApps);
+                }
+            }
+            SettingsGroup::Advanced => {
+                reset_scalar!(auto_restore_english, AutoRestoreEnglish);
+                reset_scalar!(auto_capitalize, AutoCapitalize);
+                reset_scalar!(smart_caps, SmartCaps);
+                reset_scalar!(edit_previous_word, EditPreviousWord);
+                reset_scalar!(restore_after_space, RestoreAfterSpace);
+                reset_scalar!(default_vietnamese, DefaultVietnamese);
+                reset_scalar!(unicode_form, UnicodeForm);
+            }
+        }
+        changes
     }
 
     pub fn has_external_change(&self) -> bool {

@@ -5,15 +5,18 @@ use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 use eframe::egui;
-use vfk_config::{validate_macro_rows, ConfigDocument, FieldId, Issue, Severity, ToneStyle, CHARSETS};
+use vfk_config::{
+    validate_macro_rows, ConfigDocument, FieldId, ImportPreview, Issue, SettingsGroup, Severity, ToneStyle,
+    CHARSETS,
+};
 use vfk_engine::{resolve_profile, AppProfile, OutputMode, UnicodeForm};
 
-use crate::{platform, preview, theme, ui_prefs::UiPrefs};
+use crate::{platform, preview, screenshot, theme, tray, tray::TrayAction, ui_prefs::UiPrefs};
 
 const APP_TITLE: &str = "ViFastKey — Cấu hình";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Tab {
+pub(crate) enum Tab {
     Overview,
     Typing,
     Macros,
@@ -23,7 +26,10 @@ enum Tab {
 }
 
 impl Tab {
-    fn label(self) -> &'static str {
+    pub(crate) const ALL: &'static [Tab] =
+        &[Tab::Overview, Tab::Typing, Tab::Macros, Tab::Apps, Tab::Advanced, Tab::Diagnostics];
+
+    pub(crate) fn label(self) -> &'static str {
         match self {
             Tab::Overview => "Tổng quan",
             Tab::Typing => "Kiểu gõ",
@@ -34,7 +40,7 @@ impl Tab {
         }
     }
 
-    fn name(self) -> &'static str {
+    pub(crate) fn name(self) -> &'static str {
         match self {
             Tab::Overview => "overview",
             Tab::Typing => "typing",
@@ -45,7 +51,7 @@ impl Tab {
         }
     }
 
-    fn from_name(name: &str) -> Option<Self> {
+    pub(crate) fn from_name(name: &str) -> Option<Self> {
         match name {
             "overview" | "tong-quan" => Some(Tab::Overview),
             "typing" | "kieu-go" => Some(Tab::Typing),
@@ -68,7 +74,9 @@ enum Pending {
 enum Confirm {
     Reload,
     Reset,
+    ResetGroup(SettingsGroup),
     Close,
+    Quit,
     Import(PathBuf),
 }
 
@@ -160,6 +168,15 @@ pub struct SettingsApp {
     allow_close: bool,
     prefs: UiPrefs,
     windows_backend: String,
+    import_preview: Option<(PathBuf, ImportPreview)>,
+    app_filter: String,
+    tray_enabled: bool,
+    tray_attempted: bool,
+    tray: Option<tray::Tray>,
+    tray_error: Option<String>,
+    close_to_tray: bool,
+    screenshot: Option<screenshot::Plan>,
+    title_dirty: bool,
 }
 
 impl SettingsApp {
@@ -215,7 +232,18 @@ impl SettingsApp {
             allow_close: false,
             prefs,
             windows_backend,
+            import_preview: None,
+            app_filter: String::new(),
+            tray_enabled: false,
+            tray_attempted: false,
+            tray: None,
+            tray_error: None,
+            close_to_tray: true,
+            screenshot: None,
+            title_dirty: false,
         };
+        app.tray_enabled = app.prefs.tray.unwrap_or(default_tray_enabled());
+        app.close_to_tray = app.prefs.close_to_tray.unwrap_or(true);
         app.sync_from_doc();
         if let Some(tab) = initial_tab.as_deref() {
             app.set_tab(tab);
@@ -231,17 +259,36 @@ impl SettingsApp {
         }
     }
 
+    pub fn set_tray_override(&mut self, enabled: Option<bool>) {
+        if let Some(enabled) = enabled {
+            self.tray_enabled = enabled;
+        }
+    }
+
+    pub fn set_screenshot(&mut self, plan: Option<screenshot::Plan>) {
+        if plan.is_some() {
+            self.tray_enabled = false;
+        }
+        self.screenshot = plan;
+    }
+
     fn persist_prefs(&mut self) {
         self.prefs.theme = Some(if self.dark { "dark" } else { "light" }.to_string());
         self.prefs.last_tab = Some(self.tab.name().to_string());
+        self.prefs.tray = Some(self.tray_enabled);
+        self.prefs.close_to_tray = Some(self.close_to_tray);
         self.prefs.save(self.doc.path());
     }
 
     pub fn render(&mut self, ctx: &egui::Context) {
         self.refresh_issues();
+        self.ensure_tray(ctx);
+        self.poll_tray(ctx);
+        self.handle_screenshot_event(ctx);
         self.check_external(ctx);
         self.handle_shortcuts(ctx);
         self.handle_close_request(ctx);
+        self.update_title(ctx);
 
         self.top_bar(ctx);
         self.sidebar(ctx);
@@ -250,9 +297,118 @@ impl SettingsApp {
         self.dialogs(ctx);
         self.toast_ui(ctx);
         self.process_pending(ctx);
+        self.drive_screenshot(ctx);
 
-        if self.external_change || self.toast.is_some() {
+        if self.external_change || self.toast.is_some() || self.tray.is_some() {
             ctx.request_repaint_after(Duration::from_millis(500));
+        }
+        if self.screenshot.is_some() {
+            ctx.request_repaint();
+        }
+    }
+
+    fn ensure_tray(&mut self, ctx: &egui::Context) {
+        if !self.tray_enabled || self.tray_attempted {
+            return;
+        }
+        self.tray_attempted = true;
+        let tray = tray::Tray::start(ctx.clone());
+        if tray.is_available() {
+            self.tray_error = None;
+            self.tray = Some(tray);
+        } else {
+            self.tray_error = Some(tray.error().unwrap_or("desktop không hỗ trợ tray").to_string());
+            self.tray_enabled = false;
+            self.tray = None;
+        }
+    }
+
+    fn poll_tray(&mut self, ctx: &egui::Context) {
+        let actions = self.tray.as_ref().map(tray::Tray::poll).unwrap_or_default();
+        for action in actions {
+            match action {
+                TrayAction::Show => self.show_window(ctx),
+                TrayAction::Reload => {
+                    self.show_window(ctx);
+                    self.request_reload();
+                }
+                TrayAction::Quit => {
+                    self.show_window(ctx);
+                    if self.doc.is_dirty() {
+                        self.confirm = Some(Confirm::Quit);
+                    } else {
+                        self.allow_close = true;
+                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                    }
+                }
+            }
+        }
+    }
+
+    fn show_window(&mut self, ctx: &egui::Context) {
+        ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
+        ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+        ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+    }
+
+    fn update_title(&mut self, ctx: &egui::Context) {
+        let dirty = self.doc.is_dirty();
+        if dirty != self.title_dirty {
+            self.title_dirty = dirty;
+            let title = if dirty { "ViFastKey — Cấu hình •" } else { APP_TITLE };
+            ctx.send_viewport_cmd(egui::ViewportCommand::Title(title.to_string()));
+        }
+    }
+
+    fn handle_screenshot_event(&mut self, ctx: &egui::Context) {
+        let image = ctx.input(|input| {
+            input.events.iter().find_map(|event| match event {
+                egui::Event::Screenshot { image, .. } => Some(image.clone()),
+                _ => None,
+            })
+        });
+        let Some(image) = image else { return };
+        let Some(plan) = self.screenshot.as_mut() else { return };
+        let Some((tab, path)) = plan.current().map(|(tab, path)| (tab, path.to_path_buf())) else { return };
+        match screenshot::save_png(&path, image.as_ref()) {
+            Ok(()) => println!("Đã chụp {} (tab {})", path.display(), tab.name()),
+            Err(err) => eprintln!("vifastkey-settings: {err}"),
+        }
+        plan.saved();
+    }
+
+    fn drive_screenshot(&mut self, ctx: &egui::Context) {
+        let Some((target, _)) = self.screenshot.as_ref().and_then(|plan| plan.current()) else {
+            if self.screenshot.is_some() {
+                self.screenshot = None;
+                self.allow_close = true;
+                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+            }
+            return;
+        };
+        if self.tab != target {
+            self.tab = target;
+            ctx.request_repaint();
+            return;
+        }
+        let step = self.screenshot.as_mut().map(screenshot::Plan::tick).unwrap_or(screenshot::Step::Done);
+        match step {
+            screenshot::Step::Wait => ctx.request_repaint_after(Duration::from_millis(16)),
+            screenshot::Step::Request => {
+                ctx.send_viewport_cmd(egui::ViewportCommand::Screenshot(egui::UserData::default()));
+                ctx.request_repaint_after(Duration::from_millis(50));
+            }
+            screenshot::Step::TimedOut => {
+                eprintln!("vifastkey-settings: compositor không trả ảnh chụp sau 10 giây");
+                self.screenshot = None;
+                self.allow_close = true;
+                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+            }
+            screenshot::Step::Done => {
+                self.screenshot = None;
+                self.allow_close = true;
+                ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+            }
         }
     }
 
@@ -319,6 +475,11 @@ impl SettingsApp {
         if self.doc.is_dirty() {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             self.confirm = Some(Confirm::Close);
+            return;
+        }
+        if self.close_to_tray && self.tray.as_ref().is_some_and(tray::Tray::is_available) {
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
         }
     }
 
@@ -337,7 +498,10 @@ impl SettingsApp {
                     if ui
                         .add_enabled(
                             can_save,
-                            egui::Button::new(egui::RichText::new("Lưu").strong()).fill(theme::ACCENT),
+                            egui::Button::new(
+                                egui::RichText::new("Lưu").strong().color(egui::Color32::WHITE),
+                            )
+                            .fill(theme::ACCENT),
                         )
                         .clicked()
                     {
@@ -410,11 +574,19 @@ impl SettingsApp {
     fn sidebar(&mut self, ctx: &egui::Context) {
         egui::SidePanel::left("nav").exact_width(196.0).resizable(false).show(ctx, |ui| {
             ui.add_space(10.0);
-            for tab in [Tab::Overview, Tab::Typing, Tab::Macros, Tab::Apps, Tab::Advanced, Tab::Diagnostics] {
-                if ui
-                    .add_sized([176.0, 32.0], egui::Button::selectable(self.tab == tab, tab.label()))
-                    .clicked()
-                {
+            for &tab in Tab::ALL {
+                let selected = self.tab == tab;
+                let color = if self.dark {
+                    if selected {
+                        egui::Color32::WHITE
+                    } else {
+                        egui::Color32::from_rgb(0xD8, 0xDC, 0xE4)
+                    }
+                } else {
+                    theme::INK
+                };
+                let text = egui::RichText::new(tab.label()).color(color);
+                if ui.add_sized([176.0, 32.0], egui::Button::selectable(selected, text)).clicked() {
                     self.tab = tab;
                     self.persist_prefs();
                 }
@@ -460,17 +632,20 @@ impl SettingsApp {
 
     fn central(&mut self, ctx: &egui::Context) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
-                let tab = self.tab;
-                match tab {
-                    Tab::Overview => self.overview_tab(ui),
-                    Tab::Typing => self.typing_tab(ui),
-                    Tab::Macros => self.macros_tab(ui),
-                    Tab::Apps => self.apps_tab(ui),
-                    Tab::Advanced => self.advanced_tab(ui),
-                    Tab::Diagnostics => self.diagnostics_tab(ui),
-                }
-            });
+            egui::ScrollArea::vertical().id_salt(self.tab.name()).auto_shrink([false, false]).show(
+                ui,
+                |ui| {
+                    let tab = self.tab;
+                    match tab {
+                        Tab::Overview => self.overview_tab(ui),
+                        Tab::Typing => self.typing_tab(ui),
+                        Tab::Macros => self.macros_tab(ui),
+                        Tab::Apps => self.apps_tab(ui),
+                        Tab::Advanced => self.advanced_tab(ui),
+                        Tab::Diagnostics => self.diagnostics_tab(ui),
+                    }
+                },
+            );
         });
     }
 
@@ -542,7 +717,14 @@ impl SettingsApp {
     fn typing_tab(&mut self, ui: &mut egui::Ui) {
         let issues = self.issues.clone();
         ui.heading("Kiểu gõ");
-        ui.label("Chọn cách gõ và các quy tắc áp dụng cho toàn bộ ứng dụng.");
+        ui.horizontal(|ui| {
+            ui.label("Chọn cách gõ và các quy tắc áp dụng cho toàn bộ ứng dụng.");
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.button("Khôi phục nhóm").clicked() {
+                    self.confirm = Some(Confirm::ResetGroup(SettingsGroup::Typing));
+                }
+            });
+        });
 
         section(ui, "Kiểu gõ");
         {
@@ -604,7 +786,7 @@ impl SettingsApp {
             issues_for(ui, &issues, FieldId::SpellCheck);
 
             let changed = ui
-                .add_enabled(is_telex, egui::Checkbox::new(&mut draft.config.w_as_u, "w → ư khi đứng riêng"))
+                .add_enabled(is_telex, egui::Checkbox::new(&mut draft.config.w_as_u, "w -> ư khi đứng riêng"))
                 .changed();
             if changed {
                 draft.mark(FieldId::WAsU);
@@ -612,7 +794,7 @@ impl SettingsApp {
             issues_for(ui, &issues, FieldId::WAsU);
 
             let changed = ui
-                .add_enabled(is_telex, egui::Checkbox::new(&mut draft.config.bracket_keys, "[ ] → ơ ư"))
+                .add_enabled(is_telex, egui::Checkbox::new(&mut draft.config.bracket_keys, "[ ] -> ơ ư"))
                 .changed();
             if changed {
                 draft.mark(FieldId::BracketKeys);
@@ -622,7 +804,7 @@ impl SettingsApp {
             let changed = ui
                 .add_enabled(
                     is_telex,
-                    egui::Checkbox::new(&mut draft.config.quick_telex, "Quick Telex (cc→ch, gg→gi…)"),
+                    egui::Checkbox::new(&mut draft.config.quick_telex, "Quick Telex (cc->ch, gg->gi…)"),
                 )
                 .changed();
             if changed {
@@ -698,7 +880,14 @@ impl SettingsApp {
     fn macros_tab(&mut self, ui: &mut egui::Ui) {
         let issues = self.issues.clone();
         ui.heading("Macro");
-        ui.label("Macro chạy khi kết thúc từ (dấu cách, Enter, Tab, dấu câu).");
+        ui.horizontal(|ui| {
+            ui.label("Macro chạy khi kết thúc từ (dấu cách, Enter, Tab, dấu câu).");
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.button("Khôi phục tùy chọn").clicked() {
+                    self.confirm = Some(Confirm::ResetGroup(SettingsGroup::Macros));
+                }
+            });
+        });
 
         section(ui, "Bật macro");
         {
@@ -748,21 +937,32 @@ impl SettingsApp {
         );
         let mut rows = self.macros.clone();
         let mut remove = None;
-        egui::Grid::new("macro_grid").num_columns(3).spacing([10.0, 8.0]).striped(true).show(ui, |ui| {
-            ui.label(egui::RichText::new("Trigger").strong());
-            ui.label(egui::RichText::new("Thay thế").strong());
+        ui.horizontal(|ui| {
+            ui.allocate_ui_with_layout(
+                egui::vec2(180.0, 20.0),
+                egui::Layout::left_to_right(egui::Align::Center),
+                |ui| {
+                    ui.label(egui::RichText::new("Trigger").strong());
+                },
+            );
+            ui.allocate_ui_with_layout(
+                egui::vec2(360.0, 20.0),
+                egui::Layout::left_to_right(egui::Align::Center),
+                |ui| {
+                    ui.label(egui::RichText::new("Thay thế").strong());
+                },
+            );
             ui.label("");
-            ui.end_row();
-
-            for (index, row) in rows.iter_mut().enumerate() {
-                ui.add(egui::TextEdit::singleline(&mut row.key).desired_width(150.0));
-                ui.add(egui::TextEdit::singleline(&mut row.value).desired_width(300.0));
+        });
+        for (index, row) in rows.iter_mut().enumerate() {
+            ui.horizontal(|ui| {
+                ui.add_sized([180.0, 26.0], egui::TextEdit::singleline(&mut row.key));
+                ui.add_sized([360.0, 26.0], egui::TextEdit::singleline(&mut row.value));
                 if ui.small_button("Xoá").clicked() {
                     remove = Some(index);
                 }
-                ui.end_row();
-            }
-        });
+            });
+        }
         if let Some(index) = remove {
             rows.remove(index);
         }
@@ -788,19 +988,34 @@ impl SettingsApp {
 
     fn apps_tab(&mut self, ui: &mut egui::Ui) {
         ui.heading("Ứng dụng");
-        ui.label(
-            "Ghi đè cách gõ, output và độ trễ theo từng app. Loại trừ hoàn toàn thắng mọi cấu hình khác.",
-        );
+        ui.horizontal(|ui| {
+            ui.label(
+                "Ghi đè cách gõ, output và độ trễ theo từng app. Loại trừ hoàn toàn thắng mọi cấu hình khác.",
+            );
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.button("Khôi phục nhóm").clicked() {
+                    self.confirm = Some(Confirm::ResetGroup(SettingsGroup::Apps));
+                }
+            });
+        });
 
         section(ui, "Chọn app");
-        let app_ids = self.app_ids.clone();
+        let filter = self.app_filter.trim().to_lowercase();
+        let app_ids: Vec<String> =
+            self.app_ids.iter().filter(|app| filter.is_empty() || app.contains(&filter)).cloned().collect();
         let mut selected = self.selected_app.clone();
         ui.horizontal(|ui| {
+            ui.add(
+                egui::TextEdit::singleline(&mut self.app_filter).hint_text("Tìm app…").desired_width(140.0),
+            );
             egui::ComboBox::from_id_salt("selected_app")
                 .selected_text(selected.clone().unwrap_or_else(|| "— chọn app —".into()))
                 .show_ui(ui, |ui| {
                     for app in &app_ids {
                         ui.selectable_value(&mut selected, Some(app.clone()), app);
+                    }
+                    if app_ids.is_empty() {
+                        ui.label("Không có app khớp.");
                     }
                 });
             if selected != self.selected_app {
@@ -820,6 +1035,7 @@ impl SettingsApp {
                     self.error = Some("App id không hợp lệ.".into());
                 } else {
                     self.new_app.clear();
+                    self.app_filter.clear();
                     if !self.app_ids.contains(&app) {
                         self.app_ids.push(app.clone());
                         self.app_ids.sort();
@@ -969,21 +1185,23 @@ impl SettingsApp {
         });
 
         ui.add_space(6.0);
+        let mut apply = changed;
         ui.horizontal(|ui| {
-            if ui.button("Áp dụng").clicked() {
-                self.app_editor = Some(editor.clone());
-                self.apply_app_editor();
-            }
             if editor.has_preset && !editor.inherit_preset && ui.button("Bỏ ghi đè, dùng preset").clicked()
             {
                 editor.inherit_preset = true;
-                self.app_editor = Some(editor.clone());
-                self.apply_app_editor();
+                apply = true;
             }
+            ui.label(
+                egui::RichText::new("Thay đổi được áp dụng vào bản nháp ngay; bấm Lưu để ghi file.")
+                    .small()
+                    .color(theme::MUTED),
+            );
         });
 
-        if changed {
+        if apply {
             self.app_editor = Some(editor);
+            self.apply_app_editor();
         }
 
         ui.add_space(10.0);
@@ -1052,7 +1270,14 @@ impl SettingsApp {
     fn advanced_tab(&mut self, ui: &mut egui::Ui) {
         let issues = self.issues.clone();
         ui.heading("Nâng cao");
-        ui.label("Tùy chọn đầu ra, đường dẫn và các thao tác trên file cấu hình.");
+        ui.horizontal(|ui| {
+            ui.label("Tùy chọn đầu ra, đường dẫn và các thao tác trên file cấu hình.");
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.button("Khôi phục nhóm").clicked() {
+                    self.confirm = Some(Confirm::ResetGroup(SettingsGroup::Advanced));
+                }
+            });
+        });
 
         section(ui, "Đầu ra");
         {
@@ -1067,16 +1292,12 @@ impl SettingsApp {
             }
             ui.horizontal(|ui| {
                 ui.label("Dạng Unicode");
-                let before = draft.config.unicode_form;
                 if combo(
                     ui,
                     "unicode_form",
                     &mut draft.config.unicode_form,
                     &[(UnicodeForm::Nfc, "NFC (dựng sẵn)"), (UnicodeForm::Nfd, "NFD (tổ hợp)")],
                 ) {
-                    draft.mark(FieldId::UnicodeForm);
-                }
-                if before != draft.config.unicode_form {
                     draft.mark(FieldId::UnicodeForm);
                 }
             });
@@ -1086,6 +1307,45 @@ impl SettingsApp {
                 ui.label(egui::RichText::new(draft.config.schema_version.to_string()).monospace());
             });
         }
+
+        section(ui, "Giao diện");
+        if ui.checkbox(&mut self.dark, "Giao diện tối").changed() {
+            theme::apply(ui.ctx(), self.dark);
+            self.persist_prefs();
+        }
+
+        section(ui, "Khay hệ thống");
+        let tray_changed =
+            ui.checkbox(&mut self.tray_enabled, "Hiện biểu tượng ViFastKey trong khay hệ thống").changed();
+        if tray_changed {
+            if !self.tray_enabled {
+                self.tray = None;
+            } else {
+                self.tray_attempted = false;
+            }
+            self.persist_prefs();
+        }
+        let close_changed = ui
+            .add_enabled(
+                self.tray_enabled,
+                egui::Checkbox::new(&mut self.close_to_tray, "Đóng cửa sổ thì ẩn xuống khay thay vì thoát"),
+            )
+            .changed();
+        if close_changed {
+            self.persist_prefs();
+        }
+        if self.tray.as_ref().is_some_and(tray::Tray::is_available) {
+            ui.colored_label(theme::SUCCESS, "Tray đang chạy.");
+        } else if let Some(err) = &self.tray_error {
+            ui.colored_label(theme::WARNING, format!("Tray chưa bật được: {err}"));
+        }
+        ui.label(
+            egui::RichText::new(
+                "Trên Linux cần desktop hỗ trợ StatusNotifierItem (GNOME cần extension AppIndicator).",
+            )
+            .small()
+            .color(theme::MUTED),
+        );
 
         section(ui, "File và sao lưu");
         ui.label(egui::RichText::new(self.doc.path().display().to_string()).monospace());
@@ -1107,7 +1367,13 @@ impl SettingsApp {
         });
         ui.add_space(8.0);
         ui.horizontal(|ui| {
-            if ui.add(egui::Button::new("Khôi phục mặc định").fill(theme::ERROR)).clicked() {
+            if ui
+                .add(
+                    egui::Button::new(egui::RichText::new("Khôi phục mặc định").color(egui::Color32::WHITE))
+                        .fill(theme::ERROR),
+                )
+                .clicked()
+            {
                 self.confirm = Some(Confirm::Reset);
             }
             ui.label(egui::RichText::new("Tạo backup trước khi ghi đè.").small().color(theme::MUTED));
@@ -1127,6 +1393,16 @@ impl SettingsApp {
                 egui::RichText::new("Nhập chỉ thay bản nháp; bấm Lưu mới ghi file.")
                     .small()
                     .color(theme::MUTED),
+            );
+        });
+        egui::CollapsingHeader::new("Xem JSON hiệu lực (dùng khi xuất)").show(ui, |ui| {
+            let mut text = self.doc.pretty_effective_json();
+            ui.add(
+                egui::TextEdit::multiline(&mut text)
+                    .code_editor()
+                    .desired_rows(14)
+                    .desired_width(f32::INFINITY)
+                    .interactive(false),
             );
         });
 
@@ -1158,11 +1434,6 @@ impl SettingsApp {
             );
         }
 
-        section(ui, "Giao diện");
-        if ui.checkbox(&mut self.dark, "Giao diện tối").changed() {
-            theme::apply(ui.ctx(), self.dark);
-            self.persist_prefs();
-        }
         ui.add_space(16.0);
     }
 
@@ -1345,45 +1616,125 @@ impl SettingsApp {
 
     fn dialogs(&mut self, ctx: &egui::Context) {
         let Some(action) = self.confirm.clone() else { return };
-        let mut chosen: Option<Confirm> = None;
+        let mut chosen = false;
         let mut cancel = false;
-        let (title, body) = match &action {
-            Confirm::Reload => ("Tải lại cấu hình?", "Các thay đổi chưa lưu sẽ bị bỏ.".to_string()),
-            Confirm::Reset => (
-                "Khôi phục mặc định?",
-                "Toàn bộ cấu hình người dùng sẽ bị xoá. File hiện tại được sao lưu trước khi ghi."
-                    .to_string(),
-            ),
-            Confirm::Close => ("Đóng mà không lưu?", "Bạn có thay đổi chưa lưu.".to_string()),
-            Confirm::Import(path) => (
-                "Nhập cấu hình?",
-                format!(
-                    "Nạp {} sẽ thay thế bản nháp hiện tại. File hiện tại chỉ bị ghi khi bấm Lưu.",
-                    path.display()
-                ),
-            ),
+        let (title, confirm_label) = match &action {
+            Confirm::Reload => ("Tải lại cấu hình?", "Tải lại"),
+            Confirm::Reset => ("Khôi phục mặc định?", "Khôi phục"),
+            Confirm::ResetGroup(_) => ("Khôi phục nhóm?", "Khôi phục nhóm"),
+            Confirm::Close => ("Đóng mà không lưu?", "Đóng không lưu"),
+            Confirm::Quit => ("Thoát ViFastKey?", "Thoát"),
+            Confirm::Import(_) => ("Nhập cấu hình?", "Nhập"),
         };
         egui::Window::new(title)
             .collapsible(false)
             .resizable(false)
+            .default_width(620.0)
+            .max_width(760.0)
             .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
             .show(ctx, |ui| {
-                ui.label(body);
+                match &action {
+                    Confirm::Reload => {
+                        ui.label("Các thay đổi chưa lưu sẽ bị bỏ.");
+                    }
+                    Confirm::Reset => {
+                        ui.label("Toàn bộ cấu hình người dùng sẽ bị xoá. File hiện tại được sao lưu trước khi ghi.");
+                    }
+                    Confirm::ResetGroup(group) => {
+                        ui.label(group_reset_body(*group));
+                    }
+                    Confirm::Close => {
+                        ui.label("Bạn có thay đổi chưa lưu. Đóng bây giờ sẽ bỏ các thay đổi đó.");
+                    }
+                    Confirm::Quit => {
+                        ui.label("Thoát ứng dụng cấu hình? Bộ gõ vẫn tiếp tục chạy.");
+                        if self.doc.is_dirty() {
+                            ui.colored_label(theme::WARNING, "Có thay đổi chưa lưu sẽ bị bỏ.");
+                        }
+                    }
+                    Confirm::Import(path) => self.import_dialog_ui(ui, path),
+                }
                 ui.add_space(8.0);
+                let can_confirm = match &action {
+                    Confirm::Import(_) => self.import_preview.as_ref().is_some_and(|(_, p)| !p.has_errors()),
+                    _ => true,
+                };
                 ui.horizontal(|ui| {
-                    if ui.button("Đồng ý").clicked() {
-                        chosen = Some(action.clone());
+                    if ui.add_enabled(can_confirm, egui::Button::new(confirm_label)).clicked() {
+                        chosen = true;
                     }
                     if ui.button("Huỷ").clicked() {
                         cancel = true;
                     }
                 });
             });
-        if let Some(action) = chosen {
+        if chosen {
             self.confirm = None;
             self.apply_confirm(ctx, action);
         } else if cancel {
             self.confirm = None;
+            if matches!(action, Confirm::Import(_)) {
+                self.import_preview = None;
+            }
+        }
+    }
+
+    fn import_dialog_ui(&self, ui: &mut egui::Ui, path: &Path) {
+        let Some((_, preview)) = &self.import_preview else {
+            ui.colored_label(theme::ERROR, "Không có preview để hiển thị.");
+            return;
+        };
+        ui.label(format!(
+            "Nạp {} sẽ thay thế bản nháp hiện tại. File hiện tại chỉ bị ghi khi bấm Lưu; key lạ của file nhập được giữ.",
+            path.display()
+        ));
+        ui.label(
+            egui::RichText::new(format!(
+                "{} thay đổi · {} lỗi · {} cảnh báo · {} bytes",
+                preview.change_count(),
+                preview.error_count(),
+                preview.warning_count(),
+                preview.bytes
+            ))
+            .small()
+            .color(theme::MUTED),
+        );
+        ui.add_space(4.0);
+        if preview.changes.is_empty() {
+            ui.label("Giá trị hiệu lực không đổi.");
+        } else {
+            egui::ScrollArea::vertical().max_height(260.0).show(ui, |ui| {
+                for change in preview.changes.iter().take(200) {
+                    ui.horizontal_wrapped(|ui| {
+                        ui.label(egui::RichText::new(&change.path).monospace().strong());
+                        ui.label("->");
+                        ui.label(egui::RichText::new(format_change(change)).small());
+                    });
+                }
+                if preview.changes.len() > 200 {
+                    ui.label(
+                        egui::RichText::new(format!("… và {} thay đổi nữa", preview.changes.len() - 200))
+                            .small()
+                            .color(theme::MUTED),
+                    );
+                }
+            });
+        }
+        let visible_issues: Vec<_> =
+            preview.issues.iter().filter(|issue| issue.severity != Severity::Info).collect();
+        if !visible_issues.is_empty() {
+            ui.add_space(4.0);
+            ui.label(egui::RichText::new("Kiểm tra cấu hình nhập").strong());
+            for issue in visible_issues.iter().take(40) {
+                ui.colored_label(theme::severity_color(issue.severity), format!("• {}", issue.message));
+            }
+            if visible_issues.len() > 40 {
+                ui.label(
+                    egui::RichText::new(format!("… và {} cảnh báo nữa", visible_issues.len() - 40))
+                        .small()
+                        .color(theme::MUTED),
+                );
+            }
         }
     }
 
@@ -1398,35 +1749,47 @@ impl SettingsApp {
                 self.sync_from_doc();
                 self.pending = Some(Pending::Save);
             }
-            Confirm::Close => {
+            Confirm::ResetGroup(group) => {
+                let changes = self.doc.reset_group(group);
+                self.sync_from_doc();
+                if let Some(app) = self.selected_app.clone() {
+                    self.select_app(app);
+                }
+                self.toast(format!("Đã khôi phục nhóm ({} thay đổi)", changes));
+            }
+            Confirm::Close | Confirm::Quit => {
                 self.persist_prefs();
                 self.allow_close = true;
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);
             }
-            Confirm::Import(path) => self.import_path(&path),
+            Confirm::Import(_) => self.apply_import(),
         }
     }
 
     fn request_import(&mut self, path: PathBuf) {
-        if self.doc.is_dirty() {
-            self.confirm = Some(Confirm::Import(path));
-        } else {
-            self.import_path(&path);
-        }
-    }
-
-    fn import_path(&mut self, path: &Path) {
-        match std::fs::read_to_string(path) {
-            Ok(text) => match self.doc.import_json(&text) {
-                Ok(()) => {
-                    self.read_only = false;
-                    self.banner = None;
-                    self.sync_from_doc();
-                    self.toast(format!("Đã nạp {} — bấm Lưu để ghi", path.display()));
+        match std::fs::read_to_string(&path) {
+            Ok(text) => match self.doc.preview_import(&text) {
+                Ok(preview) => {
+                    self.import_preview = Some((path.clone(), preview));
+                    self.confirm = Some(Confirm::Import(path));
                 }
                 Err(err) => self.error = Some(format!("File nhập không hợp lệ: {err}")),
             },
             Err(err) => self.error = Some(format!("Không đọc được {}: {err}", path.display())),
+        }
+    }
+
+    fn apply_import(&mut self) {
+        let Some((path, preview)) = self.import_preview.take() else { return };
+        match self.doc.apply_import(preview) {
+            Ok(()) => {
+                self.read_only = false;
+                self.banner = None;
+                self.external_change = false;
+                self.sync_from_doc();
+                self.toast(format!("Đã nạp {} — bấm Lưu để ghi", path.display()));
+            }
+            Err(err) => self.error = Some(format!("Không nạp được {}: {err}", path.display())),
         }
     }
 
@@ -1634,6 +1997,44 @@ fn tri_label(value: Option<bool>) -> &'static str {
     }
 }
 
+fn group_reset_body(group: SettingsGroup) -> &'static str {
+    match group {
+        SettingsGroup::Typing => {
+            "Đưa kiểu gõ, đặt dấu, chính tả và các tùy chọn Telex về mặc định. Bảng macro và app profile không đổi."
+        }
+        SettingsGroup::Macros => {
+            "Đưa các tùy chọn macro về mặc định. Bảng macro hiện có được giữ nguyên."
+        }
+        SettingsGroup::Apps => {
+            "Xoá toàn bộ app profile ghi đè và danh sách app loại trừ. Trạng thái Việt/Anh do adapter ghi nhớ vẫn được giữ."
+        }
+        SettingsGroup::Advanced => {
+            "Đưa các tùy chọn đầu ra, viết hoa, sửa từ và Unicode về mặc định."
+        }
+    }
+}
+
+fn format_change(change: &vfk_config::Change) -> String {
+    let before = change.before.as_ref().map(compact_json).unwrap_or_else(|| "(không có)".into());
+    let after = change.after.as_ref().map(compact_json).unwrap_or_else(|| "(xoá)".into());
+    format!("{before} -> {after}")
+}
+
+fn compact_json(value: &serde_json::Value) -> String {
+    let text = value.to_string();
+    if text.chars().count() > 90 {
+        let mut out: String = text.chars().take(87).collect();
+        out.push('…');
+        out
+    } else {
+        text
+    }
+}
+
+fn default_tray_enabled() -> bool {
+    cfg!(any(target_os = "windows", target_os = "linux"))
+}
+
 fn rows_to_map(rows: &[MacroRow]) -> BTreeMap<String, String> {
     rows.iter()
         .filter_map(|row| {
@@ -1655,4 +2056,64 @@ impl eframe::App for SettingsApp {
 
 pub fn window_title() -> &'static str {
     APP_TITLE
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn test_app(contents: &str) -> (tempfile::TempDir, std::path::PathBuf, egui::Context, SettingsApp) {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("config.json");
+        std::fs::write(&path, contents).unwrap();
+        let ctx = egui::Context::default();
+        crate::fonts::install(&ctx);
+        theme::apply(&ctx, false);
+        let mut app = SettingsApp::new(&ctx, path.clone());
+        app.tray_enabled = false;
+        (dir, path, ctx, app)
+    }
+
+    fn render_frames(ctx: &egui::Context, app: &mut SettingsApp, count: usize) {
+        for _ in 0..count {
+            let _ = ctx.run(egui::RawInput::default(), |ctx| app.render(ctx));
+        }
+    }
+
+    #[test]
+    fn renders_import_preview_dialog() {
+        let (_dir, _path, ctx, mut app) = test_app(r#"{"input_method":"telex","macros":{"ko":"không"}}"#);
+        let imported = r#"{"input_method":"vni","macros":{"ko":"không","vn":"Việt Nam"}}"#;
+        let preview = app.doc.preview_import(imported).unwrap();
+        let source = PathBuf::from("/tmp/import.json");
+        app.import_preview = Some((source.clone(), preview));
+        app.confirm = Some(Confirm::Import(source));
+        render_frames(&ctx, &mut app, 2);
+    }
+
+    #[test]
+    fn app_editor_applies_profile_immediately() {
+        let (_dir, _path, ctx, mut app) = test_app(r#"{"app_profiles":{"kitty":{"output_mode":"preedit"}}}"#);
+        app.select_app("kitty".into());
+        let mut editor = app.app_editor.clone().unwrap();
+        editor.output_mode = Some(OutputMode::Replace);
+        app.app_editor = Some(editor);
+        app.apply_app_editor();
+        assert_eq!(app.doc.profile("kitty").unwrap().output_mode, Some(OutputMode::Replace));
+        render_frames(&ctx, &mut app, 1);
+    }
+
+    #[test]
+    fn renders_each_tab_and_group_reset_dialog() {
+        let (_dir, path, ctx, mut app) = test_app(
+            r#"{"input_method":"vni","tone_style":"old","excluded_apps":["minecraft"],"app_profiles":{"kitty":{"output_mode":"preedit"}}}"#,
+        );
+        for tab in Tab::ALL {
+            app.set_tab(tab.name());
+            render_frames(&ctx, &mut app, 1);
+        }
+        app.confirm = Some(Confirm::ResetGroup(SettingsGroup::Apps));
+        render_frames(&ctx, &mut app, 2);
+        assert!(path.exists());
+    }
 }

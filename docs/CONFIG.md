@@ -131,6 +131,8 @@ atomic; crate này dùng `vfk_engine::Config` làm schema, không định nghĩa
 
 ## 6. Migration
 
+- File UTF-8 có BOM (PowerShell 5.1/editor Windows) được chấp nhận; khi UI ghi lại sẽ không còn BOM.
+
 - File cũ thiếu `schema_version`/`macro_digits`/`macro_undo`/`allow_coda_k`: nhận mặc định.
 - File mới hơn (schema_version > 1): vẫn đọc các field đã biết, bỏ qua field lạ.
 - Khi đổi hành vi có chủ đích: thêm golden, chạy `python -m tools.export_conformance`,
@@ -168,6 +170,10 @@ UI cấu hình desktop dùng chung file JSON với mọi adapter. Hợp đồng 
 trong engine; UI merge preset khi hiển thị/validate, không materialize vào file.
 
 Import thay thế toàn bộ document và giữ key lạ của file import; chỉ ghi khi bấm Lưu.
-Theme/tab cuối của UI nằm trong `settings-ui.json` cùng thư mục, không thuộc schema engine.
+Trước khi nạp, UI hiện preview diff theo giá trị hiệu lực và chặn nếu có lỗi validate.
+“Khôi phục mặc định” có thể áp dụng cho từng nhóm (kiểu gõ, tùy chọn macro, ứng dụng,
+nâng cao); nhóm macro không xoá bảng macro, nhóm ứng dụng giữ `app_modes`.
+Theme/tab/tray/bật-ẩn của UI nằm trong `settings-ui.json` cùng thư mục, không thuộc
+schema engine.
 
 Chi tiết UI, tab, đường dẫn và platform: [`DESKTOP_UI.md`](DESKTOP_UI.md).

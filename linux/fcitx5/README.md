@@ -99,7 +99,7 @@ field, action gần nhất; log adapter không chứa nội dung từ.
 
 ## Giới hạn
 
-- Chưa có tray icon; UI cấu hình dùng `vifastkey-settings`, sửa JSON hoặc status action.
+- Addon chưa có tray icon riêng; UI cấu hình `vifastkey-settings` có tray StatusNotifierItem, sửa JSON hoặc status action của Fcitx5.
 - Chưa dùng `uinput`/Libei/XTest. Nếu app không nhận surrounding text và không
   nhận `forwardKey`, adapter fallback về preedit/pass-through thay vì inject phím.
 - `~/.config/vifastkey/user_words.txt` được nạp thêm vào dictionary tiếng Việt

@@ -7,6 +7,7 @@
 //! - validate cross-field;
 //! - ghi atomic + backup.
 
+pub mod diff;
 pub mod document;
 pub mod draft;
 pub mod error;
@@ -16,7 +17,8 @@ pub mod raw;
 pub mod store;
 pub mod validate;
 
-pub use document::ConfigDocument;
+pub use diff::{diff_json, Change};
+pub use document::{ConfigDocument, ImportPreview, SettingsGroup};
 pub use draft::Draft;
 pub use error::Error;
 pub use meta::{DirtySet, FieldId};

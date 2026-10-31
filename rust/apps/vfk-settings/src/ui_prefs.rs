@@ -10,6 +10,11 @@ pub struct UiPrefs {
     pub theme: Option<String>,
     #[serde(default)]
     pub last_tab: Option<String>,
+    /// `None` = theo mặc định nền tảng.
+    #[serde(default)]
+    pub tray: Option<bool>,
+    #[serde(default)]
+    pub close_to_tray: Option<bool>,
 }
 
 impl UiPrefs {
@@ -37,10 +42,17 @@ mod tests {
     fn round_trips_next_to_config() {
         let dir = tempfile::tempdir().unwrap();
         let config = dir.path().join("config.json");
-        let prefs = UiPrefs { theme: Some("dark".into()), last_tab: Some("apps".into()) };
+        let prefs = UiPrefs {
+            theme: Some("dark".into()),
+            last_tab: Some("apps".into()),
+            tray: Some(false),
+            close_to_tray: Some(true),
+        };
         prefs.save(&config);
         let loaded = UiPrefs::load(&config);
         assert_eq!(loaded.theme.as_deref(), Some("dark"));
         assert_eq!(loaded.last_tab.as_deref(), Some("apps"));
+        assert_eq!(loaded.tray, Some(false));
+        assert_eq!(loaded.close_to_tray, Some(true));
     }
 }
