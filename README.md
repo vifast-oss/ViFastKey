@@ -218,6 +218,7 @@ cargo test --workspace
 - `macos/README.md` — build/cài/test adapter macOS IMK.
 - `windows/tsf/README.md` — build/cài/test TSF Windows, `windows.json`, backend Preedit (TSF)/Replace (hook).
 - `docs/PLATFORMS.md` — trạng thái adapter từng nền tảng và hợp đồng tối thiểu.
+- `packaging/` — script đóng gói Windows/Linux và README cài đặt/giới thiệu tính năng cho người dùng.
 - `THIRD_PARTY_NOTICES.md` — ghi công bảng mã bamboo-core MIT.
 - `CONTRIBUTING.md` — quy trình sửa hành vi, chạy test, đồng bộ conformance.
 - `CHANGELOG.md` — thay đổi theo phiên bản.

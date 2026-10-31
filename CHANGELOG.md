@@ -9,6 +9,8 @@
 - **Windows Preedit/Replace**: mặc định `tsf` (Preedit); UI chỉ còn Preedit/Replace.
   Chọn Replace chạy hook nền + Run key, chọn Preedit dừng hook + xoá Run key; bỏ
   lựa chọn `auto` khỏi UI (giá trị cũ đọc như Preedit).
+- Gói phát hành Windows/Linux có `README.md` hướng dẫn cài đặt/giới thiệu tính năng,
+  `DEVELOPER.md`, `LICENSE`, third-party notices; Linux thêm `install.sh`/`uninstall.sh`.
 - **Tray icon**: Windows/macOS dùng `tray-icon`, Linux dùng StatusNotifierItem
   (`ksni`, không cần GTK/AppIndicator trong binary); menu mở cấu hình/tải lại/thoát,
   click trái mở cửa sổ, đóng cửa sổ ẩn xuống tray (tắt được trong tab Nâng cao).

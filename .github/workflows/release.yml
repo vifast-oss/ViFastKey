@@ -60,7 +60,9 @@ jobs:
           if [ "${{ runner.os }}" = "Windows" ]; then
             mkdir -p settings-package
             cp target/release/vifastkey-settings.exe settings-package/
-            cp apps/vfk-settings/README.md settings-package/README.md
+            cp ../packaging/windows/settings-only-README.md settings-package/README.md
+            cp apps/vfk-settings/README.md settings-package/DEVELOPER.md
+            cp ../LICENSE ../THIRD_PARTY_NOTICES.md settings-package/
             (cd settings-package && 7z a ../vifastkey-settings-windows-x64.zip .)
           fi
           if [ "${{ runner.os }}" = "Linux" ]; then
@@ -68,7 +70,11 @@ jobs:
             cp target/release/vifastkey-settings settings-package/
             cp ../linux/vifastkey-settings.desktop settings-package/
             cp ../resources/brand/vifastkey-icon-192.png settings-package/vifastkey.png
-            cp apps/vfk-settings/README.md settings-package/README.md
+            cp ../resources/brand/vifastkey-icon.svg settings-package/vifastkey.svg
+            cp ../packaging/linux/README.md settings-package/README.md
+            cp ../packaging/linux/install.sh ../packaging/linux/uninstall.sh settings-package/
+            cp apps/vfk-settings/README.md settings-package/DEVELOPER.md
+            cp ../LICENSE ../THIRD_PARTY_NOTICES.md settings-package/
             tar -czf ../vifastkey-settings-linux-x86_64.tar.gz -C settings-package .
           fi
       - uses: actions/upload-artifact@v7
@@ -110,10 +116,13 @@ jobs:
           Copy-Item build/tsf-x86/Release/vifastkey.dll windows-package\x86
           Copy-Item rust/target/release/vfk-windows.exe windows-package
           Copy-Item rust/target/release/vifastkey-settings.exe windows-package
-          Copy-Item windows/tsf/README.md windows-package\README.md
+          Copy-Item packaging/windows/README.md windows-package\README.md
+          Copy-Item windows/tsf/README.md windows-package\DEVELOPER.md
           Copy-Item windows/tsf/windows.example.json windows-package
           Copy-Item windows/installer/install.ps1 windows-package
           Copy-Item windows/installer/uninstall.ps1 windows-package
+          Copy-Item LICENSE windows-package
+          Copy-Item THIRD_PARTY_NOTICES.md windows-package
           Compress-Archive -Path windows-package\* -DestinationPath vifastkey-windows-tsf.zip
       - uses: actions/upload-artifact@v7
         with:
