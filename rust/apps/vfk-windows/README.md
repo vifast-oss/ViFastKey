@@ -38,13 +38,18 @@ Yêu cầu Windows 10/11 x64, Rust stable. Chạy exe trong desktop session; hoo
 ```
 
 - `tsf` (mặc định): hook luôn pass-through; chỉ TSF preedit.
-- `auto`: hook xử lý app thường; pass-through khi TSF đang active trong foreground process.
 - `hook`: chỉ hook xử lý; TSF không ăn phím.
+
+UI `vifastkey-settings` → **Nâng cao** → **Windows: Preedit / Replace** là cách
+chọn an toàn: chọn Replace sẽ chạy hook nền + thêm Run key; chọn lại Preedit sẽ
+dừng hook + xoá Run key. Giá trị `auto` cũ chỉ còn để tương thích file cũ và được
+UI đọc như `tsf`.
 
 ## Giới hạn / roadmap
 
 - Không có TSF composition; đây là backend Replace.
-- Chưa có tray icon, auto-start, auto-update, app exclusion runtime.
+- Chưa có tray icon riêng; UI quản lý chạy/Run key của hook khi chọn Replace.
+- Chưa có auto-update, app exclusion runtime.
 - Hook có thể bị một số app/game/anti-cheat chặn.
 - Chưa test trên Windows thật trong môi trường macOS; cross-check bằng
   `cargo check --target x86_64-pc-windows-msvc`.

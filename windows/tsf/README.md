@@ -62,6 +62,21 @@ Mỗi lần chạy `install.ps1` sẽ copy DLL vào `tsf\x64` hoặc `tsf\x86` v
 3. Nếu chưa thấy profile: đăng xuất/đăng nhập lại, hoặc kiểm tra
    `regsvr32` đã chạy đúng user.
 
+## Preedit và Replace khi chơi game
+
+- **Preedit (TSF)** cần app có text store/composition của Windows. Notepad, Office,
+  trình duyệt, Discord/Slack thường hỗ trợ; nhiều game dùng DirectInput/Raw Input
+  hoặc render UI riêng nên không nhận preedit, nhất là fullscreen exclusive.
+- **Replace (hook)** bắt phím bằng `WH_KEYBOARD_LL` rồi gửi backspace + Unicode
+  bằng `SendInput`. Nó có thể gõ được trong ô chat của một số game không hỗ trợ TSF,
+  nhưng không có gạch chân preedit; game dùng anti-cheat có thể chặn hook/SendInput,
+  và fullscreen exclusive vẫn có thể nuốt phím.
+- Vì vậy mặc định là **Preedit**; chỉ chuyển **Replace** cho app/game cụ thể khi
+  preedit không hoạt động. Không bật hook nền ở chế độ Preedit để tránh anti-cheat
+  nhìn thấy keyboard hook không cần thiết.
+- Linux IBus/IMK/Fcitx5 dùng preedit; Fcitx5/macOS có Replace theo app nhưng cần
+  surrounding text và không phải giải pháp cho game.
+
 ## Cấu hình
 
 - `%APPDATA%\ViFastKey\config.json`: cấu hình engine (Telex/VNI/VIQR, macro,
@@ -80,12 +95,16 @@ Mẫu: `windows/tsf/windows.example.json`.
 | backend | Hành vi |
 |---|---|
 | `tsf` (mặc định) | Hook luôn pass; chỉ TSF preedit |
-| `auto` | TSF xử lý khi profile đang active; hook pass-through khi TSF ghi mapping cho foreground PID |
 | `hook` | TSF không ăn phím; chỉ hook Replace xử lý |
 
 Không cần khởi động lại khi sửa `config.json`: TSF đọc lại khi focus đổi; hook
 hot-reload theo mtime. Đổi `windows.json` có hiệu lực ngay với hook; TSF có thể cần
 đổi focus hoặc khởi động lại text service.
+
+**Mặc định là Preedit (TSF).** Để dùng Replace cho game/app không nhận TSF, mở
+`vifastkey-settings` → tab **Nâng cao** → **Windows: Preedit / Replace** → chọn
+**Replace (Hook)**. UI sẽ chạy hook nền và thêm Run key cho user hiện tại; chuyển
+lại **Preedit (TSF)** sẽ dừng hook và xoá Run key. Không cần bật `auto`.
 
 ## Hành vi
 
@@ -103,8 +122,8 @@ hot-reload theo mtime. Đổi `windows.json` có hiệu lực ngay với hook; T
 
 - Chưa test runtime trên Windows thật trong môi trường repo (macOS); CI build MSVC
   chỉ kiểm tra compile. Cần smoke test Notepad/Chrome/Office/Windows Terminal.
-- Chưa có tray icon/cài đặt tự động; installer đăng ký per-user và tạo shortcut
-  `ViFastKey Settings` nếu có `vifastkey-settings.exe`.
+- Tray icon nằm trong `vifastkey-settings`; installer đăng ký TSF per-user, cài hook
+  và tạo shortcut `ViFastKey Settings`. Auto-start hook do UI quản lý khi chọn Replace.
 - Macro hiện chỉ chạy ở `REPLACE` trong engine; TSF `PREEDIT` chưa mở macro.
 - Charset legacy chưa áp ở đầu ra TSF (luôn chèn Unicode).
 - App elevated: TSF per-user thường không nạp vào process elevated; cần bản HKLM
@@ -120,4 +139,4 @@ hot-reload theo mtime. Đổi `windows.json` có hiệu lực ngay với hook; T
 3. Chrome address bar + Google Docs; Office; Windows Terminal.
 4. Field password/URL/number: không có composition, phím đi thẳng.
 5. Chuyển app qua lại: không mất từ, không nhân đôi chữ.
-6. `backend: hook` → chỉ hook chạy; `backend: tsf` → chỉ TSF; `auto` → không double.
+6. `backend: hook` → chỉ hook chạy; `backend: tsf` (mặc định) → chỉ TSF preedit.

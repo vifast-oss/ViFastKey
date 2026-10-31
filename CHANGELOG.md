@@ -6,6 +6,9 @@
 
 - Thêm UI cấu hình `vifastkey-settings` (egui) cho Windows/Linux, kèm `vfk-config`
   đọc/merge/validate/atomic save, `--self-test`/`--check`/`--import`/`--export`.
+- **Windows Preedit/Replace**: mặc định `tsf` (Preedit); UI chỉ còn Preedit/Replace.
+  Chọn Replace chạy hook nền + Run key, chọn Preedit dừng hook + xoá Run key; bỏ
+  lựa chọn `auto` khỏi UI (giá trị cũ đọc như Preedit).
 - **Tray icon**: Windows/macOS dùng `tray-icon`, Linux dùng StatusNotifierItem
   (`ksni`, không cần GTK/AppIndicator trong binary); menu mở cấu hình/tải lại/thoát,
   click trái mở cửa sổ, đóng cửa sổ ẩn xuống tray (tắt được trong tab Nâng cao).

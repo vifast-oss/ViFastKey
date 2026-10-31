@@ -218,7 +218,8 @@ và action trace. Preview chỉ kiểm tra engine, không kiểm tra adapter/app
 
 - TSF reload config khi focus đổi.
 - Hook poll mtime config + `windows.json` mỗi 500 ms; không reload khi đang có preedit.
-- Tab “Windows backend” ghi `windows.json` (`tsf` mặc định, `auto`/`hook` nếu cần).
+- Tab “Windows Backend” ghi `windows.json`: `tsf` = Preedit (mặc định), `hook` = Replace;
+  chọn Replace chạy hook nền + Run key, chọn Preedit dừng hook + xoá Run key.
 - `Ctrl+Shift+,` trong hook mở `vifastkey-settings.exe --tab apps`; installer tạo
   Start Menu shortcut.
 - Tray `tray-icon` (Win32): chuột phải mở menu (cấu hình, tải lại, thoát); click trái mở cửa sổ;

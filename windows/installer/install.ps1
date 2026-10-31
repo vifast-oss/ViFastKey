@@ -62,6 +62,31 @@ if ($process.ExitCode -ne 0) {
 
 Write-Host "Đã cài ViFastKey TSF ($arch) vào $dest"
 
+# Hook Replace: chỉ chạy khi người dùng chọn Replace; installer chỉ copy binary.
+$hookCandidates = @(
+    (Join-Path $PSScriptRoot "vfk-windows.exe"),
+    (Join-Path $root "vfk-windows.exe"),
+    (Join-Path $root "rust\target\release\vfk-windows.exe")
+)
+$hook = $hookCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($hook) {
+    $tools = Join-Path $env:LOCALAPPDATA "ViFastKey"
+    New-Item -ItemType Directory -Force -Path $tools | Out-Null
+    $installedHook = Join-Path $tools "vfk-windows.exe"
+    Copy-Item $hook $installedHook -Force
+    Write-Host "Đã cài hook Replace: $installedHook (bật khi chọn Replace trong cài đặt)"
+} else {
+    Write-Warning "Không thấy vfk-windows.exe; chế độ Replace sẽ chưa chạy được."
+}
+
+# Mặc định Preedit (TSF), không ghi đè lựa chọn đã có.
+$configDir = Join-Path $env:APPDATA "ViFastKey"
+New-Item -ItemType Directory -Force -Path $configDir | Out-Null
+$windowsJson = Join-Path $configDir "windows.json"
+if (-not (Test-Path $windowsJson)) {
+    Set-Content -Path $windowsJson -Value '{"backend":"tsf"}' -Encoding ASCII
+}
+
 # Cài UI cấu hình nếu có trong package/build; shortcut mở tab Ứng dụng.
 $settingsCandidates = @(
     (Join-Path $PSScriptRoot "vifastkey-settings.exe"),

@@ -26,11 +26,17 @@ pub fn windows_backend_path(config_path: &Path) -> PathBuf {
 
 pub fn load_windows_backend(config_path: &Path) -> String {
     let path = windows_backend_path(config_path);
-    std::fs::read(&path)
+    let backend = std::fs::read(&path)
         .ok()
         .and_then(|bytes| vfk_config::raw::parse_object(&bytes).ok())
         .and_then(|value| value.get("backend").and_then(|v| v.as_str()).map(str::to_string))
-        .unwrap_or_else(|| "tsf".to_string())
+        .unwrap_or_else(|| "tsf".to_string());
+    // `auto` là giá trị legacy; UI hiện chỉ còn Preedit/Replace và mặc định Preedit.
+    if backend == "hook" {
+        "hook".into()
+    } else {
+        "tsf".into()
+    }
 }
 
 pub fn save_windows_backend(config_path: &Path, backend: &str) -> io::Result<()> {
@@ -41,6 +47,100 @@ pub fn save_windows_backend(config_path: &Path, backend: &str) -> io::Result<()>
     let bytes =
         serde_json::to_vec_pretty(&serde_json::json!({ "backend": backend })).map_err(io::Error::other)?;
     std::fs::write(path, bytes)
+}
+
+/// Bật Replace: chạy hook nền và thêm vào Run key của user hiện tại.
+#[cfg(target_os = "windows")]
+pub fn ensure_replace_mode() -> Result<(), String> {
+    use std::process::Command;
+    use std::time::Duration;
+
+    let exe = std::env::current_exe().map_err(|err| format!("không tìm được exe: {err}"))?;
+    let hook = exe.with_file_name("vfk-windows.exe");
+    if !hook.exists() {
+        return Err(format!("Không thấy {}; cài lại gói ViFastKey có vfk-windows.exe.", hook.display()));
+    }
+
+    if !hook_running() {
+        Command::new(&hook).spawn().map_err(|err| format!("không chạy được {}: {err}", hook.display()))?;
+        std::thread::sleep(Duration::from_millis(200));
+    }
+    set_hook_autostart(Some(&hook))?;
+    Ok(())
+}
+
+/// Tắt Replace: bỏ Run key và dừng hook nền.
+#[cfg(target_os = "windows")]
+pub fn disable_replace_mode() -> Result<(), String> {
+    use std::process::Command;
+
+    set_hook_autostart(None)?;
+    let output = Command::new("taskkill")
+        .args(["/IM", "vfk-windows.exe", "/F"])
+        .output()
+        .map_err(|err| format!("không dừng được hook: {err}"))?;
+    if !output.status.success() && hook_running() {
+        return Err("không dừng được vfk-windows.exe; mở Task Manager để kết thúc.".into());
+    }
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+pub fn hook_running() -> bool {
+    std::process::Command::new("tasklist")
+        .args(["/FI", "IMAGENAME eq vfk-windows.exe", "/NH"])
+        .output()
+        .map(|output| {
+            String::from_utf8_lossy(&output.stdout).to_ascii_lowercase().contains("vfk-windows.exe")
+        })
+        .unwrap_or(false)
+}
+
+#[cfg(target_os = "windows")]
+fn set_hook_autostart(hook: Option<&Path>) -> Result<(), String> {
+    use std::process::Command;
+
+    const KEY: &str = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run";
+    let output = match hook {
+        Some(hook) => Command::new("reg")
+            .args([
+                "ADD",
+                KEY,
+                "/v",
+                "ViFastKeyHook",
+                "/t",
+                "REG_SZ",
+                "/d",
+                &format!("\"{}\"", hook.display()),
+                "/f",
+            ])
+            .output(),
+        None => Command::new("reg").args(["DELETE", KEY, "/v", "ViFastKeyHook", "/f"]).output(),
+    }
+    .map_err(|err| format!("không cập nhật Run key: {err}"))?;
+
+    if hook.is_some() && !output.status.success() {
+        return Err(format!(
+            "không thêm được ViFastKeyHook vào Run key: {}",
+            String::from_utf8_lossy(&output.stderr).trim()
+        ));
+    }
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn ensure_replace_mode() -> Result<(), String> {
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn disable_replace_mode() -> Result<(), String> {
+    Ok(())
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn hook_running() -> bool {
+    false
 }
 
 #[cfg(test)]
@@ -57,5 +157,8 @@ mod tests {
 
         std::fs::write(windows_backend_path(&config), b"\xEF\xBB\xBF{\"backend\":\"hook\"}").unwrap();
         assert_eq!(load_windows_backend(&config), "hook");
+
+        std::fs::write(windows_backend_path(&config), br#"{"backend":"auto"}"#).unwrap();
+        assert_eq!(load_windows_backend(&config), "tsf", "auto legacy được đọc như Preedit");
     }
 }

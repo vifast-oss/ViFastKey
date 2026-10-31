@@ -148,9 +148,11 @@ Windows dùng thêm `%APPDATA%\ViFastKey\windows.json` (không thuộc engine co
 
 | Giá trị | Ý nghĩa |
 |---|---|
-| `tsf` (mặc định) | Chỉ TSF preedit; hook pass-through |
-| `auto` | TSF xử lý khi profile active; hook pass-through khi TSF báo đang giữ foreground window/PID |
-| `hook` | TSF không ăn phím; chỉ hook Replace |
+| `tsf` (mặc định) | Preedit: chỉ TSF; hook pass-through |
+| `hook` | Replace: TSF không ăn phím; chỉ hook xử lý |
+
+UI chỉ hiện Preedit/Replace. Giá trị `auto` cũ được đọc như `tsf`; chọn Replace
+trong UI sẽ chạy hook nền và thêm Run key, chọn Preedit sẽ dừng hook và xoá Run key.
 
 Chi tiết build/cài: `windows/tsf/README.md`.
 

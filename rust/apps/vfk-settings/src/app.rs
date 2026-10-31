@@ -168,6 +168,7 @@ pub struct SettingsApp {
     allow_close: bool,
     prefs: UiPrefs,
     windows_backend: String,
+    hook_running: bool,
     import_preview: Option<(PathBuf, ImportPreview)>,
     app_filter: String,
     tray_enabled: bool,
@@ -232,6 +233,7 @@ impl SettingsApp {
             allow_close: false,
             prefs,
             windows_backend,
+            hook_running: false,
             import_preview: None,
             app_filter: String::new(),
             tray_enabled: false,
@@ -244,6 +246,14 @@ impl SettingsApp {
         };
         app.tray_enabled = app.prefs.tray.unwrap_or(default_tray_enabled());
         app.close_to_tray = app.prefs.close_to_tray.unwrap_or(true);
+        if app.windows_backend == "hook" {
+            if let Err(err) = platform::ensure_replace_mode() {
+                app.error = Some(err);
+            }
+            app.hook_running = platform::hook_running();
+        } else if let Err(err) = platform::disable_replace_mode() {
+            app.error = Some(err);
+        }
         app.sync_from_doc();
         if let Some(tab) = initial_tab.as_deref() {
             app.set_tab(tab);
@@ -1091,7 +1101,7 @@ impl SettingsApp {
                     "output_mode",
                     &mut editor.output_mode,
                     &[
-                        (None, "Tự động"),
+                        (None, "Mặc định (Preedit)"),
                         (Some(OutputMode::Preedit), "Preedit"),
                         (Some(OutputMode::Replace), "Replace"),
                     ],
@@ -1102,6 +1112,13 @@ impl SettingsApp {
                     editor.inherit_preset = false;
                 }
             });
+            ui.label(
+                egui::RichText::new(
+                    "Preedit là mặc định. Replace chỉ dùng cho app không nhận preedit (macOS/Fcitx5); Windows chọn Preedit/Replace ở tab Nâng cao.",
+                )
+                .small()
+                .color(theme::MUTED),
+            );
             ui.horizontal(|ui| {
                 ui.label("Tiếng Việt");
                 if tri_bool(ui, "app_vietnamese", &mut editor.vietnamese, "Theo mặc định") {
@@ -1407,30 +1424,63 @@ impl SettingsApp {
         });
 
         if cfg!(target_os = "windows") {
-            section(ui, "Windows backend");
+            section(ui, "Windows: Preedit / Replace");
             ui.horizontal(|ui| {
-                ui.label("Backend");
+                ui.label("Chế độ gõ");
                 let mut backend = self.windows_backend.clone();
-                egui::ComboBox::from_id_salt("windows_backend").selected_text(backend.clone()).show_ui(
-                    ui,
-                    |ui| {
-                        for value in ["auto", "tsf", "hook"] {
-                            ui.selectable_value(&mut backend, value.to_string(), value);
-                        }
-                    },
-                );
+                let selected = if backend == "hook" { "Replace (Hook)" } else { "Preedit (TSF)" };
+                egui::ComboBox::from_id_salt("windows_backend").selected_text(selected).show_ui(ui, |ui| {
+                    ui.selectable_value(&mut backend, "tsf".to_string(), "Preedit (TSF)");
+                    ui.selectable_value(&mut backend, "hook".to_string(), "Replace (Hook)");
+                });
                 if backend != self.windows_backend {
                     match platform::save_windows_backend(self.doc.path(), &backend) {
                         Ok(()) => {
+                            let mode = if backend == "hook" {
+                                platform::ensure_replace_mode()
+                            } else {
+                                platform::disable_replace_mode()
+                            };
                             self.windows_backend = backend;
-                            self.toast("Đã lưu windows.json");
+                            match mode {
+                                Ok(()) => {
+                                    self.hook_running = platform::hook_running();
+                                    self.toast("Đã lưu windows.json");
+                                }
+                                Err(err) => self.error = Some(err),
+                            }
                         }
                         Err(err) => self.error = Some(format!("Không ghi được windows.json: {err}")),
                     }
                 }
             });
+            if self.windows_backend == "hook" {
+                if self.hook_running {
+                    ui.colored_label(
+                        theme::SUCCESS,
+                        "Replace: hook nền đang chạy và tự khởi động cùng Windows.",
+                    );
+                } else {
+                    ui.colored_label(
+                        theme::WARNING,
+                        "Replace: hook nền chưa chạy; bấm Kiểm tra/khởi động lại.",
+                    );
+                }
+                if ui.button("Kiểm tra hook").clicked() {
+                    if let Err(err) = platform::ensure_replace_mode() {
+                        self.error = Some(err);
+                    }
+                    self.hook_running = platform::hook_running();
+                }
+            } else {
+                ui.colored_label(theme::SUCCESS, "Preedit (TSF) là mặc định và an toàn cho đa số app.");
+            }
             ui.label(
-                egui::RichText::new("Đổi backend cần khởi động lại hook/TSF.").small().color(theme::MUTED),
+                egui::RichText::new(
+                    "Preedit hợp với Office/trình duyệt/terminal; Replace dùng cho app hoặc game không nhận TSF. Đổi chế độ có thể cần đổi focus hoặc đăng nhập lại.",
+                )
+                .small()
+                .color(theme::MUTED),
             );
         }
 
@@ -1985,7 +2035,7 @@ fn output_label(mode: Option<OutputMode>) -> &'static str {
     match mode {
         Some(OutputMode::Preedit) => "Preedit",
         Some(OutputMode::Replace) => "Replace",
-        None => "Tự động",
+        None => "Mặc định",
     }
 }
 

@@ -216,7 +216,7 @@ cargo test --workspace
 - `docs/DESKTOP_UI.md` — UI cấu hình desktop (egui), hợp đồng ghi config và tích hợp adapter.
 - `docs/IME_TEST_VECTORS.md` — bộ ví dụ hành vi dùng để port/regression.
 - `macos/README.md` — build/cài/test adapter macOS IMK.
-- `windows/tsf/README.md` — build/cài/test TSF Windows, `windows.json`, backend auto/tsf/hook.
+- `windows/tsf/README.md` — build/cài/test TSF Windows, `windows.json`, backend Preedit (TSF)/Replace (hook).
 - `docs/PLATFORMS.md` — trạng thái adapter từng nền tảng và hợp đồng tối thiểu.
 - `THIRD_PARTY_NOTICES.md` — ghi công bảng mã bamboo-core MIT.
 - `CONTRIBUTING.md` — quy trình sửa hành vi, chạy test, đồng bộ conformance.

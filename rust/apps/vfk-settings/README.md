@@ -25,6 +25,13 @@ cargo run -p vifastkey-settings -- --no-tray   # tắt tray
 6 tab rồi thoát, dùng cho CI. `--screenshots` chụp framebuffer của cửa sổ ra
 `overview.png`, `typing.png`… không cần `screencapture`/X11 screenshot tool.
 
+## Windows: Preedit / Replace
+
+- Mặc định **Preedit (TSF)**; hook nền không chạy.
+- Chọn **Replace (Hook)** trong tab **Nâng cao** sẽ chạy `vfk-windows.exe` và thêm
+  Run key cho user hiện tại; chọn lại **Preedit (TSF)** sẽ dừng hook và xoá Run key.
+- `auto` cũ không còn trong UI; file cũ được đọc như Preedit.
+
 ## Tray
 
 - Windows/macOS: `tray-icon` (Win32 Shell_NotifyIcon / NSStatusItem).

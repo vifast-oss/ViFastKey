@@ -8,6 +8,8 @@
 //! Giới hạn: low-level hook yêu cầu app chạy trong desktop session và một số app
 //! chống hook; TSF là hướng production. Không chạy được trên macOS/Linux.
 
+#![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
+
 #[cfg(not(windows))]
 fn main() {
     eprintln!("vfk-windows chỉ chạy trên Windows.");
@@ -51,7 +53,7 @@ mod win {
 
     #[derive(Deserialize, Default)]
     struct WindowsConfig {
-        /// hook | tsf | auto. Mặc định tsf (preedit).
+        /// hook | tsf. Mặc định tsf (preedit); auto là giá trị legacy.
         #[serde(default)]
         backend: Option<String>,
     }
