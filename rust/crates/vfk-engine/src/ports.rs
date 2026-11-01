@@ -75,7 +75,8 @@ pub fn default_app_profiles() -> HashMap<String, AppProfile> {
         ..Default::default()
     };
     let chromium = AppProfile { wait_ack: true, delay_per_char_ms: 2, ..Default::default() };
-    let electron = AppProfile { backspace_delay_ms: 3, ..Default::default() };
+    let electron =
+        AppProfile { backspace_delay_ms: 3, output_mode: Some(OutputMode::Preedit), ..Default::default() };
     let mut m = HashMap::new();
     for k in ["terminal", "wezterm", "kitty", "alacritty", "iterm2", "windowsterminal"] {
         m.insert(k.to_string(), term.clone());
@@ -85,12 +86,20 @@ pub fn default_app_profiles() -> HashMap<String, AppProfile> {
     }
     m.insert(
         "firefox".into(),
-        AppProfile { backspace_delay_ms: 4, edit_previous_word: Some(false), ..Default::default() },
+        AppProfile {
+            backspace_delay_ms: 4,
+            edit_previous_word: Some(false),
+            output_mode: Some(OutputMode::Preedit),
+            ..Default::default()
+        },
     );
     for k in ["code", "slack", "discord"] {
         m.insert(k.to_string(), electron.clone());
     }
-    m.insert("notion".into(), AppProfile { backspace_delay_ms: 5, ..Default::default() });
+    m.insert(
+        "notion".into(),
+        AppProfile { backspace_delay_ms: 5, output_mode: Some(OutputMode::Preedit), ..Default::default() },
+    );
     m.insert("minecraft".into(), AppProfile { vietnamese: Some(false), ..Default::default() });
     m
 }

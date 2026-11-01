@@ -12,6 +12,7 @@ final class PreferencesWindowController: NSWindowController {
     private var methodPopup = NSPopUpButton()
     private var tonePopup = NSPopUpButton()
     private var unicodePopup = NSPopUpButton()
+    private var outputPopup = NSPopUpButton()
     private var excludedField = NSTextField()
     private var checks: [String: NSButton] = [:]
     private var macroView = NSTextView()
@@ -81,6 +82,9 @@ final class PreferencesWindowController: NSWindowController {
         let unicodeRow = row("Unicode", unicodePopup)
         unicodePopup.addItems(withTitles: ["NFC (dựng sẵn)", "NFD (tổ hợp)"])
         stack.addArrangedSubview(unicodeRow)
+        let outputRow = row("Chữ đang gõ", outputPopup)
+        outputPopup.addItems(withTitles: ["Không gạch chân (Replace)", "Gạch chân (Preedit)"])
+        stack.addArrangedSubview(outputRow)
 
         for key in Self.boolKeys {
             let check = NSButton(checkboxWithTitle: label(for: key), target: nil, action: nil)
@@ -171,6 +175,7 @@ final class PreferencesWindowController: NSWindowController {
         }
         tonePopup.selectItem(at: (dict["tone_style"] as? String == "old") ? 0 : 1)
         unicodePopup.selectItem(at: (dict["unicode_form"] as? String == "NFD") ? 1 : 0)
+        outputPopup.selectItem(at: ConfigFile.outputMode == "preedit" ? 1 : 0)
         for (key, check) in checks {
             check.state = (dict[key] as? Bool ?? Self.defaultBool(for: key)) ? .on : .off
         }
@@ -183,6 +188,7 @@ final class PreferencesWindowController: NSWindowController {
         dict["input_method"] = Self.methods[methodPopup.indexOfSelectedItem].0
         dict["tone_style"] = tonePopup.indexOfSelectedItem == 1 ? "new" : "old"
         dict["unicode_form"] = unicodePopup.indexOfSelectedItem == 1 ? "NFD" : "NFC"
+        dict["output_mode"] = outputPopup.indexOfSelectedItem == 1 ? "preedit" : "replace"
         for (key, check) in checks {
             dict[key] = check.state == .on
         }

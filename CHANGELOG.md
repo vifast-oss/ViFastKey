@@ -35,6 +35,9 @@
   kill process cũ; `build.sh` tự dùng Apple Development/Developer ID nếu có; thêm
   `--status` và kiểm tra chữ ký/crash report trong `doctor.sh`. Buffer preedit
   chuyển sang `NSAttributedString` để Notes/NSTextView rich text hiện chữ.
+  Mặc định **Replace** (không gạch chân) giống Android/Windows; đổi trong
+  Cấu hình → “Chữ đang gõ” hoặc `output_mode`; terminal/Electron/Firefox giữ
+  Preedit vì replace range không ổn định.
   ZIP phát hành giờ tự chứa `install.sh`/`uninstall.sh`/README; sửa hướng dẫn
   web/docs (đường dẫn `~/Library/Input Methods`, hộp thoại Allow, không cài lại
   nhiều lần).

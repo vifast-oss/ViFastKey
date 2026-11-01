@@ -13,13 +13,16 @@ final class ViFastKeyInputController: IMKInputController {
     private var currentClient: AnyObject?
     private var configTimer: Timer?
     private var lastConfigMtime: Date?
+    /// Mặc định toàn cục: 0 = PREEDIT, 1 = REPLACE (không gạch chân).
+    private var globalOutputMode: UInt32 = 1
 
     override init!(server: IMKServer!, delegate: Any!, client inputClient: Any!) {
         super.init(server: server, delegate: delegate, client: inputClient)
         ConfigFile.ensureExists()
         currentClient = inputClient as AnyObject?
         currentAppID = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
-        engine = VfkEngine(configJSON: ConfigFile.load())
+        globalOutputMode = Self.modeValue(ConfigFile.outputMode)
+        engine = VfkEngine(configJSON: ConfigFile.load(), mode: globalOutputMode)
         if let app = currentAppID {
             _ = engine?.focusChanged(appID: app)
         }
@@ -67,7 +70,7 @@ final class ViFastKeyInputController: IMKInputController {
         _ = engine?.focusChanged(appID: currentAppID)
         // Preedit cũ không được tồn tại khi vừa chuyển context.
         _ = engine?.cursorMoved()
-        applyProfileOutputMode(for: sender)
+        applyOutputMode(for: sender)
     }
 
     override func deactivateServer(_ sender: Any!) {
@@ -164,11 +167,21 @@ final class ViFastKeyInputController: IMKInputController {
         return result.handled && !result.forwardKey
     }
 
-    private func applyProfileOutputMode(for sender: Any!) {
+    private static func modeValue(_ name: String) -> UInt32 {
+        name == "preedit" ? 0 : 1
+    }
+
+    /// App profile được ưu tiên; nếu app không có profile thì dùng mặc định
+    /// toàn cục (Replace = không gạch chân).
+    private func applyOutputMode(for sender: Any!) {
         guard let engine, let client = clientObject(sender) else { return }
-        let profileMode = engine.profileOutputMode
-        guard profileMode == 1 || profileMode == 2 else { return }
-        let action = engine.setOutputMode(profileMode == 2 ? 1 : 0)
+        let target: UInt32
+        switch engine.profileOutputMode {
+        case 1: target = 0                      // Preedit
+        case 2: target = 1                      // Replace
+        default: target = globalOutputMode
+        }
+        let action = engine.setOutputMode(target)
         if action.kind != VfkActionKind.pass {
             _ = applier.apply(action, to: ImkTextClient(client))
         }
@@ -339,8 +352,10 @@ final class ViFastKeyInputController: IMKInputController {
         if let client = currentClient, let action = engine?.cursorMoved(), action.kind != .pass {
             _ = applier.apply(action, to: ImkTextClient(client))
         }
-        engine = VfkEngine(configJSON: ConfigFile.load())
+        globalOutputMode = Self.modeValue(ConfigFile.outputMode)
+        engine = VfkEngine(configJSON: ConfigFile.load(), mode: globalOutputMode)
         _ = engine?.focusChanged(appID: currentAppID)
+        applyOutputMode(for: currentClient)
         lastConfigMtime = ConfigFile.modificationDate()
     }
 

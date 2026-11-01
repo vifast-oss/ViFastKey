@@ -50,6 +50,7 @@ Cấu hình là JSON, dùng chung cho Python, Rust, C ABI và WASM. File mẫu:
 | Trường | Kiểu | Mặc định | Ý nghĩa |
 |---|---|---|---|
 | `unicode_form` | `"NFC" \| "NFD"` | `"NFC"` | Dạng Unicode đầu ra |
+| `output_mode` | `"replace" \| "preedit"` | `"replace"` | macOS IMK: Replace commit thẳng (không gạch chân) hoặc Preedit marked text. Android có setting riêng; Windows hook luôn Replace |
 | `schema_version` | int | `1` | Phiên bản tài liệu cấu hình |
 
 Ghi chú URL/omnibox: field URL vẫn cho gõ tiếng Việt (ô địa chỉ trình duyệt
@@ -76,6 +77,10 @@ hiện thay thế toàn bộ entry preset cùng app (schema 1).
 | `tone_style` | `"old" \| "new" \| null` | Ghi đè kiểu đặt dấu |
 | `spell_check` | bool \| null | Ghi đè kiểm tra chính tả |
 | `charset` | string \| null | Gợi ý bảng mã cho adapter |
+
+Preset mặc định giữ **Preedit** cho terminal/iTerm, Electron (VS Code, Slack,
+Discord, Notion) và Firefox vì các app này xử lý replace range không ổn định;
+các app còn lại theo `output_mode` toàn cục (mặc định Replace trên macOS).
 
 Ví dụ:
 

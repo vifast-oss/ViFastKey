@@ -2,6 +2,9 @@ import Foundation
 
 struct ConfigFile {
     static let bundleID = "app.vifastkey.inputmethod.ViFastKey"
+    /// `replace` = không gạch chân (mặc định, giống Android/Windows);
+    /// `preedit` = marked text có gạch chân của macOS.
+    static let defaultOutputMode = "replace"
 
     static var directory: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -14,6 +17,11 @@ struct ConfigFile {
 
     static func load() -> String? {
         try? String(contentsOf: path, encoding: .utf8)
+    }
+
+    static var outputMode: String {
+        let value = (loadDictionary()["output_mode"] as? String)?.lowercased()
+        return value == "preedit" ? "preedit" : defaultOutputMode
     }
 
     static func modificationDate() -> Date? {
@@ -58,6 +66,7 @@ struct ConfigFile {
               "edit_previous_word": true,
               "restore_after_space": true,
               "smart_caps": false,
+              "output_mode": "replace",
               "unicode_form": "NFC"
             }
             """

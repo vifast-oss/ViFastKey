@@ -167,7 +167,14 @@ fallback. Bản phát hành vẫn phải ký Developer ID + notarize (`package.s
   - Mở Input Sources.
 - Escape trả raw và **không** forward Esc.
 - Backspace xoá ký tự hiển thị, giữ dấu.
-- Preedit được IMK vẽ gạch chân; Enter/dấu cách/click/focus commit đúng.
+- Mặc định **Replace** (không gạch chân) giống Android/Windows; đổi trong
+  **Cấu hình → Chữ đang gõ** hoặc `"output_mode": "replace" | "preedit"` trong
+  file JSON. Replace commit thẳng bằng `insertText(replacementRange:)` (một range
+  UTF-16), không tạo marked text.
+- Terminal/iTerm, Electron (VS Code, Slack, Discord, Notion) và Firefox mặc định
+  Preedit vì replace range không ổn định; có thể override từng app bằng
+  `app_profiles`.
+- Preedit (khi bật) được IMK vẽ gạch chân; Enter/dấu cách/click/focus commit đúng.
 - Secure input/password: reset preedit và pass-through, không commit chữ vào field mật khẩu.
 
 ## Cấu hình

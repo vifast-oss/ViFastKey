@@ -47,14 +47,15 @@ struct VfkEnginePlan {
 final class VfkEngine {
     private var handle: OpaquePointer?
 
-    init(configJSON: String? = nil) {
+    /// `mode`: 0 = PREEDIT (marked text, có gạch chân), 1 = REPLACE (commit thẳng).
+    init(configJSON: String? = nil, mode: UInt32 = 0) {
         if let json = configJSON {
-            handle = json.withCString { vfk_session_new($0, 0) }
+            handle = json.withCString { vfk_session_new($0, mode) }
         } else {
-            handle = vfk_session_new(nil, 0)
+            handle = vfk_session_new(nil, mode)
         }
         if handle == nil {
-            handle = vfk_session_new(nil, 0)
+            handle = vfk_session_new(nil, mode)
         }
     }
 

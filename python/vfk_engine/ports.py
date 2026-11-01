@@ -55,12 +55,13 @@ DEFAULT_APP_PROFILES: dict[str, AppProfile] = {
     "brave": AppProfile(wait_ack=True, delay_per_char_ms=2),
     "msedge": AppProfile(wait_ack=True, delay_per_char_ms=2),
     # Firefox: surrounding text không tin cậy
-    "firefox": AppProfile(backspace_delay_ms=4, edit_previous_word=False),
-    # Electron
-    "code": AppProfile(backspace_delay_ms=3),
-    "slack": AppProfile(backspace_delay_ms=3),
-    "discord": AppProfile(backspace_delay_ms=3),
-    "notion": AppProfile(backspace_delay_ms=5),
+    "firefox": AppProfile(backspace_delay_ms=4, edit_previous_word=False,
+                          output_mode="preedit"),
+    # Electron: replace range không ổn định -> giữ preedit
+    "code": AppProfile(backspace_delay_ms=3, output_mode="preedit"),
+    "slack": AppProfile(backspace_delay_ms=3, output_mode="preedit"),
+    "discord": AppProfile(backspace_delay_ms=3, output_mode="preedit"),
+    "notion": AppProfile(backspace_delay_ms=5, output_mode="preedit"),
     # game
     "minecraft": AppProfile(vietnamese=False),
 }
