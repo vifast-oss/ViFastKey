@@ -212,6 +212,8 @@ Hướng dẫn mọi nền tảng: [`docs/INSTALL.md`](docs/INSTALL.md).
 - `python/EDGE_CASES.md` — tổng hợp edge case từ các dự án IME khác.
 - `rust/README.md` — kiến trúc crate, khác biệt có chủ đích, C ABI.
 - `docs/IME_FEATURE_RESEARCH.md` — tổng hợp 21 dự án IME, ma trận tính năng, quyết định.
+- `docs/ime-survey/` — khảo sát 31 IME (snapshot 2026-11-01), sổ tay kỹ thuật Areca
+  và so sánh với ViFastKey.
 - `docs/research/` — 8 báo cáo phân tích chi tiết (+ ViFastTts, Areca IME).
 - `docs/research/08-areca-ime.md` — bài học adapter Fcitx5 từ Areca: queue/barrier, backend,
   trust probe, timing/ACK, app compatibility.

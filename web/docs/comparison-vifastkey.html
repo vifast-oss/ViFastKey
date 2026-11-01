@@ -1,0 +1,1180 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ViFastKey so với 31 bộ gõ · ViFastKey</title>
+<meta name="description" content="So sánh theo 8 trục, scorecard, điểm mạnh/yếu và roadmap đề xuất cho ViFastKey.">
+<link rel="canonical" href="https://vifastkey.hoctuthien.com/docs/comparison-vifastkey.html">
+<meta name="theme-color" content="#FFF8EC">
+<link rel="icon" href="/brand/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="stylesheet" href="/docs/docs.css">
+<meta name="robots" content="noindex">
+</head>
+<body>
+<header class="doc-header">
+  <div class="inner">
+    <a class="brand" href="/" aria-label="ViFastKey — về trang chủ">
+      <img src="/brand/vifastkey-icon-192.png" alt="">
+      <span><span class="red">Vi</span><em>Fast</em><span class="red">Key</span> <span class="doc-suffix" style="font-weight:400;color:var(--muted)">· Tài liệu</span></span>
+    </a>
+    <nav class="doc-nav" aria-label="Tài liệu">
+      <a href="/">Trang chủ</a>
+      <a href="/docs/">Tài liệu</a>
+      <a href="/docs/areca-ime.html">Areca</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap">
+  <div class="crumbs"><a href="/">ViFastKey</a> / <a href="/docs/">Tài liệu</a> / ViFastKey so với 31 bộ gõ</div>
+  <article>
+<h1>ViFastKey so với 31 bộ gõ tiếng Việt</h1>
+<blockquote>
+<p>Snapshot 2026-11-01. Đây là so sánh <strong>kỹ thuật và sản phẩm</strong>, không phải
+benchmark. Điểm số (nếu có) là chủ quan, dựa trên đọc mã nguồn/tài liệu, không
+dựa trên đo tốc độ hay test app thật.</p>
+<p>ViFastKey <strong>chưa có trong tracker</strong> tại thời điểm này, nên không có stars/issue
+để so. Các nhận định về ViFastKey lấy từ <code>README.md</code>, <code>docs/PLATFORMS.md</code>,
+<code>docs/COMPATIBILITY.md</code>, <code>docs/CONFIG.md</code> và mã nguồn trong repo.</p>
+</blockquote>
+<hr>
+<h2>1. Tóm tắt cho người vội</h2>
+<ul>
+<li><strong>ViFastKey mạnh nhất ở tầng engine + kỷ luật kiểm thử.</strong> Không dự án nào
+trong 31 repo có oracle Python + conformance JSONL + port Rust đối chiếu
+100%. Đây là lợi thế khó copy.</li>
+<li><strong>ViFastKey yếu hơn ở tầng adapter Linux và phân phối.</strong> Areca, fcitx5-lotus
+và SKey có nhiều backend/fallback hơn; Areca/Lotus/SKey/OpenKey/Gõ Nhanh có
+gói cài và kênh phát hành hoàn chỉnh hơn.</li>
+<li><strong>ViFastKey rộng nhất về nền tảng.</strong> macOS + Windows + Linux (IBus/Fcitx5) +
+Android + iOS + Chrome + WASM + UEFI demo. Không dự án nào trong khảo sát có
+đủ bộ này.</li>
+<li><strong>ViFastKey ngang top về tính năng engine</strong> (4 kiểu gõ, 16 bảng mã, macro
+nhiều từ + undo, app profile, preedit/replace, gợi ý local).</li>
+<li><strong>ViFastKey thua top về UX tiện dụng</strong> (emoji picker, prediction, grammar,
+auto-update, ký/notarize) — những thứ không khó nhưng quyết định trải nghiệm.</li>
+</ul>
+<hr>
+<h2>2. ViFastKey là gì (và không là gì)</h2>
+<p><strong>Là:</strong></p>
+<ul>
+<li>Một <strong>đặc tả hành vi chạy được</strong>: Python là oracle, Rust là port phải qua
+100% <code>conformance/*.jsonl</code> (13.345 core + 3.000 engine tại snapshot).</li>
+<li>Một <strong>engine thuần</strong> trả <code>Action</code> (Pass/Preedit/Replace/Commit), không tự
+gửi phím, không tự vẽ UI.</li>
+<li>Một <strong>bộ adapter</strong> cho 8 đích: macOS IMK, Windows hook, Linux IBus, Linux
+Fcitx5, Android IME, iOS keyboard, Chrome MV3, UEFI demo.</li>
+<li>Một <strong>bộ công cụ</strong>: CLI, charset converter, suggest, emoji, settings egui,
+WASM playground.</li>
+</ul>
+<p><strong>Không là:</strong></p>
+<ul>
+<li>Không phải bộ gõ &quot;cài là chạy&quot; trên Linux: chưa có <code>.deb</code>/<code>.rpm</code>/AUR.</li>
+<li>Không phải bản macOS đã ký/notarize: cần Developer ID.</li>
+<li>Không phải TSF trên Windows: hiện là hook-only.</li>
+<li>Không có backend uinput/Libei/XTest trên Linux.</li>
+<li>Không có emoji picker/prediction/grammar như Lotus/TextVN/Funput.</li>
+</ul>
+<hr>
+<h2>3. Ma trận năng lực (nhóm tiêu biểu)</h2>
+<p>Ký hiệu: ✅ mạnh · ◐ có nhưng chưa chín/giới hạn · — không có · 🔌 thuộc OS.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Năng lực</th>
+<th>ViFastKey</th>
+<th>Areca</th>
+<th>Lotus</th>
+<th>SKey</th>
+<th>ibus-bamboo</th>
+<th>OpenKey</th>
+<th>Gõ Nhanh</th>
+<th>TextVN</th>
+<th>Funput</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Telex / VNI</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>VIQR</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>◐</td>
+<td>✅</td>
+<td>—</td>
+<td>—</td>
+<td>✅</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Simple Telex</td>
+<td>✅</td>
+<td>◐</td>
+<td>✅</td>
+<td>◐</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Bảng mã legacy</td>
+<td>16</td>
+<td>~17 (bamboo)</td>
+<td>17</td>
+<td>14</td>
+<td>17</td>
+<td>6+</td>
+<td>1</td>
+<td>4</td>
+<td>◐</td>
+</tr>
+<tr>
+<td>Spell check 3 trạng thái</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Macro nhiều từ</td>
+<td>✅</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+</tr>
+<tr>
+<td>Macro undo 1 phím</td>
+<td>✅</td>
+<td>✅</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+</tr>
+<tr>
+<td>App profile (method/tone/spell)</td>
+<td>✅</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Preedit</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>◐</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Direct rewrite</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Fallback đa backend (Linux)</td>
+<td>◐</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>—</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+</tr>
+<tr>
+<td>Trust probe surrounding</td>
+<td>◐</td>
+<td>✅</td>
+<td>◐</td>
+<td>◐</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>◐</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Transaction barrier</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>◐</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>◐</td>
+<td>◐</td>
+</tr>
+<tr>
+<td>Emoji picker</td>
+<td>—</td>
+<td>—</td>
+<td>✅</td>
+<td>—</td>
+<td>✅</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Gợi ý từ (local)</td>
+<td>✅</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Prediction câu</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Grammar assistant</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>◐</td>
+<td>—</td>
+<td>✅</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Chuyển mã clipboard/file</td>
+<td>✅ CLI</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>✅</td>
+<td>—</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>macOS native</td>
+<td>✅ IMK</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Windows native</td>
+<td>◐ hook</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>✅</td>
+<td>◐ beta</td>
+<td>✅ TSF</td>
+<td>✅ TSF</td>
+</tr>
+<tr>
+<td>Linux Fcitx5</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>—</td>
+<td>◐</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Linux IBus</td>
+<td>✅</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>✅</td>
+<td>—</td>
+<td>—</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Android / iOS</td>
+<td>✅ / ✅</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Web / WASM</td>
+<td>✅</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>UEFI demo</td>
+<td>✅</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>GUI cấu hình</td>
+<td>✅ AppKit + egui</td>
+<td>✅ ImGui</td>
+<td>✅ Qt/Py</td>
+<td>✅ Qt6</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Packaging đa distro</td>
+<td>—</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>◐</td>
+</tr>
+<tr>
+<td>Ký/notarize/auto-update</td>
+<td>—</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+<td>◐</td>
+<td>✅</td>
+<td>✅</td>
+<td>◐</td>
+<td>◐</td>
+</tr>
+<tr>
+<td>Test adapter tự động</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>◐</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Conformance corpus</td>
+<td>✅ 16k+</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>License</td>
+<td>MIT</td>
+<td>MIT</td>
+<td>GPL-3.0</td>
+<td>GPL-3.0</td>
+<td>GPL-3.0</td>
+<td>GPL-3.0</td>
+<td>BSD-3</td>
+<td>GPL-3.0</td>
+<td>MIT</td>
+</tr>
+</tbody></table></div>
+<p>Ghi chú:</p>
+<ul>
+<li>&quot;Bảng mã legacy&quot; đếm theo tài liệu; một số dự án chỉ hỗ trợ Unicode.</li>
+<li>&quot;Trust probe&quot; = chờ bằng chứng app đã xóa trước khi commit; Areca đầy đủ
+nhất, ViFastKey có guard nhưng không probe ACK.</li>
+<li>&quot;Test adapter&quot; = test bằng InputContext/TestFrontend giả lập, không cần GUI.</li>
+</ul>
+<hr>
+<h2>4. So sánh theo tám trục</h2>
+<h3>4.1 Độ đúng của engine</h3>
+<p><strong>Ai dẫn:</strong> ViFastKey, Gõ Nhanh, telebit, OpenKey.</p>
+<ul>
+<li>ViFastKey có mô hình âm tiết CVC 3 trạng thái, đặt thanh, <code>allow_coda_k</code>,
+<code>đ</code> viết tắt, VNI literal number, sticky restore, open <code>uơ/ươ</code> theo âm đầu.
+Hành vi được ghi thành hợp đồng trong <code>COMPATIBILITY.md</code>.</li>
+<li>Gõ Nhanh dùng <strong>validation-first</strong>: kiểm tra âm tiết trước khi biến đổi, nên
+không &quot;cướp&quot; từ tiếng Anh. Đây là cách tiếp cận khác, rất tốt cho người gõ
+Anh nhiều.</li>
+<li>telebit <strong>rebuild âm tiết</strong> (initial + rime + tone) rồi validate — gần với
+cách ViFastKey làm.</li>
+<li>OpenKey có nhiều năm edge case thực tế, nhưng ít tài liệu.</li>
+</ul>
+<p><strong>Kết luận:</strong> ViFastKey ngang top về độ phủ; Gõ Nhanh/telebit có triết lý khác
+đáng học. Không ai vượt trội tuyệt đối.</p>
+<h3>4.2 Kiểm thử và đặc tả</h3>
+<p><strong>Ai dẫn:</strong> ViFastKey (rõ ràng), sau đó TextVN/Areca/Lotus.</p>
+<ul>
+<li>ViFastKey: 676 test Python, 16k+ ca conformance, adapter-conformance dùng
+chung cho mọi port, golden/corpus. Đây là mức kỷ luật hiếm thấy trong toàn
+bộ khảo sát.</li>
+<li>TextVN: 230+ replay scenario, 190+ assistant test, adapter simulator 3 OS.</li>
+<li>Areca: 22 CTest adapter, fake InputContext — tốt nhất về <strong>hành vi adapter</strong>.</li>
+<li>Lotus: 57 test headless, golden files, CI nặng.</li>
+<li>ibus-bamboo/OpenKey: nhiều người dùng nhưng test tự động ít.</li>
+</ul>
+<p><strong>Kết luận:</strong> ViFastKey dẫn về test engine/đặc tả; Areca/Lotus dẫn về test
+adapter. Hai loại test khác nhau, không thay thế nhau.</p>
+<h3>4.3 Adapter Linux</h3>
+<p><strong>Ai dẫn:</strong> Areca, fcitx5-lotus, SKey.</p>
+<ul>
+<li>Areca: 6 backend, trust probe, adaptive wait, mouse tracker, app
+compatibility, preedit/replace/redirect.</li>
+<li>Lotus: 3 chế độ uinput + surrounding + preedit, app rules có delay riêng,
+emoji picker.</li>
+<li>SKey: 5 output mode, per-app, Qt6.</li>
+<li>ViFastKey: preedit mặc định + surrounding guard + transaction barrier +
+field policy + AppProfile timing. Đủ cho P0 nhưng <strong>không có fallback</strong> khi
+app không xử lý surrounding, không uinput/native, không browser/address bar.</li>
+<li>pinakey công bố rõ no-underline thất bại ở terminal/LibreOffice/GNOME
+Wayland — điều ViFastKey cũng sẽ gặp nếu mở rộng direct rewrite.</li>
+</ul>
+<p><strong>Kết luận:</strong> ViFastKey đã thu hẹp khoảng cách sau đợt học Areca, nhưng vẫn
+xếp sau 3 dự án trên về độ sâu adapter.</p>
+<h3>4.4 macOS</h3>
+<p><strong>Ai dẫn:</strong> OpenKey, Gõ Nhanh.</p>
+<ul>
+<li>OpenKey: lâu năm, menu bar chín, auto-update, convert tool, nhớ charset theo
+app.</li>
+<li>Gõ Nhanh: sản phẩm hoá tốt, auto-restore tiếng Anh, ESC khôi phục, nhớ
+ON/OFF theo app, Homebrew, notarize (theo mô tả sản phẩm).</li>
+<li>ViFastKey: IMK thật, universal2, menu Telex/VNI, macro undo, app profile;
+<strong>chưa ký/notarize</strong>, chưa có event-tap fallback.</li>
+<li>VieLotus: native Swift, nhiều store, nhưng core đóng.</li>
+</ul>
+<p><strong>Kết luận:</strong> ViFastKey đủ dùng về kỹ thuật nhưng thua về độ chín sản phẩm
+(signing, auto-update, UX). Nếu phát hành cho người dùng phổ thông, đây là
+việc P0.</p>
+<h3>4.5 Windows</h3>
+<p><strong>Ai dẫn:</strong> TextVN, OpenKey, BambooMintKey (TSF); ViFastKey ở nhóm hook-only.</p>
+<ul>
+<li>TextVN: TSF in-process, MS Store, grammar, prediction; nhiều tính năng nhất.</li>
+<li>OpenKey: hook + SendInput, ổn định, auto-update.</li>
+<li>BambooMintKey: TSF in-process COM, không inject key — kiến trúc đúng.</li>
+<li>ViFastKey: hook-only một binary, HKL EN-US, VI/JP pass-through, tray; TSF
+legacy không đóng gói.</li>
+<li>Gõ Nhanh: beta.</li>
+</ul>
+<p><strong>Kết luận:</strong> ViFastKey chọn hook-only để tránh cài đặt/phức tạp — đúng cho
+bản portable, nhưng thua TSF về độ tương thích app hiện đại. Nếu muốn Windows
+nghiêm túc, cần TSF hoặc giải thích rõ giới hạn hook.</p>
+<h3>4.6 Tính năng người dùng</h3>
+<p><strong>Ai dẫn:</strong> Lotus, ibus-bamboo, TextVN, OpenKey.</p>
+<ul>
+<li>Lotus: 7 mode, 8 kiểu gõ, 17 charset, emoji picker, macro <code>$DATE</code>, double
+space → period, custom dict/keymap.</li>
+<li>ibus-bamboo: 2666 emoji, 5 mode không gạch chân, nhiều charset.</li>
+<li>TextVN: grammar assistant, prediction, transcode vùng bôi đen.</li>
+<li>OpenKey: convert tool, nhớ charset theo app, gõ tắt phụ âm.</li>
+<li>Funput: gợi ý trigram/context, flip composing.</li>
+<li>ViFastKey: 4 kiểu gõ, 16 charset, macro nhiều từ + undo + digits, app
+profile, gợi ý từ/emoji local, charset CLI. <strong>Thiếu</strong> emoji picker trong IME
+desktop, prediction, grammar.</li>
+</ul>
+<p><strong>Kết luận:</strong> ViFastKey đủ cho người dùng kỹ thuật, thiếu &quot;delight&quot; cho người
+dùng phổ thông.</p>
+<h3>4.7 UX và cấu hình</h3>
+<p><strong>Ai dẫn:</strong> OpenKey, Gõ Nhanh, Areca, Lotus, SKey.</p>
+<ul>
+<li>Areca: 5 tab, 9 theme, menu chọn backend theo app, preset &quot;Best performance&quot;.</li>
+<li>SKey/Lotus: Qt6/Python GUI, mode menu bằng backtick.</li>
+<li>OpenKey: menu bar + control panel rất chín.</li>
+<li>ViFastKey: macOS AppKit + egui 6 tab (Windows/Linux), tray, import/export,
+screenshots; nhưng chưa có trên Linux dưới dạng gói, và chưa có mode menu
+kiểu Areca/SKey.</li>
+</ul>
+<p><strong>Kết luận:</strong> ViFastKey ngang về năng lực cấu hình, thua về độ hoàn thiện
+trình bày và discoverability.</p>
+<h3>4.8 Phân phối và vận hành</h3>
+<p><strong>Ai dẫn:</strong> Areca, Lotus, SKey, OpenKey, Gõ Nhanh, TextVN.</p>
+<ul>
+<li>Areca: installer tự nhận distro, .deb/.rpm/pacman/AUR, udev, CI matrix đa distro.</li>
+<li>Lotus/SKey: PPA/repo riêng, Nix, packaging.</li>
+<li>OpenKey/Gõ Nhanh: auto-update, Homebrew, store.</li>
+<li>TextVN: 60 release, MS Store, AUR, PPA, ký GPG/Sigstore.</li>
+<li>ViFastKey: web download, Windows zip, macOS package; <strong>chưa có repo Linux,
+chưa auto-update, chưa ký</strong>.</li>
+</ul>
+<p><strong>Kết luận:</strong> đây là khoảng cách lớn nhất giữa ViFastKey và top sản phẩm.</p>
+<hr>
+<h2>5. So sánh trực tiếp với sáu đối thủ chính</h2>
+<h3>5.1 ViFastKey vs Areca</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Trục</th>
+<th>ViFastKey</th>
+<th>Areca</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Engine</td>
+<td>Riêng, 4 kiểu gõ, 16 charset, conformance</td>
+<td>bamboo-core, Telex/VNI/VIQR</td>
+</tr>
+<tr>
+<td>Test</td>
+<td>16k+ conformance + 676 test + adapter</td>
+<td>22 CTest adapter</td>
+</tr>
+<tr>
+<td>Adapter Linux</td>
+<td>Preedit + surrounding + barrier</td>
+<td>6 backend + probe + adaptive</td>
+</tr>
+<tr>
+<td>Preedit mặc định</td>
+<td>✅</td>
+<td>❌ (Rewrite mặc định)</td>
+</tr>
+<tr>
+<td>Direct rewrite</td>
+<td>Chỉ khi Replace</td>
+<td>Mặc định</td>
+</tr>
+<tr>
+<td>App compatibility</td>
+<td>Capability + preset nhỏ</td>
+<td>Danh sách hàng trăm app</td>
+</tr>
+<tr>
+<td>Packaging</td>
+<td>Chưa</td>
+<td>Đầy đủ</td>
+</tr>
+<tr>
+<td>License</td>
+<td>MIT</td>
+<td>MIT</td>
+</tr>
+</tbody></table></div>
+<p><strong>Kết luận:</strong> Areca là <strong>playbook adapter</strong>; ViFastKey là <strong>playbook engine +
+đặc tả</strong>. Hai dự án bổ sung nhau. Nếu ViFastKey muốn vượt Areca trên Linux,
+phải làm fallback backend + trust probe + test app thật, không phải viết lại
+engine.</p>
+<h3>5.2 ViFastKey vs fcitx5-lotus</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Trục</th>
+<th>ViFastKey</th>
+<th>Lotus</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Tính năng người dùng</td>
+<td>Đủ</td>
+<td>Rất nhiều (7 mode, emoji, 17 charset)</td>
+</tr>
+<tr>
+<td>Mode</td>
+<td>Preedit/Replace</td>
+<td>3 uinput + surrounding + preedit + emoji</td>
+</tr>
+<tr>
+<td>Test</td>
+<td>Engine nặng, adapter vừa</td>
+<td>57 headless, adapter + golden</td>
+</tr>
+<tr>
+<td>UX</td>
+<td>egui 6 tab</td>
+<td>Qt/Python, emoji picker</td>
+</tr>
+<tr>
+<td>Engine</td>
+<td>Riêng</td>
+<td>C++ port bamboo-core</td>
+</tr>
+<tr>
+<td>License</td>
+<td>MIT</td>
+<td>GPL-3.0</td>
+</tr>
+</tbody></table></div>
+<p><strong>Kết luận:</strong> Lotus thắng về trải nghiệm và số mode; ViFastKey thắng về tính
+đúng engine, đặc tả và license. Nếu người dùng Linux muốn &quot;nhiều tính năng&quot;,
+Lotus là lựa chọn; nếu muốn &quot;engine đúng, adapter an toàn&quot;, ViFastKey có nền
+tốt hơn nhưng phải hoàn thiện adapter.</p>
+<h3>5.3 ViFastKey vs SKey</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Trục</th>
+<th>ViFastKey</th>
+<th>SKey</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Engine</td>
+<td>Riêng, 16 charset</td>
+<td>Rust stateless, 14 charset</td>
+</tr>
+<tr>
+<td>Output mode</td>
+<td>2</td>
+<td>5</td>
+</tr>
+<tr>
+<td>GUI</td>
+<td>egui</td>
+<td>Qt6</td>
+</tr>
+<tr>
+<td>Test</td>
+<td>16k+ conformance</td>
+<td>8 file CTest + setup test</td>
+</tr>
+<tr>
+<td>Packaging</td>
+<td>Chưa</td>
+<td>PPA/Fedora/openSUSE/Arch/Nix</td>
+</tr>
+<tr>
+<td>License</td>
+<td>MIT</td>
+<td>GPL-3.0</td>
+</tr>
+</tbody></table></div>
+<p><strong>Kết luận:</strong> SKey là &quot;Areca nhẹ&quot;: ít tham vọng hơn nhưng đủ mode và đóng gói
+tốt. ViFastKey hơn về engine/test; thua về mode và phân phối.</p>
+<h3>5.4 ViFastKey vs ibus-bamboo</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Trục</th>
+<th>ViFastKey</th>
+<th>ibus-bamboo</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Framework</td>
+<td>Fcitx5 + IBus</td>
+<td>IBus</td>
+</tr>
+<tr>
+<td>Tính năng</td>
+<td>Đủ, hiện đại</td>
+<td>Rất nhiều (emoji, 5 mode)</td>
+</tr>
+<tr>
+<td>Bảo trì</td>
+<td>Đang phát triển</td>
+<td>Đình trệ</td>
+</tr>
+<tr>
+<td>Test</td>
+<td>Mạnh</td>
+<td>Yếu</td>
+</tr>
+<tr>
+<td>Engine</td>
+<td>Riêng</td>
+<td>bamboo-core</td>
+</tr>
+</tbody></table></div>
+<p><strong>Kết luận:</strong> ibus-bamboo vẫn là lựa chọn GNOME phổ biến vì quen và nhiều
+tính năng, nhưng tương lai không sáng. ViFastKey có thể thay thế nếu adapter
+IBus được test kỹ trên Wayland.</p>
+<h3>5.5 ViFastKey vs OpenKey</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Trục</th>
+<th>ViFastKey</th>
+<th>OpenKey</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>macOS</td>
+<td>IMK, chưa ký</td>
+<td>Chín, auto-update</td>
+</tr>
+<tr>
+<td>Windows</td>
+<td>Hook-only</td>
+<td>Hook + SendInput</td>
+</tr>
+<tr>
+<td>Linux</td>
+<td>Fcitx5/IBus</td>
+<td>Chưa hoàn thiện</td>
+</tr>
+<tr>
+<td>Tính năng</td>
+<td>Charset/CLI/test</td>
+<td>Convert tool, per-app charset</td>
+</tr>
+<tr>
+<td>License</td>
+<td>MIT</td>
+<td>GPL-3.0</td>
+</tr>
+</tbody></table></div>
+<p><strong>Kết luận:</strong> OpenKey thắng tuyệt đối về độ chín macOS. ViFastKey thắng về
+engine/test/đa nền tảng. Trên macOS, người dùng phổ thông nên chọn OpenKey/Gõ
+Nhanh; người cần charset/CLI có thể chọn ViFastKey.</p>
+<h3>5.6 ViFastKey vs Gõ Nhanh</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Trục</th>
+<th>ViFastKey</th>
+<th>Gõ Nhanh</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Engine</td>
+<td>4 kiểu gõ, 16 charset, 3 trạng thái</td>
+<td>Validation-first, auto-restore</td>
+</tr>
+<tr>
+<td>Auto-restore tiếng Anh</td>
+<td>Escape Telex, không dictionary</td>
+<td>✅ tự động + ESC</td>
+</tr>
+<tr>
+<td>macOS UX</td>
+<td>IMK cơ bản</td>
+<td>Sản phẩm hoàn thiện</td>
+</tr>
+<tr>
+<td>Windows/Linux</td>
+<td>Hook / Fcitx5+IBus</td>
+<td>Beta</td>
+</tr>
+<tr>
+<td>Test</td>
+<td>16k+ conformance</td>
+<td>Test + CI, ít conformance</td>
+</tr>
+<tr>
+<td>License</td>
+<td>MIT</td>
+<td>BSD-3</td>
+</tr>
+</tbody></table></div>
+<p><strong>Kết luận:</strong> Gõ Nhanh thắng về trải nghiệm gõ Anh/Việt và macOS; ViFastKey
+thắng về độ phủ tiếng Việt, charset và đa nền tảng. Đây là đối thủ gần nhất
+về triết lý &quot;engine tốt + sản phẩm gọn&quot;.</p>
+<h3>5.7 Các dự án khác đáng chú ý</h3>
+<ul>
+<li><strong>TextVN:</strong> nhiều tính năng nhất (grammar, prediction, transcode), nhưng
+nặng và RC. Nếu ViFastKey muốn mở rộng tính năng, đây là bản đồ.</li>
+<li><strong>Funput:</strong> kiến trúc crate sạch nhất; đáng học cách tách pure/stateful và
+gợi ý local.</li>
+<li><strong>telebit:</strong> thuật toán rebuild âm tiết + doctor; đáng học nếu cải thiện
+engine.</li>
+<li><strong>CanType:</strong> invariant rõ; đáng học cách viết hợp đồng trước khi code.</li>
+<li><strong>pinakey:</strong> trung thực về giới hạn no-underline; đáng học cách công bố
+failure mode.</li>
+</ul>
+<hr>
+<h2>6. Scorecard (chủ quan)</h2>
+<p>Thang 1–5. Điểm dựa trên đọc code/docs, <strong>không</strong> phải đo thực tế. Dùng để
+thấy hình dạng, không để tranh cãi điểm lẻ.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Dự án</th>
+<th align="right">Engine</th>
+<th align="right">Test</th>
+<th align="right">Linux adapter</th>
+<th align="right">macOS</th>
+<th align="right">Windows</th>
+<th align="right">Tính năng</th>
+<th align="right">UX</th>
+<th align="right">Phân phối</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>ViFastKey</strong></td>
+<td align="right">5</td>
+<td align="right">5</td>
+<td align="right">3.5</td>
+<td align="right">3.5</td>
+<td align="right">3.5</td>
+<td align="right">4</td>
+<td align="right">3.5</td>
+<td align="right">2.5</td>
+</tr>
+<tr>
+<td>Areca</td>
+<td align="right">3.5</td>
+<td align="right">4</td>
+<td align="right">5</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">3.5</td>
+<td align="right">4.5</td>
+<td align="right">4.5</td>
+</tr>
+<tr>
+<td>fcitx5-lotus</td>
+<td align="right">4.5</td>
+<td align="right">4</td>
+<td align="right">5</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">5</td>
+<td align="right">4.5</td>
+<td align="right">4.5</td>
+</tr>
+<tr>
+<td>SKey</td>
+<td align="right">4</td>
+<td align="right">4</td>
+<td align="right">4.5</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">3.5</td>
+<td align="right">4.5</td>
+<td align="right">4.5</td>
+</tr>
+<tr>
+<td>ibus-bamboo</td>
+<td align="right">4</td>
+<td align="right">2</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">5</td>
+<td align="right">4</td>
+<td align="right">3.5</td>
+</tr>
+<tr>
+<td>OpenKey</td>
+<td align="right">4.5</td>
+<td align="right">2</td>
+<td align="right">2</td>
+<td align="right">5</td>
+<td align="right">4</td>
+<td align="right">4.5</td>
+<td align="right">5</td>
+<td align="right">4</td>
+</tr>
+<tr>
+<td>Gõ Nhanh</td>
+<td align="right">4</td>
+<td align="right">4</td>
+<td align="right">3.5</td>
+<td align="right">5</td>
+<td align="right">3</td>
+<td align="right">4</td>
+<td align="right">5</td>
+<td align="right">4.5</td>
+</tr>
+<tr>
+<td>TextVN</td>
+<td align="right">4</td>
+<td align="right">4.5</td>
+<td align="right">3.5</td>
+<td align="right">4</td>
+<td align="right">4.5</td>
+<td align="right">5</td>
+<td align="right">3</td>
+<td align="right">4</td>
+</tr>
+<tr>
+<td>Funput</td>
+<td align="right">4</td>
+<td align="right">4</td>
+<td align="right">3.5</td>
+<td align="right">3</td>
+<td align="right">3</td>
+<td align="right">4</td>
+<td align="right">3.5</td>
+<td align="right">2.5</td>
+</tr>
+</tbody></table></div>
+<p><strong>Đọc bảng:</strong></p>
+<ul>
+<li>ViFastKey có cột <strong>Engine/Test</strong> cao nhất và cột <strong>Phân phối</strong> thấp nhất.</li>
+<li>Không dự án nào có tất cả cột cao. Đây là lý do hệ sinh thái vẫn phân mảnh.</li>
+<li>Nếu mục tiêu là &quot;sản phẩm cho người dùng phổ thông&quot;, Gõ Nhanh/OpenKey/Lotus
+đang dẫn. Nếu mục tiêu là &quot;nền tảng kỹ thuật đúng&quot;, ViFastKey dẫn.</li>
+</ul>
+<hr>
+<h2>7. ViFastKey mạnh / yếu / ngang (tóm tắt)</h2>
+<h3>Mạnh hơn tất cả</h3>
+<ol>
+<li><strong>Oracle + conformance</strong>: không ai có.</li>
+<li><strong>Đặc tả hành vi</strong>: <code>COMPATIBILITY.md</code> chi tiết đến mức kỳ lạ (theo nghĩa
+tốt).</li>
+<li><strong>Bảng mã + CLI chuyển mã</strong>: 16 charset, encode/decode, detect.</li>
+<li><strong>Đa nền tảng thật</strong>: 8 đích, cùng một engine.</li>
+<li><strong>Adapter-core dùng chung</strong>: field policy, surrounding guard, action plan,
+timing — một lần viết, nhiều port.</li>
+<li><strong>License MIT</strong> trong khi đa số đối thủ GPL.</li>
+<li><strong>UEFI demo</strong>: duy nhất trong khảo sát.</li>
+</ol>
+<h3>Ngang top</h3>
+<ol>
+<li><strong>Engine Telex/VNI/VIQR + chính tả 3 trạng thái</strong>.</li>
+<li><strong>Macro</strong> (nhiều từ, undo, digits, off-mode).</li>
+<li><strong>App profile</strong> (method/tone/spell).</li>
+<li><strong>Preedit/replace + surrounding guard</strong>.</li>
+<li><strong>Test adapter</strong> (ngang Areca/Lotus, hơn phần còn lại).</li>
+</ol>
+<h3>Yếu hơn top</h3>
+<ol>
+<li><strong>Fallback backend Linux</strong> (Areca/Lotus/SKey hơn).</li>
+<li><strong>Trust probe ACK</strong> (Areca hơn).</li>
+<li><strong>uinput/Libei/XTest</strong> (Areca/Lotus/SKey hơn).</li>
+<li><strong>Browser/address bar heuristics</strong> (Areca/SKey hơn).</li>
+<li><strong>Finalized-word recovery</strong> (Areca hơn).</li>
+<li><strong>Adaptive wait</strong> (Areca/Lotus hơn).</li>
+<li><strong>Emoji picker</strong> (Lotus/ibus-bamboo hơn).</li>
+<li><strong>Prediction/grammar</strong> (TextVN/Funput hơn).</li>
+<li><strong>Packaging Linux</strong> (Areca/Lotus/SKey hơn).</li>
+<li><strong>Ký/notarize/auto-update</strong> (OpenKey/Gõ Nhanh/TextVN hơn).</li>
+<li><strong>UX macOS</strong> (OpenKey/Gõ Nhanh hơn).</li>
+<li><strong>TSF Windows</strong> (TextVN/BambooMintKey/OpenKey hơn).</li>
+</ol>
+<hr>
+<h2>8. Khoảng trống và roadmap đề xuất</h2>
+<h3>P0 — trước khi nói &quot;dùng được cho người thật&quot;</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Việc</th>
+<th>Vì sao</th>
+<th>Tiêu chí</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>Ký + notarize macOS, stable signing</td>
+<td>Gatekeeper/TCC; không ký thì người dùng không mở được</td>
+<td>Cài trên máy sạch, không cảnh báo</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Gói Linux <code>.deb</code>/<code>.rpm</code>/AUR + repo</td>
+<td>Người dùng Linux không cài từ source</td>
+<td><code>apt install</code> chạy, có gỡ sạch</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Fallback backend Fcitx5</td>
+<td>App không nhận surrounding sẽ mất chữ</td>
+<td>Có ít nhất Preedit fallback + ForwardBackspace</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Test app thật (Chrome, LibreOffice, terminal, VS Code)</td>
+<td>Test giả lập không bắt được frontend</td>
+<td>Checklist app + log</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Auto-update hoặc thông báo phiên bản</td>
+<td>Người dùng không tự cập nhật</td>
+<td>Có cơ chế check/update</td>
+</tr>
+</tbody></table></div>
+<h3>P1 — để ngang top</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Việc</th>
+<th>Học từ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>6</td>
+<td>Trust probe surrounding + cache verdict</td>
+<td>Areca</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Browser/address bar guard</td>
+<td>Areca/SKey</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Finalized-word recovery</td>
+<td>Areca</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Emoji picker + gợi ý trong IME desktop</td>
+<td>Lotus/ibus-bamboo</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Chuyển mã GUI (không chỉ CLI)</td>
+<td>OpenKey/SKey</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Doctor script (<code>vfk-doctor</code>)</td>
+<td>Areca/telebit</td>
+</tr>
+<tr>
+<td>12</td>
+<td>macOS event-tap fallback</td>
+<td>OpenKey/Gõ Nhanh</td>
+</tr>
+</tbody></table></div>
+<h3>P2 — khác biệt hoá</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>Việc</th>
+<th>Học từ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>13</td>
+<td>Auto-restore tiếng Anh thông minh</td>
+<td>Gõ Nhanh</td>
+</tr>
+<tr>
+<td>14</td>
+<td>Prediction/grammar local</td>
+<td>TextVN/Funput</td>
+</tr>
+<tr>
+<td>15</td>
+<td>&quot;Cứu chữ&quot;/&quot;Cứu dấu&quot;</td>
+<td>Ngó Sen</td>
+</tr>
+<tr>
+<td>16</td>
+<td>Adaptive wait theo app</td>
+<td>Areca/lilypad</td>
+</tr>
+<tr>
+<td>17</td>
+<td>uinput/Libei opt-in</td>
+<td>Areca/SKey</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2>9. Kết luận</h2>
+<ol>
+<li><strong>ViFastKey không thua ở đâu về kỹ thuật nền.</strong> Engine, test, đặc tả, đa
+nền tảng, license — đều ngang hoặc hơn top.</li>
+<li><strong>ViFastKey thua ở tầng &quot;sản phẩm&quot;</strong>: cài đặt, ký, auto-update, UX tiện
+dụng, và độ sâu adapter Linux. Đây là những việc không khó về ý tưởng nhưng
+tốn thời gian và cần test thật.</li>
+<li><strong>Đừng cố thắng mọi trục.</strong> Areca thắng adapter, Lotus thắng tính năng,
+OpenKey/Gõ Nhanh thắng macOS. ViFastKey nên giữ lợi thế <strong>engine đúng +
+conformance + MIT + đa nền tảng</strong>, rồi chọn 2–3 trục để đuổi:
+Linux fallback, macOS signing, packaging.</li>
+<li><strong>Học Areca ở adapter, không học ở engine.</strong> Engine ViFastKey đã có nhiều
+edge case mà bamboo-core không có (<code>allow_coda_k</code>, <code>đ</code> viết tắt, VNI literal
+number, open <code>uơ/ươ</code>); bê nguyên Areca sẽ làm chậm và phình.</li>
+<li><strong>Học Gõ Nhanh ở UX, không học ở engine.</strong> Auto-restore/ESC là thứ người
+dùng cảm nhận ngay; nhưng validation-first của họ không thay thế được mô
+hình âm tiết của ViFastKey.</li>
+</ol>
+<hr>
+<h2>10. Nguồn</h2>
+<ul>
+<li><a href="survey-all-imes.html"><code>survey-all-imes.md</code></a> — phân tích 31 repo.</li>
+<li><a href="areca-ime.html"><code>areca-ime.md</code></a> — sổ tay Areca.</li>
+<li>ViFastKey: <code>README.md</code>, <code>docs/PLATFORMS.md</code>, <code>docs/COMPATIBILITY.md</code>,
+<code>docs/CONFIG.md</code>, <code>docs/IME_FEATURE_RESEARCH.md</code>, <code>docs/research/</code>,
+<code>linux/fcitx5/README.md</code>, <code>rust/crates/vfk-ffi/include/vifastkey.h</code>.</li>
+<li>Tracker: <a href="https://hthienloc.github.io/vietnamese-ime-tracker">https://hthienloc.github.io/vietnamese-ime-tracker</a>.</li>
+</ul>
+
+  </article>
+</div>
+<footer class="doc-footer"><div class="wrap">ViFastKey · tài liệu kỹ thuật · cập nhật 2026-11-01</div></footer>
+</body>
+</html>

@@ -1,0 +1,32 @@
+name,repo,platform,framework,language,license,stars,created,last_commit,status,engine,integration,highlights,limits
+ibus-bamboo,https://github.com/BambooEngine/ibus-bamboo,Linux,IBus,Go,GPL-3.0,1508,2018-09-24,2026-07-03,Active,bamboo-core,IBus engine,"5 chế độ gõ, 2666 emoji, 17 bảng mã","đình trệ, Wayland IBus yếu"
+OpenKey,https://github.com/tuyenvm/OpenKey,macOS/Windows/Linux,Native,C++,GPL-3.0,969,2019-02-01,2026-06-15,Active,own,IMK + hook + Linux,"auto-update, convert tool, nhớ charset theo app","149 issue, Linux chưa xong"
+Gõ Nhanh,https://github.com/khaphanspace/gonhanh.org,macOS/Linux/Windows,Native + Fcitx5,Rust,BSD-3-Clause,772,2025-12-06,2026-10-29,Active,own (validation-first),CGEventTap / WH_KEYBOARD_LL / Fcitx5,"auto-restore EN, ESC, nhớ ON/OFF theo app",Windows/Linux beta
+fcitx5-lotus,https://github.com/LotusInputMethod/fcitx5-lotus,Linux,Fcitx5,C++,GPL-3.0,522,2026-02-17,2026-10-28,Active,C++ port bamboo-core (từ VMK),Fcitx5 + uinput server,"7 mode, 17 bảng mã, emoji, app rules",uinput/ACL phức tạp
+fcitx5-unikey,https://github.com/fcitx/fcitx5-unikey,Linux,Fcitx5,C++,GPL-2.0+,130,2019-10-22,2026-09-06,Active,unikey-lib (x-unikey),Fcitx5 addon,"8 bảng mã, preedit styles, test table","UX cũ, ít tính năng"
+Unikey-Wayland,https://github.com/ubuntu2310fake/Unikey-Wayland,Linux,Standalone Wayland,C++/Makefile,GPL-3.0,101,2026-07-07,2026-10-01,Active,own keycode (v3),kernel module + XKB,"ring-0, mọi app","/dev/ukw 0666, root daemon"
+VMK,https://github.com/thanhpy2009/VMK,Linux,Fcitx5,C++,GPL-3.0,101,2026-01-02,2026-09-20,Active,bamboo-core,Fcitx5 + uinput server,"4 mode, chạy Wine/IDE","alpha, không CI"
+fcitx5-bamboo,https://github.com/fcitx/fcitx5-bamboo,Linux,Fcitx5,C++,LGPL-2.1+,76,2022-06-04,2026-09-06,Active,bamboo-core,Fcitx5 addon,"17 bảng mã, spell dict",preedit only
+vietc,https://github.com/vndangkhoa/vietc,Linux,Standalone Wayland,Rust,MIT,60,2026-06-29,2026-10-06,Active,bamboo-rs,IBus / input-method-v2 / evdev / XTest,"nhiều đường inject, AT-SPI password",zero-underline không thật
+Funput,https://github.com/Funput/Funput,5 nền tảng,Cross-platform,Rust,MIT,52,2026-06-14,2026-10-31,Active,own workspace,IMK/TSF/Fcitx5/IBus/JNI,"5 OS, suggestions, flip composing","14 issue, không VIQR"
+Ngó Sen,https://github.com/ngosen/ngosen,Linux,Fcitx5,C++,GPL-3.0,51,2026-10-10,2026-10-29,Active,bamboo-rs,Fcitx5 + ibus-ngosen,"Cứu chữ/Cứu dấu, Gõ Sen","vibecoded, VNI chưa chín"
+skey,https://github.com/collyn/skey,Linux,Fcitx5,C++/Rust,GPL-3.0,29,2026-06-29,2026-10-29,Active,skey-engine (stateless),"Fcitx5, 5 output mode","14 bảng mã, Qt6, per-app","engine stateless, addon giữ state"
+Areca IME,https://github.com/xhkzeroone/ArecaIME,Linux,Fcitx5,C++/Go,MIT,20,2026-07-31,2026-10-29,Active,bamboo-core,Fcitx5 + 6 backend,"trust probe, scheduler, 22 CTest","một maintainer, phức tạp"
+UniLume,https://github.com/LumeWorks/UniLume,Linux,Fcitx5,Makefile,không rõ,11,2026-07-23,2026-08-07,Archived,legacy x-unikey,Fcitx5 (legacy branch),legacy branch tham khảo,không còn code ở default branch
+BambooMintKey,https://github.com/thatislg/BambooMintKey,Windows/Linux,TSF + Fcitx5,C#/F#,MIT (GitHub báo NOASSERTION),10,2026-09-01,2026-10-14,Active,F# core,TSF in-process + Fcitx5,"NativeAOT, Flatpak SteamOS",Telex only
+TextVN,https://github.com/hunglinhpt/TextVN,Windows/macOS/Linux,Cross-platform,Rust,GPL-3.0,9,2026-09-26,2026-10-28,Active,own core,TSF/IMK/IBus/Fcitx5,"grammar, prediction, transcode","RC, README changelog"
+telebit,https://github.com/sonnam0904/telebit,Linux,Fcitx5,C++,MIT,8,2026-03-11,2026-09-15,Active,own (rebuild syllable),Fcitx5 addon,"doctor, direct commit rollback",không app profile
+vi-ime,https://github.com/nhanth87/vi-ime,Linux,Standalone Wayland,Rust,GPL-3.0,7,2026-07-10,2026-10-28,Active,own,input-method-v2 + virtual keyboard,"doctor, take-over, app rules","không GNOME, không CI"
+VieLotus IM,https://github.com/stevedat/VieLotus-IM,5 nền tảng,Cross-platform,Swift/C++,MIT,6,2026-09-28,2026-10-28,Active,closed binary,IMK/TSF/IBus/Fcitx5/JNI,"5 store, per-app YAML","core đóng, binary commit"
+pinakey,https://github.com/trananhtung/pinakey,Linux,Fcitx5,Rust,không rõ,7,2026-06-19,2026-10-28,Active,own,Fcitx5 + uinput opt-in,"165 test, emoji, transport rules",no-underline thất bại ở nhiều app
+fcitx5-lilypad,https://github.com/chiconcota/fcitx5-lilypad,Linux,Fcitx5,C++,GPL-3.0,6,2026-08-02,2026-09-12,Active,bamboo-core,Fcitx5 + uinput daemon,"đo swallow time, 9 mode","AUR only, ít test"
+TypeVN,https://github.com/vithanhlam/TypeVN,Linux,IBus,Rust/C,MIT,3,2026-08-16,2026-09-10,Active,own,IBus,"GNOME hotkeys, mục tiêu <1ms","không CI, không app profile"
+NepKey,https://github.com/todo-laterx/nepkey,Linux,IBus,Go,GPL-3.0,2,2026-10-25,2026-10-27,Active,bamboo-core (pin cũ),IBus,"slash command AI chat, clipboard","IBus only, core pin cũ"
+Clak,https://github.com/versenilvis/ClakIME,Linux,Fcitx5,Rust/C++,0BSD,2,2026-10-01,2026-10-23,Active,own,Fcitx5,"RTT calibration, DOM desync","pre-1.0, hardcode app"
+CanType,https://github.com/LumeWorks/CanType,Linux,Fcitx5,Rust,MPL-2.0,1,2026-08-05,2026-08-08,Active,Cadence,Fcitx5,"invariant, verify-before-mutate",Phase 1-2
+Unikey-Wayland-Pro,https://github.com/quannguyen247/Unikey-Wayland-Pro,Linux,Standalone Wayland,Makefile,GPL-3.0,1,2026-08-18,2026-10-24,Archived,upstream 2.x,Wayland/IBus/X11/Win hook,fork,không maintain
+vnkey,https://github.com/marixdev/vnkey,Linux,Fcitx5/IBus,Rust,GPL-3.0,101,2026-03-29,2026-04-03,Inactive,own,Fcitx5/IBus/Windows/macOS,"15 bảng mã, 4 OS",IBus dùng xdotool
+ibus-lotus,https://github.com/LotusInputEngine/ibus-lotus,Linux,IBus,Go,GPL-3.0,118,2025-07-20,2026-01-17,Dead,own,IBus,cùng thương hiệu Lotus,repo 404
+codekeyvn,https://github.com/tollaai2212hp22-lgtm/codekeyvn,Linux,Standalone Wayland,Rust,không rõ,7,2026-07-19,2026-07-19,Dead,unknown,Wayland,-,repo 404
+LotusVibe,https://github.com/ngosen/ngosen-fork-archive,Linux,Fcitx5,C++,GPL-3.0,6,2026-09-05,2026-10-10,Archived,bamboo-rs,Fcitx5,tiền thân Ngó Sen,archive
+SenKey,https://github.com/furimeo/senkey,Linux,Fcitx5,C++,GPL-2.0,0,2026-09-27,2026-10-11,Dead,unknown,Fcitx5,-,repo 404

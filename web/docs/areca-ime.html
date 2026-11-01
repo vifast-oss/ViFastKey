@@ -1,0 +1,1730 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Areca IME — sổ tay kỹ thuật · ViFastKey</title>
+<meta name="description" content="Kiến trúc, scheduler, 6 backend rewrite, trust probe, timing, config, build, debug và test của Areca IME.">
+<link rel="canonical" href="https://vifastkey.hoctuthien.com/docs/areca-ime.html">
+<meta name="theme-color" content="#FFF8EC">
+<link rel="icon" href="/brand/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="stylesheet" href="/docs/docs.css">
+
+</head>
+<body>
+<header class="doc-header">
+  <div class="inner">
+    <a class="brand" href="/" aria-label="ViFastKey — về trang chủ">
+      <img src="/brand/vifastkey-icon-192.png" alt="">
+      <span><span class="red">Vi</span><em>Fast</em><span class="red">Key</span> <span class="doc-suffix" style="font-weight:400;color:var(--muted)">· Tài liệu</span></span>
+    </a>
+    <nav class="doc-nav" aria-label="Tài liệu">
+      <a href="/">Trang chủ</a>
+      <a href="/docs/">Tài liệu</a>
+      <a href="/docs/areca-ime.html">Areca</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap">
+  <div class="crumbs"><a href="/">ViFastKey</a> / <a href="/docs/">Tài liệu</a> / Areca IME — sổ tay kỹ thuật</div>
+  <article>
+<h1>Areca IME — sổ tay kỹ thuật</h1>
+<blockquote>
+<p>Tài liệu này viết cho anh: đọc là hiểu Areca được xây dựng thế nào, vì sao nó khó,
+và nếu cần sửa/debug/mở rộng thì bắt đầu từ đâu. Không phải bài giới thiệu cho
+người dùng cuối — phần cài đặt chỉ chiếm một mục, còn lại là kiến trúc và mã nguồn.</p>
+<p><strong>Snapshot:</strong> commit <code>952ddd8</code> (2026-11-01), tag <code>v8.3.0</code>.
+<strong>Giấy phép:</strong> MIT (kể cả <code>bamboo-core</code>). Có thể đọc, sửa, dùng thương mại.
+<strong>Nền tảng:</strong> Linux, Fcitx5 addon, tối ưu Wayland.</p>
+</blockquote>
+<hr>
+<h2>0. Mười phút nắm Areca</h2>
+<p>Areca <strong>không viết lại engine tiếng Việt</strong>. Nó lấy <code>bamboo-core</code> (MIT, cùng engine
+với ibus-bamboo) qua một bridge Go, rồi dồn gần như toàn bộ công sức vào thứ khó
+hơn: <strong>làm cho việc sửa chữ đã hiện trên màn hình không bị sai, không bị mất, không
+bị lặp, trên hàng trăm ứng dụng Linux khác nhau</strong>.</p>
+<p>Ba câu tóm tắt:</p>
+<ol>
+<li><strong>Engine là phần dễ.</strong> <code>bamboo-core</code> đã lo Telex/VNI/VIQR, bảng mã, kiểm tra
+chính tả, macro.</li>
+<li><strong>Adapter là phần khó.</strong> Fcitx5 giao phím đồng bộ, nhưng <code>deleteSurroundingText()</code>
+và <code>commitString()</code> là bất đồng bộ với app. App nào hỗ trợ gì, xử lý lệnh xóa
+nhanh hay chậm, có gửi ACK hay không — mỗi app một kiểu.</li>
+<li><strong>Giá trị của Areca nằm ở 6 cơ chế:</strong> FIFO + single-flight + transaction barrier;
+backend abstraction với fallback; trust probe cho surrounding text; timing/ACK
+thích ứng; nhận diện app/field; và vòng đời preedit/reset/click.</li>
+</ol>
+<p>Nếu chỉ nhớ một ý: <strong>Areca là một nghiên cứu điển hình về lập trình IME trên Linux,
+không phải về thuật toán tiếng Việt.</strong></p>
+<hr>
+<h2>0.1 Đọc theo quỹ thời gian</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Anh có</th>
+<th>Đọc gì</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>10 phút</td>
+<td>§0, §2, §3, §17 (mạnh/yếu)</td>
+</tr>
+<tr>
+<td>30 phút</td>
+<td>§0–§9 + §16 (đọc source theo thứ tự)</td>
+</tr>
+<tr>
+<td>2 giờ</td>
+<td>Toàn bộ, trừ §12 (config) và §13 (build)</td>
+</tr>
+<tr>
+<td>Muốn sửa code</td>
+<td>§4–§9, §15, §16 rồi mở <code>src/input_scheduler.cpp</code></td>
+</tr>
+</tbody></table></div>
+<h2>0.2 Thử nhanh (5 phút)</h2>
+<pre><code class="language-bash"># 1. Cài Fcitx5 (Ubuntu/Debian)
+sudo apt install fcitx5 fcitx5-config-qt fcitx5-frontend-all
+
+# 2. Cài Areca
+curl -fsSL https://raw.githubusercontent.com/xhkzeroone/ArecaIME/main/install.sh | bash
+
+# 3. Thêm input method
+fcitx5-configtool    # tìm &quot;Areca (Bamboo)&quot; → Add
+
+# 4. Khởi động lại và kiểm tra
+fcitx5 -rd
+pgrep -a fcitx5
+fcitx5-diagnose | grep -i areca
+</code></pre>
+<p>Gõ thử <code>tieengs</code> trong một editor đơn giản (gedit/kate). Nếu ra <code>tiếng</code>, engine
+và addon đã thông. Nếu không, xem §14.</p>
+<h2>0.3 Mục lục</h2>
+<ol>
+<li>Vì sao IME trên Linux khó</li>
+<li>Kiến trúc tổng thể</li>
+<li>Ba chế độ</li>
+<li>Đường đi của một phím</li>
+<li>Engine: bamboo-core và diff</li>
+<li>Scheduler: FIFO, single-flight, barrier</li>
+<li>Backend rewrite và chính sách chọn</li>
+<li>Trust probe cho surrounding text</li>
+<li>Timing, ACK và AdaptiveWait</li>
+<li>Nhận diện app, field, context</li>
+<li>Preedit, finalized word, reset, click</li>
+<li>Cấu hình đầy đủ</li>
+<li>Build, cài, đóng gói</li>
+<li>Debug: playbook thực dụng</li>
+<li>Test: 22 CTest và <code>TestInputContext</code></li>
+<li>Đọc source theo thứ tự</li>
+<li>Điểm mạnh, điểm yếu, giới hạn</li>
+<li>Nếu anh muốn đóng góp</li>
+<li>Glossary</li>
+<li>Nguồn</li>
+</ol>
+<ul>
+<li>Phụ lục A — Cheat sheet (một trang)</li>
+</ul>
+<hr>
+<h2>1. Vì sao IME trên Linux khó</h2>
+<h3>1.1 Mô hình Fcitx5</h3>
+<p>Fcitx5 là một daemon input method. Ứng dụng (client) và Fcitx5 nói chuyện qua
+frontend:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Frontend</th>
+<th>Cơ chế</th>
+<th>Hệ quả</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>wayland</code> (text-input-v3)</td>
+<td>Giao thức Wayland</td>
+<td>Chuẩn mới, nhưng nhiều app hỗ trợ chưa đủ</td>
+</tr>
+<tr>
+<td><code>dbus</code></td>
+<td>IBus DBus / portal</td>
+<td>Phổ biến trên GNOME</td>
+</tr>
+<tr>
+<td><code>xim</code></td>
+<td>XIM (X11)</td>
+<td>Cũ, độ trễ cao, hay mất key</td>
+</tr>
+<tr>
+<td><code>fcitx4</code></td>
+<td>Tương thích ngược</td>
+<td>Hiếm</td>
+</tr>
+<tr>
+<td><code>gtk</code> / <code>qt</code></td>
+<td>Module IM nhúng</td>
+<td>Nhanh, nhưng app tự quyết định</td>
+</tr>
+</tbody></table></div>
+<p>Mỗi frontend trả về một tập <strong>capability</strong> khác nhau. Areca phải đọc capability
+thay vì đoán theo tên app — nhưng capability cũng không đáng tin tuyệt đối
+(xem §8).</p>
+<h3>1.2 Ba cách đưa chữ vào app</h3>
+<pre><code class="language-text">Cách 1 — Preedit (composition):
+  app hiển thị vùng soạn thảo có gạch chân, Fcitx5 sở hữu nó.
+  Ưu: an toàn, không cần xóa chữ đã commit.
+  Nhược: gạch chân, một số app/terminal không hỗ trợ, IME &quot;nháy&quot;.
+
+Cách 2 — Commit trực tiếp (direct/rewrite):
+  IME gửi thẳng chuỗi vào app, không có vùng đệm.
+  Ưu: giống UniKey trên Windows, không gạch chân.
+  Nhược: muốn sửa chữ đã hiện thì phải xóa ngược (backspace) rồi chèn lại.
+
+Cách 3 — Gõ phím vật lý / uinput / XTest:
+  IME giả lập bàn phím ở tầng kernel hoặc X server.
+  Ưu: app không thể &quot;nuốt&quot; key.
+  Nhược: cần quyền, dễ tạo duplicate event, khó đồng bộ.
+</code></pre>
+<p>Areca mặc định <strong>Cách 2 (Rewrite)</strong>, và có <strong>Cách 1 (Preedit)</strong> cùng <strong>Cách 3</strong>
+làm fallback. Đây là lựa chọn thiết kế trung tâm: Rewrite cho trải nghiệm giống
+UniKey, nhưng buộc phải giải bài toán &quot;xóa chữ đã commit&quot; thật nghiêm túc.</p>
+<h3>1.3 Những thứ có thể hỏng khi rewrite</h3>
+<ul>
+<li>App nhận <code>deleteSurroundingText(-N, N)</code> nhưng xóa thiếu/không xóa.</li>
+<li>App xóa xong nhưng chưa cập nhật <code>surroundingText()</code>; IME đọc snapshot cũ.</li>
+<li>Key tiếp theo đến trước khi app xử lý xong lệnh xóa → mất/lặp ký tự.</li>
+<li>App tự động thêm autocomplete/URL completion → xóa nhầm.</li>
+<li>Terminal/Electron nuốt <code>forwardKey(Backspace)</code>.</li>
+<li>Người dùng đang bôi đen text → lệnh xóa ăn vào selection.</li>
+<li>Click chuột giữa từ → state engine vẫn tưởng đang ở caret cũ.</li>
+</ul>
+<p>Toàn bộ phần còn lại của tài liệu là cách Areca xử lý từng mục trên.</p>
+<hr>
+<h2>2. Kiến trúc tổng thể</h2>
+<h3>2.1 Thành phần</h3>
+<pre><code class="language-text">┌──────────────────────────────────────────────────────────────────┐
+│                         Fcitx5 daemon                            │
+│                                                                  │
+│  ArecaEngine (addon)                                             │
+│   ├─ chọn PresentationMode: Rewrite / Preedit / Redirect          │
+│   ├─ password? → forward nguyên bản                               │
+│   ├─ mouse click? → protected reset                               │
+│   ├─ hotkey? → menu chọn backend cho app                          │
+│   └─ dispatch → InputModeHandler                                  │
+│                                                                  │
+│   RewriteModeHandler ──► KeyQueue ──► InputScheduler              │
+│                                          │                        │
+│                                          ├─ BambooEngineAdapter   │
+│                                          │     └─ Go bridge ──────┼──► bamboo-core
+│                                          │                        │
+│                                          ├─ ReliabilityChecker    │
+│                                          └─ RewriteBackend        │
+│                                               ├─ SurroundingText  │
+│                                               ├─ SurroundingV2    │
+│                                               ├─ ForwardBackspace │
+│                                               ├─ UinputBackspace  │
+│                                               ├─ UinputShiftSelect│
+│                                               └─ NativeXTest      │
+│                                                                  │
+│   PreeditModeHandler ──► Bamboo trực tiếp + preedit UI            │
+│   RedirectModeHandler ─► forward                                  │
+│                                                                  │
+│   WindowFocusTracker (AT-SPI)   MouseClickTracker → helper process│
+└──────────────────────────────────────────────────────────────────┘
+</code></pre>
+<h3>2.2 Quy mô mã nguồn</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Khu vực</th>
+<th align="right">File</th>
+<th align="right">Dòng</th>
+<th>Ghi chú</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/</code> (addon)</td>
+<td align="right">73</td>
+<td align="right">~11.900</td>
+<td>C++20, gồm AT-SPI và notification</td>
+</tr>
+<tr>
+<td><code>src/areca_engine.cpp</code></td>
+<td align="right">1</td>
+<td align="right">2.066</td>
+<td>File lớn nhất; routing + policy</td>
+</tr>
+<tr>
+<td><code>tests/</code></td>
+<td align="right">23</td>
+<td align="right">~4.400</td>
+<td>22 CTest target</td>
+</tr>
+<tr>
+<td><code>settings/</code></td>
+<td align="right">—</td>
+<td align="right">~2.670</td>
+<td>SDL3 + Dear ImGui, chưa kể ImGui vendored</td>
+</tr>
+<tr>
+<td><code>bamboo-bridge/main.go</code></td>
+<td align="right">1</td>
+<td align="right">475</td>
+<td>c-archive, export C ABI</td>
+</tr>
+<tr>
+<td>Tổng đọc được (không tính ImGui)</td>
+<td align="right">—</td>
+<td align="right">~19.000</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<p>Một chi tiết dễ gây nhầm: <code>CMakeLists.txt</code> khai báo <code>project(... VERSION 0.1.0)</code>
+trong khi release tag là <code>v8.3.0</code>. Đừng dùng số trong CMake để đánh giá độ chín;
+hãy nhìn tag, số test và lịch sử commit.</p>
+<h3>2.3 Vì sao có Go bridge?</h3>
+<p><code>bamboo-core</code> là thư viện Go. Areca cần gọi nó từ C++:</p>
+<pre><code class="language-text">C++ (BambooEngineAdapter)
+   │  extern &quot;C&quot; ArecaBambooProcess(id, key, spellCheck, ...)
+   ▼
+Go bridge (bamboo-bridge/main.go, buildmode=c-archive)
+   │  bamboo.NewEngine(method, flags)
+   ▼
+bamboo-core (Go)
+</code></pre>
+<p>Bridge giữ một <code>map[uint64]bamboo.IEngine</code>. Mỗi input context có một engine id
+riêng, tránh state của app A lẫn sang app B. API export gồm:</p>
+<p><code>ArecaBambooCreate</code>, <code>Destroy</code>, <code>Process</code>, <code>Backspace</code>, <code>RecoverBackspace</code>,
+<code>Reset</code>, <code>AddMacro</code>, <code>ExpandMacro</code>, <code>FinalizeWord</code>, <code>Restore</code>,
+<code>InputMethodNames</code>, <code>CharsetNames</code>, <code>Encode</code>, <code>CanProcess</code>.</p>
+<p>Điểm đáng học: bridge <strong>không trả chuỗi cuối cùng</strong>, nó trả đủ dữ liệu để C++
+tính diff (xem §5.2). Nhờ vậy toàn bộ logic &quot;xóa bao nhiêu, chèn gì&quot; nằm ở một
+chỗ, không phân tán.</p>
+<hr>
+<h2>3. Ba chế độ</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Hành vi</th>
+<th>Khi nào dùng</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Rewrite</code></td>
+<td>Gõ trực tiếp; engine tính diff; IME xóa/chèn</td>
+<td>Mặc định; giống UniKey</td>
+</tr>
+<tr>
+<td><code>Preedit</code></td>
+<td>Composition có gạch chân; commit khi hết từ</td>
+<td>App/terminal không chịu được rewrite</td>
+</tr>
+<tr>
+<td><code>Redirect</code></td>
+<td>Forward phím gốc, không xử lý tiếng Việt</td>
+<td>Chế độ EN toàn cục</td>
+</tr>
+</tbody></table></div>
+<p>Chuyển mode:</p>
+<ul>
+<li>Global: <code>SwitchModeKey</code> — tài liệu kiến trúc nói <code>Alt+Space</code>, nhưng trong
+commit này default là rỗng và nhánh xử lý đang bị comment trong
+<code>ArecaEngine::keyEvent</code>; hạ tầng mode vẫn tồn tại. Đừng giả định hotkey có
+sẵn khi debug.</li>
+<li>Theo app: <code>AppOverrides</code> trong <code>areca-apps.conf</code> (Auto / Surrounding /
+Shift select / Backspace / Preedit / Redirect).</li>
+<li>Theo field: <code>CapabilityFlag::Password</code> luôn đi đường forward, bất kể mode.</li>
+</ul>
+<p><strong>Điểm cần hiểu:</strong> ba mode có state riêng. <code>RewriteInputState</code> và
+<code>PreeditInputState</code> không dùng chung engine instance. Đổi mode phải reset cả hai.
+Đây là lý do Areca không bị &quot;di chuyển state&quot; khi người dùng chuyển qua lại.</p>
+<hr>
+<h2>4. Đường đi của một phím (Rewrite)</h2>
+<h3>4.1 Trình tự</h3>
+<pre><code class="language-text">1. Fcitx5 gọi ArecaEngine::keyEvent()
+2. Nếu Password → handler hiện tại forward, xóa state cũ, return
+3. Nếu đang chọn backend (menu) → xử lý phím menu, return
+4. Nếu là Backspace do uinput replay → Forward/Uinput backend &quot;nuốt&quot; trước
+5. Nếu là Left do Shift+Select replay → ShiftSelect backend xử lý
+6. Nếu là press:
+   a. resolveProgram() (AT-SPI nếu cần)
+   b. có mouse click pending? → reset có bảo vệ
+   c. hotkey chọn backend? → mở menu
+7. handlerFor(context).handleKeyEvent(event)
+   └─ RewriteModeHandler:
+      - release: bỏ qua (trừ Backspace recovery)
+      - modifier-only: bỏ qua
+      - Backspace khi rewrite pending: forward, không đổi state
+      - Password: reset + forward
+      - tính suppressMacro (nếu giữ modifier + Space)
+      - nếu engine rảnh và là browser: thử handleIdleKey()
+      - ngược lại: filterAndAccept() rồi enqueue(codepoint, utf8)
+8. InputScheduler::processNext()
+   - pop đúng một key
+   - engine-&gt;process() hoặc processBackspace()
+   - applyResult()
+9. applyResult():
+   - deleteCount == 0 → commitString + post-commit barrier
+   - deleteCount &gt; 0  → chọn backend → apply → chờ callback
+10. rewriteDone() → post-commit timer (20 ms) → xử lý key kế
+</code></pre>
+<h3>4.2 Vì sao <code>filterAndAccept()</code> trước khi enqueue?</h3>
+<p>Fcitx5 có hai lựa chọn cho mỗi event:</p>
+<ul>
+<li><strong>Không filter</strong>: app vẫn nhận phím gốc.</li>
+<li><strong><code>filterAndAccept()</code></strong>: app không nhận phím gốc; IME chịu trách nhiệm gửi
+kết quả.</li>
+</ul>
+<p>Areca accept ngay khi đưa key vào queue, vì nó sẽ tự commit kết quả. Nếu không
+accept, app sẽ nhận cả phím gốc lẫn chữ đã biến đổi → nhân đôi.</p>
+<p>Ngoại lệ quan trọng: <strong><code>handleIdleKey()</code></strong> (§4.3) cố tình <em>không</em> accept khi
+Bamboo không đổi output, để editor web nhận được phím đầu.</p>
+<h3>4.3 <code>handleIdleKey()</code> — chiêu cho Google Sheets/editor web</h3>
+<p>Một số web editor chỉ mở chế độ soạn thảo khi nhận được <code>keydown</code> thật. Nếu IME
+nuốt phím đầu và chỉ gửi <code>commitString</code>, editor không vào chế độ edit.</p>
+<p>Areca xử lý:</p>
+<pre><code class="language-cpp">// Chỉ khi: browser, engine rỗng, scheduler rảnh, không pending, không stalled.
+result = engine-&gt;process(codepoint, text);
+
+if (result.deleteCount == 0 &amp;&amp;
+    result.commitText == text &amp;&amp;
+    !result.macroExpanded) {
+    event.forward();          // để frontend nhận phím gốc
+    // Vẫn giữ state Bamboo: gõ &#39;a&#39; rồi &#39;s&#39; vẫn thành &#39;á&#39;
+    finishKeyAfterDelay();    // vẫn giữ barrier 20 ms
+} else {
+    event.filterAndAccept();
+    applyResult(result);      // áp kết quả đã tính, không xử lý lại
+}
+</code></pre>
+<p>Điểm tinh tế: <code>event.forward()</code> trong Fcitx5 là <strong>getter</strong>, không phải hành động.
+Việc &quot;cho phím đi tiếp&quot; là <strong>không gọi <code>filterAndAccept()</code></strong>. Rất dễ đọc sai chỗ này.</p>
+<p>Điều kiện để đi đường tắt rất chặt: <code>processing_ == false</code>, không rewrite pending,
+queue rỗng, không stalled, và đã qua cửa sổ bảo vệ 20 ms. Nếu không, rơi về FIFO
+bình thường.</p>
+<hr>
+<h2>5. Engine: bamboo-core và diff</h2>
+<h3>5.1 Cấu hình engine</h3>
+<pre><code class="language-go">method := bamboo.ParseInputMethod(bamboo.InputMethodDefinitions, name)
+flags  := uint(bamboo.EstdFlags)
+if modernStyle { flags &amp;^= bamboo.EstdToneStyle }  // ngược tên có chủ ý
+engine := bamboo.NewEngine(method, flags)
+</code></pre>
+<p><code>ModernStyle=True</code> → <code>oà/uý</code>; <code>False</code> → <code>òa/úy</code>. Tên flag nội bộ <code>EstdToneStyle</code>
+ngược với tên option, và điều này được ghi chú rõ trong code — một ví dụ tốt về
+việc ghi lại &quot;tại sao&quot; thay vì chỉ &quot;cái gì&quot;.</p>
+<h3>5.2 <code>BambooResult</code> và common-prefix diff</h3>
+<p>Adapter giữ <code>renderedText_</code> — chuỗi nó tin là đang hiển thị. Sau mỗi key:</p>
+<pre><code class="language-text">currentText  = chuỗi trước key
+newText      = chuỗi Bamboo trả về sau key
+deleteCount  = số code point ở suffix cũ cần xóa
+commitText   = suffix mới cần chèn
+</code></pre>
+<p>Ví dụ:</p>
+<pre><code class="language-text">currentText = &quot;a&quot;   key = &quot;w&quot;   newText = &quot;ă&quot;
+→ deleteCount = 1, commitText = &quot;ă&quot;
+
+currentText = &quot;nguoi&quot;  key = &quot;wf&quot;  newText = &quot;người&quot;
+→ deleteCount = 5, commitText = &quot;người&quot;
+</code></pre>
+<p><strong>Chi tiết quan trọng:</strong> diff được tính trên chuỗi <strong>đã encode theo <code>OutputCharset</code></strong>,
+không phải trên Unicode nội bộ. Vì vậy với <code>Unicode tổ hợp</code>, VNI-Windows hay VIQR,
+<code>deleteCount</code> vẫn khớp đúng số ký tự thực tế đã commit. Nếu tính diff trên Unicode
+rồi encode sau, độ dài xóa sẽ sai với bảng mã nhiều codepoint.</p>
+<p>Đây là bài học trực tiếp cho bất kỳ ai viết adapter: <strong>độ dài xóa phải tính trên
+representation mà app thực sự nhận.</strong></p>
+<h3>5.3 Spell check ba mức</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th><code>SpellcheckMode</code></th>
+<th>Hành vi</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Off</code></td>
+<td>Không kiểm tra; commit nguyên trạng</td>
+</tr>
+<tr>
+<td><code>Basic</code></td>
+<td>Khi hết từ, gọi <code>IsValid(true)</code>; nếu từ có dấu nhưng cấu trúc sai → <code>RestoreLastWord(false)</code> về chuỗi phím Latin</td>
+</tr>
+<tr>
+<td><code>Realtime</code></td>
+<td>Như Basic, và kiểm tra từng ký tự trung gian (<code>spellCheck=1</code>) để rollback ngay</td>
+</tr>
+</tbody></table></div>
+<p>Restore không dùng từ điển ngoài; nó dùng luật âm tiết của <code>bamboo-core</code>.</p>
+<h3>5.4 Macro</h3>
+<ul>
+<li>Macro table là sub-config riêng (<code>Macro</code> key/value).</li>
+<li>Expand tại <strong>word boundary</strong>, trước spell check.</li>
+<li>Lookup không phân biệt hoa/thường.</li>
+<li><code>CapitalizeMacro</code>: key thường → value thường; key HOA → value HOA;
+key Firstupper → Title Case từng từ; mixed-case khác → giữ value gốc.</li>
+<li><code>MacroBypassModifier</code>: giữ Shift/Ctrl/Alt/Super + Space để bỏ macro cho <strong>đúng
+boundary đó</strong>. Cờ <code>suppressMacro</code> nằm trên từng <code>QueuedKey</code>, không phải state
+one-shot → gõ nhanh không bị lây sang phím sau.</li>
+<li><code>RevertMacroOnBackspace</code>: Backspace ngay sau macro khôi phục trigger + boundary.</li>
+</ul>
+<h3>5.5 <code>RestoreSurroundingText</code></h3>
+<p>Tính năng thử nghiệm: đọc từ ngay trước caret từ <code>surroundingText()</code> rồi nạp lại
+vào engine để sửa tiếp từ đã commit.</p>
+<p>Cách làm rất thận trọng:</p>
+<ol>
+<li>Chỉ đọc tối đa 16 chữ cái Latin/tiếng Việt dựng sẵn.</li>
+<li>Từ chối chuỗi UTF-8 lỗi, dấu tổ hợp, từ bị cắt.</li>
+<li>Không đoán: tách chữ gốc + hiệu ứng dấu, thử một tập phím hữu hạn trên <strong>engine
+tạm</strong>, yêu cầu output khớp chính xác từ trên màn hình.</li>
+<li>Chỉ khi xác minh thành công mới nạp chuỗi phím vào engine thật.</li>
+</ol>
+<p>Đây là pattern &quot;verify on a scratch engine before mutating the real one&quot; — rất
+đáng bắt chước.</p>
+<hr>
+<h2>6. Scheduler: FIFO, single-flight, barrier</h2>
+<h3>6.1 Bốn bất biến</h3>
+<ol>
+<li><strong>FIFO</strong> — key giữ đúng thứ tự.</li>
+<li><strong>Single-flight</strong> — chỉ một key được engine xử lý tại một thời điểm.</li>
+<li><strong>Transaction barrier</strong> — khi backend đang xóa/chèn, key mới chỉ vào queue.</li>
+<li><strong>Không sleep trên main thread</strong> — mọi delay dùng timer của event loop.</li>
+</ol>
+<h3>6.2 Code path</h3>
+<pre><code class="language-cpp">void InputScheduler::enqueue(...) {
+    key.sequence = nextSequence_++;
+    key.inputContext = inputContext.watch();   // không giữ con trỏ thô
+    queue_.push(std::move(key));
+    scheduleNext();
+}
+
+void InputScheduler::scheduleNext() {
+    if (processing_ || queue_.empty() || stalled_) return;
+    processNext();
+}
+
+void InputScheduler::processNext() {
+    auto key = queue_.pop();
+    processing_ = true;
+    ...
+    applyResult(...);
+}
+</code></pre>
+<p><code>stalled_</code> là trạng thái &quot;fail closed&quot;: nếu backend báo lỗi, Areca <strong>dừng xử lý</strong>
+thay vì tiếp tục trong trạng thái không xác định. Người dùng có thể phải chuyển
+app hoặc restart Fcitx5, nhưng không bị mất/lặp chữ hàng loạt. Đây là lựa chọn
+đúng: thà treo còn hơn hỏng dữ liệu.</p>
+<h3>6.3 Vì sao key đầu được xử lý inline?</h3>
+<p>Nếu mọi key đều qua timer, độ trễ tăng và gõ nhanh sẽ cảm thấy lag. Areca chỉ
+enqueue khi pipeline bận; key đầu tiên khi rảnh được xử lý ngay trong callback.
+Queue chỉ dùng cho key đến trong lúc bận — thường là 0–2 key.</p>
+<h3>6.4 Post-commit barrier</h3>
+<p>Sau mỗi commit:</p>
+<pre><code class="language-cpp">lastRewriteCompletionTimeUsec_ = now();
+postCommitTimer_ = eventLoop_.addTimeEvent(
+    CLOCK_MONOTONIC, now() + postCommitDelayMs * 1000, timerAccuracyUsec,
+    [this](...) { finishKey(); return false; });
+</code></pre>
+<p><code>PostCommitDelayMs</code> mặc định <strong>20 ms</strong>. Trong cửa sổ này:</p>
+<ul>
+<li><code>shouldRejectReset()</code> trả <code>true</code> → reset từ app bị hoãn.</li>
+<li>Key mới vẫn được nhận nhưng chờ timer.</li>
+<li>Mouse click chưa được áp.</li>
+</ul>
+<p>Mục đích: cho app kịp xử lý commit trước khi IME đọc lại surrounding hoặc xóa
+tiếp. 20 ms là con số thực nghiệm, không phải chuẩn.</p>
+<hr>
+<h2>7. Backend rewrite và chính sách chọn</h2>
+<h3>7.1 Sáu backend</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Backend</th>
+<th>Cách sửa</th>
+<th>Dùng khi</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>SurroundingTextBackend</code></td>
+<td><code>deleteSurroundingText(-N,N)</code> + <code>commitString</code></td>
+<td>App hỗ trợ surrounding và đáng tin</td>
+</tr>
+<tr>
+<td><code>SurroundingTextV2Backend</code></td>
+<td>Xóa từng ký tự, mỗi nhịp 1 ms</td>
+<td>Firefox/Monaco/CodeMirror xử lý xóa gộp kém</td>
+</tr>
+<tr>
+<td><code>ForwardBackspaceBackend</code></td>
+<td><code>forwardKey(Backspace)</code> × N</td>
+<td>App nhận forward key, không có surrounding</td>
+</tr>
+<tr>
+<td><code>UinputBackspaceBackend</code></td>
+<td><code>KEY_BACKSPACE</code> × N qua <code>/dev/uinput</code></td>
+<td>App/frontend nuốt forward Backspace</td>
+</tr>
+<tr>
+<td><code>UinputShiftSelectBackend</code></td>
+<td>Shift+Left × N+1 rồi commit</td>
+<td>Browser cần thay selection</td>
+</tr>
+<tr>
+<td><code>NativeXTestBackend</code></td>
+<td>Libei (Wayland) / XTest (X11)</td>
+<td>uinput không khả dụng, hoặc user chọn</td>
+</tr>
+</tbody></table></div>
+<h3>7.2 Thứ tự chọn (rút gọn theo <code>selectRewriteBackend</code>)</h3>
+<pre><code class="language-text">terminal (kể cả VS Code embedded)
+    → backspace backend ưu tiên hardware:
+      Native (nếu bật) → uinput → Native → ForwardBackspace
+browser autocomplete / Firefox autocomplete thu gọn / đang có selection
+    ├─ nếu là URL và có shift-select → UinputShiftSelect
+    └─ ngược lại → backspace backend (+1 nếu selection khớp text hiện tại)
+URL không có surrounding + browser
+    → UinputShiftSelect (nếu có), else Backspace
+UseBackspaceForUrl bật
+    → UinputShiftSelect (nếu có), else Backspace
+app override != Auto
+    → backend được chỉ định (kèm fallback)
+decision.useSurrounding
+    → V2 / ShiftSelect (nếu bật) / SurroundingText
+còn lại
+    → uinput/native nếu bật, else ForwardBackspace
+</code></pre>
+<p>Lưu ý: &quot;terminal&quot; ở đây là kết quả của <code>InputTypeDetector::isTerminal()</code>, không chỉ
+tên app. Một app có thể là terminal ở cửa sổ chính nhưng là editor ở panel phụ;
+Areca chọn theo context, không theo process.</p>
+<h3>7.3 Vì sao <code>plasmashell</code> bị đặc cách?</h3>
+<p><code>plasmashell</code>/krunner công bố surrounding hợp lệ nhưng áp dụng update trễ và
+không phát ACK khớp. Nếu dùng <code>deleteSurroundingText</code>, chữ bị xóa sai. Areca
+đẩy thẳng vào nhóm compatibility, dùng ForwardBackspace. Đây là ví dụ của một
+nguyên tắc: <strong>capability chỉ là gợi ý; hành vi thực tế mới là sự thật.</strong></p>
+<h3>7.4 Selection guard</h3>
+<p>Nếu <code>cursor != anchor</code> (đang bôi đen) hoặc phát hiện browser autocomplete:</p>
+<ul>
+<li><strong>Không</strong> dùng Shift+Select (sẽ phá selection người dùng).</li>
+<li>Fallback ForwardBackspace, cộng thêm <strong>1</strong> Backspace để xóa vùng autocomplete.</li>
+</ul>
+<p>Điều kiện autocomplete (<code>browser_autocomplete.cpp</code>) khá chặt: selection phải bắt
+đầu ngay sau composition, kéo tới hết dòng, không đi qua newline.</p>
+<h3>7.5 uinput: những cạm bẫy đã xử lý</h3>
+<p><code>UinputBackspaceBackend</code> không chỉ là &quot;gửi N phím Backspace&quot;:</p>
+<ul>
+<li>Mọi event Backspace quay lại Fcitx đều phải <strong>forward</strong>, kể cả event đến muộn.</li>
+<li>Bộ đếm ACK chỉ là mốc tương đối, <strong>không dùng để lọc event</strong>.</li>
+<li>Timer phát phím và timer commit <strong>độc lập</strong>; commit không được chạy trước khi
+phát đủ N phím, dù ACK đến sớm.</li>
+<li>Hết timeout ACK (150 ms) vẫn chuyển sang settling wait rồi commit, không treo.</li>
+</ul>
+<p><code>UinputShiftSelectBackend</code> còn khó hơn: gửi Shift down, Left × N+1, forward N Left
+đầu, lọc Left xác nhận cuối, Shift up, chờ settling, rồi commit từng ký tự.</p>
+<p><strong>Bài học:</strong> nếu định làm uinput, hãy coi nó là một state machine có ACK, không
+phải một lời gọi hàm.</p>
+<hr>
+<h2>8. Trust probe cho surrounding text</h2>
+<p>Đây là cơ chế đáng học nhất của Areca.</p>
+<h3>8.1 Vấn đề</h3>
+<p>App khai báo <code>CapabilityFlag::SurroundingText</code>. Nhưng:</p>
+<ul>
+<li>Snapshot có thể cũ.</li>
+<li>App có thể bỏ qua <code>deleteSurroundingText</code>.</li>
+<li>App có thể xóa nhưng không phát <code>SurroundingTextUpdated</code>.</li>
+<li>App có thể di chuyển caret trước rồi mới xóa.</li>
+</ul>
+<p>Nếu tin ngay, IME sẽ xóa nhầm hoặc chèn đè.</p>
+<h3>8.2 Cách probe</h3>
+<pre><code class="language-text">1. App khai báo SurroundingText, snapshot valid.
+2. Text ngay trước cursor phải kết thúc bằng currentText của engine.
+3. Gửi deleteSurroundingText(-N, N).
+4. Chờ event SurroundingTextUpdated, tối đa 150 ms (lần đầu) / 80 ms (retry).
+5. Kiểm tra ngữ nghĩa bằng surroundingProbeMatches():
+   - cursor == anchor (không selection)
+   - text trước cursor khớp expected sau khi xóa
+   - text cũ không còn
+   - loại trừ trạng thái trung gian &quot;cursor di chuyển trước rồi xóa&quot;
+6. Khớp → đánh dấu reliable, hủy deadline, commit.
+7. Timeout/không khớp → đánh dấu unreliable, fallback backend.
+</code></pre>
+<p>Verdict được cache theo <code>InputContext</code> UUID, và bị xóa khi lifecycle thay đổi.
+Backspace, Ctrl+A và phím di chuyển bảo vệ verdict trong <strong>1 giây</strong> — vì những
+thao tác đó có thể làm snapshot cũ đi nhưng không đủ để kết luận app hỏng.</p>
+<h3>8.3 Vì sao không tin capability?</h3>
+<p>Vì capability là <strong>lời khai</strong>, không phải <strong>bằng chứng</strong>. Areca chờ bằng chứng
+rằng lệnh xóa đã thực sự có hiệu lực. Đây là khác biệt giữa &quot;hy vọng app đúng&quot;
+và &quot;biết app đúng&quot;.</p>
+<h3>8.4 Chi phí</h3>
+<p>Probe chỉ chạy ở lần rewrite đầu tiên cần xóa, không chạy mỗi phím. Timeout
+150/80 ms chỉ xảy ra một lần cho mỗi context. Vì vậy chi phí gần như bằng 0
+trong steady state.</p>
+<hr>
+<h2>9. Timing, ACK và AdaptiveWait</h2>
+<h3>9.1 Delay theo frontend</h3>
+<p>Areca không dùng một con số chung. Cùng một thao tác, mỗi frontend một mức:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Nhóm</th>
+<th align="right">Wayland</th>
+<th align="right">DBus/IBus/XIM/Fcitx4</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Giữa các Backspace</td>
+<td align="right">1 ms</td>
+<td align="right">1 ms</td>
+</tr>
+<tr>
+<td>Sau Backspace cuối</td>
+<td align="right">3 ms</td>
+<td align="right">10 ms</td>
+</tr>
+<tr>
+<td>Sau xóa surrounding</td>
+<td align="right">3 ms</td>
+<td align="right">3 ms</td>
+</tr>
+<tr>
+<td>Sau Shift+Left</td>
+<td align="right">5 ms</td>
+<td align="right">10 ms</td>
+</tr>
+<tr>
+<td>Sau commit</td>
+<td align="right">20 ms</td>
+<td align="right">20 ms</td>
+</tr>
+<tr>
+<td>uinput ACK timeout</td>
+<td align="right">150 ms</td>
+<td align="right">150 ms</td>
+</tr>
+</tbody></table></div>
+<h3>9.2 AdaptiveWait</h3>
+<pre><code class="language-text">extraWaitMs = 0
+mỗi tín hiệu lag: +10 ms (tối đa 50 ms)
+sau 5 transaction ổn định: -10 ms
+tín hiệu:
+  - timer drift ≥ 5 ms
+  - ACK round-trip ≥ 4 ms
+  - ACK timeout → đề nghị 30 ms
+  - CPU PSI / load average / nhiệt độ (80/85°C)
+</code></pre>
+<p>Trước commit, backend đọc lại mức adaptive; nếu vừa tăng, hẹn thêm rồi mới commit.</p>
+<h3>9.3 Event loop post</h3>
+<p>Commit không chạy trực tiếp trong timer callback. Nó được đẩy sang <strong>post phase</strong>
+của event loop để các công việc đang nghẽn được xử lý trước. Đây là chi tiết nhỏ
+nhưng quan trọng: commit trong timer callback có thể vượt mặt thao tác xóa mà app
+chưa xử lý.</p>
+<h3>9.4 <code>PreciseTiming</code></h3>
+<p><code>True</code> → timer accuracy 1 µs. <code>False</code> → accuracy 0, cho phép event loop coalesce
+timer (tiết kiệm CPU, nhưng delay kém chính xác). Mặc định <code>True</code>.</p>
+<hr>
+<h2>10. Nhận diện app, field, context</h2>
+<h3>10.1 Các tầng nhận diện</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tầng</th>
+<th>Nguồn</th>
+<th>Dùng cho</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Program</td>
+<td><code>inputContext.program()</code></td>
+<td>App override, compatibility list</td>
+</tr>
+<tr>
+<td>Fallback program</td>
+<td>AT-SPI (<code>WindowFocusTracker</code>)</td>
+<td>Khi frontend trả rỗng</td>
+</tr>
+<tr>
+<td>Frontend</td>
+<td><code>wayland</code>, <code>xim</code>, <code>ibus</code>, <code>dbus</code>, <code>fcitx4</code></td>
+<td>Chọn timing</td>
+</tr>
+<tr>
+<td>Capability</td>
+<td><code>SurroundingText</code>, <code>Password</code>, <code>Url</code>, <code>KeyEventOrderFix</code>, <code>FormattedPreedit</code></td>
+<td>Field policy</td>
+</tr>
+<tr>
+<td>Field</td>
+<td>terminal, browser, address bar, editor/IDE, office</td>
+<td>Backend policy</td>
+</tr>
+<tr>
+<td>Selection</td>
+<td><code>cursor != anchor</code></td>
+<td>Selection guard</td>
+</tr>
+<tr>
+<td>Browser autocomplete</td>
+<td>selection kéo tới cuối dòng</td>
+<td>+1 Backspace</td>
+</tr>
+<tr>
+<td>Address bar</td>
+<td><code>CapabilityFlag::Url</code>, browser + AT-SPI, cuối cùng là <code>cursorRect</code></td>
+<td>Shift-Select/Backspace</td>
+</tr>
+</tbody></table></div>
+<h3>10.2 Compatibility list</h3>
+<p><code>program_compatibility.cpp</code> chứa hàng trăm tên: JetBrains, VS Code, Zed, Sublime,
+terminal (GNOME, Kitty, Alacritty, WezTerm...), browser, Office, chat.</p>
+<p>Hai hàm quan trọng:</p>
+<ul>
+<li><code>normalizedProgramName()</code>: bỏ path, lowercase, bỏ <code>.desktop</code>.</li>
+<li><code>matchesNameOrVariant()</code>: prefix + kiểm tra ký tự kế tiếp là <code>.</code> hoặc <code>-</code>.</li>
+</ul>
+<p>Nhờ vậy <code>code</code> không match <code>codeblocks</code>, <code>code-insiders</code>, <code>codelite</code>.</p>
+<h3>10.3 Address bar</h3>
+<p>Thứ tự ưu tiên:</p>
+<ol>
+<li><code>CapabilityFlag::Url</code> — đáng tin nhất.</li>
+<li>Browser identity + AT-SPI browser UI.</li>
+<li>Heuristic <code>cursorRect</code>: width ≤ 2, height 18–24, top &lt; 200, cache 5 giây.</li>
+</ol>
+<p>Heuristic cuối rất dễ vỡ khi đổi theme/scale/font. Areca dùng nó như phương án
+cuối, không phải phương án chính. Nếu anh viết IME, đừng bắt đầu từ đây.</p>
+<hr>
+<h2>11. Preedit, finalized word, reset, click</h2>
+<h3>11.1 Preedit mode</h3>
+<ul>
+<li>Dùng <code>BambooEngineAdapter</code> riêng, xử lý đồng bộ.</li>
+<li>Hiển thị qua client preedit nếu app có <code>CapabilityFlag::Preedit</code>; nếu không
+dùng server-side preedit của Fcitx.</li>
+<li><code>BackspaceRecovery=True</code>: Backspace trong composition gọi <code>processBackspace()</code>
+để Bamboo dựng lại chuỗi (<code>nhanhsh → nhánh</code>).</li>
+<li>Space/dấu câu: macro + spell check rồi commit ngay.</li>
+</ul>
+<h3>11.2 Finalized word recovery</h3>
+<p>Sau khi commit một từ + boundary (space/dấu câu), adapter giữ snapshot của từ và
+đếm số boundary đã commit.</p>
+<pre><code class="language-text">Người dùng gõ:  &quot;Chào &quot;     (từ &quot;Chào&quot; đã commit, 1 boundary)
+Backspace:      xóa boundary, đưa &quot;Chào&quot; trở lại preedit
+Gõ tiếp &quot;f&quot;:    &quot;Chàof&quot; → engine xử lý như đang soạn
+</code></pre>
+<p>Điều kiện: app hỗ trợ <code>SurroundingText</code> <strong>và</strong> snapshot khớp chính xác. Nếu không,
+reset state và forward Backspace gốc. Không đoán.</p>
+<p>Đây là tính năng rất khó, và Areca làm đúng cách: chỉ bật khi có bằng chứng.</p>
+<h3>11.3 Reset barrier</h3>
+<p><code>ArecaEngine::reset()</code> không reset ngay:</p>
+<pre><code class="language-cpp">if (scheduler_.shouldRejectReset()) return;   // đang xử lý hoặc &lt;20ms sau commit
+handlerFor(context).requestProtectedReset(context);
+</code></pre>
+<p><code>RewriteModeHandler::requestProtectedReset</code> còn từ chối nếu đang trong 20 ms sau
+Backspace. <code>PreeditModeHandler</code> từ chối nếu đang <code>Erasing</code> (finalized word
+recovery) hoặc trong 20 ms sau commit.</p>
+<p>Mục đích: reset từ frontend (đổi focus, app gửi lifecycle giả) không được xóa
+state mà IME cần để hoàn tất thao tác đang dở.</p>
+<h3>11.4 Mouse click tracker</h3>
+<pre><code class="language-text">libinput/udev → areca-mouse-monitor (process con)
+             → pipe stdout (R/C)
+             → MouseClickTracker trên event loop
+             → pending click
+             → keyEvent kế tiếp → reset có bảo vệ
+</code></pre>
+<ul>
+<li><code>R</code> = context libinput đã khởi tạo.</li>
+<li><code>C</code> = có nút chuột được nhấn (không phân biệt trái/phải/giữa).</li>
+<li>Pipe nonblocking; nhiều click gộp thành một cờ.</li>
+<li>Callback chỉ đánh dấu; trước phím kế, addon đọc thêm pipe để lấy click đến muộn.</li>
+<li>Nếu scheduler đang bảo vệ rewrite, cờ được giữ cho phím sau.</li>
+</ul>
+<p>Đây là cách duy nhất phát hiện click trên Wayland mà không cần quyền root, nhưng
+cần udev rule <code>70-areca-pointer.rules</code> cấp <code>uaccess</code> cho chuột/touchpad.</p>
+<hr>
+<h2>12. Cấu hình đầy đủ</h2>
+<h3>12.1 File</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Nội dung</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>areca.conf</code></td>
+<td>Cấu hình chính (kiểu gõ, charset, macro bật/tắt, app override...)</td>
+</tr>
+<tr>
+<td><code>areca-advanced.conf</code></td>
+<td>Timing, fallback, mouse tracking, debug</td>
+</tr>
+<tr>
+<td><code>areca-macro-table.conf</code></td>
+<td>Bảng macro</td>
+</tr>
+<tr>
+<td><code>areca-apps.conf</code></td>
+<td>Override backend theo app</td>
+</tr>
+</tbody></table></div>
+<p>Field timing cũ trong <code>areca.conf</code> được giữ dạng <code>HiddenOption</code> để migrate.
+File advanced load sau và <strong>ưu tiên</strong>. Đây là lý do nếu sửa tay cả hai file, kết
+quả có thể khác dự đoán — hãy sửa qua UI hoặc chỉ sửa file advanced.</p>
+<h3>12.2 Nhóm chính</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Default</th>
+<th>Ý nghĩa</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>BambooInputMethod</code></td>
+<td><code>Telex 2</code></td>
+<td>Kiểu gõ (lấy từ bamboo-core)</td>
+</tr>
+<tr>
+<td><code>OutputCharset</code></td>
+<td><code>Unicode</code></td>
+<td>Bảng mã đầu ra</td>
+</tr>
+<tr>
+<td><code>SpellcheckMode</code></td>
+<td><code>Realtime</code></td>
+<td>Off / Basic / Realtime</td>
+</tr>
+<tr>
+<td><code>ModernStyle</code></td>
+<td><code>true</code></td>
+<td><code>oà/uý</code> thay <code>òa/úy</code></td>
+</tr>
+<tr>
+<td><code>AutoCapitalizeAfterPunctuation</code></td>
+<td><code>false</code></td>
+<td>Viết hoa sau <code>. ! ?</code></td>
+</tr>
+<tr>
+<td><code>EnableMacro</code></td>
+<td><code>true</code></td>
+<td>Bật macro</td>
+</tr>
+<tr>
+<td><code>CapitalizeMacro</code></td>
+<td><code>true</code></td>
+<td>Giữ kiểu hoa/thường</td>
+</tr>
+<tr>
+<td><code>RevertMacroOnBackspace</code></td>
+<td><code>true</code></td>
+<td>Backspace hoàn tác macro</td>
+</tr>
+<tr>
+<td><code>MacroBypassModifier</code></td>
+<td><code>Shift</code></td>
+<td>Giữ modifier + Space để bỏ macro</td>
+</tr>
+<tr>
+<td><code>BackspaceRecovery</code></td>
+<td><code>true</code></td>
+<td>Backspace dựng lại từ trong preedit</td>
+</tr>
+<tr>
+<td><code>RestoreSurroundingText</code></td>
+<td><code>false</code></td>
+<td>Sửa từ đã commit (thử nghiệm)</td>
+</tr>
+<tr>
+<td><code>ShiftSelectFallbackForBrowser</code></td>
+<td><code>false</code></td>
+<td>Shift+Left khi browser thiếu surrounding</td>
+</tr>
+<tr>
+<td><code>UseBackspaceForUrl</code></td>
+<td><code>true</code></td>
+<td>Xử lý riêng ô URL</td>
+</tr>
+<tr>
+<td><code>SelectBackendKey</code></td>
+<td><code>grave</code> (<code>`</code>)</td>
+<td>Mở menu chọn backend cho app</td>
+</tr>
+<tr>
+<td><code>SwitchModeKey</code></td>
+<td>rỗng</td>
+<td>Hotkey đổi mode</td>
+</tr>
+<tr>
+<td><code>Debug</code></td>
+<td><code>false</code></td>
+<td>Log chi tiết</td>
+</tr>
+</tbody></table></div>
+<h3>12.3 Timing (advanced)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Key</th>
+<th align="right">Default</th>
+<th>Ghi chú</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>BackspaceDelayMs</code></td>
+<td align="right">1</td>
+<td>Giữa các Backspace</td>
+</tr>
+<tr>
+<td><code>AfterBackspaceWaitMs</code></td>
+<td align="right">10</td>
+<td>Sau Backspace cuối</td>
+</tr>
+<tr>
+<td><code>WaylandAfterBackspaceWaitMs</code></td>
+<td align="right">3</td>
+<td>Riêng Wayland</td>
+</tr>
+<tr>
+<td><code>XimAfterBackspaceWaitMs</code></td>
+<td align="right">10</td>
+<td></td>
+</tr>
+<tr>
+<td><code>Fcitx4AfterBackspaceWaitMs</code></td>
+<td align="right">10</td>
+<td></td>
+</tr>
+<tr>
+<td><code>DbusAfterBackspaceWaitMs</code></td>
+<td align="right">10</td>
+<td></td>
+</tr>
+<tr>
+<td><code>IBusAfterBackspaceWaitMs</code></td>
+<td align="right">10</td>
+<td></td>
+</tr>
+<tr>
+<td><code>UinputShiftSelectDelayMs</code></td>
+<td align="right">1</td>
+<td>Giữa các Shift+Left</td>
+</tr>
+<tr>
+<td><code>UinputShiftSelectAckTimeoutMs</code></td>
+<td align="right">150</td>
+<td>Hidden</td>
+</tr>
+<tr>
+<td><code>AfterUinputShiftSelectWaitMs</code></td>
+<td align="right">10</td>
+<td></td>
+</tr>
+<tr>
+<td><code>WaylandAfterUinputShiftSelectWaitMs</code></td>
+<td align="right">5</td>
+<td></td>
+</tr>
+<tr>
+<td><code>SurroundingWaitMs</code></td>
+<td align="right">3</td>
+<td>Sau xóa surrounding</td>
+</tr>
+<tr>
+<td><code>SurroundingProbeTimeoutMs</code></td>
+<td align="right">80</td>
+<td>Hidden; lần đầu dùng 150</td>
+</tr>
+<tr>
+<td><code>SurroundingDeleteDelayMs</code></td>
+<td align="right">10</td>
+<td>V2, giữa các lệnh xóa 1 ký tự</td>
+</tr>
+<tr>
+<td><code>WaylandSurroundingDeleteDelayMs</code></td>
+<td align="right">0</td>
+<td>V2 trên Wayland</td>
+</tr>
+<tr>
+<td><code>AfterSurroundingDeleteWaitMs</code></td>
+<td align="right">1</td>
+<td></td>
+</tr>
+<tr>
+<td><code>XTestBackspaceDelayMs</code></td>
+<td align="right">1</td>
+<td>Native</td>
+</tr>
+<tr>
+<td><code>PostCommitDelayMs</code></td>
+<td align="right">20</td>
+<td>Barrier sau commit</td>
+</tr>
+<tr>
+<td><code>PreciseTiming</code></td>
+<td align="right"><code>true</code></td>
+<td>Timer 1 µs</td>
+</tr>
+<tr>
+<td><code>UseSurroundingV2InsteadOfSurroundingV1</code></td>
+<td align="right"><code>false</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>UseUinputInsteadOfForwardKey</code></td>
+<td align="right"><code>true</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>UseXTestInsteadOfUinput</code></td>
+<td align="right"><code>false</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>EnableMouseTracking</code></td>
+<td align="right"><code>true</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>ForwardFirstCharacter</code></td>
+<td align="right"><code>true</code></td>
+<td></td>
+</tr>
+</tbody></table></div>
+<h3>12.4 Preset &quot;Best performance&quot;</h3>
+<p><code>applyBestPerformancePreset()</code> hạ các wait rewrite xuống 3–5 ms và surrounding
+xuống 1 ms. Chỉ nên dùng khi máy nhanh và app hợp tác; nếu gõ nhanh bị mất chữ,
+tăng lại <code>AfterBackspaceWaitMs</code> trước.</p>
+<hr>
+<h2>13. Build, cài, đóng gói</h2>
+<h3>13.1 Dependency</h3>
+<pre><code class="language-bash"># Ubuntu/Debian
+sudo apt install build-essential cmake ninja-build extra-cmake-modules golang \
+  libfcitx5core-dev libfcitx5config-dev libfcitx5utils-dev libfcitx5config-dev \
+  libdbus-1-dev libinput-dev libudev-dev libx11-dev libxtst-dev \
+  libsdl3-dev libfontconfig1-dev
+</code></pre>
+<p>CMake bắt buộc: <code>Fcitx5Core</code>, <code>Fcitx5Config</code>, <code>Fcitx5Utils</code>, <code>dbus-1</code>, <code>libinput</code>,
+<code>libudev</code>, <code>x11</code>, <code>xtst</code>. Tùy chọn: <code>libei-1.0 &gt;= 1.0</code> và <code>libportal &gt;= 0.7.1</code>
+(bật native Wayland backend nếu Fcitx5 &gt;= 5.1.11), <code>SDL3</code> (settings app),
+<code>fontconfig</code>.</p>
+<h3>13.2 Build + test</h3>
+<pre><code class="language-bash">git clone --recurse-submodules https://github.com/xhkzeroone/ArecaIME.git
+cd ArecaIME
+cmake -S . -B build -G Ninja \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_INSTALL_PREFIX=/usr
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure
+sudo cmake --install build
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+fcitx5 -rd
+</code></pre>
+<h3>13.3 uinput</h3>
+<pre><code class="language-bash">sudo modprobe uinput
+echo uinput | sudo tee /etc/modules-load.d/areca-uinput.conf
+
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+
+sudo usermod -aG input &quot;$USER&quot;   # đăng xuất/đăng nhập lại
+test -w /dev/uinput &amp;&amp; echo OK
+</code></pre>
+<p>Nếu không muốn cấp quyền <code>input</code>, bỏ qua — Areca tự fallback.</p>
+<h3>13.4 Đóng gói</h3>
+<ul>
+<li><code>install.sh</code> tự nhận distro/version và tải asset từ GitHub release.</li>
+<li>Hỗ trợ Ubuntu 24.04/25.10/26.04, Mint 22, Pop!_OS 24.04, Zorin 17,
+Fedora 42–44, Nobara, Bazzite, openSUSE Tumbleweed, Arch/CachyOS/Manjaro/
+EndeavourOS/Garuda.</li>
+<li>AUR: <code>fcitx5-areca-bin</code>, <code>fcitx5-areca-git</code>.</li>
+<li>CI build matrix + <code>.deb</code>/<code>.rpm</code>/pacman; bundle SDL3 với <code>$ORIGIN</code> rpath cho
+Ubuntu 24.04.</li>
+<li>udev rules: <code>99-uinput-areca.rules</code>, <code>70-areca-pointer.rules</code>.</li>
+</ul>
+<hr>
+<h2>14. Debug: playbook thực dụng</h2>
+<h3>14.1 Bật log</h3>
+<pre><code class="language-ini"># areca-advanced.conf
+Debug=True
+</code></pre>
+<pre><code class="language-bash">fcitx5 -rd
+journalctl --user -f | grep --line-buffered -i areca
+</code></pre>
+<h3>14.2 Kiểm tra addon đã nạp</h3>
+<pre><code class="language-bash">pgrep -a fcitx5
+fcitx5-diagnose
+# addon cũ còn sót?
+grep -i areca /proc/$(pgrep -x fcitx5)/maps
+</code></pre>
+<p>Nếu thấy đường dẫn có <code>(deleted)</code>, Fcitx5 vẫn đang giữ binary cũ. Restart hẳn
+(<code>fcitx5 -rd</code>) hoặc logout.</p>
+<h3>14.3 Phân biệt lỗi theo log</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Log</th>
+<th>Nghĩa</th>
+<th>Hướng xử lý</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>rewrite select backend=...</code></td>
+<td>Backend được chọn</td>
+<td>Kiểm tra app có đúng nhóm không</td>
+</tr>
+<tr>
+<td><code>surrounding probe timeout</code></td>
+<td>App không ACK</td>
+<td>Fallback; thêm app vào override</td>
+</tr>
+<tr>
+<td><code>reset rejected</code></td>
+<td>Reset đến trong transaction/20 ms</td>
+<td>Bình thường nếu không mất chữ</td>
+</tr>
+<tr>
+<td><code>rewrite backend failed</code></td>
+<td>Backend lỗi</td>
+<td><code>stalled_=true</code>; restart Fcitx5</td>
+</tr>
+<tr>
+<td><code>uinput</code> + <code>failed</code></td>
+<td>Không mở được <code>/dev/uinput</code></td>
+<td>Kiểm tra module/quyền</td>
+</tr>
+<tr>
+<td><code>mouse reset skipped</code></td>
+<td>Click đến khi đang composition</td>
+<td>Có thể là bảo vệ đúng</td>
+</tr>
+</tbody></table></div>
+<h3>14.4 Cấu hình cũ che default mới</h3>
+<p>Nếu vừa update mà hành vi không đổi: kiểm tra <code>areca.conf</code> có field timing cũ
+không. File advanced load sau và ưu tiên; field cũ trong <code>areca.conf</code> chỉ để
+migrate. Xóa field cũ hoặc sửa qua UI.</p>
+<h3>14.5 Kiểm tra nhanh bằng tay</h3>
+<pre><code class="language-bash"># 1. Addon có trong fcitx5?
+fcitx5-remote -o   # bật
+# 2. Gõ thử trong editor đơn giản
+gedit &amp;            # hoặc kate, mousepad
+# 3. Nếu gedit OK mà Chrome không OK → lỗi frontend/backend, không phải engine
+</code></pre>
+<p>Quy tắc: <strong>cô lập theo tầng</strong>. Engine sai thì mọi app đều sai. Nếu chỉ một app
+sai, đó là adapter/backend.</p>
+<hr>
+<h2>15. Test: 22 CTest và <code>TestInputContext</code></h2>
+<h3>15.1 Triết lý</h3>
+<p>Areca test <strong>hành vi adapter</strong>, không chỉ engine. Đây là điều nhiều dự án IME
+thiếu: họ test <code>transform(&quot;tieengs&quot;) == &quot;tiếng&quot;</code> rồi tưởng đã xong.</p>
+<h3>15.2 Fake InputContext</h3>
+<p><code>TestInputContext</code> ghi lại:</p>
+<ul>
+<li><code>commitStringImpl()</code></li>
+<li><code>deleteSurroundingTextImpl()</code></li>
+<li><code>forwardKeyImpl()</code></li>
+<li><code>updatePreeditImpl()</code></li>
+<li><code>surroundingText().setText(text, cursor, anchor)</code></li>
+<li><code>setCapabilityFlags(...)</code></li>
+</ul>
+<p>Nhờ vậy có thể chạy CTest headless, không cần GUI, không cần app thật.</p>
+<h3>15.3 Các nhóm test</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Kiểm tra</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>adaptive_wait_test</code></td>
+<td>Tăng/giảm delay, ngưỡng lag</td>
+</tr>
+<tr>
+<td><code>app_mode_routing_test</code></td>
+<td>Chọn mode theo app</td>
+</tr>
+<tr>
+<td><code>bamboo_engine_adapter_test</code></td>
+<td>Diff, charset, macro</td>
+</tr>
+<tr>
+<td><code>browser_autocomplete_test</code></td>
+<td>Nhận diện autocomplete</td>
+</tr>
+<tr>
+<td><code>event_loop_post_test</code></td>
+<td>Commit ở post phase</td>
+</tr>
+<tr>
+<td><code>forward_backspace_probe_test</code></td>
+<td>Fallback khi forward</td>
+</tr>
+<tr>
+<td><code>idle_key_forward_test</code></td>
+<td>Phím đầu đi tiếp</td>
+</tr>
+<tr>
+<td><code>input_type_detector_test</code></td>
+<td>Terminal/browser/URL</td>
+</tr>
+<tr>
+<td><code>mouse_click_tracker_test</code></td>
+<td>Pipe protocol, reset</td>
+</tr>
+<tr>
+<td><code>preedit_logic_test</code></td>
+<td>Composition, backspace</td>
+</tr>
+<tr>
+<td><code>preedit_surrounding_restore_test</code></td>
+<td>Khôi phục từ đã commit</td>
+</tr>
+<tr>
+<td><code>program_compatibility_test</code></td>
+<td>Match tên app</td>
+</tr>
+<tr>
+<td><code>rewrite_feature_toggle_test</code></td>
+<td>Bật/tắt tính năng</td>
+</tr>
+<tr>
+<td><code>sentence_capitalizer_test</code></td>
+<td>Auto-cap</td>
+</tr>
+<tr>
+<td><code>surrounding_text_probe_test</code></td>
+<td>Probe/ACK/timeout</td>
+</tr>
+<tr>
+<td><code>surrounding_text_restore_test</code></td>
+<td>Restore state</td>
+</tr>
+<tr>
+<td><code>surrounding_text_v2_backend_test</code></td>
+<td>Xóa từng ký tự</td>
+</tr>
+<tr>
+<td><code>uinput_backspace_backend_test</code></td>
+<td>ACK, forward, timeout</td>
+</tr>
+<tr>
+<td><code>uinput_shift_select_backend_test</code></td>
+<td>Shift+Select</td>
+</tr>
+<tr>
+<td><code>word_segment_test</code></td>
+<td>Tách từ</td>
+</tr>
+<tr>
+<td><code>xtest_backspace_backend_test</code></td>
+<td>XTest</td>
+</tr>
+<tr>
+<td><code>xtest_shift_select_backend_test</code></td>
+<td>XTest selection</td>
+</tr>
+</tbody></table></div>
+<h3>15.4 Chạy một test</h3>
+<pre><code class="language-bash">ctest --test-dir build -R surrounding_text_probe --output-on-failure
+</code></pre>
+<h3>15.5 Điểm yếu của test hiện tại</h3>
+<ul>
+<li>Dùng <code>assert</code> + <code>-UNDEBUG</code>, không framework → dừng ở lỗi đầu tiên, không có
+report đẹp.</li>
+<li>Chưa có test end-to-end với app thật trong CI (chỉ unit/integration).</li>
+<li>Chưa có fuzzing cho parser/charset.</li>
+</ul>
+<p>Nếu anh muốn đóng góp có giá trị cao, thêm một harness ghi lại <strong>scenario app
+thật</strong> (serialize InputContext callbacks) sẽ hữu ích hơn thêm test unit.</p>
+<hr>
+<h2>16. Đọc source theo thứ tự</h2>
+<p>Nếu mở repo lần đầu, đừng đọc <code>areca_engine.cpp</code> (2.066 dòng). Thứ tự gợi ý:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th align="right">Bước</th>
+<th>File</th>
+<th>Vì sao</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="right">1</td>
+<td><code>src/types.h</code></td>
+<td><code>BambooResult</code>, <code>RewritePlan</code>, enum</td>
+</tr>
+<tr>
+<td align="right">2</td>
+<td><code>src/rewrite_backend.h</code></td>
+<td>Hợp đồng backend</td>
+</tr>
+<tr>
+<td align="right">3</td>
+<td><code>src/key_queue.h</code></td>
+<td>FIFO, watch reference</td>
+</tr>
+<tr>
+<td align="right">4</td>
+<td><code>src/input_scheduler.{h,cpp}</code></td>
+<td>Trái tim của adapter</td>
+</tr>
+<tr>
+<td align="right">5</td>
+<td><code>src/bamboo_engine_adapter.cpp</code></td>
+<td>Diff + bridge</td>
+</tr>
+<tr>
+<td align="right">6</td>
+<td><code>src/surrounding_text_backend.cpp</code></td>
+<td>Backend phổ biến nhất</td>
+</tr>
+<tr>
+<td align="right">7</td>
+<td><code>src/surrounding_probe_match.h</code></td>
+<td>Logic trust probe</td>
+</tr>
+<tr>
+<td align="right">8</td>
+<td><code>src/rewrite_mode.cpp</code></td>
+<td>Policy key/Backspace/macro</td>
+</tr>
+<tr>
+<td align="right">9</td>
+<td><code>src/preedit_mode.cpp</code></td>
+<td>Preedit + finalized word</td>
+</tr>
+<tr>
+<td align="right">10</td>
+<td><code>src/areca_engine.cpp</code></td>
+<td>Routing tổng</td>
+</tr>
+<tr>
+<td align="right">11</td>
+<td><code>src/program_compatibility.cpp</code></td>
+<td>Danh sách app</td>
+</tr>
+<tr>
+<td align="right">12</td>
+<td><code>settings/</code></td>
+<td>UI (không cần cho hiểu engine)</td>
+</tr>
+</tbody></table></div>
+<h3>16.1 Cảnh báo: tài liệu và code lệch nhau</h3>
+<p>Đây là dự án đang tiến hoá nhanh; đừng tin tài liệu tuyệt đối. Ba chỗ tôi đã
+kiểm tra và thấy lệch tại snapshot:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tài liệu nói</th>
+<th>Code thực tế</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>SwitchModeKey</code> mặc định <code>Alt+Space</code></td>
+<td>Default rỗng; nhánh xử lý bị comment trong <code>keyEvent</code></td>
+</tr>
+<tr>
+<td><code>UinputShiftSelectAckTimeoutMs</code> 20 ms (spec)</td>
+<td>Default <strong>150 ms</strong> trong <code>SchedulerTiming</code>/<code>types.h</code></td>
+</tr>
+<tr>
+<td><code>project(... VERSION 0.1.0)</code></td>
+<td>Release tag <code>v8.3.0</code></td>
+</tr>
+</tbody></table></div>
+<p>Quy tắc: khi debugging, <strong>đọc code trước, docs sau</strong>. Khi viết PR, sửa docs cùng
+lúc với code — đây là nợ kỹ thuật dễ trả nhất của Areca.</p>
+<hr>
+<h2>17. Điểm mạnh, điểm yếu, giới hạn</h2>
+<h3>17.1 Điểm mạnh</h3>
+<ol>
+<li><strong>Adapter production-grade</strong> — thứ khó nhất của IME Linux được làm tới nơi.</li>
+<li><strong>Fail-closed</strong> — backend lỗi thì dừng, không hỏng dữ liệu.</li>
+<li><strong>Trust probe</strong> — không tin capability, chờ bằng chứng.</li>
+<li><strong>Fallback chain đầy đủ</strong> — hầu như app nào cũng gõ được bằng cách này hay cách khác.</li>
+<li><strong>Test adapter</strong> — 22 target, có fake InputContext.</li>
+<li><strong>Đóng gói nghiêm túc</strong> — đa distro, AUR, udev, CI matrix.</li>
+<li><strong>Tài liệu kiến trúc tốt</strong> — ARCHITECTURE.md + spec + debugging.</li>
+</ol>
+<h3>17.2 Điểm yếu / rủi ro</h3>
+<ol>
+<li><strong>Phụ thuộc bamboo-core</strong> — engine không phải của Areca; bug engine phải chờ upstream.</li>
+<li><strong>Go bridge</strong> — thêm một runtime, một lớp FFI, khó debug hơn C++ thuần.</li>
+<li><strong>Phức tạp cao</strong> — 6 backend, nhiều timing, nhiều state; người mới khó tiếp cận.</li>
+<li><strong>Compatibility list dài</strong> — bảo trì nặng, dễ sai khi app đổi tên.</li>
+<li><strong>Heuristic address bar bằng <code>cursorRect</code></strong> — rất dễ vỡ.</li>
+<li><strong>AdaptiveWait toàn cục</strong> — một app chậm có thể làm mọi app chậm thêm.</li>
+<li><strong>uinput mặc định bật</strong> — cần quyền, có thể tạo duplicate event trên máy lạ.</li>
+<li><strong>Chưa có test app thật trong CI</strong> — nhiều hành vi chỉ biết qua báo lỗi.</li>
+<li><strong>Một maintainer</strong> — bus factor thấp.</li>
+<li><strong>Chưa có fuzzing/benchmark công khai</strong> — chất lượng dựa nhiều vào test hồi quy
+viết tay; chưa có số đo latency/CPU chính thức.</li>
+</ol>
+<h3>17.3 Giới hạn cần biết trước khi dùng</h3>
+<ul>
+<li>Chỉ Linux + Fcitx5. Không IBus, không macOS/Windows.</li>
+<li>Rewrite mặc định có thể gây lỗi trên app lạ; chuyển Preedit cho app đó.</li>
+<li>uinput cần quyền; nếu không có, một số app vẫn có thể nuốt chữ.</li>
+<li>Một số app (Discord/Signal cũ, LibreOffice, Google Sheets) cần override tay.</li>
+</ul>
+<hr>
+<h2>18. Nếu anh muốn đóng góp</h2>
+<h3>18.1 Quy trình</h3>
+<ol>
+<li>Đọc <code>CONTRIBUTING.md</code>, <code>AGENTS.md</code> (nếu có), <code>docs/ARCHITECTURE.md</code>.</li>
+<li>Chọn issue nhỏ; đừng bắt đầu bằng việc thêm backend mới.</li>
+<li>Build + chạy full <code>ctest</code> trước khi sửa.</li>
+<li>Sửa + thêm test <strong>hành vi</strong> (không chỉ test hàm).</li>
+<li>Chạy <code>clang-format</code>/<code>clang-tidy</code> theo <code>settings/.clang-format</code>.</li>
+<li>PR mô tả: app nào, frontend nào, trước/sau, log.</li>
+</ol>
+<h3>18.2 Việc đáng làm</h3>
+<ul>
+<li>Thêm test cho app thật (serialize callback).</li>
+<li>Giảm phụ thuộc <code>cursorRect</code>.</li>
+<li>Scope AdaptiveWait theo app/backend.</li>
+<li>Thêm backend fallback cho app mới.</li>
+<li>Cải thiện docs cho người dùng cuối.</li>
+</ul>
+<h3>18.3 Việc không nên làm</h3>
+<ul>
+<li>Thêm app vào compatibility list mà không có log.</li>
+<li>Tăng delay mặc định để &quot;che&quot; lỗi.</li>
+<li>Copy code từ dự án GPL (Areca MIT, nhưng đừng kéo GPL vào).</li>
+<li>Refactor lớn trước khi có test.</li>
+</ul>
+<hr>
+<h2>19. Glossary</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Thuật ngữ</th>
+<th>Nghĩa</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Rewrite</strong></td>
+<td>Gõ trực tiếp, sửa bằng xóa/chèn</td>
+</tr>
+<tr>
+<td><strong>Preedit</strong></td>
+<td>Vùng soạn thảo có gạch chân</td>
+</tr>
+<tr>
+<td><strong>Redirect</strong></td>
+<td>Forward phím gốc</td>
+</tr>
+<tr>
+<td><strong>Surrounding text</strong></td>
+<td>API cho IME đọc text quanh caret</td>
+</tr>
+<tr>
+<td><strong>Transaction</strong></td>
+<td>Một lượt xóa + chèn của backend</td>
+</tr>
+<tr>
+<td><strong>Single-flight</strong></td>
+<td>Chỉ một transaction tại một thời điểm</td>
+</tr>
+<tr>
+<td><strong>Barrier</strong></td>
+<td>Khoảng chờ sau commit trước khi xử lý key tiếp</td>
+</tr>
+<tr>
+<td><strong>Trust probe</strong></td>
+<td>Thử xóa và chờ ACK để đánh giá app</td>
+</tr>
+<tr>
+<td><strong>ACK</strong></td>
+<td>Tín hiệu app đã xử lý lệnh</td>
+</tr>
+<tr>
+<td><strong>AdaptiveWait</strong></td>
+<td>Tự tăng/giảm delay theo lag</td>
+</tr>
+<tr>
+<td><strong>Finalized word</strong></td>
+<td>Từ đã commit nhưng còn khả năng sửa</td>
+</tr>
+<tr>
+<td><strong>Protected reset</strong></td>
+<td>Reset bị hoãn để không mất state</td>
+</tr>
+<tr>
+<td><strong>Idle key</strong></td>
+<td>Phím đầu khi engine rỗng, có thể forward</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2>20. Nguồn</h2>
+<h3>Trong repo Areca</h3>
+<ul>
+<li><code>README.md</code>, <code>docs/ARCHITECTURE.md</code>, <code>docs/ARECA_ARCHITECTURE_SPECIFICATION.md</code></li>
+<li><code>docs/ADAPTIVE_DELAYS.md</code>, <code>docs/DEBUGGING.md</code></li>
+<li><code>src/areca_engine.cpp</code>, <code>src/input_scheduler.cpp</code>, <code>src/key_queue.h</code></li>
+<li><code>src/bamboo_engine_adapter.cpp</code>, <code>bamboo-bridge/main.go</code></li>
+<li><code>src/surrounding_text_backend.cpp</code>, <code>src/surrounding_text_v2_backend.cpp</code>,
+<code>src/surrounding_probe_match.h</code>, <code>src/surrounding_text_cache.cpp</code></li>
+<li><code>src/forward_backspace_backend.cpp</code>, <code>src/uinput_backspace_backend.cpp</code>,
+<code>src/uinput_shift_select_backend.cpp</code>, <code>src/native_device.cpp</code>, <code>src/xtest_*</code></li>
+<li><code>src/adaptive_wait.h</code>, <code>src/adaptive_wait_monitor.cpp</code></li>
+<li><code>src/rewrite_mode.cpp</code>, <code>src/preedit_mode.cpp</code>, <code>src/preedit_logic.cpp</code></li>
+<li><code>src/input_type_detector.cpp</code>, <code>src/program_compatibility.cpp</code>,
+<code>src/browser_autocomplete.cpp</code>, <code>src/window_focus_tracker.cpp</code></li>
+<li><code>src/sentence_capitalizer.cpp</code>, <code>src/word_segment.cpp</code></li>
+<li><code>settings/</code>, <code>install.sh</code>, <code>packaging/</code>, <code>.github/workflows/package-linux.yml</code></li>
+</ul>
+<h3>Ngoài repo</h3>
+<ul>
+<li><a href="https://github.com/BambooEngine/bamboo-core">bamboo-core</a> — engine MIT</li>
+<li><a href="https://fcitx-im.org/wiki/Develop">Fcitx5 documentation</a></li>
+<li><a href="https://fcitx-im.org/wiki/Using_Fcitx_5_on_Wayland">Using Fcitx5 on Wayland</a></li>
+<li>text-input-v3 protocol, libei/libportal, AT-SPI</li>
+</ul>
+<h3>Ghi chú về số liệu</h3>
+<p>Số dòng/file/test lấy từ commit <code>952ddd8</code>. Stars/issue thay đổi theo thời gian;
+xem <code>docs/ime-survey/README.md</code> cho snapshot khảo sát.</p>
+<hr>
+<h2>Phụ lục A — Cheat sheet (một trang)</h2>
+<h3>Bất biến</h3>
+<ol>
+<li>FIFO — key giữ thứ tự.</li>
+<li>Single-flight — một key xử lý tại một thời điểm.</li>
+<li>Transaction barrier — backend đang sửa thì key mới chờ.</li>
+<li>Không sleep trên main thread — chỉ timer event loop.</li>
+<li>Fail closed — backend lỗi thì dừng, không đoán.</li>
+<li>Commit trước reset — không xóa state khi còn composition.</li>
+</ol>
+<h3>Sáu backend</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Backend</th>
+<th>Một dòng</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>SurroundingTextBackend</code></td>
+<td><code>deleteSurroundingText(-N,N)</code> + commit</td>
+</tr>
+<tr>
+<td><code>SurroundingTextV2Backend</code></td>
+<td>Xóa từng ký tự, chậm mà chắc</td>
+</tr>
+<tr>
+<td><code>ForwardBackspaceBackend</code></td>
+<td><code>forwardKey(Backspace)</code> × N</td>
+</tr>
+<tr>
+<td><code>UinputBackspaceBackend</code></td>
+<td><code>KEY_BACKSPACE</code> qua <code>/dev/uinput</code> + ACK</td>
+</tr>
+<tr>
+<td><code>UinputShiftSelectBackend</code></td>
+<td>Shift+Left × N+1 rồi commit</td>
+</tr>
+<tr>
+<td><code>NativeXTestBackend</code></td>
+<td>Libei (Wayland) / XTest (X11)</td>
+</tr>
+</tbody></table></div>
+<h3>Timing mặc định</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Thông số</th>
+<th align="right">Giá trị</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Backspace giữa các phím</td>
+<td align="right">1 ms</td>
+</tr>
+<tr>
+<td>Sau Backspace cuối (Wayland)</td>
+<td align="right">3 ms</td>
+</tr>
+<tr>
+<td>Sau Backspace cuối (khác)</td>
+<td align="right">10 ms</td>
+</tr>
+<tr>
+<td>Sau xóa surrounding</td>
+<td align="right">3 ms</td>
+</tr>
+<tr>
+<td>Sau commit</td>
+<td align="right">20 ms</td>
+</tr>
+<tr>
+<td>Probe surrounding (lần đầu / retry)</td>
+<td align="right">150 / 80 ms</td>
+</tr>
+<tr>
+<td>uinput ACK timeout</td>
+<td align="right">150 ms</td>
+</tr>
+</tbody></table></div>
+<h3>Lệnh</h3>
+<pre><code class="language-bash"># build + test
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
+ctest --test-dir build --output-on-failure
+
+# cài + reload
+sudo cmake --install build
+sudo udevadm control --reload-rules &amp;&amp; sudo udevadm trigger
+fcitx5 -rd
+
+# log
+journalctl --user -f | grep --line-buffered -i areca
+
+# kiểm tra addon
+grep -i areca /proc/$(pgrep -x fcitx5)/maps
+</code></pre>
+<h3>Sáu file nên đọc</h3>
+<ol>
+<li><code>src/types.h</code></li>
+<li><code>src/input_scheduler.cpp</code></li>
+<li><code>src/bamboo_engine_adapter.cpp</code></li>
+<li><code>src/surrounding_text_backend.cpp</code></li>
+<li><code>src/rewrite_mode.cpp</code></li>
+<li><code>src/preedit_mode.cpp</code></li>
+</ol>
+<h3>Năm lỗi thường gặp</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Triệu chứng</th>
+<th>Nguyên nhân thường gặp</th>
+<th>Xử lý</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Mất chữ khi gõ nhanh</td>
+<td>Barrier/timing quá ngắn</td>
+<td>Tăng <code>PostCommitDelayMs</code>, kiểm tra <code>stalled_</code></td>
+</tr>
+<tr>
+<td>Chữ lặp</td>
+<td>Commit hai lần / forward key</td>
+<td>Kiểm tra backend + <code>filterAndAccept</code></td>
+</tr>
+<tr>
+<td>Xóa sai vị trí</td>
+<td>Snapshot surrounding cũ</td>
+<td>Probe/verify trước khi xóa</td>
+</tr>
+<tr>
+<td>Không gõ được trong terminal</td>
+<td>Preedit/forward không tương thích</td>
+<td>Chuyển app override sang Backspace/Preedit</td>
+</tr>
+<tr>
+<td>Addon không nạp</td>
+<td>Binary cũ <code>(deleted)</code></td>
+<td>Restart Fcitx5, kiểm tra <code>/proc/&lt;pid&gt;/maps</code></td>
+</tr>
+</tbody></table></div>
+
+  </article>
+</div>
+<footer class="doc-footer"><div class="wrap">ViFastKey · tài liệu kỹ thuật · cập nhật 2026-11-01</div></footer>
+</body>
+</html>

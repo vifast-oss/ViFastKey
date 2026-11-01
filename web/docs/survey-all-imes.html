@@ -1,0 +1,1264 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Khảo sát 31 bộ gõ tiếng Việt · ViFastKey</title>
+<meta name="description" content="Phân tích từng repo theo nhóm Fcitx5, IBus, Wayland và native; ma trận tính năng và bài học chung.">
+<link rel="canonical" href="https://vifastkey.hoctuthien.com/docs/survey-all-imes.html">
+<meta name="theme-color" content="#FFF8EC">
+<link rel="icon" href="/brand/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
+<link rel="stylesheet" href="/docs/docs.css">
+<meta name="robots" content="noindex">
+</head>
+<body>
+<header class="doc-header">
+  <div class="inner">
+    <a class="brand" href="/" aria-label="ViFastKey — về trang chủ">
+      <img src="/brand/vifastkey-icon-192.png" alt="">
+      <span><span class="red">Vi</span><em>Fast</em><span class="red">Key</span> <span class="doc-suffix" style="font-weight:400;color:var(--muted)">· Tài liệu</span></span>
+    </a>
+    <nav class="doc-nav" aria-label="Tài liệu">
+      <a href="/">Trang chủ</a>
+      <a href="/docs/">Tài liệu</a>
+      <a href="/docs/areca-ime.html">Areca</a>
+    </nav>
+  </div>
+</header>
+<div class="wrap">
+  <div class="crumbs"><a href="/">ViFastKey</a> / <a href="/docs/">Tài liệu</a> / Khảo sát 31 bộ gõ tiếng Việt</div>
+  <article>
+<h1>Khảo sát 31 bộ gõ tiếng Việt</h1>
+<blockquote>
+<p>Snapshot 2026-11-01. Nguồn: <code>hthienloc/vietnamese-ime-tracker</code> (repos.yml +
+bo-go-tieng-viet.csv), GitHub API, README và mã nguồn từng repo.
+Metadata (stars, license, ngày) lấy tự động; tính năng lấy từ README/source.
+Chỗ nào chỉ suy ra từ cấu trúc sẽ ghi &quot;có vẻ&quot;/&quot;theo cấu trúc&quot;.</p>
+<p>Quy ước: ✅ có · ◐ một phần · — không · 🔌 thuộc adapter/OS.</p>
+</blockquote>
+<hr>
+<h2>1. Phương pháp và giới hạn</h2>
+<p><strong>Đã làm:</strong></p>
+<ul>
+<li>Đối chiếu 36 dòng dữ liệu tracker → 31 repository unique.</li>
+<li>Lấy metadata GitHub API cho 28 repo còn tồn tại (3 repo đã bị xóa: 404).</li>
+<li>Đọc toàn bộ README của 28 repo.</li>
+<li>Đọc mã nguồn/kiến trúc sâu cho các repo lớn: Areca, fcitx5-lotus, skey,
+fcitx5-bamboo, fcitx5-unikey, Gõ Nhanh, telebit, Ngó Sen.</li>
+<li>Đối chiếu chéo các tuyên bố trong README với cấu trúc source khi có thể.</li>
+</ul>
+<p><strong>Chưa làm:</strong></p>
+<ul>
+<li>Chưa build/chạy tất cả trên máy thật. Các nhận định về &quot;mượt&quot;, &quot;ổn định&quot;,
+&quot;chính xác&quot; chỉ dựa trên kiến trúc, test và báo cáo, không phải benchmark.</li>
+<li>Chưa test từng app (Chrome, LibreOffice, terminal...) cho từng dự án.</li>
+<li>Stars/issue thay đổi; số liệu chỉ đúng tại snapshot.</li>
+</ul>
+<p><strong>Cách đọc &quot;trạng thái&quot;:</strong></p>
+<ul>
+<li><code>Active</code>: repo còn phát triển (commit gần nhất trong ~3 tháng).</li>
+<li><code>Archived</code>: repo archive/tombstone, không nhận thay đổi.</li>
+<li><code>Inactive</code>: 3–6 tháng không commit.</li>
+<li><code>Dead</code>: &gt;6 tháng, hoặc repo đã bị xóa (404).</li>
+</ul>
+<p>Lưu ý: tracker dùng ngưỡng commit để gắn nhãn, nên một repo archive vẫn có thể
+hiện &quot;Active&quot;. Bộ dữ liệu ở đây phân loại lại theo trạng thái thực tế.</p>
+<hr>
+<h2>2. Bức tranh tổng</h2>
+<h3>2.1 Số liệu</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Chỉ số</th>
+<th>Giá trị</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Repository unique</td>
+<td>31</td>
+</tr>
+<tr>
+<td>Dòng dữ liệu (đa nền tảng)</td>
+<td>36</td>
+</tr>
+<tr>
+<td>Active / Archived / Inactive / Dead (repo)</td>
+<td>24 / 3 / 1 / 3</td>
+</tr>
+<tr>
+<td>Tổng stars (unique)</td>
+<td>~4.700</td>
+</tr>
+<tr>
+<td>Trung vị tuổi repo</td>
+<td>phần lớn dưới 1 năm; 27/36 dòng tạo năm 2026</td>
+</tr>
+<tr>
+<td>Fcitx5 (dòng)</td>
+<td>16</td>
+</tr>
+<tr>
+<td>IBus (dòng)</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Standalone Wayland (dòng)</td>
+<td>5</td>
+</tr>
+<tr>
+<td>Fcitx5 + IBus (dòng)</td>
+<td>4</td>
+</tr>
+<tr>
+<td>macOS native (dòng)</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Windows native (dòng)</td>
+<td>3</td>
+</tr>
+</tbody></table></div>
+<p>Ngôn ngữ chính (dòng): C++ 12, Rust 12, Go 3, Makefile 3, Swift 3, Kotlin 1,
+C# 1, HTML 1.</p>
+<p>Giấy phép (dòng, theo cột tracker): GPL-3.0 18, MIT 9, BSD-3-Clause 3, không rõ 3,
+0BSD 1, MPL-2.0 1, GPL-2.0 1. GitHub API có thể báo khác (ví dụ <code>fcitx5-bamboo</code>
+ghi LGPL-2.1+ trong README nhưng API không thấy license).</p>
+<h3>2.2 Ba xu hướng</h3>
+<p><strong>Xu hướng 1 — Bùng nổ Fcitx5 sau Wayland.</strong>
+16/36 dòng là Fcitx5 addon. Trước 2025 chỉ có <code>fcitx5-unikey</code> và
+<code>fcitx5-bamboo</code>; từ 2026 mọc thêm Lotus, Areca, VMK, SKey, telebit, Clak,
+lilypad, Ngó Sen, CanType, pinakey... Lý do: Fcitx5 ổn định, tài liệu addon tốt,
+và Wayland làm IBus/XIM lộ nhiều lỗi.</p>
+<p><strong>Xu hướng 2 — Rust thay C++ ở lớp engine.</strong>
+12 repo Rust, phần lớn ra đời 2026. Nhưng đa số là engine nhỏ + adapter mỏng;
+các dự án lâu năm (OpenKey, ibus-bamboo, fcitx5-unikey, Lotus) vẫn C++/Go.
+Rust thắng ở FFI an toàn, cross-platform, nhưng chưa thắng ở số tính năng.</p>
+<p><strong>Xu hướng 3 — Tách engine khỏi adapter.</strong>
+Các dự án mới đều có <code>core</code>/<code>engine</code> crate riêng + adapter mỏng:
+Gõ Nhanh, Funput, TextVN, vnkey, CanType, pinakey, skey, telebit, Areca.
+Đây là bài học chung của cả hệ sinh thái, không riêng ai.</p>
+<h3>2.3 Nghịch lý &quot;nhiều dự án, ít test&quot;</h3>
+<ul>
+<li>31 repo nhưng chỉ khoảng <strong>8–10</strong> có test tự động thực sự chạy trong CI.</li>
+<li>Chỉ <strong>khoảng 4–5</strong> có test adapter (giả lập InputContext): Areca, fcitx5-lotus,
+fcitx5-unikey (TestFrontend), ViFastKey, có thể thêm Ngó Sen.</li>
+<li>Phần lớn test engine (transform chuỗi), không test hành vi với app.</li>
+<li>Đây là lý do cùng một lỗi &quot;mất chữ trên Chrome&quot; xuất hiện lặp lại ở nhiều
+dự án qua nhiều năm.</li>
+</ul>
+<hr>
+<h2>3. Taxonomy: tích hợp ở đâu?</h2>
+<pre><code class="language-text">┌─ Fcitx5 addon ─────────────────────────────────────────────┐
+│ Engine nhúng trong addon, Fcitx5 gọi keyEvent.              │
+│ Ưu: chuẩn, có surrounding text, preedit, status area.       │
+│ Nhược: chỉ Linux; hành vi phụ thuộc frontend.               │
+├─ IBus engine ──────────────────────────────────────────────┤
+│ Daemon riêng nói D-Bus với IBus.                            │
+│ Ưu: mặc định trên GNOME/Ubuntu.                             │
+│ Nhược: Wayland hạn chế, surrounding text kém.               │
+├─ Standalone Wayland ───────────────────────────────────────┤
+│ Bắt evdev / dùng zwp_input_method_v2 / virtual keyboard.    │
+│ Ưu: không cần Fcitx/IBus, kiểm soát hoàn toàn.              │
+│ Nhược: cần quyền, dễ xung đột, phụ thuộc compositor.        │
+├─ Native desktop ───────────────────────────────────────────┤
+│ macOS IMK/CGEventTap, Windows TSF/hook.                     │
+│ Ưu: tích hợp sâu, UX tốt.                                   │
+│ Nhược: mỗi OS một codebase, signing/notarize.               │
+└─ Cross-platform core + nhiều adapter ──────────────────────┘
+</code></pre>
+<p>Điểm quan trọng: <strong>cùng một engine có thể xuất hiện ở nhiều nhóm</strong>. Ví dụ
+<code>bamboo-core</code> có mặt trong ibus-bamboo, fcitx5-bamboo, Areca, NepKey, và gián
+tiếp trong Lotus (C++ port). Vì vậy đánh giá &quot;bộ gõ&quot; phải tách <strong>engine</strong> khỏi
+<strong>adapter</strong>.</p>
+<hr>
+<h2>4. Nhóm Fcitx5</h2>
+<h3>4.1 fcitx5-unikey — chuẩn mực cũ</h3>
+<ul>
+<li><strong>Repo:</strong> <code>fcitx/fcitx5-unikey</code> · C++ · GPL-2.0+ (README) · 132★ · 2019.</li>
+<li><strong>Là gì:</strong> addon chính thức của Fcitx, dùng <code>unikey-lib</code> port từ x-unikey
+<code>ukengine</code> (inputproc, charset, mactab, ukengine, usrkeymap).</li>
+<li><strong>Tính năng:</strong> Telex, VNI, VIQR, Microsoft Vietnamese, UserIM, Simple Telex,
+Simple Telex 2; 8 bảng mã (Unicode, TCVN3, VNI Win, VIQR, BK HCM 2, CString,
+NCR dec/hex); spell check; macro; <code>Process W at word begin</code>; auto-restore;
+modern style; free marking; preedit style None/Underline/Highlight;
+<strong>experimental modify surrounding text</strong>.</li>
+<li><strong>Đáng học:</strong> test <code>TestFrontend</code> headless với bảng Telex kỳ vọng lớn; tách
+subconfig macro/keymap (<code>fcitx://config/addon/unikey/...</code>); editor tự reload.</li>
+<li><strong>Hạn chế:</strong> engine và UX cũ; preedit-centric; surrounding edit chỉ thử nghiệm;
+không app profile, không timing; README 9 dòng.</li>
+<li><strong>Độ chín:</strong> cao về tuổi đời và tích hợp Fcitx; thấp về tính năng hiện đại.</li>
+</ul>
+<p><strong>Vì sao vẫn quan trọng:</strong> đây là baseline mà mọi người dùng Linux so sánh. Nếu
+bộ gõ mới không bằng fcitx5-unikey ở Telex/VNI cơ bản, đừng bàn chuyện khác.</p>
+<h3>4.2 fcitx5-bamboo — engine Go trong addon C++</h3>
+<ul>
+<li><strong>Repo:</strong> <code>fcitx/fcitx5-bamboo</code> · C++ + Go · LGPL-2.1+ (README) · 76★ · 2022.</li>
+<li><strong>Kiến trúc:</strong> <code>bamboo-core</code> build <code>-buildmode=c-archive</code>, cgo <code>Handle</code> bọc
+trong RAII <code>CGoObject</code>; <code>BambooState</code> theo từng input context; dictionary
+<code>vietnamese.cm.dict</code> nạp vào Go map.</li>
+<li><strong>Tính năng:</strong> Telex, VNI, VIQR, Custom keymap; Unicode + 16 bảng mã legacy
+(TCVN3, VNI, VIQR, VISCII, VPS, BKHCM, Vietware, CP1258, NCR...); spell check
+bằng từ điển; macro theo từng input method; <code>autoNonVnRestore</code>, <code>modernStyle</code>,
+<code>freeMarking</code>, <code>restoreKeyStroke</code>; preedit có gạch chân.</li>
+<li><strong>Đáng học:</strong> macro file riêng <code>conf/bamboo-macro-&lt;im&gt;.conf</code>; status area cho
+input method/charset/spell/macro; option list lấy động từ Go.</li>
+<li><strong>Hạn chế:</strong> chỉ preedit; không direct commit/surrounding/app profile/timing;
+Go runtime trong Fcitx5; <code>ddFreeStyle</code> bị ép true; addon không có test target.</li>
+<li><strong>Độ chín:</strong> ổn định, chính thức, nhưng đứng yên về tính năng.</li>
+</ul>
+<p><strong>Bài học:</strong> đây là ví dụ sạch của &quot;engine Go + adapter C++&quot;. Areca học mô hình
+này nhưng thêm scheduler/backend.</p>
+<h3>4.3 fcitx5-lotus — nhiều mode nhất</h3>
+<ul>
+<li><strong>Repo:</strong> <code>LotusInputMethod/fcitx5-lotus</code> · C++20 · GPL-3.0 · 522★ · 2026-02.</li>
+<li><strong>Nguồn gốc:</strong> <strong>fork tối ưu từ VMK</strong>, không phải từ fcitx5-bamboo. Engine
+<code>lotus/</code> là <strong>bản port C++ của bamboo-core</strong> (engine, composition,
+key_processor, spelling, macro_table, encoder, rules_parser, flattener,
+rebuild, dictionary).</li>
+<li><strong>7 mode:</strong> OFF, Uinput (Smooth), Uinput (Super Smooth), Uinput (Select),
+Surrounding Text, Preedit, Emoji Picker.</li>
+<li><strong>Tính năng:</strong> 8 kiểu gõ (Telex, VNI, Telex+VNI, VIQR, Microsoft, VNI French,
+Custom...); 17 bảng mã; dictionary spell check; macro <code>$TIME/$DATE</code>;
+auto-capitalize; double-space → period; double-hyphen → em dash; custom
+keymap; emoji history; <strong>app rules</strong> đặt mode + delay commit/backspace/post
+theo app.</li>
+<li><strong>Đáng học:</strong> uinput server tách process, xác thực peer bằng <code>SO_PEERCRED</code>
+(UID + executable allowlist) trên abstract <code>SOCK_SEQPACKET</code>; 57 test headless
+gồm <code>app-rule-delay-wire</code>, <code>dbus-deferred-commit</code>,
+<code>focus-out-mid-replacement</code>, <code>chromium-address-bar</code>, golden files.</li>
+<li><strong>Hạn chế:</strong> uinput/udev/ACL/setfacl phức tạp, bề mặt bảo mật rộng;
+<code>BUILD_TESTING</code> mặc định off; README mỏng, docs ở site ngoài.</li>
+<li><strong>Độ chín:</strong> cao nhất trong nhóm Fcitx5 mới (522★, 22 contributor, CI nặng).</li>
+</ul>
+<p><strong>So với Areca:</strong> Lotus nhiều mode và nhiều tính năng người dùng hơn; Areca đi
+sâu hơn vào trust probe và tính đúng đắn của từng transaction. Hai triết lý khác
+nhau: Lotus tối ưu trải nghiệm, Areca tối ưu tính đúng.</p>
+<h3>4.4 Areca IME — adapter production-grade</h3>
+<ul>
+<li><strong>Repo:</strong> <code>xhkzeroone/ArecaIME</code> · C++20 + Go bridge · MIT · 20★ · 2026-07.</li>
+<li><strong>Kiến trúc:</strong> 3 mode Rewrite/Preedit/Redirect; <code>KeyQueue</code> + <code>InputScheduler</code>
+(FIFO, single-flight, transaction barrier, post-commit 20 ms); 6 backend
+(Surrounding v1/v2, ForwardBackspace, UinputBackspace, UinputShiftSelect,
+NativeXTest); trust probe surrounding 150/80 ms; adaptive wait; AT-SPI;
+mouse tracker qua process libinput riêng.</li>
+<li><strong>Tính năng:</strong> Telex/VNI/VIQR qua bamboo-core; spell check 3 mức; macro +
+capitalize + bypass modifier + revert; auto-cap; restore word từ surrounding;
+app override; 5 tab settings SDL3/ImGui, 9 theme.</li>
+<li><strong>Đáng học:</strong> xem <a href="areca-ime.html"><code>areca-ime.md</code></a> — tài liệu riêng.</li>
+<li><strong>Hạn chế:</strong> chỉ Fcitx5; phụ thuộc bamboo-core; phức tạp; compatibility list
+dài; heuristic address bar dễ vỡ; một maintainer.</li>
+<li><strong>Độ chín:</strong> adapter chín nhất trong nhóm; engine không phải của họ.</li>
+</ul>
+<h3>4.5 VMK — tổ tiên của Lotus</h3>
+<ul>
+<li><strong>Repo:</strong> <code>thanhpy2009/VMK</code> · C++ · GPL-3.0 · 102★ · 2026-01 · alpha 0.9.31.</li>
+<li><strong>Kiến trúc:</strong> addon <code>vmk.so</code> + <code>fcitx5_uinput_server</code> riêng; FLTK <code>sconfig</code>;
+dựa trên <code>fcitx5-bamboo</code> + <code>bamboo-core</code>.</li>
+<li><strong>4 mode:</strong> VMK1 (Backspace ảo + delay), VMK1HC (state trong <code>/tmp</code> để sống
+qua XIM disconnect; cho IDE/Wine), VMK2 (Surrounding Text), VMK-Pre (preedit).</li>
+<li><strong>Tính năng:</strong> Telex, Telex W, VNI; Unicode/UTF-8/VNI Windows/TCVN3/Unicode
+tổ hợp; macro; fix Chrome/Gemini/Chrome-X11.</li>
+<li><strong>Đáng học:</strong> delay rõ ràng; fix race E-core; fix leak 100% CPU; chuyển từ
+socket world-writable (<code>666</code>) sang D-Bus.</li>
+<li><strong>Hạn chế:</strong> alpha; không <code>git clone</code> đầy đủ (src-full cần <code>bamboo/</code> ngoài);
+không CI/test; README lộn xộn; từng có vấn đề socket world-writable (đã chuyển
+sang D-Bus).</li>
+<li><strong>Độ chín:</strong> thấp, nhưng là nguồn gốc của Lotus và lilypad.</li>
+</ul>
+<p><strong>Bài học:</strong> VMK chứng minh nhu cầu &quot;không gạch chân&quot; rất lớn (102★ dù alpha).
+Nhưng thiếu kỷ luật test/CI khiến nó bị fork và vượt qua.</p>
+<h3>4.6 SKey — 5 output mode + Qt6</h3>
+<ul>
+<li><strong>Repo:</strong> <code>collyn/skey</code> · C++17 + Rust · GPL-3.0 · 29★ · 2026-06.</li>
+<li><strong>Kiến trúc:</strong> addon C++17 + <code>skey-engine</code> Rust <strong>stateless</strong> (~700 LOC,
+10 hàm FFI, <code>input string → output string</code>); CMake clone engine pin v0.2.2.</li>
+<li><strong>5 mode:</strong> Auto, Surrounding Text, Uinput (in-process <code>/dev/uinput</code>), Native
+(XTest/libei+portal, mặc định tắt), Preedit.</li>
+<li><strong>Tính năng:</strong> Telex/VNI (engine có VIQR); <code>w→ư</code>, <code>][→ươ</code>, free marking;
+14 bảng mã gồm NFD/TCVN3/VNI/VIQR; auto-restore với từ điển ~7.9k từ + user
+words; macro; per-app mode/disable/delay; profile riêng cho address bar
+Chromium; menu mode bằng backtick.</li>
+<li><strong>Đáng học:</strong> engine stateless → FFI đơn giản, addon giữ buffer; ACL uinput
+qua <code>skey-uinput-access configure</code>; setup test trên 13 desktop.</li>
+<li><strong>Hạn chế:</strong> engine stateless nghĩa là addon phải giữ state → dễ lệch nếu
+adapter phức tạp; Native cần portal; Auto phụ thuộc app/compositor; build cần
+mạng.</li>
+<li><strong>Độ chín:</strong> cao; PPA + Fedora/openSUSE/Arch + NixOS, 8 file test/CTest.</li>
+</ul>
+<p><strong>So với Areca:</strong> SKey gọn hơn, nhiều mode tương đương, GUI Qt6 thay vì ImGui.
+Areca có trust probe và scheduler chặt hơn; SKey có engine stateless dễ thay.</p>
+<h3>4.7 telebit — engine C++ độc lập + doctor</h3>
+<ul>
+<li><strong>Repo:</strong> <code>sonnam0904/telebit</code> · C++17 · MIT · 8★ · 2026-03 · v2.15.1.</li>
+<li><strong>Kiến trúc:</strong> <code>vietnamese.*</code> + <code>EngineVietCpp</code> buffer theo phím;
+<code>canonicalize</code> (escape, tách initial/vần, chuẩn hóa <code>w</code>/<code>aa</code>/<code>ee</code>/<code>oo</code>, tách
+thanh); <code>rime_table</code> bảng nguyên âm + vị trí main vowel; <code>render_utf8</code>;
+<code>ai_client</code> libcurl; <code>tests.cpp</code>.</li>
+<li><strong>Tính năng:</strong> Telex/VNI; Unicode; spell restore; <code>DirectCommitRollback</code>
+(direct commit, fallback preedit); VNI số <code>6/7/8/9</code>; modern tone; auto-cap;
+macro; AI assistant.</li>
+<li><strong>Đáng học:</strong> <strong>rebuild âm tiết</strong> (initial + rime + tone) rồi validate, thay
+vì thay thế cơ học; <code>telebit doctor [--deep|--markdown]</code> với exit code
+0/1/2; AI key chỉ đọc từ env, không ghi config.</li>
+<li><strong>Hạn chế:</strong> không app profile; direct-mode undo/redo khác; AI gửi text ra
+ngoài; base người dùng nhỏ.</li>
+<li><strong>Độ chín:</strong> C++ test + APT repo 5 suite + Fedora RPM + docs site.</li>
+</ul>
+<p><strong>Bài học:</strong> telebit là một trong số ít dự án có &quot;doctor&quot; và xử lý rollback
+nghiêm túc. Rất đáng đọc <code>canonicalize</code> nếu anh quan tâm thuật toán.</p>
+<h3>4.8 Clak IME — không preedit, nhiều kênh</h3>
+<ul>
+<li><strong>Repo:</strong> <code>versenilvis/ClakIME</code> · C++ + Rust · 0BSD · 2★ · 2026-10 · v0.7.7.</li>
+<li><strong>Kiến trúc:</strong> addon C++ + <code>clak-engine</code> Rust staticlib qua C FFI; GUI Slint;
+CLI/diagnostics Rust.</li>
+<li><strong>Tính năng:</strong> Telex, VNI, VIQR, Teip-VNI; NFC/NFD/VNI Win/TCVN3/CP1258/VIQR;
+spell/dictionary; macro; auto-cap; double-space period; auto-restore; modern
+tone. <strong>Không preedit</strong>; <code>ClakAction</code> = FORWARD / COMMIT / REPLACE /
+REPLACE_SURROUNDING / ADDRESS_BAR_FIX.</li>
+<li><strong>Đáng học:</strong> routing theo app (<code>terminal.h</code>, <code>browser.h</code>, <code>steam.h</code>,
+<code>sites.h</code>); safety timer 50 ms; adaptive RTT pacing/calibration;
+<code>surrounding_verifier</code> phát hiện DOM desync; bypass Vim/Helix NORMAL qua
+Hyprland IPC.</li>
+<li><strong>Hạn chế:</strong> rất mới; docs tự nhận AI-generated; heuristic app hardcode; phụ
+thuộc uinput/compositor; pre-1.0.</li>
+<li><strong>Độ chín:</strong> thấp–trung; CI + Nix + packaging; ~114 Rust + 17 C++ + 4 E2E.</li>
+</ul>
+<p><strong>Bài học:</strong> ý tưởng &quot;verify surrounding bằng DOM desync&quot; và &quot;RTT calibration&quot;
+là hướng đáng thử, nhưng hardcode app là nợ kỹ thuật.</p>
+<h3>4.9 fcitx5-lilypad — đo thời gian nuốt phím</h3>
+<ul>
+<li><strong>Repo:</strong> <code>chiconcota/fcitx5-lilypad</code> · C++ + Bamboo Go · GPL-3.0 · 6★ ·
+2026-08 · v2.3.6.</li>
+<li><strong>Kiến trúc:</strong> addon C++ + Bamboo Go qua C FFI + <code>fcitx5-lilypad-server</code>
+uinput daemon (Unix socket, <code>SO_PEERCRED</code> UID auth) + Python/PyQt settings.</li>
+<li><strong>9 mode:</strong> Off, Smooth, SuperSmooth, Uinput, SurroundingText, Preedit, Emoji,
+Minecraft, Sequence.</li>
+<li><strong>Đáng học:</strong> đo <code>ΔT_swallow</code>; <code>per_bs_us = max(min, EMA, measured)</code>;
+N+1 sentinel Backspace; 70 ms post-commit settling; 250 ms watchdog
+<code>purgeContextEmergency</code>; IKI 35–150 ms; <code>ack_apps</code>; libinput mouse.</li>
+<li><strong>Hạn chế:</strong> chỉ AUR; chỉ test Niri; 6★; một test Python; heuristic phức tạp;
+root daemon; README có link <code>file:///home/...</code>.</li>
+<li><strong>Độ chín:</strong> thấp; nhưng ý tưởng đo thời gian thực rất đáng học.</li>
+</ul>
+<h3>4.10 Ngó Sen — &quot;cứu chữ&quot;, &quot;cứu dấu&quot;</h3>
+<ul>
+<li><strong>Repo:</strong> <code>ngosen/ngosen</code> · C++17 + Rust <code>bamboo-rs</code> · GPL-3.0 · 51★ · 2026-10.</li>
+<li><strong>Kiến trúc:</strong> addon Fcitx5 + engine Rust port bamboo-core; Qt + GTK settings;
+<strong>không có uinput daemon</strong>; có <code>ibus-ngosen</code> và GNOME Shell extension
+<code>forward-keys</code>.</li>
+<li><strong>Mode:</strong> OFF, <code>Gõ Sen</code> (commit trực tiếp, tự nhận cách app nhận text),
+Preedit, Emoji Picker.</li>
+<li><strong>Tính năng:</strong> Telex (daily-tested), VNI (chưa chắc); spell check; macro
+<code>$TIME/$DATE</code>; <code>w→ư</code>, <code>[</code>/<code>]</code>; <strong>Cứu chữ</strong> (gõ lại từ tiếng Anh sau khi
+chuyển sang tiếng Việt); <strong>Cứu dấu</strong> (thêm/đổi/bỏ dấu trên text bôi đen);
+giữ Ctrl tap-release để khóa từ; nhớ Việt/Anh theo app qua logout.</li>
+<li><strong>Đáng học:</strong> state machine retype/retone/wait tường minh
+(<code>ngosen-state-*.cpp</code>); recorder; app-quirks layer; probe surrounding có
+event wait/timeout thay vì sleep cố định; settings lưu live + Undo.</li>
+<li><strong>Hạn chế:</strong> maintainer tự nhận &quot;vibecoded&quot;, không hứa support; chỉ Fcitx5;
+VNI chưa chín; Firefox Snap không dùng được Cứu dấu; Chromium Wayland mất
+preedit; Snap VS Code ra raw Telex.</li>
+<li><strong>Độ chín:</strong> khá; 54 test headless, CI X ảo, repo COPR/APT/pacman/zypper,
+ARM64.</li>
+</ul>
+<p><strong>Bài học:</strong> &quot;Cứu chữ/Cứu dấu&quot; là UX rất Việt Nam, giải quyết đúng nỗi đau
+chuyển Việt↔Anh. Đáng học cách họ làm state machine thay vì heuristic.</p>
+<h3>4.11 CanType — zero-preedit, invariant rõ</h3>
+<ul>
+<li><strong>Repo:</strong> <code>LumeWorks/CanType</code> · Rust · MPL-2.0 · 1★ · 2026-08.</li>
+<li><strong>Kiến trúc:</strong> một crate với <code>cadence</code> (anti-corruption boundary), <code>sua</code>
+(sửa text đã commit, diff Unicode-safe trên byte/UTF-16/codepoint), <code>host</code>
+(<code>Host</code>, <code>BoiCanhNhap</code>, <code>KetQuaHost</code>, <code>HanhDong</code>), <code>phien</code> (session theo
+context), <code>fcitx5</code>, <code>ffi</code> (nơi duy nhất có <code>unsafe</code>); C++ shim.</li>
+<li><strong>Tính năng:</strong> Telex + VNI; giữ code/chat (<code>sha256</code>, <code>1.2.3</code>); NFC/NFD;
+zero-preedit (chỉ insert/replace đã commit).</li>
+<li><strong>Đáng học:</strong> <code>verify-before-mutate</code>; state mới của Cadence bị từ chối tới khi
+host áp dụng xong; host outcome không rõ → resync an toàn; tách <code>.so</code> khỏi
+Slint.</li>
+<li><strong>Hạn chế:</strong> Phase 1–2; chưa IBus/TSF/macOS/uinput/package/hotkey; 1★.</li>
+<li><strong>Độ chín:</strong> thấp về người dùng, cao về tài liệu invariant.</li>
+</ul>
+<p><strong>Bài học:</strong> CanType là ví dụ tốt nhất về &quot;viết ra invariant trước khi viết
+code&quot; trong nhóm dự án nhỏ.</p>
+<h3>4.12 PinaKey — nói thật về nơi no-underline thất bại</h3>
+<ul>
+<li><strong>Repo:</strong> <code>trananhtung/pinakey</code> · Rust · chưa rõ license · 7★ · 2026-06.</li>
+<li><strong>Kiến trúc:</strong> workspace <code>pinakey-core</code> (transform, spell, dictionary,
+charset), <code>pinakey-config</code>, <code>pinakey-emoji</code>, <code>pinakey-engine</code>
+(<code>process_key → (handled, Vec&lt;Action&gt;)</code>), <code>pinakey-ffi</code> (cbindgen),
+<code>pinakey-settings</code> (egui); C++ addon mỏng map Action.</li>
+<li><strong>Tính năng:</strong> Telex/VNI/VIQR + Simple Telex; emoji fuzzy-trie ~11k key;
+macro <code>$DATE</code>/<code>$TIME</code>; spell &quot;giải oan&quot; + <code>dict.txt</code>; auto-skip app English/
+password; <code>transport-rules.conf</code>; 14 µs/key; 165 unit test.</li>
+<li><strong>Đáng học:</strong> diff common-prefix cho no-underline; transport rules theo app;
+<strong>công bố rõ</strong> terminal/LibreOffice/GNOME Wayland phải dùng preedit; uinput
+opt-in.</li>
+<li><strong>Hạn chế:</strong> GNOME Wayland buộc preedit; VTE/LibreOffice không tin được;
+uinput chưa ổn; Linux-only; một maintainer.</li>
+<li><strong>Độ chín:</strong> trung bình; CI fmt/clippy/test/e2e, deb/rpm/AUR/Nix, docs
+ARCHITECTURE/USAGE/BENCHMARK, v2.1.2.</li>
+</ul>
+<p><strong>Bài học:</strong> pinakey là dự án duy nhất công bố &quot;no-underline thất bại ở đâu&quot;.
+Sự trung thực này đáng copy hơn mọi tuyên bố &quot;100%&quot;.</p>
+<h3>4.13 UniLume — bia mộ có giá trị lịch sử</h3>
+<ul>
+<li><strong>Repo:</strong> <code>LumeWorks/UniLume</code> (trước <code>dismonjames/UniLume</code>) · 11★ · archive.</li>
+<li><strong>Là gì:</strong> chỉ còn thông báo chuyển nhà. UI/runtime → <code>CanType</code>; engine →
+<code>Cadence</code>. Branch <code>legacy</code> là bản merge giữ <strong>UniKey/x-unikey core</strong>, Fcitx5
+addon, engine, test, benchmark — chỉ để tham khảo, không phát triển tiếp.</li>
+<li><strong>Đáng học:</strong> quyết định tách engine/runtime được đưa ra ở đây; <code>legacy</code> là
+dấu vết công khai duy nhất của dòng x-unikey trong nhóm LumeWorks.</li>
+<li><strong>Hạn chế:</strong> không code ở default branch; không build/test docs.</li>
+</ul>
+<h3>4.14 LotusVibe — archive của một fork</h3>
+<ul>
+<li><strong>Repo:</strong> <code>ngosen/ngosen-fork-archive</code> (trước <code>nguyenphivn/LotusVibe</code>) ·
+C++ · GPL-3.0 · 6★ · archive 2026-10-10.</li>
+<li><strong>Là gì:</strong> fork pre-1.0 của Ngó Sen, dòng LotusVibe cũ; đã bị thay thế.</li>
+<li><strong>Giá trị:</strong> ghi lại việc đổi tên <code>Uinput</code>/<code>Surrounding Text</code> → <code>Gõ Sen</code> và
+bỏ uinput service; config vẫn là <code>lotus*.conf</code>.</li>
+<li><strong>Hạn chế:</strong> không fix; Nix chỉ test trên X ảo; README ngắn.</li>
+</ul>
+<h3>4.15 Các dự án Fcitx5 khác trong nhóm đa nền tảng</h3>
+<p><code>Funput</code> và <code>TextVN</code> có adapter Fcitx5 nhưng thuộc nhóm cross-platform — xem
+§7.3 và §7.4 để tránh trùng lặp.</p>
+<hr>
+<h2>5. Nhóm IBus</h2>
+<h3>5.1 ibus-bamboo — nhiều người dùng nhất, đã ngừng</h3>
+<ul>
+<li><strong>Repo:</strong> <code>BambooEngine/ibus-bamboo</code> · Go · GPL-3.0 · <strong>1508★</strong> · 2018.</li>
+<li><strong>Kiến trúc:</strong> engine Go + <code>bamboo-core</code>; daemon IBus; nhiều chế độ gõ.</li>
+<li><strong>Tính năng:</strong> gần như đầy đủ nhất trong nhóm IBus — Telex/Telex W/Telex 2/
+VNI/VIQR/Microsoft; Unicode/TCVN3/VNI/VPS/VISCII/BKHCM/NCR; spell check;
+tone cũ/mới; bỏ dấu tự do; macro; <strong>2666 emoji</strong>; <strong>5 chế độ gõ không gạch
+chân + 1 preedit</strong>; nhớ mode theo app; <code>Shift+~</code> mở menu mode; loại trừ app.</li>
+<li><strong>Đáng học:</strong> mô hình &quot;một app một mode&quot; rất sớm; menu mode bằng phím tắt;
+tích hợp emoji như một phần của IME, không phải app phụ.</li>
+<li><strong>Hạn chế:</strong> README tự nói dự án đình trệ; Wayland IBus chưa tốt; khuyên
+chuyển sang fcitx5-unikey.</li>
+<li><strong>Độ chín:</strong> cao về người dùng, thấp về bảo trì. <strong>Bus factor = 1</strong>.</li>
+</ul>
+<p><strong>Bài học:</strong> ibus-bamboo là lý do nhiều người vẫn nghĩ &quot;IBus là đủ&quot;. Nó đúng
+về tính năng, sai về tương lai.</p>
+<h3>5.2 ibus-lotus — đã chết</h3>
+<ul>
+<li><strong>Repo:</strong> <code>LotusInputEngine/ibus-lotus</code> · Go · GPL-3.0 · 118★ · 2025-07 →
+2026-01 (dead, repo 404).</li>
+<li><strong>Là gì:</strong> engine IBus song song với fcitx5-lotus, cùng thương hiệu Lotus.</li>
+<li><strong>Bài học:</strong> cùng một team làm hai framework → một cái chết. Chi phí duy trì
+hai adapter lớn hơn tưởng tượng.</li>
+</ul>
+<h3>5.3 TypeVN — IBus tối giản cho GNOME</h3>
+<ul>
+<li><strong>Repo:</strong> <code>vithanhlam/TypeVN</code> · Rust + C · MIT · 3★ · 2026-08 · v0.2.4.</li>
+<li><strong>Kiến trúc:</strong> IBus only; adapter C (<code>c/main.c</code>, <code>c/engine.c</code>) do <code>build.rs</code>
+biên dịch; <code>typevn-core</code> Rust staticlib qua C ABI; settings Python GTK4.</li>
+<li><strong>Tính năng:</strong> Telex/VNI; Unicode/VNI Win/VIQR/TCVN3; macro exact-match;
+Telex auto-repair; English passthrough + tone rewind; undo một phím.</li>
+<li><strong>Preedit:</strong> IBus preedit tắt gạch chân; auto-commit sau idle 300–2000 ms
+(mặc định 800 ms). 0.2.0 thử commit-and-replace, 0.2.1 revert vì terminal
+không xóa surrounding đáng tin.</li>
+<li><strong>Đáng học:</strong> xử lý đồng bộ từng phím, không queue/network; mục tiêu &lt;1 ms;
+hotkey GNOME (<code>Shift+Space</code>, <code>Ctrl+Shift+1/2</code>).</li>
+<li><strong>Hạn chế:</strong> không CI; không app profile; IBus/GNOME only; Snap pending.</li>
+<li><strong>Độ chín:</strong> thấp–trung; test <code>telex.rs</code>, <code>vni.rs</code>, <code>stress.rs</code> + bench.</li>
+</ul>
+<p><strong>Bài học:</strong> việc revert commit-and-replace là quyết định đúng và đáng ghi
+nhận. Nó xác nhận: trên terminal, preedit là lựa chọn an toàn.</p>
+<h3>5.4 NepKey — IBus + slash command cho AI chat</h3>
+<ul>
+<li><strong>Repo:</strong> <code>todo-laterx/nepkey</code> · Go · GPL-3.0 · 2★ · 2026-10.</li>
+<li><strong>Kiến trúc:</strong> daemon IBus Go (<code>goibus</code> + <code>godbus</code>); settings GTK4/Python;
+engine dùng <code>bamboo-core</code> pin commit <code>b2e49a2</code> (2024-09).</li>
+<li><strong>Tính năng:</strong> Telex 2/Telex/VNI/VIQR; Unicode; free tone; <code>òa/ùy</code>; spell;
+macro YAML hot-reload; V/E toggle.</li>
+<li><strong>Đáng học:</strong> <code>rawTokenMode</code>/<code>slashCommandMode</code> + <code>isRawTokenContinuation()</code>
+bảo vệ <code>/image</code>, <code>/clear</code>; tách URL/path trước khi thêm dấu; auto-commit khi
+Left/Right/Home/End; <code>input-purpose</code> password bypass; output <code>clipboard</code>
+mặc định, <code>hex</code> (Ctrl+Shift+U) cho GTK.</li>
+<li><strong>Hạn chế:</strong> IBus/GNOME only; clipboard injection race; macro 1:1; core pin
+cũ; 2★.</li>
+<li><strong>Độ chín:</strong> thấp; <code>go test</code>, CI vet/test/build, <code>.deb</code>.</li>
+</ul>
+<p><strong>Bài học:</strong> NepKey là dự án duy nhất nhắm thẳng vào chat AI/CLI. Niche hẹp
+nhưng thật.</p>
+<hr>
+<h2>6. Nhóm Wayland standalone</h2>
+<h3>6.1 Unikey-Wayland — ring-0 IME</h3>
+<ul>
+<li><strong>Repo:</strong> <code>ubuntu2310fake/Unikey-Wayland</code> · Makefile/C++ · GPL-3.0 · <strong>101★</strong> ·
+2026-07 · v3.0.3.</li>
+<li><strong>Kiến trúc v3:</strong> kernel module <code>ukw_driver</code> + root <code>ukw_daemon</code> + XKB layout
+<code>Vietnamese (Kernel Driver)</code>; legacy <code>wayland-client</code> (Bamboo Go qua CGO),
+<code>ibus-engine</code>, <code>x11-client</code>, Windows global hook vẫn trong tree; settings Qt6.</li>
+<li><strong>Tính năng:</strong> Telex, Telex giản lược, VNI, VIQR; Unicode/TCVN3/VNI/VIQR;
+free marking; modern tone; spell; macro; preedit chỉ làm fallback terminal;
+Windows <code>SendInput</code> (không TSF).</li>
+<li><strong>Đáng học:</strong> grab input ở kernel + <code>/dev/ukw</code> FIFO; XKB map keycode tùy biến
+(86/89/...) sang chữ dựng sẵn/dấu tổ hợp; DKMS; backend native từng OS;
+fix Omnibox selection.</li>
+<li><strong>Hạn chế:</strong> <code>/dev/ukw</code> mode <code>0666</code> — <strong>bất kỳ user nào cũng đọc/inject được
+phím</strong>; root daemon; kernel module dễ vỡ; README nói Bamboo nhưng v3 ring-0
+là engine keycode C++ riêng; repo có <code>a.out</code>, <code>main.cpp.orig</code>, <code>fix*.py</code>;
+không unit test.</li>
+<li><strong>Độ chín:</strong> cao về phân phối (deb/rpm/AUR, x86_64/ARM64, Windows OTA),
+thấp về vệ sinh mã nguồn.</li>
+</ul>
+<p><strong>Cảnh báo:</strong> nếu định dùng, hãy audit <code>/dev/ukw</code>. Đây là mô hình quyền nguy
+hiểm nhất trong toàn bộ khảo sát.</p>
+<h3>6.2 Unikey-Wayland-Pro — fork mất giá trị</h3>
+<ul>
+<li><strong>Repo:</strong> <code>quannguyen247/Unikey-Wayland-Pro</code> (trước <code>...-Final</code>) · 1★ ·
+archive.</li>
+<li><strong>Là gì:</strong> bản copy 2.x của Unikey-Wayland, không có <code>ring0-engine</code>.</li>
+<li><strong>Hạn chế:</strong> README là bản upstream bỏ mục Ring-0; changelog dừng 2.0.10;
+download trỏ về upstream; không có tính năng riêng; không fix bảo mật.</li>
+<li><strong>Bài học:</strong> đừng đặt tên &quot;Pro&quot; nếu không có gì mới. Fork không maintain =
+nợ bảo mật.</li>
+</ul>
+<h3>6.3 vi-ime — Rust, không Fcitx/IBus</h3>
+<ul>
+<li><strong>Repo:</strong> <code>nhanth87/vi-ime</code> · Rust · GPL-3.0 (API báo NOASSERTION) · 7★ ·
+2026-07 · v7.4.4.</li>
+<li><strong>Kiến trúc:</strong> bind <code>zwp_input_method_v2</code> + <code>zwp_virtual_keyboard_v1</code>; grab
+evdev <code>/dev/input</code> + uinput fallback; single binary/AppImage.</li>
+<li><strong>Tính năng:</strong> NFD/NFC algebra, không bảng nguyên âm, parse lại cả âm tiết
+mỗi phím; Telex/VNI/&quot;Tự do&quot;; Unicode NFC/NFD; <code>viet_dict</code>; 1070 từ Anh; 120+
+cheat; macro/hotkey macro; emoji.</li>
+<li><strong>Preedit:</strong> theo app — terminal echo trực tiếp; Firefox preedit;
+LibreOffice/OnlyOffice evdev; Chrome trên Niri non-preedit. <code>APP_RULES.md</code>
+định nghĩa 5 tầng + timing 3–20 ms.</li>
+<li><strong>Đáng học:</strong> một <code>rx.recv()</code> blocking, không timer; <code>--doctor</code>; phát hiện
+IME đối thủ + <code>--take-over</code> (opt-in); <code>godmod</code> JSONL telemetry; NFC clipboard
+tool; <code>learning.rs</code> cache theo app; <code>/proc/PID</code> advisor cho Electron.</li>
+<li><strong>Hạn chế:</strong> không GNOME; không CI; AppImage prebuilt commit; README tự mâu
+thuẫn (&quot;0.8ns/word&quot; vs &quot;17µs/keypress&quot;); hardcode 45+ app; cần group <code>input</code>.</li>
+<li><strong>Độ chín:</strong> thấp–trung; có unit/integration test, không CI.</li>
+</ul>
+<h3>6.4 vietc — &quot;zero underline&quot; nhưng có preedit</h3>
+<ul>
+<li><strong>Repo:</strong> <code>vndangkhoa/vietc</code> · Rust · MIT · 60★ · 2026-06 · v0.1.24.</li>
+<li><strong>Kiến trúc:</strong> workspace <code>engine/protocol/daemon/uinputd/vietcctl</code>; systemd
+user daemon. Thứ tự đường: IBus-first trên Ubuntu GNOME → <code>zwp_input_method_v2</code>
+→ EVIOCGRAB evdev → X11 XTEST; <code>wtype</code>/uinput + virtual keyboard native.</li>
+<li><strong>Tính năng:</strong> Telex/VNI; <code>engine/bamboo.rs</code> kiểu Bamboo; auto-restore tiếng
+Anh; macro; giữ case; <code>uo→ươ</code>; Unicode only.</li>
+<li><strong>Preedit:</strong> v2/IBus dùng preedit; evdev gõ rồi sửa. <strong>README &quot;Zero Underline&quot;
+bị <code>docs/wayland-rootless.md</code> phản bác</strong> — đường IBus vẫn hiện preedit.</li>
+<li><strong>Đáng học:</strong> lọc <code>/dev/input/by-path/*-event-kbd</code>; AT-SPI password detector;
+state theo app (mặc định off); key dedup opt-in; OSD/tray/CLI; TOML config.</li>
+<li><strong>Hạn chế:</strong> chọn đường phức tạp; stop IBus khi start (SIGKILL để lại IBus
+tắt); race khi inject; app profile mặc định off; claim &quot;100%&quot;; 6 issue mở.</li>
+<li><strong>Độ chín:</strong> trung bình; CI build/release/AUR, &quot;151 tests&quot; badge, insta
+snapshot.</li>
+</ul>
+<p><strong>Bài học:</strong> vietc cho thấy &quot;zero underline&quot; là marketing, không phải kiến
+trúc. Muốn không gạch chân thật, phải direct-rewrite + quản lý transaction.</p>
+<h3>6.5 codekeyvn — đã chết</h3>
+<ul>
+<li><strong>Repo:</strong> <code>tollaai2212hp22-lgtm/codekeyvn</code> · Rust · 7★ · tạo và chết trong
+cùng tháng 7/2026 (404).</li>
+<li><strong>Bài học:</strong> repo một-lần-commit, không README để lại, không có gì để đánh
+giá. Đừng đưa vào tài liệu như một lựa chọn.</li>
+</ul>
+<hr>
+<h2>7. Nhóm native desktop &amp; cross-platform</h2>
+<h3>7.1 OpenKey — chuẩn mực macOS/Windows</h3>
+<ul>
+<li><strong>Repo:</strong> <code>tuyenvm/OpenKey</code> · C++ · GPL-3.0 · <strong>969★</strong> · 2019.</li>
+<li><strong>Nền tảng:</strong> macOS (chính), Windows, Linux (đang phát triển).</li>
+<li><strong>Kỹ thuật:</strong> <strong>Backspace technique</strong> — không gạch chân; gửi text một lần
+hoặc từng phím (tùy chọn &quot;Gửi từng phím&quot; cho app không tương thích).</li>
+<li><strong>Tính năng:</strong> Telex/VNI/Simple Telex; Unicode/TCVN3/VNI Win/Unicode tổ hợp/
+CP1258; modern orthography; Quick Telex (<code>cc=ch</code>, <code>gg=gi</code>...); grammar check;
+spelling check; restore invalid word; macro không giới hạn; chuyển chế độ
+theo app; auto-cap; tắt tạm bằng Ctrl/Cmd; cho <code>f z w j</code> làm phụ âm đầu;
+gõ tắt phụ âm đầu/cuối; <strong>công cụ chuyển mã</strong>; nhớ bảng mã theo app
+(Photoshop/CAD); auto-update.</li>
+<li><strong>Đáng học:</strong> UX menu bar rất chín; &quot;gửi từng phím&quot; như fallback tương thích;
+chuyển mã + nhớ charset theo app là tính năng người dùng thật, không phải
+demo.</li>
+<li><strong>Hạn chế:</strong> 149 issue mở; macOS/Windows codebase tách nhánh; Linux chưa
+hoàn thiện; kỹ thuật Backspace có thể đua với app nhanh.</li>
+<li><strong>Độ chín:</strong> rất cao về người dùng; là lựa chọn mặc định của nhiều người
+Việt trên macOS.</li>
+</ul>
+<h3>7.2 Gõ Nhanh — sản phẩm hoá tốt nhất</h3>
+<ul>
+<li><strong>Repo:</strong> <code>khaphanspace/gonhanh.org</code> · Rust + Swift/C# · BSD-3-Clause ·
+<strong>772★</strong> · 2025-12.</li>
+<li><strong>Nền tảng:</strong> macOS (chính, Homebrew), Linux beta (Fcitx5), Windows beta.</li>
+<li><strong>Kiến trúc:</strong> core Rust <strong>validation-first</strong>, pipeline 7 tầng: Stroke → Tone
+→ Vowel mark → Remove → W-vowel → Normal letter → Shortcut; FFI C ABI; macOS
+CGEventTap, Windows <code>WH_KEYBOARD_LL</code>, Linux Fcitx5.</li>
+<li><strong>Tính năng:</strong> Telex/VNI; tone mới; auto-cap; gõ tắt; <strong>auto-restore tiếng
+Anh</strong> (<code>text</code>, <code>expect</code>, <code>user</code>...); <strong>ESC khôi phục</strong>; nhớ ON/OFF theo app;
+tự tắt khi chuyển input source Nhật/Hàn/Trung; delay theo app (IDE/Claude
+Code); dark/light.</li>
+<li><strong>Đáng học:</strong> validation-first (kiểm tra âm tiết trước khi biến đổi) là cách
+tránh &quot;cướp từ tiếng Anh&quot; tốt hơn dictionary; tài liệu thuật toán công khai;
+UX &quot;ba không&quot; (không phí/quảng cáo/theo dõi) tạo niềm tin.</li>
+<li><strong>Hạn chế:</strong> auto-restore vẫn thua các từ tạo âm tiết hợp lệ (<code>mix → mĩ</code>);
+Windows/Linux còn beta; core Rust nhưng UI native từng OS.</li>
+<li><strong>Độ chín:</strong> rất cao về sản phẩm; test/CI tốt; là đối thủ mạnh nhất của
+OpenKey trên macOS.</li>
+</ul>
+<h3>7.3 Funput — 5 nền tảng, crate sạch</h3>
+<ul>
+<li><strong>Repo:</strong> <code>Funput/Funput</code> · Rust + Kotlin/Swift · MIT · 52★ · 2026-06.</li>
+<li><strong>Nền tảng:</strong> iOS keyboard extension, Android IME (Kotlin/JNI), macOS, Windows
+TSF, Linux Fcitx5 <strong>và</strong> IBus; settings GTK4/libadwaita.</li>
+<li><strong>Kiến trúc:</strong> workspace <code>funput-core</code> (thuần: Telex/VNI,
+<code>TransformKind Pending/Applied/Reverted/Ignored</code>), <code>funput-engine</code> (stateful,
+<code>Action{None,Send,Restore}</code> + backspace + output), <code>funput-ffi</code>
+(<code>chars:[u32;64]</code>), <code>funput-jni</code>, <code>funput-config</code>, <code>funput-convert</code>,
+<code>funput-suggestions</code>, <code>funput-term</code>, <code>funput-lexicon-tool</code>, <code>funput-cli</code>.</li>
+<li><strong>Tính năng:</strong> Telex, TelexAdvanced (<code>w</code> onset, <code>[</code>/<code>]</code>), VNI; tone cũ/mới;
+spell gate; smart + eager restore; <code>flip_composing()</code> (<code>card</code> ⇄ <code>cải</code>);
+shortcut; phụ âm đầu Z/F/W/J; Unicode/NFD/TCVN3/VNI Win; auto-cap;
+no-preedit với fallback theo app; gợi ý trigram/context/personal.</li>
+<li><strong>Đáng học:</strong> tách pure/stateful cực rõ; backspace suy ra từ diff; overflow
+FFI xử lý ở boundary; có <code>benchmarks/results</code>.</li>
+<li><strong>Hạn chế:</strong> không VIQR; &quot;kiến trúc có thể thay đổi&quot;; README gốc mỏng; 14
+issue mở; không CI badge.</li>
+<li><strong>Độ chín:</strong> trung bình–cao; proptest + bench + docs từng nền tảng.</li>
+</ul>
+<h3>7.4 TextVN — nhiều tính năng nhất</h3>
+<ul>
+<li><strong>Repo:</strong> <code>hunglinhpt/TextVN</code> · Rust + Swift/C++ · GPL-3.0 · 9★ · 2026-09 ·
+v0.2.60 (60 release trong ~1 tháng).</li>
+<li><strong>Nền tảng:</strong> Windows TSF (+ hook &quot;Compatibility&quot;), macOS IMK (+ CGEventTap
+chưa phát hành), Linux IBus + Fcitx5; settings GTK4.</li>
+<li><strong>Kiến trúc:</strong> <code>core/</code> Rust độc lập (Telex/VNI/VIQR, tone, charset, macro),
+<code>ffi/</code> C ABI, <code>config/</code>; adapter từng OS; <code>corpus/*.keys</code> replay qua 4
+adapter simulator.</li>
+<li><strong>Tính năng:</strong> Telex/VNI/VIQR/Simple Telex; Unicode/TCVN3/VNI/NFD; tone
+cũ/mới; macro theo case; per-app override; Tab completion + next-phrase
+prediction; 3000 từ Anh auto-restore; ESC raw restore; Ctrl+Shift+F9
+transcode vùng bôi đen; E28 anti-key-loop; <strong>trợ lý ngữ pháp</strong> 15 loại lỗi,
+Ctrl+Z 5 s; không gạch chân (<code>TF_LS_NONE</code>); không Backspace tổng hợp.</li>
+<li><strong>Đáng học:</strong> adapter-simulation corpus replay; công bố luật xung đột ngôn
+ngữ; thiết kế chống AV; GPG + Sigstore signing.</li>
+<li><strong>Hạn chế:</strong> RC (chưa Authenticode/notarize); thiếu RPM; README là changelog
+khổng lồ; repo ~740 MB.</li>
+<li><strong>Độ chín:</strong> cao về tính năng và release velocity; thấp về ổn định kênh phát
+hành.</li>
+</ul>
+<p><strong>Bài học:</strong> TextVN cho thấy &quot;grammar assistant&quot; là hướng đi mới, nhưng cũng
+cho thấy nguy cơ phình tính năng trước khi ổn định nền tảng.</p>
+<h3>7.5 VieLotus IM (Sen Việt) — open-core, store-first</h3>
+<ul>
+<li><strong>Repo:</strong> <code>stevedat/VieLotus-IM</code> · Swift + core nhị phân · MIT · 6★ ·
+2026-09.</li>
+<li><strong>Nền tảng:</strong> macOS IMK, iOS/iPadOS <code>UIInputViewController</code>, Windows TSF
+(<code>ITfTextInputProcessorEx</code>, <code>ITfEditSession</code> atomic), Linux IBus+Fcitx5 qua
+<code>libVieLotusCAPI.so</code>, Android <code>InputMethodService</code>.</li>
+<li><strong>Kiến trúc:</strong> shell Swift 6, nhưng engine là <code>VieLotusCore.xcframework</code> dựng
+sẵn; <strong>mã nguồn core không công khai</strong>; Windows wrapper link <code>.obj</code> commit
+sẵn.</li>
+<li><strong>Tính năng:</strong> Telex/VNI; loại âm tiết bất khả (<code>turn</code> giữ nguyên); xử lý
+<code>rest</code>/<code>rét</code>, <code>if</code>/<code>ì</code>; per-app <code>typing-modes.yml</code> với <code>directReplacement</code> /
+<code>markedText</code> / <code>passthrough</code> / <code>automatic</code>; ring buffer 20 từ cho Backspace;
+UTF-16 cursor sync; p99 &lt;0.2 ms (tự công bố).</li>
+<li><strong>Đáng học:</strong> per-app behavior là <strong>dữ liệu</strong>, không phải code; precedence
+user override; rule sai bị bỏ qua thay vì crash.</li>
+<li><strong>Hạn chế:</strong> không thực sự open source; binary (<code>.pkg</code>, <code>.exe</code>, <code>.deb</code>,
+<code>.obj</code>) commit trong <code>Binaries/</code>; &quot;Pure Swift 6&quot; không khớp C++ Windows;
+không macro/charset.</li>
+<li><strong>Độ chín:</strong> cao về phân phối (App Store, Play, MS Store, Snap, PPA, AUR,
+Homebrew); thấp về mở.</li>
+</ul>
+<p><strong>Cảnh báo:</strong> nếu anh cần đọc/sửa engine, đây không phải lựa chọn. Nếu cần
+dùng, nó ổn.</p>
+<h3>7.6 BambooMintKey — .NET/F# + TSF in-process</h3>
+<ul>
+<li><strong>Repo:</strong> <code>thatislg/BambooMintKey</code> · F#/.NET 10 + C++ · MIT (GitHub báo
+NOASSERTION) · 10★ · 2026-09.</li>
+<li><strong>Nền tảng:</strong> Windows TSF in-process COM (<code>ITfKeyEventSink</code>, không inject
+key); Linux Fcitx5 addon C++ gọi C ABI <code>BambooMintKeyCore.so</code>; macOS IMK
+&quot;TBD&quot;; Steam Deck qua Flatpak Addon Extension.</li>
+<li><strong>Kiến trúc:</strong> F# <code>BambooMintKey.Core</code> (Telex, syllable parser, Unicode
+tables) dùng chung 100%; C# NativeAOT bridge; Avalonia settings.</li>
+<li><strong>Tính năng:</strong> Telex only; V/E toggle bằng <code>`</code> + D-Bus <code>ModeChanged</code>;
+<code>config.json</code> hot-reload <code>inotify</code>; shared-memory config sync Windows;
+taskbar V/E icon.</li>
+<li><strong>Đáng học:</strong> một functional core + bridge mỏng; Flatpak addon cho SteamOS
+read-only; single-owner D-Bus service.</li>
+<li><strong>Hạn chế:</strong> không VNI/VIQR/macro/spell; macOS chưa build; toolchain .NET 10<ul>
+<li>NativeAOT + clang/lld nặng; license chưa rõ.</li>
+</ul>
+</li>
+<li><strong>Độ chín:</strong> trung bình; unit test F#, C++ addon test, DevHarness.</li>
+</ul>
+<p><strong>Bài học:</strong> TSF in-process là cách đúng để không inject key trên Windows —
+đáng học nếu anh làm Windows IME.</p>
+<h3>7.7 vnkey — 4 adapter, dừng giữa đường</h3>
+<ul>
+<li><strong>Repo:</strong> <code>marixdev/vnkey</code> · Rust + C/ObjC · GPL-3.0 · 101★ · 2026-03 →
+inactive 2026-04.</li>
+<li><strong>Nền tảng:</strong> Windows native, macOS IMKit, Fcitx5, IBus — cùng một core Rust
+<code>vnkey-engine</code> qua C FFI staticlib; Windows dùng Win32/Direct2D +
+<code>WH_KEYBOARD_LL</code>; macOS Objective-C IMKit; adapter C++/C mỏng; chung
+<code>config.json</code>.</li>
+<li><strong>Tính năng:</strong> Telex, Simple Telex, VNI, VIQR, <strong>MS Vietnamese</strong>; 15 bảng mã;
+spell check/ASCII restore; free marking; modern style; <strong>clipboard charset
+converter</strong>; macro (lookup không phân biệt hoa/thường); mode <strong>Ede (Tây
+Nguyên)</strong>; <code>app_charsets</code> theo app; Windows app blacklist.</li>
+<li><strong>Direct/preedit:</strong> Windows hook + <code>SendInput</code> backspace/Unicode rewrite;
+Fcitx5 nhận diện terminal → preedit để commit atomic, còn lại direct commit.</li>
+<li><strong>Đáng học:</strong> một core + 4 adapter là mô hình đúng; <code>app_charsets</code> theo app
+rất thực dụng cho người dùng Photoshop/CAD.</li>
+<li><strong>Hạn chế:</strong> hook/SendInput fragile (có workaround VMware/RDP trong code);
+IBus dùng <code>xdotool</code> + <code>/proc</code> để tìm app → X11-only; JSON parser viết tay;
+README bỏ sót macro/Ede.</li>
+<li><strong>Độ chín:</strong> trung bình–cao về đóng gói (deb/rpm/pacman/Nix, CI, SignPath),
+nhưng <strong>đã dừng</strong> — đừng chọn làm nền tảng lâu dài.</li>
+</ul>
+<p><strong>Bài học:</strong> vnkey là ví dụ rõ nhất của &quot;làm đúng kiến trúc nhưng hết người&quot;.
+Nếu anh định làm IME đa nền tảng, hãy học cấu trúc của họ và chuẩn bị người
+kế nhiệm.</p>
+<hr>
+<h2>8. Ma trận tính năng</h2>
+<p>Ký hiệu: ✅ có · ◐ một phần · — không · 🔌 adapter/OS.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Dự án</th>
+<th>Telex</th>
+<th>VNI</th>
+<th>VIQR</th>
+<th>Charset</th>
+<th>Spell</th>
+<th>Macro</th>
+<th>App profile</th>
+<th>Preedit</th>
+<th>Direct rewrite</th>
+<th>Đa nền tảng</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>fcitx5-unikey</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>8</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>✅</td>
+<td>◐ (experimental)</td>
+<td>—</td>
+</tr>
+<tr>
+<td>fcitx5-bamboo</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>17</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>✅</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>fcitx5-lotus</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>17</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Areca</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>bamboo</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+</tr>
+<tr>
+<td>VMK</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>5</td>
+<td>◐</td>
+<td>✅</td>
+<td>◐</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+</tr>
+<tr>
+<td>SKey</td>
+<td>✅</td>
+<td>✅</td>
+<td>◐</td>
+<td>14</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+</tr>
+<tr>
+<td>telebit</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>1</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Clak</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>6</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>✅</td>
+<td>—</td>
+</tr>
+<tr>
+<td>lilypad</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>bamboo</td>
+<td>✅</td>
+<td>✅</td>
+<td>◐</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Ngó Sen</td>
+<td>✅</td>
+<td>◐</td>
+<td>—</td>
+<td>◐</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+</tr>
+<tr>
+<td>CanType</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>2</td>
+<td>◐</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>✅</td>
+<td>—</td>
+</tr>
+<tr>
+<td>pinakey</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>◐</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+</tr>
+<tr>
+<td>ibus-bamboo</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>17</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+</tr>
+<tr>
+<td>TypeVN</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>4</td>
+<td>◐</td>
+<td>✅</td>
+<td>—</td>
+<td>✅</td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>NepKey</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>1</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>✅</td>
+<td>◐</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Unikey-Wayland</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>4</td>
+<td>✅</td>
+<td>✅</td>
+<td>◐</td>
+<td>◐</td>
+<td>✅</td>
+<td>◐ (Win)</td>
+</tr>
+<tr>
+<td>vi-ime</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>2</td>
+<td>◐</td>
+<td>✅</td>
+<td>✅</td>
+<td>◐</td>
+<td>✅</td>
+<td>—</td>
+</tr>
+<tr>
+<td>vietc</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>1</td>
+<td>◐</td>
+<td>✅</td>
+<td>◐</td>
+<td>◐</td>
+<td>✅</td>
+<td>—</td>
+</tr>
+<tr>
+<td>OpenKey</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>6+</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>✅</td>
+<td>✅ (mac/Win)</td>
+</tr>
+<tr>
+<td>Gõ Nhanh</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>1</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>🔌</td>
+<td>✅</td>
+<td>✅ (3 OS)</td>
+</tr>
+<tr>
+<td>Funput</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>◐</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅ (5 OS)</td>
+</tr>
+<tr>
+<td>TextVN</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>4</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅ (3 OS)</td>
+</tr>
+<tr>
+<td>VieLotus</td>
+<td>✅</td>
+<td>✅</td>
+<td>—</td>
+<td>1</td>
+<td>◐</td>
+<td>—</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅ (5 OS)</td>
+</tr>
+<tr>
+<td>BambooMintKey</td>
+<td>✅</td>
+<td>—</td>
+<td>—</td>
+<td>1</td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>✅</td>
+<td>◐</td>
+<td>✅ (Win/Linux)</td>
+</tr>
+</tbody></table></div>
+<p>Ghi chú:</p>
+<ul>
+<li>&quot;Charset&quot; là số bảng mã theo README; nhiều dự án chỉ hỗ trợ Unicode.</li>
+<li>&quot;App profile&quot; = cấu hình hành vi theo app, không chỉ bật/tắt.</li>
+<li>&quot;Direct rewrite&quot; = gõ trực tiếp, không gạch chân, có sửa text đã commit.</li>
+<li>Bảng này không đo chất lượng; một dấu ✅ có thể là tính năng mới, chưa chín.</li>
+</ul>
+<hr>
+<h2>9. Bản đồ dòng dõi engine</h2>
+<pre><code class="language-text">bamboo-core (Go, MIT, Luong Thanh Lam)
+├── ibus-bamboo            (Go, dùng trực tiếp)
+├── fcitx5-bamboo          (Go c-archive)
+├── Areca                  (Go c-archive + C++ adapter)
+├── NepKey                 (Go, IBus)
+├── fcitx5-lotus           (port C++ trong lotus/)
+├── VMK                    (Go + C++ addon)
+├── lilypad               (Go + C++ addon, fork VMK/Lotus)
+├── Ngó Sen                (Rust port bamboo-rs)
+└── vietc                  (Rust port kiểu Bamboo)
+
+x-unikey / UniKey
+├── fcitx5-unikey          (unikey-lib port)
+├── Unikey-Wayland         (2.x dùng Bamboo; 3.x engine keycode riêng)
+└── UniLume legacy         (x-unikey core, archive)
+
+Engine riêng
+├── OpenKey                (C++, lâu năm)
+├── Gõ Nhanh               (Rust, validation-first)
+├── telebit                (C++, rebuild âm tiết)
+├── SKey                   (Rust stateless)
+├── Funput                 (Rust workspace)
+├── TextVN                 (Rust core + nhiều adapter)
+├── vnkey                  (Rust engine)
+├── CanType/Cadence        (Rust)
+└── pinakey                (Rust)
+</code></pre>
+<p><strong>Nhận xét:</strong> <code>bamboo-core</code> là engine được tái sử dụng nhiều nhất. Điều này
+tốt cho chất lượng tiếng Việt (một chỗ sửa, nhiều nơi hưởng), nhưng tạo rủi ro
+tập trung: nếu upstream chậm, cả hệ sinh thái chậm.</p>
+<hr>
+<h2>10. Mười bài học kỹ thuật lặp lại</h2>
+<ol>
+<li><strong>Tách engine khỏi adapter.</strong> Dự án nào trộn hai thứ vào một file sẽ khó
+test và khó port. Bài học từ Areca, SKey, Funput, CanType, ViFastKey.</li>
+<li><strong>Preedit là an toàn, direct rewrite là trải nghiệm.</strong> Đừng chọn một;
+hãy cho người dùng chọn và tự fallback.</li>
+<li><strong>Không tin capability.</strong> App khai báo surrounding text không có nghĩa là
+nó xóa đúng. Areca probe; SKey/Lotus có mode riêng; pinakey công bố nơi
+thất bại.</li>
+<li><strong>Transaction barrier là bắt buộc nếu direct rewrite.</strong> Không có nó, gõ
+nhanh sẽ mất/lặp chữ. Xem Areca §6, Lotus <code>focus-out-mid-replacement</code>.</li>
+<li><strong>Timing theo frontend, không một con số chung.</strong> Wayland 3 ms, DBus 10 ms,
+post-commit 20 ms. Xem Areca §9, lilypad <code>ΔT_swallow</code>.</li>
+<li><strong>Undo/restore phải có bằng chứng.</strong> Chỉ coi phím lặp là undo khi phím trước
+thực sự biến đổi; nếu không, khôi phục raw. Xem ViFastKey COMPATIBILITY §4.</li>
+<li><strong>Macro cần undo một phím + bypass modifier.</strong> OpenKey, Areca, ViFastKey
+đều làm; dự án thiếu sẽ bị người dùng phàn nàn.</li>
+<li><strong>Charset là module riêng, không nhúng vào transform.</strong> Độ dài xóa phải
+tính trên chuỗi đã encode. Xem Areca §5.2.</li>
+<li><strong>Test adapter, không chỉ test engine.</strong> Cần <code>TestInputContext</code> giả lập
+commit/delete/forward/surrounding. Areca, Lotus, fcitx5-unikey, ViFastKey có.</li>
+<li><strong>Đóng gói và doctor quan trọng ngang code.</strong> Người dùng không debug được
+nếu không có log, không có <code>fcitx5-diagnose</code>, không có gói cài.</li>
+</ol>
+<hr>
+<h2>11. Repo đã chết và bài học</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Repo</th>
+<th>Trạng thái</th>
+<th>Bài học</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>LotusInputEngine/ibus-lotus</code></td>
+<td>404, dead</td>
+<td>Làm hai framework cùng lúc → một cái chết</td>
+</tr>
+<tr>
+<td><code>furimeo/senkey</code></td>
+<td>404, dead</td>
+<td>Không để lại README/license → không ai kế thừa</td>
+</tr>
+<tr>
+<td><code>tollaai2212hp22-lgtm/codekeyvn</code></td>
+<td>404, dead</td>
+<td>Repo một lần commit không có giá trị lịch sử</td>
+</tr>
+<tr>
+<td><code>nguyenphivn/LotusVibe</code></td>
+<td>archive</td>
+<td>Fork không maintain = nợ bảo mật</td>
+</tr>
+<tr>
+<td><code>quannguyen247/Unikey-Wayland-Final</code></td>
+<td>archive</td>
+<td>Đổi tên &quot;Pro&quot; không tạo giá trị</td>
+</tr>
+<tr>
+<td><code>marixdev/vnkey</code></td>
+<td>inactive</td>
+<td>101★ nhưng dừng 4/2026; bus factor</td>
+</tr>
+</tbody></table></div>
+<p><strong>SenKey</strong> (<code>furimeo/senkey</code>, 0★, GPL-2.0) là trường hợp đáng tiếc nhất: repo
+tồn tại chưa đầy một tháng, không README, không release, rồi bị xóa. Không có
+gì để đánh giá — chỉ còn dòng trong tracker.</p>
+<p><strong>Bài học chung:</strong> trong 31 repo, 7 không còn phát triển (3 repo bị xóa, 3 archive,
+1 inactive) — tức gần 1/4. Hệ sinh thái này có tỷ lệ churn rất cao. Khi chọn bộ
+gõ để dùng lâu dài, hãy nhìn <strong>lịch sử commit + test + packaging</strong>, đừng nhìn stars.</p>
+<hr>
+<h2>12. Chọn bộ gõ nào?</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Nhu cầu</th>
+<th>Gợi ý</th>
+<th>Vì sao</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Linux, muốn giống UniKey, không gạch chân</td>
+<td><strong>Areca</strong> hoặc <strong>fcitx5-lotus</strong></td>
+<td>Areca đúng đắn/ổn định; Lotus nhiều mode/tính năng</td>
+</tr>
+<tr>
+<td>Linux, cần nhiều output mode + GUI</td>
+<td><strong>SKey</strong></td>
+<td>5 mode, Qt6, per-app, 14 charset</td>
+</tr>
+<tr>
+<td>Linux, GNOME/IBus</td>
+<td><strong>ibus-bamboo</strong> (nếu chấp nhận stale) hoặc <strong>NepKey/TypeVN</strong></td>
+<td>ibus-bamboo đầy đủ nhất; hai dự án kia mới hơn</td>
+</tr>
+<tr>
+<td>Linux, không muốn Fcitx/IBus</td>
+<td><strong>vi-ime</strong> hoặc <strong>vietc</strong></td>
+<td>Standalone Wayland; chấp nhận cấu hình phức tạp</td>
+</tr>
+<tr>
+<td>Linux, terminal/IDE nhiều</td>
+<td><strong>Areca Preedit</strong> hoặc <strong>SKey Preedit</strong></td>
+<td>Preedit an toàn cho VTE/Electron</td>
+</tr>
+<tr>
+<td>macOS</td>
+<td><strong>Gõ Nhanh</strong> hoặc <strong>OpenKey</strong></td>
+<td>Gõ Nhanh hiện đại/auto-restore; OpenKey chín/lâu năm</td>
+</tr>
+<tr>
+<td>Windows</td>
+<td><strong>OpenKey</strong> hoặc <strong>TextVN</strong></td>
+<td>OpenKey ổn định; TextVN nhiều tính năng (grammar)</td>
+</tr>
+<tr>
+<td>Đa nền tảng, một engine</td>
+<td><strong>Funput</strong>, <strong>TextVN</strong>, <strong>vnkey</strong>, <strong>ViFastKey</strong></td>
+<td>Cùng core, nhiều adapter</td>
+</tr>
+<tr>
+<td>Học kiến trúc adapter</td>
+<td><strong>Areca</strong></td>
+<td>Tài liệu + 6 backend + trust probe</td>
+</tr>
+<tr>
+<td>Học thuật toán engine</td>
+<td><strong>Gõ Nhanh</strong>, <strong>telebit</strong></td>
+<td>Validation-first / rebuild âm tiết, có docs</td>
+</tr>
+<tr>
+<td>Học kiến trúc tổng thể</td>
+<td><strong>ViFastKey</strong></td>
+<td>Oracle + conformance + nhiều adapter</td>
+</tr>
+</tbody></table></div>
+<hr>
+<h2>13. Kết luận</h2>
+<ol>
+<li><strong>Không có bộ gõ nào &quot;tốt nhất&quot; toàn diện.</strong> Mỗi dự án tối ưu một trục:
+Areca (đúng đắn), Lotus (tính năng), SKey (mode), OpenKey (UX macOS),
+Gõ Nhanh (sản phẩm), TextVN (tính năng), ViFastKey (kỷ luật kỹ thuật).</li>
+<li><strong>Engine tiếng Việt đã gần như commodity.</strong> <code>bamboo-core</code> và các port đủ tốt
+cho 90% nhu cầu. Cạnh tranh thật nằm ở adapter, UX và phân phối.</li>
+<li><strong>Test adapter là lợi thế cạnh tranh dài hạn.</strong> Đây là thứ khó copy nhất và
+cũng là thứ người dùng cảm nhận rõ nhất (mất chữ, lặp từ, vỡ dấu).</li>
+<li><strong>Hệ sinh thái churn cao.</strong> 7/31 repo không còn phát triển (3 xóa, 3 archive,
+1 inactive). Đừng xây sản phẩm phụ thuộc vào một repo không có test/CI/người
+kế nhiệm.</li>
+<li><strong>ViFastKey có nền tốt nhất về kỷ luật</strong> (oracle + conformance + adapter
+contract), nhưng còn thiếu chiều sâu adapter Linux và phân phối so với
+Areca/Lotus/SKey. Xem <a href="comparison-vifastkey.html"><code>comparison-vifastkey.md</code></a>.</li>
+</ol>
+<hr>
+<h2>14. Nguồn</h2>
+<ul>
+<li>Tracker: <a href="https://hthienloc.github.io/vietnamese-ime-tracker">https://hthienloc.github.io/vietnamese-ime-tracker</a> ·
+<code>repos.yml</code> · <code>bo-go-tieng-viet.csv</code></li>
+<li>GitHub API: metadata 31 repo (star, language, license, created, pushed).</li>
+<li>README của 28 repo còn tồn tại.</li>
+<li>Mã nguồn/kiến trúc: Areca (<code>952ddd8</code>), fcitx5-lotus, skey, fcitx5-bamboo,
+fcitx5-unikey, Gõ Nhanh, telebit, Ngó Sen.</li>
+<li>Tài liệu nội bộ ViFastKey: <code>docs/IME_FEATURE_RESEARCH.md</code>,
+<code>docs/research/*.md</code>, <code>docs/PLATFORMS.md</code>, <code>docs/COMPATIBILITY.md</code>.</li>
+</ul>
+
+  </article>
+</div>
+<footer class="doc-footer"><div class="wrap">ViFastKey · tài liệu kỹ thuật · cập nhật 2026-11-01</div></footer>
+</body>
+</html>

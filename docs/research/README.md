@@ -3,6 +3,9 @@
 Đây là 8 báo cáo do các sub agent lập trong đợt đối chiếu 21 dự án IME tiếng Việt.
 Bản tổng hợp và quyết định triển khai nằm ở [`../IME_FEATURE_RESEARCH.md`](../IME_FEATURE_RESEARCH.md).
 
+Bộ khảo sát mới hơn (31 repo, snapshot 2026-11-01) nằm ở
+[`../ime-survey/`](../ime-survey/README.md), gồm sổ tay Areca và so sánh với ViFastKey.
+
 Các báo cáo là **ảnh chụp tại thời điểm khảo sát**; câu “ViFastKey currently lacks/gap”
 có thể đã lỗi thời. Trạng thái hiện tại xem [`../PLATFORMS.md`](../PLATFORMS.md),
 [`../../ROADMAP.md`](../../ROADMAP.md), [`../DESKTOP_UI.md`](../DESKTOP_UI.md) và
