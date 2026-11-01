@@ -1,0 +1,29 @@
+[package]
+name = "vifastkey-wayland"
+description = "Adapter Wayland standalone cho ViFastKey (zwp_input_method_v2 + virtual keyboard)."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+
+[[bin]]
+name = "vifastkey-wayland"
+path = "src/main.rs"
+
+[dependencies]
+vfk-engine = { workspace = true }
+vfk-adapter-core = { workspace = true }
+serde_json = { workspace = true }
+log = "0.4"
+env_logger = "0.11"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+wayland-client = "0.31"
+wayland-protocols = { version = "0.32", features = ["client", "unstable"] }
+wayland-protocols-misc = { version = "0.3", features = ["client"] }
+xkbcommon = { version = "0.8", features = ["wayland"] }
+libc = "0.2"
+
+[dev-dependencies]
+tempfile = "3"
