@@ -26,7 +26,6 @@ Cấu hình là JSON, dùng chung cho Python, Rust, C ABI và WASM. File mẫu:
 
 | Trường | Kiểu | Mặc định | Ý nghĩa |
 |---|---|---|---|
-| `auto_restore_english` | bool | `true` | Dùng `Dictionary` để trả raw từ tiếng Anh |
 | `macro_enabled` | bool | `true` | Bật macro |
 | `macro_digits` | bool | `false` | Giữ chữ số trong từ (`mp3`, `k8s`) |
 | `macro_undo` | bool | `true` | Backspace ngay sau macro khôi phục trigger + dấu cách |
@@ -143,18 +142,18 @@ atomic; crate này dùng `vfk_engine::Config` làm schema, không định nghĩa
 Windows dùng thêm `%APPDATA%\ViFastKey\windows.json` (không thuộc engine config):
 
 ```json
-{ "backend": "tsf" }
+{ "backend": "hook" }
 ```
 
 | Giá trị | Ý nghĩa |
 |---|---|
-| `tsf` (mặc định) | Preedit: chỉ TSF; hook pass-through |
-| `hook` | Replace: TSF không ăn phím; chỉ hook xử lý |
+| `hook` (duy nhất) | Hook-only: chỉ xử lý khi input source English US; VI/JP pass-through |
 
-UI chỉ hiện Preedit/Replace. Giá trị `auto` cũ được đọc như `tsf`; chọn Replace
-trong UI sẽ chạy hook nền và thêm Run key, chọn Preedit sẽ dừng hook và xoá Run key.
+Từ bản Windows hook-only, `windows.json` chỉ còn `{"backend":"hook"}`. Giá trị
+`tsf`/`auto` cũ được đọc để migration nhưng không còn UI chọn; installer mới ghi
+`hook` và gỡ TSF legacy. Xem `docs/INSTALL.md`.
 
-Chi tiết build/cài: `windows/tsf/README.md`.
+Chi tiết cài: `docs/INSTALL.md`. TSF cũ chỉ còn legacy/reference.
 
 ## 8. UI desktop và ghi config
 

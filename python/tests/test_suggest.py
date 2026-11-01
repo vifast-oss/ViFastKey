@@ -1,4 +1,4 @@
-from vfk_suggest import SuggestionEngine, default_engine, suggest
+from vfk_suggest import SuggestionEngine, autocorrect, default_engine, suggest
 
 
 def test_prefix_without_diacritics_matches_vietnamese():
@@ -17,3 +17,19 @@ def test_engine_limit_and_user_words():
 
 def test_loaded_corpus_size():
     assert len(default_engine()) > 20_000
+
+
+def test_corrects_near_miss_word():
+    assert "tiếng" in suggest("tieengx", 6)
+
+
+def test_prefix_priority_before_corrections():
+    assert suggest("nguoi", 20)[0] == "người"
+
+
+def test_autocorrects_only_invalid_common_words():
+    assert autocorrect("tieengd") == "tiếng"
+    assert autocorrect("Tieengd") == "Tiếng"
+    assert autocorrect("tiếng") is None
+    assert autocorrect("hello") is None
+    assert autocorrect("tie") is None

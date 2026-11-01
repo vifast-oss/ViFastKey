@@ -62,8 +62,10 @@ def test_corpus_rebuild(im):
 
 
 def test_english_restore_at_word_end():
-    for w in "text case windows class law debug json".split():
+    # data/boot/meet: âm cuối tắc không có sắc/nặng nên không phải từ Việt hoàn chỉnh.
+    for w in "text case windows class law debug json data boot meet".split():
         assert transform(w, TELEX, final=True).text == w
+    assert transform("last", TELEX, final=True).text == "lát"
 
 
 def test_max_raw_is_literal():

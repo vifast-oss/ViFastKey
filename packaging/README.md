@@ -7,6 +7,7 @@ Hướng dẫn và script đóng gói cho người dùng cuối:
 | `vifastkey-windows-tsf-<version>.zip` | TSF x64/x86 + engine + settings + hook + installer | `packaging/windows/README.md` |
 | `vifastkey-settings-windows-x64.zip` | Chỉ UI settings (CI) | `packaging/windows/settings-only-README.md` |
 | `vifastkey-settings-linux-x86_64-<version>.tar.gz` | UI settings + desktop entry/icon + install script | `packaging/linux/README.md` |
+| `vifastkey-uefi-x86_64.zip` | UEFI editor demo + `EFI/BOOT/BOOTX64.EFI` + install notes | `uefi/README.md` |
 
 ## Windows
 
@@ -34,3 +35,13 @@ icon, `LICENSE`, `THIRD_PARTY_NOTICES.md`.
 
 Gói Linux **chỉ là UI cấu hình**; engine IBus/Fcitx5 cài theo `linux/ibus/` hoặc
 `linux/fcitx5/`.
+
+## UEFI
+
+```bash
+./uefi/package.sh
+# dist/vifastkey-uefi-x86_64.zip
+```
+
+ZIP chứa `EFI/BOOT/BOOTX64.EFI`, `INSTALL.txt`, README và license; giải nén trực
+tiếp vào USB FAT32. Đây là demo editor, không phải IME toàn hệ thống.

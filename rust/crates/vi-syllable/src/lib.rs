@@ -8,8 +8,15 @@
 //! * Các hàm phân tích (`parse`, `check`, `tone_index`) nhận chuỗi **thường, không thanh, NFC**.
 //! * Thanh: 0 ngang, 1 sắc, 2 huyền, 3 hỏi, 4 ngã, 5 nặng.
 
-use std::collections::{HashMap, HashSet};
-use std::sync::OnceLock;
+#![cfg_attr(not(feature = "std"), no_std)]
+
+extern crate alloc;
+
+use alloc::collections::{BTreeMap, BTreeSet};
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
+use core::iter;
+use spin::Once;
 
 use unicode_normalization::UnicodeNormalization;
 
@@ -177,16 +184,16 @@ pub fn upper(c: char) -> char {
 }
 
 struct Tables {
-    onset_prefixes: HashSet<String>,
-    open: HashSet<String>,
-    closed: HashSet<String>,
-    ch_nh: HashSet<String>,
+    onset_prefixes: BTreeSet<String>,
+    open: BTreeSet<String>,
+    closed: BTreeSet<String>,
+    ch_nh: BTreeSet<String>,
     /// Cụm nguyên âm (kể cả gõ dở, chưa đủ dấu) có thể hoàn thiện.
-    relaxed_any: HashSet<String>,
+    relaxed_any: BTreeSet<String>,
     /// coda (có thể gõ dở) -> các cụm nguyên âm (đã bỏ bớt dấu) đi được với nó.
-    relaxed_for_coda: HashMap<String, HashSet<String>>,
+    relaxed_for_coda: BTreeMap<String, BTreeSet<String>>,
     /// Như trên nhưng có thêm âm cuối k (tuỳ chọn tên riêng).
-    relaxed_for_coda_k: HashMap<String, HashSet<String>>,
+    relaxed_for_coda_k: BTreeMap<String, BTreeSet<String>>,
 }
 
 fn prefixes(s: &str) -> Vec<String> {
@@ -205,11 +212,11 @@ fn demark(c: char) -> char {
 }
 
 /// Mọi biến thể bỏ bớt dấu phụ: "ươ" -> {ươ, uơ, ưo, uo}.
-fn relax(s: &str) -> HashSet<String> {
-    let mut out: HashSet<String> = HashSet::from([String::new()]);
+fn relax(s: &str) -> BTreeSet<String> {
+    let mut out: BTreeSet<String> = iter::once(String::new()).collect();
     for ch in s.chars() {
         let opts = [ch, demark(ch)];
-        let mut next = HashSet::new();
+        let mut next = BTreeSet::new();
         for p in &out {
             for o in opts {
                 let mut q = p.clone();
@@ -223,24 +230,24 @@ fn relax(s: &str) -> HashSet<String> {
 }
 
 fn tables() -> &'static Tables {
-    static T: OnceLock<Tables> = OnceLock::new();
-    T.get_or_init(|| {
-        let mut onset_prefixes = HashSet::new();
+    static T: Once<Tables> = Once::new();
+    T.call_once(|| {
+        let mut onset_prefixes = BTreeSet::new();
         for o in ONSETS.iter().copied().chain(["gi", "qu"]) {
             onset_prefixes.extend(prefixes(o));
         }
-        let open: HashSet<String> = OPEN_CLUSTERS.iter().map(|s| s.to_string()).collect();
-        let closed: HashSet<String> = CLOSED_CLUSTERS.iter().map(|s| s.to_string()).collect();
-        let ch_nh: HashSet<String> = CH_NH_CLUSTERS.iter().map(|s| s.to_string()).collect();
+        let open: BTreeSet<String> = OPEN_CLUSTERS.iter().map(|s| s.to_string()).collect();
+        let closed: BTreeSet<String> = CLOSED_CLUSTERS.iter().map(|s| s.to_string()).collect();
+        let ch_nh: BTreeSet<String> = CH_NH_CLUSTERS.iter().map(|s| s.to_string()).collect();
 
-        let mut relaxed_any = HashSet::new();
+        let mut relaxed_any = BTreeSet::new();
         for c in open.iter().chain(closed.iter()) {
             for p in prefixes(c) {
                 relaxed_any.extend(relax(&p));
             }
         }
 
-        let mut relaxed_for_coda: HashMap<String, HashSet<String>> = HashMap::new();
+        let mut relaxed_for_coda: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
         for coda in CODAS {
             for cl in CLOSED_CLUSTERS {
                 if (*coda == "ch" || *coda == "nh") && !ch_nh.contains(*cl) {
@@ -305,7 +312,7 @@ pub fn decompose_char(ch: char) -> Decomposed {
     if lo == 'đ' {
         return Decomposed { base: 'd', mark: Some(Mark::Stroke), tone: 0, upper: is_upper };
     }
-    let mut it = std::iter::once(lo).nfd();
+    let mut it = iter::once(lo).nfd();
     let base = it.next().unwrap_or(lo);
     let mut mark = None;
     let mut tone = 0;
@@ -448,6 +455,25 @@ pub fn check_with(s: &str, tone: u8, allow_coda_k: bool) -> Status {
     Status::Invalid
 }
 
+/// Như [`check_with`] nhưng dùng khi kết thúc từ.
+///
+/// Âm tiết có âm cuối tắc (c, ch, p, t, và k khi bật tên riêng) phải mang thanh
+/// sắc/nặng mới là từ hoàn chỉnh. Nhờ vậy `dât`/`bôt` bị coi là chưa hợp lệ ở cuối từ,
+/// còn `lát`/`mút` vẫn hợp lệ.
+pub fn check_final(s: &str, tone: u8, allow_coda_k: bool) -> Status {
+    let st = check_with(s, tone, allow_coda_k);
+    if st != Status::Valid {
+        return st;
+    }
+    let syl = parse(s);
+    let stop_codas = if allow_coda_k { STOP_CODAS_WITH_K } else { STOP_CODAS };
+    if stop_codas.contains(&syl.coda.as_str()) && !matches!(tone, 1 | 5) {
+        Status::Invalid
+    } else {
+        st
+    }
+}
+
 /// Âm cuối tắc (c, ch, p, t) chỉ đi với thanh sắc / nặng.
 pub fn tone_allowed(s: &str, tone: u8) -> bool {
     tone_allowed_with(s, tone, false)
@@ -530,6 +556,16 @@ mod unit {
         assert_eq!(compose_char('e', Some(Mark::Circumflex), 1, false), 'ế');
         assert_eq!(compose_char('d', Some(Mark::Stroke), 0, true), 'Đ');
         assert_eq!(compose_char('u', Some(Mark::Horn), 2, true), 'Ừ');
+    }
+
+    #[test]
+    fn check_final_stop_coda_requires_tone() {
+        assert_eq!(check_final("dat", 0, false), Status::Invalid);
+        assert_eq!(check_final("dat", 1, false), Status::Valid);
+        assert_eq!(check_final("mô", 0, false), Status::Valid);
+        assert_eq!(check_final("lat", 1, false), Status::Valid);
+        assert_eq!(check_final("đăk", 1, true), Status::Valid);
+        assert_eq!(check_final("đăk", 0, true), Status::Invalid);
     }
 
     #[test]

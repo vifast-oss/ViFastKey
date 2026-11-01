@@ -194,6 +194,25 @@ pub extern "system" fn Java_app_vifastkey_NativeEngine_setConfig<'caller>(
 }
 
 #[no_mangle]
+pub extern "system" fn Java_app_vifastkey_NativeEngine_setOutputMode<'caller>(
+    mut unowned_env: EnvUnowned<'caller>,
+    _class: JClass<'caller>,
+    ptr: jlong,
+    mode: jint,
+) -> JString<'caller> {
+    unowned_env
+        .with_env(|env| -> JniResult<JString> {
+            let Some(h) = handle(ptr) else {
+                return Ok(JString::null());
+            };
+            let mode = if mode == 2 { OutputMode::Replace } else { OutputMode::Preedit };
+            let action = h.session.set_output_mode(mode);
+            Ok(to_jstring(env, action_json(&action)))
+        })
+        .resolve::<ThrowRuntimeExAndDefault>()
+}
+
+#[no_mangle]
 pub extern "system" fn Java_app_vifastkey_NativeEngine_display<'caller>(
     mut unowned_env: EnvUnowned<'caller>,
     _class: JClass<'caller>,
@@ -223,6 +242,21 @@ pub extern "system" fn Java_app_vifastkey_NativeEngine_suggest<'caller>(
             let values = vfk_suggest::suggest(prefix.trim(), 6);
             let json = serde_json::to_string(&values).unwrap_or_else(|_| "[]".to_string());
             Ok(JString::from_str(env, json).unwrap_or_else(|_| JString::null()))
+        })
+        .resolve::<ThrowRuntimeExAndDefault>()
+}
+
+#[no_mangle]
+pub extern "system" fn Java_app_vifastkey_NativeEngine_autocorrect<'caller>(
+    mut unowned_env: EnvUnowned<'caller>,
+    _class: JClass<'caller>,
+    word: JString<'caller>,
+) -> JString<'caller> {
+    unowned_env
+        .with_env(|env| -> JniResult<JString> {
+            let word = string_arg(&word, env);
+            let value = vfk_suggest::autocorrect(&word).unwrap_or_default();
+            Ok(JString::from_str(env, value).unwrap_or_else(|_| JString::null()))
         })
         .resolve::<ThrowRuntimeExAndDefault>()
 }

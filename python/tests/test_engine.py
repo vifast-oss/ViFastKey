@@ -108,19 +108,24 @@ def test_macro_and_case(mode):
 
 
 @pytest.mark.parametrize("mode", MODES)
-def test_dictionary_restore(mode):
+def test_default_prefers_valid_vietnamese(mode):
     s, f, _ = make(mode)
-    f.type(s, "data her mix this did ")
-    # data->dât, her->hẻ, mix->mĩ không phải từ Việt thông dụng -> khôi phục
-    # this->thí, did->đi là từ Việt -> giữ tiếng Việt
-    assert f.text == "data her mix thí đi "
+    f.type(s, "mix max six tax too this ")
+    assert f.text == "mĩ mã sĩ tã tô thí "
 
 
 @pytest.mark.parametrize("mode", MODES)
-def test_spell_restore_without_dictionary(mode):
-    s, f, _ = make(mode, Config(auto_restore_english=False))
+def test_english_words_use_telex_escape_by_default(mode):
+    s, f, _ = make(mode)
+    f.type(s, "mixx thiss seee dataa lasst ")
+    assert f.text == "mix this see data last "
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_spell_restore_for_invalid_english(mode):
+    s, f, _ = make(mode)                       # không có dictionary auto-restore
     f.type(s, "text law windows boss ")
-    assert f.text == "text law windows bos "     # 'ss' = hoàn tác; không có từ điển thì giữ 'bos'
+    assert f.text == "text law windows bos "   # 'ss' = hoàn tác; giữ 'bos'
 
 
 @pytest.mark.parametrize("mode", MODES)
@@ -194,6 +199,48 @@ def test_backspace_after_duplicate_letters_restores_word(mode):
     assert f.text == "nhuwngg"
     f.type(s, [BS])
     assert f.text == "nhưng"
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_backspace_after_space_adopted_word_does_not_duplicate(mode):
+    s, f, _ = make(mode)
+    f.type(s, list("ViFastKey") + [" ", BS, BS, "y", BS])
+    assert f.text == "ViFastKe"
+    f.type(s, "y ")
+    assert f.text == "ViFastKey "
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_backspace_after_invalid_suffix_restores_word(mode):
+    s, f, _ = make(mode)
+    f.type(s, "nhuwnggg")
+    f.type(s, [BS, BS])
+    assert f.text == "nhưng"
+    # Gõ thêm ký tự làm từ sai chính tả: hiện raw, nhưng xoá đi phải quay lại tiếng Việt.
+    f.type(s, "l")
+    assert f.text == "nhuwngl"
+    f.type(s, [BS])
+    assert f.text == "nhưng"
+
+    # Từ Việt đã đúng + ký tự thừa: xoá ký tự thừa phải quay lại từ Việt.
+    f.type(s, " too")
+    assert f.text == "nhưng tô"
+    f.type(s, "l")
+    assert f.text == "nhưng tool"
+    f.type(s, [BS])
+    assert f.text == "nhưng tô"
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_backspace_restores_valid_syllable_not_in_dictionary(mode):
+    """thoảng là âm tiết hợp lệ nhưng không có trong từ điển common."""
+    s, f, _ = make(mode)
+    f.type(s, "thoangr")
+    assert f.text == "thoảng"
+    f.type(s, "e")
+    assert f.text == "thoangre"
+    f.type(s, [BS])
+    assert f.text == "thoảng"
 
 
 @pytest.mark.parametrize("mode", MODES)

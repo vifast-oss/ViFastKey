@@ -1,3 +1,5 @@
+> **Legacy.** Gói này không còn được phát hành. Dùng `vifastkey-windows-hook-0.1.0.zip`.
+
 # ViFastKey Settings (chỉ UI cấu hình)
 
 Gói này **chỉ chứa `vifastkey-settings.exe`**, không chứa TSF/hook.

@@ -3,7 +3,11 @@
 //! Thuần, không I/O, không trạng thái toàn cục. Mọi chỉ số tính theo `char`.
 //! Mỗi `Letter` ứng đúng 1 ký tự hiển thị, nên chỉ số trong `letters` == chỉ số char của chuỗi hiển thị.
 
+use alloc::string::String;
+use alloc::vec::Vec;
+use alloc::{format, vec};
 use arrayvec::ArrayVec;
+use core::cmp::Reverse;
 use vi_syllable::{self as vs, lower, upper, Mark, Status, ToneStyle};
 
 use crate::rules::{quick_telex, InputMethodSpec, MarkRule};
@@ -163,6 +167,15 @@ fn status(letters: &[Letter], tone: u8, opt: &TransformOptions) -> Status {
     vs::check_with(&toneless_lower(letters), tone, opt.allow_coda_k)
 }
 
+/// Trạng thái dùng khi render: cuối từ kiểm tra chặt hơn (âm cuối tắc phải có sắc/nặng).
+fn status_for(letters: &[Letter], tone: u8, opt: &TransformOptions, is_final: bool) -> Status {
+    if is_final {
+        vs::check_final(&toneless_lower(letters), tone, opt.allow_coda_k)
+    } else {
+        status(letters, tone, opt)
+    }
+}
+
 /// VNI: số thật hoặc cặp phím số lặp phải giữ nguyên (nam2024, ba10, a11).
 fn vni_literal(raw: &[char], im: &InputMethodSpec) -> Option<String> {
     if !im.digit_keys || !raw.iter().any(|c| c.is_ascii_digit()) {
@@ -242,7 +255,7 @@ fn candidates(st: &WordState, rules: &[MarkRule]) -> Vec<Cand> {
         }
     }
     // sort ổn định, giảm dần theo vị trí đầu
-    singles.sort_by_key(|c| std::cmp::Reverse(c[0].0));
+    singles.sort_by_key(|c| Reverse(c[0].0));
     let mut out: Vec<Cand> = Vec::new();
     for c in pairs.into_iter().chain(singles) {
         if !out.contains(&c) {
@@ -452,7 +465,7 @@ fn step(st: &mut WordState, k: char, im: &InputMethodSpec, opt: &TransformOption
 
 fn result(st: &WordState, raw: &[char], opt: &TransformOptions, is_final: bool) -> TransformResult {
     let text = render(st, opt.tone_style);
-    let stt = status(&st.letters, st.tone, opt);
+    let stt = status_for(&st.letters, st.tone, opt, is_final);
     if opt.spell_check && st.transformed {
         let (start, end) = cluster_span(&st.letters);
         let raw_s: String = raw.iter().collect();

@@ -218,7 +218,7 @@ fn word_char(ch: char) -> bool {
 
 /// Chuẩn hoá một đoạn văn bản: chuyển Telex/VNI thô thành chữ Việt và
 /// chuẩn hoá các từ đã có dấu. Giữ nguyên dấu câu/khoảng trắng.
-/// Từ tiếng Anh đã biết trong lexicon được giữ nguyên để tránh `data` -> `dât`.
+/// Từ tiếng Anh đã biết trong lexicon được giữ nguyên thay vì bẻ dấu thành tiếng Việt.
 #[wasm_bindgen]
 pub fn normalize_text(text: &str, method: &str, tone_style: &str) -> String {
     let im = input_method(method);

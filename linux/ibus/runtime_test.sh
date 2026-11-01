@@ -61,7 +61,7 @@ if [ -z "$WID" ]; then
     cat "$TMP/zenity.log" >&2 || true
     exit 1
 fi
-xdotool windowactivate --sync "$WID"
+xdotool windowactivate --sync "$WID" 2>/dev/null || xdotool windowfocus "$WID"
 sleep 1
 if ! ibus engine vifastkey 2>"$TMP/engine.err"; then
     echo "FAIL: không chọn được engine vifastkey" >&2

@@ -1,3 +1,7 @@
+> **Legacy / reference only.** Từ bản Windows hook-only, TSF không còn được
+> build/đóng gói/cài mặc định. Giữ source để tham khảo hoặc cho một bản preedit
+> riêng sau này. Xem `docs/INSTALL.md` cho bản Windows hiện tại.
+
 # ViFastKey Windows TSF (preedit)
 
 Text service TSF cho Windows: composition/preedit thật (vùng gạch chân), commit
@@ -7,6 +11,16 @@ chung engine, adapter-core và conformance với các nền tảng khác.
 Adapter hook (`rust/apps/vfk-windows-replace`) vẫn là fallback Replace cho app không dùng
 TSF. Hai backend không xử lý cùng một context: TSF ghi named mapping
 `Local\ViFastKeyTsfState`, hook đọc mapping và pass-through khi PID trùng.
+
+## Core dùng chung và phần TSF-specific
+
+- **Dùng chung** qua `vfk-ffi` + `vfk-engine` + `vfk-adapter-core`: action/plan
+  preedit-commit-replace, kiểm tra surrounding, quy đổi UTF-16, timing và
+  conformance. Android/JNI, macOS, Linux và Windows đều đi qua phần này.
+- **TSF-specific**, nằm trong `text_service.cpp`, không đưa vào core vì phụ thuộc
+  `ITfContext`/`ITfRange`: `ActivateEx`/`EnsureContext` khi đổi IME, giữ caret sau
+  `EndComposition`, throttle reload config và routing Preedit/Replace. Các port
+  khác có primitive tương đương nhưng không dùng chung code COM.
 
 ## Build (Windows 10/11)
 
@@ -65,15 +79,21 @@ Mỗi lần chạy `install.ps1` sẽ copy DLL vào `tsf\x64` hoặc `tsf\x86` v
 ## Preedit và Replace khi chơi game
 
 - **Preedit (TSF)** cần app có text store/composition của Windows. Notepad, Office,
-  trình duyệt, Discord/Slack thường hỗ trợ; nhiều game dùng DirectInput/Raw Input
-  hoặc render UI riêng nên không nhận preedit, nhất là fullscreen exclusive.
+  Chrome/Edge, Discord/Slack, VS Code thường hỗ trợ; nhiều game dùng DirectInput/
+  Raw Input hoặc render UI riêng nên không nhận preedit, nhất là fullscreen exclusive.
+- **Windows Terminal/OpenConsole không nạp third-party TSF per-user chưa ký**:
+  Microsoft Vietnamese/Pinyin (TIP hệ thống, đã ký) vẫn preedit được, nhưng DLL
+  `vifastkey_tsf.dll` không xuất hiện trong process `WindowsTerminal`/`OpenConsole`
+  (kiểm tra `tasklist /m vifastkey_tsf.dll`). Vì vậy terminal dùng đường hook
+  Replace riêng, không cần đổi toàn bộ Windows sang Replace.
 - **Replace (hook)** bắt phím bằng `WH_KEYBOARD_LL` rồi gửi backspace + Unicode
-  bằng `SendInput`. Nó có thể gõ được trong ô chat của một số game không hỗ trợ TSF,
-  nhưng không có gạch chân preedit; game dùng anti-cheat có thể chặn hook/SendInput,
-  và fullscreen exclusive vẫn có thể nuốt phím.
-- Vì vậy mặc định là **Preedit**; chỉ chuyển **Replace** cho app/game cụ thể khi
-  preedit không hoạt động. Không bật hook nền ở chế độ Preedit để tránh anti-cheat
-  nhìn thấy keyboard hook không cần thiết.
+  bằng `SendInput`. Nó có thể gõ được trong terminal và ô chat của một số game
+  không hỗ trợ TSF, nhưng không có gạch chân preedit; game dùng anti-cheat có thể
+  chặn hook/SendInput, và fullscreen exclusive vẫn có thể nuốt phím.
+- Hook process chạy nền ở cả Preedit, nhưng **chỉ cài keyboard hook khi foreground
+  là terminal/console** (Windows Terminal, OpenConsole, conhost, cmd, PowerShell).
+  App thường vẫn do TSF xử lý và không bị hook can thiệp. Chọn `backend: hook` thì
+  hook xử lý toàn cục như cũ.
 - Linux IBus/IMK/Fcitx5 dùng preedit; Fcitx5/macOS có Replace theo app nhưng cần
   surrounding text và không phải giải pháp cho game.
 
@@ -101,10 +121,11 @@ Không cần khởi động lại khi sửa `config.json`/`windows.json`: TSF ki
 500 ms khi có phím và khi focus đổi; hook hot-reload theo mtime. Nếu đang có preedit
 dở, bấm ra ngoài một lần để chốt trước khi đổi chế độ.
 
-**Mặc định là Preedit (TSF).** Để dùng Replace cho game/app không nhận TSF, mở
-`vifastkey-settings` → tab **Nâng cao** → **Windows: Preedit / Replace** → chọn
-**Replace (Hook)**. UI sẽ chạy hook nền và thêm Run key cho user hiện tại; chuyển
-lại **Preedit (TSF)** sẽ dừng hook và xoá Run key. Không cần bật `auto`.
+**Mặc định là Preedit (TSF).** Hook process vẫn chạy nền để xử lý riêng
+Windows Terminal/console; nó chỉ cài keyboard hook khi terminal focus. Để dùng
+Replace cho toàn bộ app/game không nhận TSF, mở `vifastkey-settings` → tab
+**Nâng cao** → **Windows: Preedit / Replace** → chọn **Replace (Hook)**. Không
+cần bật `auto`.
 
 ## Hành vi
 
@@ -114,7 +135,7 @@ lại **Preedit (TSF)** sẽ dừng hook và xoá Run key. Không cần bật `a
 - Surrounding text lấy từ `ITfRange` trước caret; `Replace` chỉ chạy khi plan xác
   minh được hậu tố.
 - Password/PIN/URL/email/số bị tắt qua `ITfInputScope`; terminal nhận field
-  `Terminal`.
+  `Terminal` (Windows Terminal dùng hook vì không nạp TSF per-user).
 - Display attribute: gạch chân xanh cho composition.
 - `Alt+,` toggle Việt/Anh (khi TSF đang xử lý context).
 
@@ -123,7 +144,8 @@ lại **Preedit (TSF)** sẽ dừng hook và xoá Run key. Không cần bật `a
 - Chưa test runtime trên Windows thật trong môi trường repo (macOS); CI build MSVC
   chỉ kiểm tra compile. Cần smoke test Notepad/Chrome/Office/Windows Terminal.
 - Tray icon nằm trong `vifastkey-settings`; installer đăng ký TSF per-user, cài hook
-  và tạo shortcut `ViFastKey Settings`. Auto-start hook do UI quản lý khi chọn Replace.
+  và tạo shortcut `ViFastKey Settings`. Hook process có Run key riêng; ở Preedit
+  nó chỉ cài keyboard hook khi terminal focus.
 - Macro hiện chỉ chạy ở `REPLACE` trong engine; TSF `PREEDIT` chưa mở macro.
 - Charset legacy chưa áp ở đầu ra TSF (luôn chèn Unicode).
 - App elevated: TSF per-user thường không nạp vào process elevated; cần bản HKLM
@@ -139,4 +161,4 @@ lại **Preedit (TSF)** sẽ dừng hook và xoá Run key. Không cần bật `a
 3. Chrome address bar + Google Docs; Office; Windows Terminal.
 4. Field password/URL/number: không có composition, phím đi thẳng.
 5. Chuyển app qua lại: không mất từ, không nhân đôi chữ.
-6. `backend: hook` → chỉ hook chạy; `backend: tsf` (mặc định) → chỉ TSF preedit.
+6. `backend: hook` → hook xử lý mọi app; `backend: tsf` (mặc định) → TSF cho app thường, hook chỉ cho terminal/console.

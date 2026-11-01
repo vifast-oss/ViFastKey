@@ -20,6 +20,19 @@ mkdir -p "$DEST"
 install -m 0755 "$HERE/ibus_engine.py" "$DEST/ibus_engine.py"
 python3 -m py_compile "$DEST/ibus_engine.py"
 
+# Đảm bảo GTK/Qt/X11 dùng IBus sau lần đăng nhập kế tiếp. Nếu phiên GNOME cũ
+# còn kế thừa GTK_IM_MODULE=fcitx, terminal/editor/Firefox sẽ không thấy IBus.
+ENV_DIR="$HOME/.config/environment.d"
+mkdir -p "$ENV_DIR"
+cat > "$ENV_DIR/00-vifastkey-ibus.conf" <<'EOF'
+GTK_IM_MODULE=ibus
+QT_IM_MODULE=ibus
+QT_IM_MODULES=wayland;ibus
+XMODIFIERS=@im=ibus
+SDL_IM_MODULE=ibus
+EOF
+echo "Đã đặt IBus làm IM cho GTK/Qt/X11 (có hiệu lực sau đăng xuất/đăng nhập)."
+
 XML_TMP="$(mktemp)"
 trap 'rm -f "$XML_TMP"' EXIT
 sed "s|@PREFIX@|$PREFIX|g" "$HERE/vifastkey.xml.in" > "$XML_TMP"
@@ -52,6 +65,26 @@ if command -v ibus >/dev/null 2>&1; then
     ibus write-cache >/dev/null 2>&1 || true
     ibus restart >/dev/null 2>&1 || true
 fi
+
+# Trên Wayland, ibus-daemon chỉ ghi address *-unix-wayland-*. File *-unix-0
+# còn sót từ phiên X11 cũ có thể trỏ daemon đã chết; ứng dụng Xwayland đọc file
+# đó sẽ không kết nối được IBus (gõ tiếng Việt không có dấu). Nếu daemon trong
+# file X11 không còn sống, đồng bộ sang daemon Wayland đang chạy.
+sync_legacy_ibus_address() {
+    [ "${XDG_SESSION_TYPE:-}" = "wayland" ] || return 0
+    local wayland_file x11_file pid
+    wayland_file=$(find "$HOME/.config/ibus/bus" -maxdepth 1 -name '*-unix-wayland-*' -print -quit 2>/dev/null)
+    x11_file=$(find "$HOME/.config/ibus/bus" -maxdepth 1 -name '*-unix-0' -print -quit 2>/dev/null)
+    [ -n "$wayland_file" ] && [ -n "$x11_file" ] || return 0
+    pid=$(sed -n 's/^IBUS_DAEMON_PID=//p' "$wayland_file" | head -1)
+    [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null || return 0
+    if [ "$(sed -n 's/^IBUS_DAEMON_PID=//p' "$x11_file" | head -1)" != "$pid" ]; then
+        cp "$wayland_file" "$x11_file"
+        chmod 600 "$x11_file" 2>/dev/null || true
+        echo "Đã đồng bộ IBus address cho ứng dụng X11/Xwayland."
+    fi
+}
+sync_legacy_ibus_address
 
 echo "Đã cài engine: $DEST/ibus_engine.py"
 echo "Đã cài component: $COMP/vifastkey.xml"

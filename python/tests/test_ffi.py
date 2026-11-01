@@ -121,13 +121,12 @@ def test_ffi_app_profile_and_dictionary():
     vfk_focus_changed(h, "/usr/bin/kitty")
     p = json.loads(vfk_app_profile_json(h))
     assert p["output_mode"] == "preedit" and p["edit_previous_word"] is False
-    vfk_load_dictionary(h, "data", "")
-    for ch in "data":
+    # Nạp từ điển vẫn hợp lệ (dùng cho backspace/gợi ý), nhưng không tự đổi từ Việt.
+    vfk_load_dictionary(h, "mix", "")
+    for ch in "mix":
         vfk_process_key(h, ch)
     out = _act(vfk_process_key(h, " "))
-    # dictionary nạp mới: 'data' được khôi phục thành chính nó, dấu cách đi tiếp
-    assert out == {"type": "replace", "delete_before_utf16": 2, "insert": "ata",
-                   "pass_key": True}
+    assert out == {"type": "pass"}
     vfk_session_free(h)
 
 

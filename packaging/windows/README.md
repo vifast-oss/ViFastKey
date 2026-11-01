@@ -1,128 +1,102 @@
-# ViFastKey cho Windows
+# ViFastKey cho Windows — Hook-only
 
-ViFastKey là bộ gõ tiếng Việt cho Windows 10/11, gồm **TSF preedit** (mặc định)
-và **hook Replace** cho app/game không nhận preedit. Gói này chứa bộ cài per-user,
-UI cấu hình và hook Replace.
-
-## Tính năng
-
-- Telex, Simple Telex, VNI, VIQR; kiểu đặt dấu cũ/mới.
-- Preedit thật bằng TSF: gạch chân, sửa trong composition, commit khi Space/Enter/dấu câu.
-- Sửa từ đã gõ, macro nhiều từ, macro số (`mp3`, `k8s`), macro undo.
-- Gõ tiếng Anh bằng escape Telex, viết hoa đầu câu, bảo vệ chữ HOA.
-- App profile: output, delay/ACK, charset, kiểu gõ/chính tả theo app.
-- UI cấu hình egui: gõ thử, import/export có preview diff, reset từng nhóm,
-  tìm app, theme sáng/tối, tray.
-- Mặc định **Preedit**; **Replace** là tùy chọn cho game/app không hỗ trợ TSF.
-- Hỗ trợ app 64-bit và 32-bit (TSF x64/x86).
+ViFastKey dùng **keyboard hook** toàn cục, không cài TSF, không cần ký Authenticode.
+Windows nên để input source **English (US)**; khi chọn Vietnamese/Japanese,
+ViFastKey tự nhường cho bộ gõ Windows.
 
 ## Trong gói
 
 ```text
-x64/                    TSF + engine cho app 64-bit
-x86/                    TSF + engine cho app 32-bit
-vifastkey-settings.exe  UI cấu hình
-vifastkey-replace.exe  hook Replace (chỉ chạy khi chọn Replace)
-install.ps1             cài per-user + đăng ký TSF
-uninstall.ps1           gỡ cài đặt
-windows.example.json    mẫu cấu hình backend
+vifastkey-settings.exe  UI + hook trong cùng một file
+install.ps1             cài per-user, thêm autostart, chạy ẩn vào tray
+uninstall.ps1           gỡ app/hook/TSF legacy
 README.md               file này
-DEVELOPER.md            tài liệu build/kỹ thuật TSF
-LICENSE
-THIRD_PARTY_NOTICES.md
+INSTALL.md              hướng dẫn mọi nền tảng
+LICENSE / THIRD_PARTY_NOTICES.md
 ```
 
 ## Cài đặt
 
-1. Giải nén gói zip ra một thư mục.
-2. Mở **PowerShell** tại thư mục đó. Không cần chạy Administrator.
-3. Cài cho app 64-bit:
+1. Giải nén ZIP ra thư mục bất kỳ.
+2. Mở PowerShell tại thư mục đó (không cần Administrator):
 
 ```powershell
 Set-ExecutionPolicy -Scope Process Bypass
-.\install.ps1 -BuildDir x64
+.\install.ps1
 ```
 
-Nếu còn dùng app 32-bit, cài thêm:
+3. Trong Windows, chọn input source **English (US)**:
 
-```powershell
-.\install.ps1 -BuildDir x86
+```text
+Settings → Time & language → Language & region
+→ Add a language → English (United States)
+→ Win+Space chọn ENG
 ```
 
-4. Khởi động lại các app đang mở (hoặc đăng xuất/đăng nhập) để Windows nạp DLL TSF mới.
-   Khi nâng cấp, nếu TSF DLL đang được dùng, installer giữ bản cũ và cảnh báo; hãy
-   đăng xuất/khởi động lại rồi chạy lại installer để cập nhật DLL.
-5. Thêm bàn phím:
-   **Settings → Time & language → Language & region → Vietnamese → Language options
-   → Add a keyboard → ViFastKey**.
-   Nếu chưa thấy, đăng xuất/đăng nhập rồi thử lại.
+4. Mở **ViFastKey Settings** từ Start Menu hoặc `Ctrl+Shift+,`.
 
-Mặc định sau khi cài là **Preedit (TSF)**. Không có hook nền chạy ở chế độ này.
+Nếu SmartScreen cảnh báo: **More info → Run anyway** (bản chưa ký).
 
 ## Sử dụng
 
-- Chuyển Việt/Anh bằng language bar hoặc `Alt+,` khi ViFastKey đang xử lý.
-- Mở cấu hình: Start Menu → **ViFastKey Settings**, hoặc `Ctrl+Shift+,` khi hook đang chạy.
-- Tray: chuột phải để mở cấu hình/tải lại/thoát; click trái để mở cửa sổ.
-- Đóng cửa sổ cấu hình sẽ ẩn xuống tray (tắt được trong tab **Nâng cao**).
+- **Logo ViFastKey** trong tray: đang gõ tiếng Việt.
+- **E**: ViFastKey đang English.
+- **Logo mờ**: đang nhường cho Microsoft Vietnamese/Japanese hoặc Game Mode.
+- **Alt+,**: đổi Việt ↔ Anh khi Windows đang ở English US.
+- **Click trái tray**: đổi Việt ↔ Anh; **double-click** mở Settings; chuột phải mở menu.
+- **Ctrl+Shift+,**: mở Settings.
+- **X**: ẩn xuống tray (mặc định). Thoát hẳn: menu tray → **Thoát**.
+- Toast nhỏ hiện khi đổi chế độ; tray icon có thể bị Windows ẩn trong overflow.
 
-## Preedit và Replace khi chơi game
+## Input source và tránh gõ đôi
 
-**Preedit (TSF)** là mặc định:
-- Có composition/gạch chân, an toàn với anti-cheat hơn vì không dùng global hook.
-- Hợp với Notepad, Office, Chrome/Edge/Firefox, Discord/Slack, VS Code, Windows Terminal.
-- Nhiều game dùng DirectInput/Raw Input, UI riêng hoặc fullscreen exclusive nên
-  **không nhận TSF**.
+Hook chỉ xử lý khi `GetKeyboardLayout` của foreground là **English US (0x0409)**.
 
-**Replace (Hook)**:
-- Bắt phím bằng hook và gửi backspace + Unicode bằng `SendInput`; có thể gõ được
-  trong ô chat của một số game không hỗ trợ TSF.
-- Không có gạch chân preedit; anti-cheat có thể chặn/flag hook hoặc synthetic input;
-  fullscreen exclusive vẫn có thể nuốt phím.
-- Chỉ bật khi app/game cụ thể không nhận Preedit. Không bật hook nền mặc định.
+| Windows input | ViFastKey |
+|---|---|
+| English US | hook gõ tiếng Việt, Alt+, đổi V/E |
+| Vietnamese | pass-through, nhường Microsoft Vietnamese |
+| Japanese | pass-through cả English/Japanese mode |
+| Khác | pass-through |
 
-Cách đổi: **ViFastKey Settings → Nâng cao → Windows: Preedit / Replace**.
-- Chọn **Replace (Hook)**: app chạy `vifastkey-replace.exe` và thêm Run key cho user.
-- Chọn lại **Preedit (TSF)**: app dừng hook và xoá Run key.
-- Đổi chế độ có hiệu lực trong khoảng 0,5 giây; nếu đang có preedit dở, bấm ra ngoài một lần.
+Vì vậy:
 
-## Cấu hình
+- Muốn dùng ViFastKey: chọn **English US**.
+- Muốn dùng Microsoft Vietnamese: chọn **Vietnamese**; ViFastKey không chèn.
+- Muốn dùng Japanese: chọn **Japanese**; ViFastKey không phá chế độ English của JP.
+- Không nên bật Microsoft Vietnamese và ViFastKey cùng lúc trong cùng input source.
 
-- `%APPDATA%\ViFastKey\config.json` — cấu hình engine dùng chung.
-- `%APPDATA%\ViFastKey\windows.json` — `{"backend":"tsf"}` (Preedit) hoặc `{"backend":"hook"}` (Replace).
-- `%APPDATA%\ViFastKey\settings-ui.json` — theme/tab/tray của UI (không thuộc engine).
-- UI ghi atomic, tạo `config.json.bak`, giữ key lạ.
+`0x0409` là language ID English (US), không đảm bảo layout QWERTY; nếu dùng
+Dvorak/US International, nên chuyển về US QWERTY.
 
-Không cần sửa JSON nếu dùng UI. File cấu hình cũ vẫn được giữ khi nâng cấp.
+## Game
 
-## Gỡ cài đặt
+- Thêm game vào **Ứng dụng → loại trừ** hoặc tạm chuyển English trước khi chơi.
+- Hook có thể bị anti-cheat chặn; không nên dùng trong game có anti-cheat nghiêm ngặt.
+- Game fullscreen exclusive thường không có IME/preedit; WASD có thể bị hook nuốt nếu
+  engine đang bật tiếng Việt. Loại trừ game để pass toàn bộ phím.
+
+## Giới hạn
+
+- Không có preedit/TSF; chữ được chèn bằng Unicode/backspace.
+- App chạy Administrator có thể cần chạy ViFastKey bằng Administrator.
+- Không có ký Authenticode; SmartScreen/antivirus có thể cảnh báo.
+- Hook có thể bị một số app bảo vệ/anti-cheat chặn.
+- `0x0409` có thể là US Dvorak/International; chỉ hỗ trợ tốt US QWERTY.
+
+## Gỡ
 
 ```powershell
 .\uninstall.ps1
 ```
 
-Gỡ TSF, hook, shortcut và `windows.json`; **giữ** `config.json` và macro của bạn.
-Muốn xoá sạch, xoá thêm `%APPDATA%\ViFastKey`.
+Giữ `config.json`, macro và `settings-ui.json`. Xoá sạch thêm
+`%APPDATA%\ViFastKey`.
 
-## Xử lý sự cố
+## Cấu hình
 
-| Hiện tượng | Cách xử lý |
-|---|---|
-| Không thấy ViFastKey trong danh sách bàn phím | Đăng xuất/đăng nhập; cài lại đúng x64/x86; kiểm tra `%LOCALAPPDATA%\ViFastKey\tsf\x64\vifastkey_tsf.dll` |
-| Có ViFastKey nhưng gõ không ra tiếng Việt | Kiểm tra đang chọn ViFastKey; thử Notepad; xem `windows.json` là `tsf` |
-| Game không nhận preedit | Chuyển Replace (Hook), hoặc tắt bộ gõ nếu game có anti-cheat mạnh |
-| Replace không gõ được | Mở Nâng cao → **Kiểm tra hook**; kiểm tra `vifastkey-replace.exe` còn trong `%LOCALAPPDATA%\ViFastKey` |
-| SmartScreen cảnh báo | Bản phát hành chưa ký Authenticode; chọn “More info → Run anyway” nếu tin nguồn |
-| App chạy Administrator không nhận TSF | TSF per-user không nạp vào app elevated; chạy app cùng mức quyền hoặc dùng bản HKLM |
-
-## Giới hạn
-
-- Chưa ký Authenticode.
-- Macro hiện chạy ở chế độ Replace; TSF preedit chưa mở macro.
-- Charset legacy chưa áp ở đầu ra TSF (luôn Unicode).
-- Hook có thể bị anti-cheat chặn; không nên dùng trong game có anti-cheat nghiêm ngặt.
-- Chưa có auto-update.
-
-## Giấy phép
-
-Mã nguồn MIT. Xem `LICENSE` và `THIRD_PARTY_NOTICES.md`.
+```text
+%APPDATA%\ViFastKey\config.json       engine/macro/app profile
+%APPDATA%\ViFastKey\settings-ui.json  theme/tab/tray/close-to-tray
+%APPDATA%\ViFastKey\hook-state.json   trạng thái hook (không chứa nội dung gõ)
+```

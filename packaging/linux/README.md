@@ -9,7 +9,7 @@ Gói này chỉ chứa **UI cấu hình**. Bộ gõ thực tế chạy qua **IBu
 
 - Telex, Simple Telex, VNI, VIQR; kiểu đặt dấu cũ/mới.
 - Bật/tắt chính tả, `w → ư`, `[ ] → ơ ư`, Quick Telex, âm cuối `k`.
-- Sửa từ đã gõ, tự khôi phục tiếng Anh, viết hoa, bảo vệ chữ HOA.
+- Sửa từ đã gõ, gõ tiếng Anh bằng escape Telex, viết hoa, bảo vệ chữ HOA.
 - Macro nhiều từ, macro số, macro undo, macro khi tắt tiếng Việt.
 - App profile: output, delay/ACK, charset, kiểu gõ/chính tả theo app.
 - Import/export JSON có preview diff; reset mặc định từng nhóm; tìm app.

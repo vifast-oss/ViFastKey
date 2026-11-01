@@ -298,7 +298,8 @@ def _clone(st: WordState) -> WordState:
 
 def _result(st: WordState, raw_s: str, opt: TransformOptions, final: bool) -> TransformResult:
     text = _render(st, opt.tone_style)
-    status = _status(st.letters, st.tone, opt)
+    status = (vs.check_final(_toneless_lower(st.letters), st.tone, opt.allow_coda_k)
+              if final else _status(st.letters, st.tone, opt))
     if opt.spell_check and st.transformed:
         start, end = _cluster_span(st.letters)
         # Hoàn tác đúng chỗ (aaa, ass, DDD, aaan) thì tôn trọng ý người gõ; còn hoàn tác

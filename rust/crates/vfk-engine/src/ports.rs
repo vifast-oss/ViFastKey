@@ -122,7 +122,6 @@ pub struct Config {
     /// Âm cuối k cho tên riêng (Đắk Lắk); chỉ đi với thanh sắc/nặng.
     pub allow_coda_k: bool,
     // --- sau khi kết thúc từ
-    pub auto_restore_english: bool,
     pub macro_enabled: bool,
     /// Chữ số thuộc từ để macro có số hoạt động (mp3, k8s); cần `macro_enabled`.
     pub macro_digits: bool,
@@ -160,7 +159,6 @@ impl Default for Config {
             bracket_keys: false,
             quick_telex: false,
             allow_coda_k: false,
-            auto_restore_english: true,
             macro_enabled: true,
             macro_digits: false,
             macro_undo: true,
@@ -215,7 +213,7 @@ pub trait SurroundingText {
 pub trait Dictionary {
     /// Phím thô, chữ thường: "data".
     fn is_english(&self, word: &str) -> bool;
-    /// Chữ tiếng Việt, thường, NFC: "dât".
+    /// Chữ tiếng Việt, thường, NFC: "nhưng".
     fn is_vietnamese(&self, word: &str) -> bool;
 }
 

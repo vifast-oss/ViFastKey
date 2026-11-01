@@ -51,6 +51,9 @@ Cấu hình mẫu đầy đủ: `python/config.example.json`.
 | INVALID | Không thể thành tiếng Việt | `kan`, `ce`, `quu`, `bàt` (âm cuối tắc + huyền) |
 
 PARTIAL có tính đến việc thêm dấu sau, nhờ vậy gõ dấu tự do không bị chặn nhầm.
+Khi **kết thúc từ**, âm tiết có âm cuối tắc (`c`, `ch`, `p`, `t`, và `k` khi bật
+`allow_coda_k`) phải mang thanh sắc/nặng; `dât`/`bôt` không phải từ hoàn chỉnh nên
+`data`/`boot` được trả raw.
 
 ### 2.3 Đặt thanh
 Đặt theo quy tắc đặt dấu thanh của chữ Quốc ngữ, kiểm tra bằng bảng `TONE_TABLE`:
@@ -76,9 +79,11 @@ PARTIAL có tính đến việc thêm dấu sau, nhờ vậy gõ dấu tự do k
 | Tuỳ chọn Quick Telex | `ccaof` ra `chào` |
 | Tuỳ chọn phím `[` `]` | `m]a` ra `mưa` |
 
-### 2.5 Khôi phục từ tiếng Anh (2 tầng)
-1. **Core**: đang gõ mà từ trở thành INVALID thì hiện phím thô (`text`, `windows`). Khi kết thúc từ, PARTIAL có âm đầu cũng bị khôi phục (`law`, không thành `lă`), trừ nguyên âm có dấu đứng một mình (`aw` → `ă`) và họ `ươ/uơ` (`duow` → `dươ`). Từ đã chủ động hoàn tác ở cuối từ thì core giữ ý người gõ (`ass` ra `as`). Hai phím thanh **liền kề** là escape chuẩn Telex: `coffee` ra `cofee`, `cofffee` ra `coffee`; không dùng từ điển cho trường hợp này.
-2. **Engine** (port `Dictionary`): khôi phục khi phím thô là từ tiếng Anh **và** kết quả không phải từ Việt thông dụng, miễn là từ không có escape đôi phím thanh. Ví dụ `data` (ra `dât`), `server`, `text` được khôi phục; còn `this` ra `thí`, `did` ra `đi` vẫn giữ tiếng Việt.
+### 2.5 Gõ tiếng Anh
+- **Core** tự trả raw khi từ trở thành INVALID (`text`, `windows`, `data`, `boot`). Khi kết thúc từ, PARTIAL có âm đầu cũng bị khôi phục (`law`, không thành `lă`), trừ nguyên âm có dấu đứng một mình (`aw` → `ă`) và họ `ươ/uơ` (`duow` → `dươ`). Từ đã chủ động hoàn tác ở cuối từ thì core giữ ý người gõ (`ass` ra `as`).
+- **Không có dictionary auto-restore**: từ vừa là tiếng Anh vừa là tiếng Việt luôn ưu tiên tiếng Việt (`mix` → `mĩ`, `too` → `tô`, `this` → `thí`). Cơ chế từ điển cũ đã bỏ vì có thể làm mất từ Việt hợp lệ.
+- **Gõ tiếng Anh** bằng escape Telex: `mixx` → `mix`, `thiss` → `this`, `lasst` → `last`, `mooon` → `moon`; hoặc chuyển chế độ Anh cho cả câu.
+- Hai phím thanh **liền kề** là escape chuẩn Telex: `coffee` ra `cofee`, `cofffee` ra `coffee`.
 
 ### 2.6 Engine
 - **Backspace xoá 1 ký tự hiển thị** và giữ dấu của phần còn lại (`tiếng` thành `tiến`), giống UniKey/OpenKey. Nếu từ còn lại không tái tạo được từ phím (vd `tex` sau khi khôi phục `text`) thì chuyển sang chế độ thô.

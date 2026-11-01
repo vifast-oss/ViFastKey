@@ -1,55 +1,42 @@
-$ErrorActionPreference = "Stop"
+param()
 
-function Get-PeMachine([string]$Path) {
-    $bytes = [System.IO.File]::ReadAllBytes($Path)
-    if ($bytes.Length -lt 0x40) { return 0 }
-    $pe = [BitConverter]::ToInt32($bytes, 0x3C)
-    if ($pe -lt 0 -or $pe + 6 -ge $bytes.Length) { return 0 }
-    return [BitConverter]::ToUInt16($bytes, $pe + 4)
-}
+$ErrorActionPreference = "Continue"
+$dest = Join-Path $env:LOCALAPPDATA "ViFastKey"
+$runKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run"
+$startMenu = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs"
 
-foreach ($arch in @("x64", "x86")) {
-    $dest = Join-Path $env:LOCALAPPDATA "ViFastKey\tsf\$arch"
-    $dll = Join-Path $dest "vifastkey_tsf.dll"
-    if (-not (Test-Path $dll)) { continue }
-
-    $is32 = (Get-PeMachine $dll) -eq 0x014C
-    if ($is32 -and [Environment]::Is64BitOperatingSystem) {
-        $regsvr = Join-Path $env:WINDIR "SysWOW64\regsvr32.exe"
-    } else {
-        $regsvr = Join-Path $env:WINDIR "System32\regsvr32.exe"
-    }
-    $process = Start-Process -FilePath $regsvr -ArgumentList @("/s", "/u", "`"$dll`"") -Wait -PassThru
-    if ($process.ExitCode -ne 0) {
-        Write-Warning "regsvr32 /u ($arch) trả về exit $($process.ExitCode)"
-    }
-    Remove-Item $dest -Recurse -Force
-}
-
-Get-Process vifastkey-replace,vfk-windows -ErrorAction SilentlyContinue | Stop-Process -Force
-$runKey = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
+# Dừng Settings + hook (cùng một image, taskkill theo tên là đủ khi uninstall).
+Get-Process vifastkey-settings, vifastkey-replace, vfk-windows -ErrorAction SilentlyContinue |
+    Stop-Process -Force
+Start-Sleep -Milliseconds 250
+Remove-ItemProperty -Path $runKey -Name "ViFastKey" -ErrorAction SilentlyContinue
 Remove-ItemProperty -Path $runKey -Name "ViFastKeyHook" -ErrorAction SilentlyContinue
 
-$settingsExe = Join-Path $env:LOCALAPPDATA "ViFastKey\vifastkey-settings.exe"
-if (Test-Path $settingsExe) {
-    Remove-Item $settingsExe -Force
-}
-$hookExe = Join-Path $env:LOCALAPPDATA "ViFastKey\vifastkey-replace.exe"
-if (Test-Path $hookExe) {
-    Remove-Item $hookExe -Force
-}
-$legacyHook = Join-Path $env:LOCALAPPDATA "ViFastKey\vfk-windows.exe"
-if (Test-Path $legacyHook) {
-    Remove-Item $legacyHook -Force
-}
-$windowsJson = Join-Path $env:APPDATA "ViFastKey\windows.json"
-if (Test-Path $windowsJson) {
-    Remove-Item $windowsJson -Force
-}
-
-$shortcut = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\ViFastKey Settings.lnk"
-if (Test-Path $shortcut) {
-    Remove-Item $shortcut -Force
+# Gỡ TSF legacy.
+foreach ($arch in @("x64", "x86")) {
+    $tsfDir = Join-Path $dest "tsf\$arch"
+    $dll = Join-Path $tsfDir "vifastkey_tsf.dll"
+    if (Test-Path $dll) {
+        $regsvr = if ($arch -eq "x86" -and [Environment]::Is64BitOperatingSystem) {
+            Join-Path $env:WINDIR "SysWOW64\regsvr32.exe"
+        } else {
+            Join-Path $env:WINDIR "System32\regsvr32.exe"
+        }
+        $p = Start-Process -FilePath $regsvr -ArgumentList @("/s", "/u", "`"$dll`"") -Wait -PassThru
+        if ($p.ExitCode -ne 0) { Write-Warning "regsvr32 /u $arch trả về $($p.ExitCode)" }
+    }
+    Remove-Item $tsfDir -Recurse -Force -ErrorAction SilentlyContinue
 }
 
-Write-Host "Đã gỡ ViFastKey TSF và UI cấu hình (giữ config người dùng)."
+Remove-Item (Join-Path $dest "vifastkey-settings.exe") -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $dest "vifastkey-replace.exe") -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $dest "vfk-windows.exe") -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $dest "vifastkey_tsf.dll") -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $env:APPDATA "ViFastKey\hook-state.json") -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $env:APPDATA "ViFastKey\windows.json") -Force -ErrorAction SilentlyContinue
+
+$link = Join-Path $startMenu "ViFastKey Settings.lnk"
+if (Test-Path $link) { Remove-Item $link -Force }
+
+Write-Host "Đã gỡ ViFastKey hook/TSF legacy. Giữ config, macro và settings-ui.json."
+Write-Host "Nếu muốn xoá sạch: Remove-Item -Recurse $env:APPDATA\ViFastKey"

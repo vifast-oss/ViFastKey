@@ -3,16 +3,27 @@
 //! Port nguyên văn bản Python v4 (`vfk_core/`). Bản Python là oracle:
 //! mọi khác biệt với `conformance/core.jsonl` là lỗi của bản Rust.
 
+#![cfg_attr(not(feature = "std"), no_std)]
+
+extern crate alloc;
+
+#[cfg(feature = "charset")]
 pub mod charset;
+#[cfg(feature = "emoji")]
 pub mod emoji;
 pub mod rules;
 pub mod transform;
 
+use alloc::string::String;
+use alloc::vec::Vec;
+
+#[cfg(feature = "charset")]
 pub use charset::{
     change_case, charset_names, convert as convert_charset, decode as decode_charset, decode_bytes,
     detect as detect_charset, encode as encode_charset, encode_bytes, normalize as normalize_charset,
     remove_diacritics, CHARSETS,
 };
+#[cfg(feature = "emoji")]
 pub use emoji::{all_emoji, search as search_emoji};
 pub use rules::{quick_telex, InputMethodSpec, MarkRule, SIMPLE_TELEX, TELEX, VIQR, VNI};
 pub use transform::{

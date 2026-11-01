@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from vfk_core import INPUT_METHODS, MAX_RAW, TELEX, Composer, TransformOptions, diff, rebuild
+from vi_syllable import Status
 
 from .ports import Config, Ports, normalize_app_id, resolve_profile
 
@@ -312,6 +313,18 @@ class ImeSession:
             return PassThrough()                    # chữ thường: để OS tự gõ, đỡ nháy
         return Replace(e.delete_before, e.insert)
 
+    def _show_after_backspace(self, was_adopted: bool) -> Action:
+        """Sau Backspace trên từ đã commit: vẫn phải dùng Replace, không preedit.
+
+        Xoá adopted trước khi tính lại để `_compute` không ghép lại từ cũ, rồi
+        đặt lại theo chữ mới. Nếu không, Preedit sẽ vẽ thêm ``ViFastKe`` vào
+        committed text và thành ``ViFastKeyViFastKe``.
+        """
+        text = self._compute()
+        if was_adopted:
+            self.adopted = (text, len(self.raw))
+        return self._show(text)
+
     def _letter(self, key: str) -> Action:
         ch = key
         self.last = None
@@ -376,6 +389,7 @@ class ImeSession:
         # Bỏ phím lặp ở cuối từ literal và thử biến đổi phần còn lại.
         # Làm được nhiều lần liên tiếp: nhuwnggg -> BS -> nhuwngg -> BS -> nhưng;
         # textt -> BS -> text (vẫn literal), không biến thành tẽ.
+        was_adopted = self.adopted is not None
         if (self.literal and len(self.raw) >= 2
                 and self.raw[-1].lower() == self.raw[-2].lower()):
             candidate = list(self.raw[:-1])
@@ -387,21 +401,37 @@ class ImeSession:
                 self.raw = candidate
                 self.literal = False
                 self.escaped = False
-                return self._show(self._compute())
+                return self._show_after_backspace(was_adopted)
             self.raw = candidate
             self.literal = True
             self.escaped = False
-            return self._show(''.join(candidate))
+            return self._show_after_backspace(was_adopted)
         # Từ đã escape đôi phím thanh phải quay lại được dấu khi xoá và gõ tiếp
-        # (phar + rr, xoá 2 r, gõ r -> phả). Từ literal thường vẫn giữ raw.
-        raw = rebuild(target, self.im, self.opt) if (self.escaped or not self.literal) else None
+        # (phar + rr, xoá 2 r, gõ r -> phả).
+        if self.escaped or not self.literal:
+            raw = rebuild(target, self.im, self.opt)
+        elif ("".join(self.raw) == self.word
+              and not self.ports.dictionary.is_english(self.word.lower())):
+            # Từ literal thường giữ raw, nhưng nếu ký tự vừa xoá là thứ làm từ sai
+            # chính tả thì phần còn lại có thể đã là tiếng Việt: nhưng + l ->
+            # nhuwngl -> Backspace -> nhưng (không phải nhuwng).
+            candidate = list(self.raw[:-1])
+            res = Composer(self.im, self.opt, candidate).result(False)
+            # Không quay lại nếu phần còn lại là âm tiết không hợp lệ, hoặc nếu
+            # từ literal là một từ tiếng Anh đã biết: 'text' + Backspace phải
+            # giữ 'tex', không được biến thành 'tẽ'. "thoảng" vẫn được khôi
+            # phục dù không có trong từ điển common, vì không phải từ tiếng Anh.
+            raw = candidate if (not res.restored and res.text != target
+                                and res.status != Status.INVALID) else None
+        else:
+            raw = None
         self.adopted = None
         if raw is not None:
             self.raw, self.literal = raw, False
             self.escaped = False
         else:
             self.raw, self.literal = list(target), True
-        return self._show(self._compute())
+        return self._show_after_backspace(was_adopted)
 
     def _escape(self) -> Action:
         """Esc: huỷ biến đổi, trả về đúng phím đã gõ."""
@@ -435,11 +465,6 @@ class ImeSession:
             final = macro
             if sep is not None and self.config.macro_undo:
                 self.last_macro = (self._out(macro) + sep, raw + sep)
-        elif (self.config.auto_restore_english and not self.literal and not self.escaped
-              and final != raw
-              and self.ports.dictionary.is_english(raw.lower())
-              and not self.ports.dictionary.is_vietnamese(final.lower())):
-            final = raw                     # 'data' -> 'dât' -> 'data'; nhưng 'thí' (this) giữ nguyên
         return self._finish(final, sep)
 
     def _finish(self, final: str, sep: str | None, pass_key: bool = True) -> Action:

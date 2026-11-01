@@ -36,6 +36,9 @@ Mở **IBus Preferences → Input Method → Add → Vietnamese → ViFastKey**,
 - Field policy: password/URL/email/number pass-through nếu IBus cung cấp input purpose.
 - `Alt+,` toggle Việt/Anh trong engine; không dùng `Ctrl+Space` (IBus dành cho
   chuyển input method).
+- Installer đặt `GTK_IM_MODULE`/`QT_IM_MODULE`/`XMODIFIERS` sang IBus trong
+  `~/.config/environment.d/`. Nếu terminal/editor/Firefox vẫn dùng fcitx sau khi
+  cài, đăng xuất/đăng nhập một lần để GNOME Shell nhận environment mới.
 
 ## Kiểm thử
 

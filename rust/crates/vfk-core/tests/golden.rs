@@ -79,9 +79,11 @@ fn coda_k_rebuild() {
 
 #[test]
 fn english_restore_at_word_end() {
-    for w in ["text", "case", "windows", "class", "law", "debug", "json"] {
+    // data/boot/meet: âm cuối tắc không có sắc/nặng nên không phải từ Việt hoàn chỉnh.
+    for w in ["text", "case", "windows", "class", "law", "debug", "json", "data", "boot", "meet"] {
         assert_eq!(transform_str(w, &TELEX, &TransformOptions::default(), true).text, w);
     }
+    assert_eq!(transform_str("last", &TELEX, &TransformOptions::default(), true).text, "lát");
 }
 
 /// Bộ sinh số ngẫu nhiên xác định (không cần crate rand).

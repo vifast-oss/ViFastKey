@@ -7,7 +7,7 @@
 
 use unicode_normalization::char::canonical_combining_class;
 use unicode_normalization::UnicodeNormalization;
-use vfk_core::{diff, rebuild, Composer, InputMethodSpec, TransformOptions, MAX_RAW, TELEX};
+use vfk_core::{diff, rebuild, Composer, InputMethodSpec, Status, TransformOptions, MAX_RAW, TELEX};
 use vi_syllable::upper;
 
 use crate::ports::{normalize_app_id, resolve_profile, AppProfile, Config, OutputMode, Ports, UnicodeForm};
@@ -601,6 +601,19 @@ impl ImeSession {
         Action::Replace { delete_before: e.delete_before, insert: e.insert, pass_key: false }
     }
 
+    /// Sau Backspace trên từ đã commit: vẫn phải dùng Replace, không preedit.
+    ///
+    /// Xoá adopted trước khi tính lại để `compute` không ghép lại từ cũ, rồi
+    /// đặt lại theo chữ mới. Nếu không, Preedit sẽ vẽ thêm ``ViFastKe`` vào
+    /// committed text và thành ``ViFastKeyViFastKe``.
+    fn show_after_backspace(&mut self, was_adopted: bool) -> Action {
+        let text = self.compute(false);
+        if was_adopted {
+            self.adopted = Some((text.clone(), self.raw.len()));
+        }
+        self.show(text, None)
+    }
+
     fn letter(&mut self, key: char) -> Action {
         let mut ch = key;
         self.last = None;
@@ -703,6 +716,7 @@ impl ImeSession {
         // Bỏ phím lặp ở cuối từ literal và thử biến đổi phần còn lại.
         // Làm được nhiều lần liên tiếp: nhuwnggg -> BS -> nhuwngg -> BS -> nhưng;
         // textt -> BS -> text (vẫn literal), không biến thành tẽ.
+        let was_adopted = self.adopted.is_some();
         if self.literal
             && self.raw.len() >= 2
             && self.raw[self.raw.len() - 1].eq_ignore_ascii_case(&self.raw[self.raw.len() - 2])
@@ -716,18 +730,38 @@ impl ImeSession {
                 self.raw = candidate;
                 self.literal = false;
                 self.escaped = false;
-                let text = self.compute(false);
-                return self.show(text, None);
+                return self.show_after_backspace(was_adopted);
             }
             self.raw = candidate;
             self.literal = true;
             self.escaped = false;
-            let text = self.compute(false);
-            return self.show(text, None);
+            return self.show_after_backspace(was_adopted);
         }
         // Từ đã escape đôi phím thanh phải quay lại được dấu khi xoá và gõ tiếp
-        // (pharr -> phar -> phả). Từ literal thường vẫn giữ raw.
-        let raw = if self.escaped || !self.literal { rebuild(&target, self.im(), &self.opt()) } else { None };
+        // (pharr -> phar -> phả).
+        let raw = if self.escaped || !self.literal {
+            rebuild(&target, self.im(), &self.opt())
+        } else if self.raw.iter().collect::<String>() == self.word
+            && !self.ports.dictionary.is_english(&self.word.to_lowercase())
+        {
+            // Từ literal thường giữ raw, nhưng nếu ký tự vừa xoá là thứ làm từ sai
+            // chính tả thì phần còn lại có thể đã là tiếng Việt: nhưng + l ->
+            // nhuwngl -> Backspace -> nhưng (không phải nhuwng).
+            let candidate: Vec<char> = self.raw[..self.raw.len() - 1].to_vec();
+            let probe = Composer::with_raw(self.im(), self.opt(), &candidate);
+            let res = probe.result(false);
+            // Không quay lại nếu phần còn lại là âm tiết không hợp lệ, hoặc nếu
+            // từ literal là một từ tiếng Anh đã biết: 'text' + Backspace phải
+            // giữ 'tex', không được biến thành 'tẽ'. "thoảng" vẫn được khôi
+            // phục dù không có trong từ điển common, vì không phải từ tiếng Anh.
+            if !res.restored && res.text != target && res.status != Status::Invalid {
+                Some(candidate)
+            } else {
+                None
+            }
+        } else {
+            None
+        };
         self.adopted = None;
         match raw {
             Some(r) => {
@@ -740,8 +774,7 @@ impl ImeSession {
                 self.literal = true;
             }
         }
-        let text = self.compute(false);
-        self.show(text, None)
+        self.show_after_backspace(was_adopted)
     }
 
     /// Esc: huỷ biến đổi, trả về đúng phím đã gõ.
@@ -796,14 +829,6 @@ impl ImeSession {
                 }
             }
             fin = m;
-        } else if self.config.auto_restore_english
-            && !self.literal
-            && !self.escaped
-            && fin != raw_s
-            && self.ports.dictionary.is_english(&raw_s.to_lowercase())
-            && !self.ports.dictionary.is_vietnamese(&fin.to_lowercase())
-        {
-            fin = raw_s; // 'data' -> 'dât' -> 'data'; nhưng 'thí' (this) giữ nguyên
         }
         self.finish(fin, sep, true)
     }

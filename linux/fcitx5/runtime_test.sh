@@ -72,7 +72,7 @@ if [ -z "$WID" ]; then
     cat "$TMP/zenity.log" >&2 || true
     exit 1
 fi
-xdotool windowactivate --sync "$WID"
+xdotool windowactivate --sync "$WID" 2>/dev/null || xdotool windowfocus "$WID"
 sleep 1
 fcitx5-remote -o >/dev/null 2>&1 || true
 fcitx5-remote -s vifastkey >/dev/null 2>&1 || true

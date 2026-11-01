@@ -135,11 +135,20 @@ fn macro_and_case() {
 }
 
 #[test]
-fn dictionary_restore() {
+fn default_prefers_valid_vietnamese() {
     for m in MODES {
         let mut h = make(m);
-        h.type_str("data her mix this did ");
-        assert_eq!(h.text(), "data her mix thí đi ");
+        h.type_str("mix max six tax too this ");
+        assert_eq!(h.text(), "mĩ mã sĩ tã tô thí ", "{m:?}");
+    }
+}
+
+#[test]
+fn english_words_use_telex_escape_by_default() {
+    for m in MODES {
+        let mut h = make(m);
+        h.type_str("mixx thiss seee dataa lasst ");
+        assert_eq!(h.text(), "mix this see data last ", "{m:?}");
     }
 }
 
@@ -235,9 +244,56 @@ fn backspace_after_duplicate_letters_restores_word() {
 }
 
 #[test]
-fn spell_restore_without_dictionary() {
+fn backspace_after_space_adopted_word_does_not_duplicate() {
     for m in MODES {
-        let mut h = make_with(m, Config { auto_restore_english: false, ..cfg() });
+        let mut h = make(m);
+        type_mixed(&mut h, &["ViFastKey", " ", BS, BS, "y", BS]);
+        assert_eq!(h.text(), "ViFastKe", "{m:?}");
+        h.type_str("y ");
+        assert_eq!(h.text(), "ViFastKey ", "{m:?}");
+    }
+}
+
+#[test]
+fn backspace_after_invalid_suffix_restores_word() {
+    for m in MODES {
+        let mut h = make(m);
+        h.type_str("nhuwnggg");
+        type_mixed(&mut h, &[BS, BS]);
+        assert_eq!(h.text(), "nhưng");
+        // Gõ thêm ký tự làm từ sai chính tả: hiện raw, nhưng xoá đi phải quay lại tiếng Việt.
+        h.type_str("l");
+        assert_eq!(h.text(), "nhuwngl");
+        type_mixed(&mut h, &[BS]);
+        assert_eq!(h.text(), "nhưng");
+
+        // Từ Việt đã đúng + ký tự thừa: xoá ký tự thừa phải quay lại từ Việt.
+        h.type_str(" too");
+        assert_eq!(h.text(), "nhưng tô");
+        h.type_str("l");
+        assert_eq!(h.text(), "nhưng tool");
+        type_mixed(&mut h, &[BS]);
+        assert_eq!(h.text(), "nhưng tô");
+    }
+}
+
+#[test]
+fn backspace_restores_valid_syllable_not_in_dictionary() {
+    for m in MODES {
+        let mut h = make(m);
+        h.type_str("thoangr");
+        assert_eq!(h.text(), "thoảng", "{m:?}");
+        h.type_str("e");
+        assert_eq!(h.text(), "thoangre", "{m:?}");
+        type_mixed(&mut h, &[BS]);
+        assert_eq!(h.text(), "thoảng", "{m:?}");
+    }
+}
+
+#[test]
+fn spell_restore_for_invalid_english() {
+    for m in MODES {
+        let mut h = make(m); // không có dictionary auto-restore
         h.type_str("text law windows boss ");
         assert_eq!(h.text(), "text law windows bos ");
     }

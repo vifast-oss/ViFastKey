@@ -77,7 +77,6 @@ class Config:
     quick_telex: bool = False               # cc=ch, gg=gi, ...
     allow_coda_k: bool = False              # âm cuối k cho tên riêng (Đắk Lắk); chỉ sắc/nặng
     # --- sau khi kết thúc từ
-    auto_restore_english: bool = True       # dùng port Dictionary
     macro_enabled: bool = True
     macro_digits: bool = False              # chữ số thuộc từ (cần macro_enabled) cho mp3, k8s
     macro_undo: bool = True                 # Backspace ngay sau macro: khôi phục phím gõ
@@ -113,7 +112,7 @@ class SurroundingText(Protocol):
 
 class Dictionary(Protocol):
     def is_english(self, word: str) -> bool: ...      # phím thô, chữ thường: 'data'
-    def is_vietnamese(self, word: str) -> bool: ...   # chữ tiếng Việt, thường, NFC: 'dât'
+    def is_vietnamese(self, word: str) -> bool: ...   # chữ tiếng Việt, thường, NFC: 'nhưng'
 
 
 @dataclass

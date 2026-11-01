@@ -25,14 +25,14 @@ license = "MIT"
 repository = "https://github.com/dvchd/ViFastKey"
 
 [workspace.dependencies]
-vi-syllable = { path = "crates/vi-syllable" }
+vi-syllable = { path = "crates/vi-syllable", default-features = false }
 vfk-core = { path = "crates/vfk-core" }
 vfk-engine = { path = "crates/vfk-engine" }
 vfk-config = { path = "crates/vfk-config" }
 vfk-adapter-core = { path = "crates/vfk-adapter-core" }
 vfk-suggest = { path = "crates/vfk-suggest" }
-arrayvec = "0.7.8"
-unicode-normalization = "0.1"
+arrayvec = { version = "0.7.8", default-features = false }
+unicode-normalization = { version = "0.1", default-features = false }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 

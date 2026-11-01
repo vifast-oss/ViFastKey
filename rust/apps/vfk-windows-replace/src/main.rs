@@ -18,7 +18,9 @@ fn main() {
 #[cfg(windows)]
 mod win {
     use std::cell::RefCell;
+    use std::ffi::c_void;
     use std::path::{Path, PathBuf};
+    use std::sync::atomic::{AtomicPtr, Ordering};
     use std::sync::OnceLock;
     use std::time::{Duration, Instant, SystemTime};
 
@@ -26,22 +28,24 @@ mod win {
     use vfk_adapter_core::{plan_action, AdapterAction, Plan, PlanContext, PlanKind};
     use vfk_engine::testing::WordListDictionary;
     use vfk_engine::*;
-    use windows_sys::Win32::Foundation::{CloseHandle, LPARAM, LRESULT, WPARAM};
+    use windows_sys::Win32::Foundation::{
+        CloseHandle, GetLastError, ERROR_ALREADY_EXISTS, LPARAM, LRESULT, WPARAM,
+    };
     use windows_sys::Win32::System::Memory::{
         MapViewOfFile, OpenFileMappingW, UnmapViewOfFile, FILE_MAP_READ,
     };
     use windows_sys::Win32::System::Threading::{
-        OpenProcess, QueryFullProcessImageNameW, PROCESS_QUERY_LIMITED_INFORMATION,
+        CreateMutexW, OpenProcess, QueryFullProcessImageNameW, PROCESS_QUERY_LIMITED_INFORMATION,
     };
     use windows_sys::Win32::UI::Input::KeyboardAndMouse::{
         GetAsyncKeyState, GetKeyboardLayout, GetKeyboardState, SendInput, ToUnicodeEx, INPUT, INPUT_0,
-        INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE, VK_BACK, VK_CONTROL, VK_LWIN,
-        VK_MENU, VK_SHIFT,
+        INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, KEYEVENTF_UNICODE, VK_BACK, VK_CAPITAL, VK_CONTROL,
+        VK_LWIN, VK_MENU, VK_SHIFT,
     };
     use windows_sys::Win32::UI::WindowsAndMessaging::{
         CallNextHookEx, DispatchMessageW, GetForegroundWindow, GetMessageW, GetWindowThreadProcessId,
-        SetWindowsHookExW, TranslateMessage, UnhookWindowsHookEx, HC_ACTION, KBDLLHOOKSTRUCT, LLKHF_INJECTED,
-        MSG, WH_KEYBOARD_LL, WM_KEYDOWN, WM_SYSKEYDOWN,
+        KillTimer, SetTimer, SetWindowsHookExW, TranslateMessage, UnhookWindowsHookEx, HC_ACTION,
+        KBDLLHOOKSTRUCT, LLKHF_INJECTED, MSG, WH_KEYBOARD_LL, WM_KEYDOWN, WM_SYSKEYDOWN,
     };
 
     thread_local! {
@@ -69,6 +73,7 @@ mod win {
     }
 
     const TSF_STATE_MAGIC: u32 = 0x5646_4B54; // 'VFKT'
+    static HOOK: AtomicPtr<c_void> = AtomicPtr::new(std::ptr::null_mut());
 
     #[derive(Clone)]
     struct MemStore(std::rc::Rc<RefCell<Config>>);
@@ -192,6 +197,75 @@ mod win {
 
     fn windows_backend() -> String {
         WINDOWS_CONFIG.with(|c| c.borrow().backend.clone().unwrap_or_else(|| "tsf".to_string()))
+    }
+
+    fn apply_letter_case(ch: char, shift: bool, caps: bool) -> char {
+        if !ch.is_ascii_alphabetic() {
+            return ch;
+        }
+        // GetKeyboardState trong WH_KEYBOARD_LL có thể chưa cập nhật Shift,
+        // nên ToUnicodeEx trả chữ thường dù người dùng đang giữ Shift.
+        if shift ^ caps {
+            ch.to_ascii_uppercase()
+        } else {
+            ch.to_ascii_lowercase()
+        }
+    }
+
+    fn is_terminal_app(app: &str) -> bool {
+        matches!(app, "windowsterminal" | "openconsole" | "conhost" | "cmd" | "powershell" | "pwsh" | "wt")
+    }
+
+    /// TSF không được nạp trong Windows Terminal (MSIX/UWP), nên terminal cần
+    /// hook Replace. Khi backend=tsf, chỉ cài hook lúc foreground là terminal;
+    /// các app khác vẫn để TSF xử lý và không nhìn thấy keyboard hook.
+    fn should_install_hook() -> bool {
+        if windows_backend() == "hook" {
+            return true;
+        }
+        if windows_backend() != "tsf" {
+            return false;
+        }
+        foreground_info().map(|(_, _, app)| is_terminal_app(&app)).unwrap_or(false)
+    }
+
+    unsafe fn install_hook() {
+        if !HOOK.load(Ordering::SeqCst).is_null() {
+            return;
+        }
+        let hook = SetWindowsHookExW(WH_KEYBOARD_LL, Some(hook_proc), std::ptr::null_mut(), 0);
+        if hook.is_null() {
+            eprintln!("Không cài được keyboard hook (error)");
+        } else {
+            HOOK.store(hook, Ordering::SeqCst);
+        }
+    }
+
+    unsafe fn remove_hook() {
+        let hook = HOOK.swap(std::ptr::null_mut(), Ordering::SeqCst);
+        if !hook.is_null() {
+            UnhookWindowsHookEx(hook);
+            // Không giữ state dở khi hook ngừng theo dõi terminal.
+            SESSION.with(|s| {
+                if let Some(session) = s.borrow_mut().as_mut() {
+                    session.reset();
+                }
+            });
+            LAST_APP.with(|last| *last.borrow_mut() = None);
+        }
+    }
+
+    unsafe fn update_hook() {
+        if should_install_hook() {
+            install_hook();
+        } else {
+            remove_hook();
+        }
+    }
+
+    unsafe extern "system" fn timer_proc(_hwnd: *mut c_void, _msg: u32, _id: usize, _time: u32) {
+        reload_runtime_config_if_changed();
+        update_hook();
     }
 
     fn tsf_state_name() -> &'static [u16] {
@@ -387,14 +461,21 @@ mod win {
         let alt = GetAsyncKeyState(VK_MENU as i32) < 0;
         let meta = GetAsyncKeyState(VK_LWIN as i32) < 0;
         let shift = GetAsyncKeyState(VK_SHIFT as i32) < 0;
+        let caps = GetAsyncKeyState(VK_CAPITAL as i32) & 1 != 0;
 
         let Some((foreground_pid, foreground_window, app)) = foreground_info() else {
             return CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam);
         };
         let backend = windows_backend();
-        // backend=tsf: TSF luôn xử lý. hook/auto: pass-through nếu TSF còn giữ
-        // context hiện tại (tránh double khi vừa đổi chế độ, TSF đổi focus mới nhả).
-        let tsf_owns = backend == "tsf" || tsf_active_for(foreground_pid, foreground_window);
+        let terminal = is_terminal_app(&app);
+        // backend=tsf: app thường để TSF xử lý. Windows Terminal không nạp
+        // third-party TSF, nên terminal dùng hook Replace khi TSF không giữ
+        // context. Nếu TSF thật sự đang sở hữu context (conhost), pass-through.
+        let tsf_owns = if backend == "tsf" && terminal {
+            tsf_active_for(foreground_pid, foreground_window)
+        } else {
+            backend == "tsf" || tsf_active_for(foreground_pid, foreground_window)
+        };
 
         if ctrl || alt || meta {
             if alt && !ctrl && !shift && !meta && kb.vkCode == 0xBC {
@@ -430,7 +511,7 @@ mod win {
             let n = ToUnicodeEx(kb.vkCode, kb.scanCode, state.as_ptr(), buf.as_mut_ptr(), 8, 0, layout);
             if n == 1 {
                 match char::from_u32(buf[0] as u32) {
-                    Some(c) => c.to_string(),
+                    Some(c) => apply_letter_case(c, shift, caps).to_string(),
                     None => return CallNextHookEx(std::ptr::null_mut(), code, wparam, lparam),
                 }
             } else {
@@ -481,6 +562,14 @@ mod win {
     }
 
     pub fn run() {
+        // Một instance duy nhất: Run key + installer/settings có thể cùng gọi.
+        static MUTEX_NAME: OnceLock<Vec<u16>> = OnceLock::new();
+        let mutex_name = MUTEX_NAME.get_or_init(|| "Local\\ViFastKeyReplace\0".encode_utf16().collect());
+        let _mutex = unsafe { CreateMutexW(std::ptr::null_mut(), 1, mutex_name.as_ptr()) };
+        if _mutex.is_null() || unsafe { GetLastError() } == ERROR_ALREADY_EXISTS {
+            return;
+        }
+
         let config = load_config();
         WINDOWS_CONFIG.with(|c| *c.borrow_mut() = load_windows_config());
         let store = MemStore(std::rc::Rc::new(RefCell::new(config)));
@@ -495,17 +584,35 @@ mod win {
         };
         SESSION.with(|s| *s.borrow_mut() = Some(ImeSession::new(ports, OutputMode::Replace)));
         unsafe {
-            let hook = SetWindowsHookExW(WH_KEYBOARD_LL, Some(hook_proc), std::ptr::null_mut(), 0);
-            if hook.is_null() {
-                eprintln!("Không cài được keyboard hook (error)");
-                return;
+            update_hook();
+            let timer = SetTimer(std::ptr::null_mut(), 0, 250, Some(timer_proc));
+            if timer == 0 {
+                // Không có timer thì fallback hook toàn cục; vẫn hơn mất chức năng.
+                install_hook();
             }
             let mut msg: MSG = std::mem::zeroed();
             while GetMessageW(&mut msg, std::ptr::null_mut(), 0, 0) > 0 {
                 TranslateMessage(&msg);
                 DispatchMessageW(&msg);
             }
-            UnhookWindowsHookEx(hook);
+            if timer != 0 {
+                KillTimer(std::ptr::null_mut(), 0);
+            }
+            remove_hook();
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::apply_letter_case;
+
+        #[test]
+        fn letter_case_honours_shift_and_caps_lock() {
+            assert_eq!(apply_letter_case('o', true, false), 'O');
+            assert_eq!(apply_letter_case('s', false, false), 's');
+            assert_eq!(apply_letter_case('d', false, true), 'D');
+            assert_eq!(apply_letter_case('d', true, true), 'd');
+            assert_eq!(apply_letter_case('1', true, false), '1');
         }
     }
 }

@@ -11,10 +11,38 @@ use std::sync::{Mutex, OnceLock};
 use egui::Context;
 
 const TRAY_ICON_PNG: &[u8] = include_bytes!("../../../../resources/brand/favicon-32.png");
+const TRAY_ICON_E_PNG: &[u8] = include_bytes!("../../../../resources/brand/vifastkey-e-32.png");
+const TRAY_ICON_DIM_PNG: &[u8] = include_bytes!("../../../../resources/brand/vifastkey-dim-32.png");
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TrayState {
+    Vietnamese,
+    English,
+    External,
+}
+
+impl TrayState {
+    fn asset(self) -> &'static [u8] {
+        match self {
+            TrayState::Vietnamese => TRAY_ICON_PNG,
+            TrayState::English => TRAY_ICON_E_PNG,
+            TrayState::External => TRAY_ICON_DIM_PNG,
+        }
+    }
+
+    fn tooltip(self) -> &'static str {
+        match self {
+            TrayState::Vietnamese => "ViFastKey — Tiếng Việt",
+            TrayState::English => "ViFastKey — English",
+            TrayState::External => "ViFastKey — Đang nhường cho bộ gõ Windows",
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TrayAction {
     Show,
+    Toggle,
     Reload,
     Quit,
 }
@@ -35,9 +63,10 @@ fn sender() -> Sender<TrayAction> {
 
 pub struct Tray {
     #[cfg(target_os = "linux")]
-    _handle: Option<ksni::blocking::Handle<imp::VfkTray>>,
+    handle: Option<ksni::blocking::Handle<imp::VfkTray>>,
     #[cfg(not(target_os = "linux"))]
-    _icon: Option<tray_icon::TrayIcon>,
+    icon: Option<tray_icon::TrayIcon>,
+    state: TrayState,
     available: bool,
     error: Option<String>,
 }
@@ -52,9 +81,10 @@ impl Tray {
         };
         Tray {
             #[cfg(target_os = "linux")]
-            _handle: handle,
+            handle,
             #[cfg(not(target_os = "linux"))]
-            _icon: handle,
+            icon: handle,
+            state: TrayState::Vietnamese,
             available: error.is_none(),
             error,
         }
@@ -66,6 +96,39 @@ impl Tray {
 
     pub fn error(&self) -> Option<&str> {
         self.error.as_deref()
+    }
+
+    pub fn set_state(&mut self, state: TrayState) {
+        if self.state == state {
+            return;
+        }
+        self.state = state;
+        #[cfg(target_os = "linux")]
+        {
+            if let Some(handle) = &self.handle {
+                let icon = load_icon_rgba(state.asset()).ok().map(|(width, height, rgba)| ksni::Icon {
+                    width: width as i32,
+                    height: height as i32,
+                    data: rgba.as_chunks::<4>().0.iter().flat_map(|p| [p[3], p[0], p[1], p[2]]).collect(),
+                });
+                let tooltip = state.tooltip().to_string();
+                let _ = handle.update(move |tray| {
+                    tray.icon = icon;
+                    tray.tooltip = tooltip;
+                });
+            }
+        }
+        #[cfg(not(target_os = "linux"))]
+        {
+            if let Some(icon) = &self.icon {
+                if let Ok((width, height, rgba)) = load_icon_rgba(state.asset()) {
+                    if let Ok(new_icon) = tray_icon::Icon::from_rgba(rgba, width, height) {
+                        let _ = icon.set_icon(Some(new_icon));
+                    }
+                }
+                let _ = icon.set_tooltip(Some(state.tooltip()));
+            }
+        }
     }
 
     pub fn poll(&self) -> Vec<TrayAction> {
@@ -80,11 +143,15 @@ impl Tray {
 }
 
 pub(crate) fn icon_data() -> Option<egui::IconData> {
-    load_icon_rgba().ok().map(|(width, height, rgba)| egui::IconData { rgba, width, height })
+    load_icon_rgba(TrayState::Vietnamese.asset()).ok().map(|(width, height, rgba)| egui::IconData {
+        rgba,
+        width,
+        height,
+    })
 }
 
-fn load_icon_rgba() -> Result<(u32, u32, Vec<u8>), String> {
-    let decoder = png::Decoder::new(Cursor::new(TRAY_ICON_PNG));
+fn load_icon_rgba(bytes: &'static [u8]) -> Result<(u32, u32, Vec<u8>), String> {
+    let decoder = png::Decoder::new(Cursor::new(bytes));
     let mut reader = decoder.read_info().map_err(|err| format!("không đọc được icon tray: {err}"))?;
     let size = reader.output_buffer_size().ok_or("icon tray quá lớn")?;
     let mut buffer = vec![0; size];
@@ -109,7 +176,8 @@ mod imp {
     pub struct VfkTray {
         tx: Sender<TrayAction>,
         ctx: Context,
-        icon: Option<ksni::Icon>,
+        pub(super) icon: Option<ksni::Icon>,
+        pub(super) tooltip: String,
     }
 
     impl VfkTray {
@@ -135,19 +203,25 @@ mod imp {
         fn tool_tip(&self) -> ksni::ToolTip {
             ksni::ToolTip {
                 title: "ViFastKey".into(),
-                description: "Bộ gõ tiếng Việt".into(),
+                description: self.tooltip.clone(),
                 ..Default::default()
             }
         }
 
         fn activate(&mut self, _x: i32, _y: i32) {
-            self.send(TrayAction::Show);
+            self.send(TrayAction::Toggle);
         }
 
         fn menu(&self) -> Vec<ksni::MenuItem<Self>> {
             use ksni::menu::StandardItem;
 
             vec![
+                StandardItem {
+                    label: "Chuyển Việt/Anh".into(),
+                    activate: Box::new(|this: &mut Self| this.send(TrayAction::Toggle)),
+                    ..Default::default()
+                }
+                .into(),
                 StandardItem {
                     label: "Mở cấu hình".into(),
                     activate: Box::new(|this: &mut Self| this.send(TrayAction::Show)),
@@ -174,13 +248,15 @@ mod imp {
     pub fn start(ctx: &Context) -> Result<ksni::blocking::Handle<VfkTray>, String> {
         use ksni::blocking::TrayMethods;
 
-        let icon = load_icon_rgba().ok().map(|(width, height, rgba)| ksni::Icon {
-            width: width as i32,
-            height: height as i32,
-            // ksni nhận ARGB32 network byte order.
-            data: rgba.as_chunks::<4>().0.iter().flat_map(|p| [p[3], p[0], p[1], p[2]]).collect(),
-        });
-        let tray = VfkTray { tx: sender(), ctx: ctx.clone(), icon };
+        let icon =
+            load_icon_rgba(TrayState::Vietnamese.asset()).ok().map(|(width, height, rgba)| ksni::Icon {
+                width: width as i32,
+                height: height as i32,
+                // ksni nhận ARGB32 network byte order.
+                data: rgba.as_chunks::<4>().0.iter().flat_map(|p| [p[3], p[0], p[1], p[2]]).collect(),
+            });
+        let tray =
+            VfkTray { tx: sender(), ctx: ctx.clone(), icon, tooltip: TrayState::Vietnamese.tooltip().into() };
         tray.spawn().map_err(|err| format!("không mở được tray: {err}"))
     }
 }
@@ -193,22 +269,23 @@ mod imp {
     use super::*;
 
     pub fn start(ctx: &Context) -> Result<tray_icon::TrayIcon, String> {
-        let (width, height, rgba) = load_icon_rgba()?;
+        let (width, height, rgba) = load_icon_rgba(TrayState::Vietnamese.asset())?;
         let icon = tray_icon::Icon::from_rgba(rgba, width, height)
             .map_err(|err| format!("icon tray không hợp lệ: {err}"))?;
 
         let menu = Menu::new();
+        let toggle = MenuItem::with_id("toggle", "Chuyển Việt/Anh", true, None);
         let open = MenuItem::with_id("open", "Mở cấu hình", true, None);
         let reload = MenuItem::with_id("reload", "Tải lại cấu hình", true, None);
         let separator = PredefinedMenuItem::separator();
         let quit = MenuItem::with_id("quit", "Thoát", true, None);
-        menu.append_items(&[&open, &reload, &separator, &quit])
+        menu.append_items(&[&toggle, &open, &reload, &separator, &quit])
             .map_err(|err| format!("không dựng được menu tray: {err}"))?;
 
         let tray = tray_icon::TrayIconBuilder::new()
             .with_menu(Box::new(menu))
             .with_menu_on_left_click(false)
-            .with_tooltip("ViFastKey — Bộ gõ tiếng Việt")
+            .with_tooltip(TrayState::Vietnamese.tooltip())
             .with_icon(icon)
             .build()
             .map_err(|err| format!("không tạo được tray: {err}"))?;
@@ -217,6 +294,7 @@ mod imp {
         let menu_ctx = ctx.clone();
         MenuEvent::set_event_handler(Some(move |event: MenuEvent| {
             let action = match event.id.0.as_str() {
+                "toggle" => Some(TrayAction::Toggle),
                 "open" => Some(TrayAction::Show),
                 "reload" => Some(TrayAction::Reload),
                 "quit" => Some(TrayAction::Quit),
@@ -231,13 +309,17 @@ mod imp {
         let click_tx = sender();
         let click_ctx = ctx.clone();
         TrayIconEvent::set_event_handler(Some(move |event: TrayIconEvent| {
-            let show = matches!(
-                event,
-                TrayIconEvent::Click { button: MouseButton::Left, button_state: MouseButtonState::Up, .. }
-                    | TrayIconEvent::DoubleClick { button: MouseButton::Left, .. }
-            );
-            if show {
-                let _ = click_tx.send(TrayAction::Show);
+            let action = match event {
+                TrayIconEvent::Click {
+                    button: MouseButton::Left,
+                    button_state: MouseButtonState::Up,
+                    ..
+                } => Some(TrayAction::Toggle),
+                TrayIconEvent::DoubleClick { button: MouseButton::Left, .. } => Some(TrayAction::Show),
+                _ => None,
+            };
+            if let Some(action) = action {
+                let _ = click_tx.send(action);
                 click_ctx.request_repaint();
             }
         }));
@@ -252,8 +334,10 @@ mod tests {
 
     #[test]
     fn icon_asset_decodes_to_rgba() {
-        let (width, height, rgba) = load_icon_rgba().unwrap();
-        assert_eq!((width, height), (32, 32));
-        assert_eq!(rgba.len(), 32 * 32 * 4);
+        for state in [TrayState::Vietnamese, TrayState::English, TrayState::External] {
+            let (width, height, rgba) = load_icon_rgba(state.asset()).unwrap();
+            assert_eq!((width, height), (32, 32));
+            assert_eq!(rgba.len(), 32 * 32 * 4);
+        }
     }
 }

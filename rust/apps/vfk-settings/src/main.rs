@@ -2,10 +2,13 @@
 
 mod app;
 mod fonts;
+mod hook;
+mod hook_state;
 mod platform;
 mod preview;
 mod screenshot;
 mod theme;
+mod toast;
 mod tray;
 mod ui_prefs;
 
@@ -25,6 +28,15 @@ fn main() -> ExitCode {
 }
 
 fn run() -> Result<ExitCode, String> {
+    if std::env::args().any(|arg| arg == "--hook") {
+        #[cfg(target_os = "windows")]
+        {
+            hook::run();
+            return Ok(ExitCode::SUCCESS);
+        }
+        #[cfg(not(target_os = "windows"))]
+        return Err("--hook chỉ dùng trên Windows".into());
+    }
     let args = Args::parse()?;
     if args.help {
         println!("{}", Args::HELP);
@@ -46,6 +58,10 @@ fn run() -> Result<ExitCode, String> {
         return import_config(&path, import);
     }
 
+    if !platform::ensure_ui_instance() {
+        return Ok(ExitCode::SUCCESS);
+    }
+
     let inner_size = args.window_size.unwrap_or([1040.0, 720.0]);
     let mut viewport =
         egui::ViewportBuilder::default().with_inner_size(inner_size).with_min_inner_size([900.0, 600.0]);
@@ -56,6 +72,7 @@ fn run() -> Result<ExitCode, String> {
 
     let tab = args.tab.clone();
     let tray = args.tray;
+    let hidden = args.hidden;
     let screenshot = match (&args.screenshot, &args.screenshots) {
         (Some(path), None) => {
             let tab = tab.as_deref().and_then(app::Tab::from_name).unwrap_or(app::Tab::Overview);
@@ -73,10 +90,12 @@ fn run() -> Result<ExitCode, String> {
             fonts::install(&cc.egui_ctx);
             theme::apply(&cc.egui_ctx, cc.egui_ctx.style().visuals.dark_mode);
             let mut app = app::SettingsApp::new(&cc.egui_ctx, path);
+            app.start_hook();
             if let Some(tab) = tab.as_deref() {
                 app.set_tab(tab);
             }
             app.set_tray_override(tray);
+            app.set_start_hidden(hidden);
             app.set_screenshot(screenshot);
             Ok(Box::new(app))
         }),
@@ -221,6 +240,7 @@ struct Args {
     screenshots: Option<PathBuf>,
     window_size: Option<[f32; 2]>,
     tray: Option<bool>,
+    hidden: bool,
     check: bool,
     self_test: bool,
     help: bool,
@@ -241,6 +261,8 @@ vifastkey-settings — UI cấu hình ViFastKey
   vifastkey-settings --screenshots <dir> chụp lần lượt 6 tab rồi thoát
   vifastkey-settings --window-size <WxH> kích thước cửa sổ, mặc định 1040x720
   vifastkey-settings --tray             bật/tắt tray: --tray hoặc --no-tray
+  vifastkey-settings --hidden            chạy ẩn vào tray (dùng khi autostart)
+  vifastkey-settings --hook              chạy hook nền (nội bộ)
   vifastkey-settings --help
 
 Mặc định: $VIFASTKEY_CONFIG hoặc path theo nền tảng.
@@ -256,6 +278,7 @@ Mặc định: $VIFASTKEY_CONFIG hoặc path theo nền tảng.
             screenshots: None,
             window_size: None,
             tray: None,
+            hidden: false,
             check: false,
             self_test: false,
             help: false,
@@ -293,6 +316,7 @@ Mặc định: $VIFASTKEY_CONFIG hoặc path theo nền tảng.
                 }
                 "--tray" => args.tray = Some(true),
                 "--no-tray" => args.tray = Some(false),
+                "--hidden" => args.hidden = true,
                 other if other.starts_with("--config=") => {
                     args.config = Some(PathBuf::from(&other["--config=".len()..]));
                 }

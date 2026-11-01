@@ -43,7 +43,12 @@ Khi `spell_check=true`, biến đổi làm INVALID bị chặn và từ có th�
   `mission → mision`, `misssion → mission`, `serrver → server`.
 - `ass → as` và `chuss → chus` được giữ (không khôi phục `ass`/`chuss`) vì người dùng
   chủ động hoàn tác ở cuối từ.
-- Khôi phục tiếng Anh: core trả raw khi INVALID; engine còn dùng `Dictionary` khi kết thúc từ.
+- Cuối từ, âm tiết có âm cuối tắc (`c`, `ch`, `p`, `t`, `k`) phải mang sắc/nặng:
+  `data`/`boot`/`meet` trả raw; `last` vẫn ra `lát`.
+- Gõ tiếng Anh: core trả raw khi từ không phải tiếng Việt hợp lệ (`text`, `data`, `boot`).
+  Không có dictionary auto-restore để tránh cướp từ Việt; từ vừa Việt vừa Anh luôn ưu tiên
+  tiếng Việt (`mix` → `mĩ`, `too` → `tô`, `this` → `thí`). Gõ tiếng Anh bằng escape Telex
+  (`mixx` → `mix`, `thiss` → `this`, `lasst` → `last`) hoặc chuyển chế độ Anh.
 - **PREEDIT sửa từ đã gõ**: nếu adapter cung cấp surrounding text, engine nạp lại từ trước con trỏ
   và trả `Replace` (delete/insert) thay vì `Preedit`; click/focus làm tắt adopt cho key đầu.
 - **Sticky restore**: sau khi một từ đã bị khôi phục raw, các phím tiếp theo vẫn ở chế độ raw

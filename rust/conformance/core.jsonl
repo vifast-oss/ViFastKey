@@ -112,7 +112,7 @@
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "xooong", "expected": "xoong"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "tiengs", "expected": "tiengs"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "dd", "expected": "đ"}
-{"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "data", "expected": "dât"}
+{"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "data", "expected": "data"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": true, "allow_coda_k": false}, "final": false, "keys": "ccaof", "expected": "chào"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": true, "allow_coda_k": false}, "final": false, "keys": "Ccaof", "expected": "Chào"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": true, "allow_coda_k": false}, "final": false, "keys": "nnuowif", "expected": "người"}
@@ -10769,7 +10769,7 @@
 {"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": false, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "p", "expected": "p"}
 {"im": "vni", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": false, "bracket_keys": false, "quick_telex": false, "allow_coda_k": true}, "final": false, "keys": "a708nq", "expected": "a708nq"}
 {"im": "simple_telex", "opts": {"tone_style": "old", "spell_check": false, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "sef", "expected": "sè"}
-{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "DWp", "expected": "DƯp"}
+{"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "DWp", "expected": "DWp"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "oxdzu]nlAh", "expected": "oxdzu]nlAh"}
 {"im": "simple_telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "etgxjyxcgwW", "expected": "etgxjyxcgwW"}
 {"im": "simple_telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "sAcnr", "expected": "sAcnr"}
@@ -11071,7 +11071,7 @@
 {"im": "simple_telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "xrrfiWrds", "expected": "xrrfiWrds"}
 {"im": "vni", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "a289Uh", "expected": "a289Uh"}
 {"im": "vni", "opts": {"tone_style": "old", "spell_check": false, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "U", "expected": "U"}
-{"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": true}, "final": true, "keys": "Wc", "expected": "Ưc"}
+{"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": true}, "final": true, "keys": "Wc", "expected": "Wc"}
 {"im": "viqr", "opts": {"tone_style": "new", "spell_check": false, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": true}, "final": false, "keys": "i~i(e+0OU+Oa", "expected": "ii(e+OU+Oa"}
 {"im": "simple_telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": true, "quick_telex": false, "allow_coda_k": true}, "final": true, "keys": "grfttutsouwc", "expected": "grfttutsouwc"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "]bd", "expected": "]bd"}
@@ -11768,7 +11768,7 @@
 {"im": "vni", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": true, "allow_coda_k": false}, "final": true, "keys": "u4q2O92", "expected": "u4q2O92"}
 {"im": "telex", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": true}, "final": true, "keys": "wWOms", "expected": "wOms"}
 {"im": "telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "UkDtqEgmamt", "expected": "UkDtqEgmamt"}
-{"im": "simple_telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "uWc", "expected": "ưc"}
+{"im": "simple_telex", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "uWc", "expected": "uWc"}
 {"im": "viqr", "opts": {"tone_style": "old", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": false, "keys": "a00d^~..?yu", "expected": "a00d^~..?yu"}
 {"im": "vni", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": false, "allow_coda_k": false}, "final": true, "keys": "a9", "expected": "a9"}
 {"im": "vni", "opts": {"tone_style": "new", "spell_check": true, "w_as_u": true, "bracket_keys": false, "quick_telex": true, "allow_coda_k": true}, "final": false, "keys": "hdU46h8Ou", "expected": "hdU46h8Ou"}

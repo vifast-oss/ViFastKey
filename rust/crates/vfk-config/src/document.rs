@@ -346,7 +346,6 @@ impl ConfigDocument {
                 }
             }
             SettingsGroup::Advanced => {
-                reset_scalar!(auto_restore_english, AutoRestoreEnglish);
                 reset_scalar!(auto_capitalize, AutoCapitalize);
                 reset_scalar!(smart_caps, SmartCaps);
                 reset_scalar!(edit_previous_word, EditPreviousWord);

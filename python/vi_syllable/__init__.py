@@ -229,6 +229,23 @@ def check(s: str, tone: int = 0, allow_coda_k: bool = False) -> Status:
     return Status.INVALID
 
 
+def check_final(s: str, tone: int = 0, allow_coda_k: bool = False) -> Status:
+    """Như `check` nhưng dùng khi kết thúc từ.
+
+    Âm tiết có âm cuối tắc (c, ch, p, t, và k khi bật tên riêng) phải mang thanh
+    sắc/nặng mới là từ hoàn chỉnh. Nhờ vậy `dât`/`bôt` bị coi là chưa hợp lệ ở cuối từ,
+    còn `lát`/`mút` vẫn hợp lệ.
+    """
+    st = check(s, tone, allow_coda_k)
+    if st is not Status.VALID:
+        return st
+    syl = parse(s)
+    stop_codas = STOP_CODAS_WITH_K if allow_coda_k else STOP_CODAS
+    if syl.coda in stop_codas and tone not in (1, 5):
+        return Status.INVALID
+    return st
+
+
 def tone_allowed(s: str, tone: int, allow_coda_k: bool = False) -> bool:
     """Âm cuối tắc (c, ch, p, t, và k khi bật tên riêng) chỉ đi với thanh sắc / nặng."""
     syl = parse(s)

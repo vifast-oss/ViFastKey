@@ -24,7 +24,10 @@ không chép code hay dữ liệu GPL.
 | `qusa` | quá |
 | `hoaf` | hòa (old) / hoà (new) |
 
-## 2. Undo / khôi phục tiếng Anh
+## 2. Undo / gõ tiếng Anh
+
+Từ Việt hợp lệ luôn thắng; gõ tiếng Anh bằng escape Telex hoặc chuyển chế độ Anh.
+Không dùng từ điển để tự đổi từ Việt sang tiếng Anh.
 
 | Raw | Kết quả | Ghi chú |
 |---|---|---|
@@ -44,8 +47,13 @@ không chép code hay dữ liệu GPL.
 | `misssion` | mission | ba `s` mới ra hai `s` |
 | `soffa` | sofa | escape `ff` → một `f` |
 | `text` | text | |
+| `data` | data | âm cuối tắc không sắc/nặng → trả raw |
+| `boot` | boot | âm cuối tắc không sắc/nặng → trả raw |
 | `texts` | texts | sticky restore ở engine |
 | `boss` | boss | engine dictionary (core: bos) |
+| `too` | tô | vừa là từ Anh, ưu tiên tiếng Việt |
+| `mix` | mĩ | vừa là từ Anh, ưu tiên tiếng Việt |
+| `mixx` | mix | escape Telex để gõ tiếng Anh |
 
 ## 3. `đ` / d
 
@@ -205,6 +213,7 @@ không chép code hay dữ liệu GPL.
 | Esc sau `vieejt` | trả `vieejt`, `pass_key=false` |
 | Enter sau `vieejt` | commit `việt`, `pass_key=true` |
 | Backspace `tieengs` | `tiến` |
+| Backspace sau ký tự thừa | `nhưng` + `l` → `nhuwngl`; Backspace → `nhưng` |
 | Backspace sau dấu cách | soft reset (`Chào ` + BS + `f` → `Chaof`) |
 | Focus đổi khi preedit | commit từ, không mất chữ |
 | Password/email/URL/number | pass through |

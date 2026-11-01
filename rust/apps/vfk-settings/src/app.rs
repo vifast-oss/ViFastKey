@@ -11,9 +11,15 @@ use vfk_config::{
 };
 use vfk_engine::{resolve_profile, AppProfile, OutputMode, UnicodeForm};
 
-use crate::{platform, preview, screenshot, theme, tray, tray::TrayAction, ui_prefs::UiPrefs};
+use crate::hook_state::{HookMode, HookState, InputSource};
+use crate::{
+    platform, preview, screenshot, theme, toast, tray, tray::TrayAction, tray::TrayState, ui_prefs::UiPrefs,
+};
 
-const APP_TITLE: &str = "ViFastKey — Cấu hình";
+// Tiêu đề cửa sổ do WM/desktop vẽ bằng font hệ thống; một số font titlebar
+// thiếu glyph tiếng Việt (ấ → ô vuông). Giữ ASCII ở title bar, còn chữ
+// "Cấu hình" trong app dùng Be Vietnam Pro nhúng.
+const APP_TITLE: &str = "ViFastKey Settings";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub(crate) enum Tab {
@@ -167,8 +173,11 @@ pub struct SettingsApp {
     confirm: Option<Confirm>,
     allow_close: bool,
     prefs: UiPrefs,
-    windows_backend: String,
     hook_running: bool,
+    hook_state: Option<HookState>,
+    last_hook_state: Option<(HookMode, InputSource)>,
+    last_hook_poll: Instant,
+    last_hook_liveness: Instant,
     import_preview: Option<(PathBuf, ImportPreview)>,
     app_filter: String,
     tray_enabled: bool,
@@ -176,6 +185,7 @@ pub struct SettingsApp {
     tray: Option<tray::Tray>,
     tray_error: Option<String>,
     close_to_tray: bool,
+    start_hidden: bool,
     screenshot: Option<screenshot::Plan>,
     title_dirty: bool,
 }
@@ -207,7 +217,9 @@ impl SettingsApp {
         };
         theme::apply(ctx, dark);
         let initial_tab = prefs.last_tab.clone();
-        let windows_backend = platform::load_windows_backend(&path);
+        // Windows hiện chỉ còn hook-only; windows.json được giữ để migration.
+        #[cfg(target_os = "windows")]
+        let _ = platform::save_windows_backend(&path, "hook");
         let mut app = SettingsApp {
             doc,
             read_only,
@@ -232,8 +244,11 @@ impl SettingsApp {
             confirm: None,
             allow_close: false,
             prefs,
-            windows_backend,
             hook_running: false,
+            hook_state: None,
+            last_hook_state: None,
+            last_hook_poll: Instant::now(),
+            last_hook_liveness: Instant::now(),
             import_preview: None,
             app_filter: String::new(),
             tray_enabled: false,
@@ -241,25 +256,27 @@ impl SettingsApp {
             tray: None,
             tray_error: None,
             close_to_tray: true,
+            start_hidden: false,
             screenshot: None,
             title_dirty: false,
         };
         app.tray_enabled = app.prefs.tray.unwrap_or(default_tray_enabled());
         app.close_to_tray = app.prefs.close_to_tray.unwrap_or(true);
-        if app.windows_backend == "hook" {
-            if let Err(err) = platform::ensure_replace_mode() {
-                app.error = Some(err);
-            }
-            app.hook_running = platform::hook_running();
-        } else if let Err(err) = platform::disable_replace_mode() {
-            app.error = Some(err);
-        }
         app.sync_from_doc();
         if let Some(tab) = initial_tab.as_deref() {
             app.set_tab(tab);
         }
         app.run_preview();
         app
+    }
+
+    /// Khởi động hook nền. Tách khỏi `new` để self-test/screenshot headless
+    /// không tạo process hook giữ stdout.
+    pub fn start_hook(&mut self) {
+        if let Err(err) = platform::ensure_hook_service() {
+            self.error = Some(err);
+        }
+        self.hook_running = platform::hook_running();
     }
 
     /// Mở thẳng một tab, dùng cho menu/tray của adapter: `--tab apps`.
@@ -272,6 +289,14 @@ impl SettingsApp {
     pub fn set_tray_override(&mut self, enabled: Option<bool>) {
         if let Some(enabled) = enabled {
             self.tray_enabled = enabled;
+        }
+    }
+
+    pub fn set_start_hidden(&mut self, hidden: bool) {
+        self.start_hidden = hidden;
+        if hidden {
+            self.tray_enabled = true;
+            self.close_to_tray = true;
         }
     }
 
@@ -292,8 +317,16 @@ impl SettingsApp {
 
     pub fn render(&mut self, ctx: &egui::Context) {
         self.refresh_issues();
+        if self.start_hidden {
+            self.start_hidden = false;
+            // Ẩn khỏi màn hình nhưng vẫn tạo cửa sổ/event loop để tray và
+            // show-request hoạt động. Visible(false) làm eframe không render
+            // và FindWindow không thấy cửa sổ.
+            ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
+        }
         self.ensure_tray(ctx);
         self.poll_tray(ctx);
+        self.poll_hook_state(ctx);
         self.handle_screenshot_event(ctx);
         self.check_external(ctx);
         self.handle_shortcuts(ctx);
@@ -309,8 +342,8 @@ impl SettingsApp {
         self.process_pending(ctx);
         self.drive_screenshot(ctx);
 
-        if self.external_change || self.toast.is_some() || self.tray.is_some() {
-            ctx.request_repaint_after(Duration::from_millis(500));
+        if self.external_change || self.toast.is_some() || self.tray.is_some() || self.hook_running {
+            ctx.request_repaint_after(Duration::from_millis(250));
         }
         if self.screenshot.is_some() {
             ctx.request_repaint();
@@ -325,6 +358,14 @@ impl SettingsApp {
         let tray = tray::Tray::start(ctx.clone());
         if tray.is_available() {
             self.tray_error = None;
+            let mut tray = tray;
+            if let Some((mode, _)) = self.last_hook_state {
+                tray.set_state(match mode {
+                    HookMode::Vietnamese => TrayState::Vietnamese,
+                    HookMode::English => TrayState::English,
+                    HookMode::External => TrayState::External,
+                });
+            }
             self.tray = Some(tray);
         } else {
             self.tray_error = Some(tray.error().unwrap_or("desktop không hỗ trợ tray").to_string());
@@ -338,6 +379,12 @@ impl SettingsApp {
         for action in actions {
             match action {
                 TrayAction::Show => self.show_window(ctx),
+                TrayAction::Toggle => {
+                    #[cfg(target_os = "windows")]
+                    crate::hook_state::request_toggle();
+                    #[cfg(not(target_os = "windows"))]
+                    self.show_window(ctx);
+                }
                 TrayAction::Reload => {
                     self.show_window(ctx);
                     self.request_reload();
@@ -347,12 +394,69 @@ impl SettingsApp {
                     if self.doc.is_dirty() {
                         self.confirm = Some(Confirm::Quit);
                     } else {
+                        platform::stop_hook();
                         self.allow_close = true;
                         ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                     }
                 }
             }
         }
+    }
+
+    fn poll_hook_state(&mut self, ctx: &egui::Context) {
+        if crate::hook_state::take_show_request() {
+            self.show_window(ctx);
+        }
+        if self.last_hook_poll.elapsed() < Duration::from_millis(200) {
+            return;
+        }
+        self.last_hook_poll = Instant::now();
+        if self.last_hook_liveness.elapsed() > Duration::from_secs(3) {
+            self.last_hook_liveness = Instant::now();
+            if !platform::hook_running() {
+                self.hook_running = false;
+                // Hook chết bất thường: khởi động lại một lần; nếu lỗi, UI vẫn sống.
+                let _ = platform::ensure_hook_service();
+                self.hook_running = platform::hook_running();
+            }
+        }
+        let Some(state) = crate::hook_state::load() else {
+            self.hook_running = false;
+            return;
+        };
+        self.hook_running = true;
+        let current = (state.mode, state.input);
+        let changed = self.last_hook_state != Some(current);
+        self.hook_state = Some(state);
+        if changed {
+            let first = self.last_hook_state.is_none();
+            self.last_hook_state = Some(current);
+            let tray_state = match current.0 {
+                HookMode::Vietnamese => TrayState::Vietnamese,
+                HookMode::English => TrayState::English,
+                HookMode::External => TrayState::External,
+            };
+            if let Some(tray) = self.tray.as_mut() {
+                tray.set_state(tray_state);
+            }
+            if !first {
+                let (title, body) = match current.0 {
+                    HookMode::Vietnamese => {
+                        ("ViFastKey · Tiếng Việt", "Alt+, để chuyển sang English".to_string())
+                    }
+                    HookMode::English => {
+                        ("ViFastKey · English", "Alt+, để chuyển sang Tiếng Việt".to_string())
+                    }
+                    HookMode::External => (
+                        "Đang dùng bộ gõ Windows",
+                        "ViFastKey đang nhường. Chọn English US để dùng ViFastKey.".to_string(),
+                    ),
+                };
+                toast::show(title, &body);
+                self.toast(format!("{title} — {body}"));
+            }
+        }
+        ctx.request_repaint_after(Duration::from_millis(250));
     }
 
     fn show_window(&mut self, ctx: &egui::Context) {
@@ -365,7 +469,7 @@ impl SettingsApp {
         let dirty = self.doc.is_dirty();
         if dirty != self.title_dirty {
             self.title_dirty = dirty;
-            let title = if dirty { "ViFastKey — Cấu hình •" } else { APP_TITLE };
+            let title = if dirty { "ViFastKey Settings *" } else { APP_TITLE };
             ctx.send_viewport_cmd(egui::ViewportCommand::Title(title.to_string()));
         }
     }
@@ -490,6 +594,9 @@ impl SettingsApp {
         if self.close_to_tray && self.tray.as_ref().is_some_and(tray::Tray::is_available) {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+        } else {
+            // Không có tray để ẩn: đóng UI nhưng không để hook mồ côi.
+            platform::stop_hook();
         }
     }
 
@@ -837,14 +944,6 @@ impl SettingsApp {
             let draft = self.doc.draft_mut();
             if bool_row(
                 ui,
-                "Tự khôi phục tiếng Anh",
-                "Dùng từ điển để trả lại từ tiếng Anh sau khi gõ.",
-                &mut draft.config.auto_restore_english,
-            ) {
-                draft.mark(FieldId::AutoRestoreEnglish);
-            }
-            if bool_row(
-                ui,
                 "Viết hoa đầu câu",
                 "Tự viết hoa chữ đầu câu khi bắt đầu từ mới.",
                 &mut draft.config.auto_capitalize,
@@ -1114,7 +1213,7 @@ impl SettingsApp {
             });
             ui.label(
                 egui::RichText::new(
-                    "Preedit là mặc định. Replace chỉ dùng cho app không nhận preedit (macOS/Fcitx5); Windows chọn Preedit/Replace ở tab Nâng cao.",
+                    "Windows hook-only luôn dùng Replace; Preedit/Replace ở đây là output mode của engine cho adapter khác (macOS/Fcitx5).",
                 )
                 .small()
                 .color(theme::MUTED),
@@ -1299,14 +1398,6 @@ impl SettingsApp {
         section(ui, "Đầu ra");
         {
             let draft = self.doc.draft_mut();
-            if bool_row(
-                ui,
-                "Tự khôi phục tiếng Anh",
-                "Dùng từ điển để trả lại từ tiếng Anh.",
-                &mut draft.config.auto_restore_english,
-            ) {
-                draft.mark(FieldId::AutoRestoreEnglish);
-            }
             ui.horizontal(|ui| {
                 ui.label("Dạng Unicode");
                 if combo(
@@ -1424,60 +1515,40 @@ impl SettingsApp {
         });
 
         if cfg!(target_os = "windows") {
-            section(ui, "Windows: Preedit / Replace");
-            ui.horizontal(|ui| {
-                ui.label("Chế độ gõ");
-                let mut backend = self.windows_backend.clone();
-                let selected = if backend == "hook" { "Replace (Hook)" } else { "Preedit (TSF)" };
-                egui::ComboBox::from_id_salt("windows_backend").selected_text(selected).show_ui(ui, |ui| {
-                    ui.selectable_value(&mut backend, "tsf".to_string(), "Preedit (TSF)");
-                    ui.selectable_value(&mut backend, "hook".to_string(), "Replace (Hook)");
-                });
-                if backend != self.windows_backend {
-                    match platform::save_windows_backend(self.doc.path(), &backend) {
-                        Ok(()) => {
-                            let mode = if backend == "hook" {
-                                platform::ensure_replace_mode()
-                            } else {
-                                platform::disable_replace_mode()
-                            };
-                            self.windows_backend = backend;
-                            match mode {
-                                Ok(()) => {
-                                    self.hook_running = platform::hook_running();
-                                    self.toast("Đã lưu windows.json");
-                                }
-                                Err(err) => self.error = Some(err),
-                            }
-                        }
-                        Err(err) => self.error = Some(format!("Không ghi được windows.json: {err}")),
-                    }
-                }
-            });
-            if self.windows_backend == "hook" {
-                if self.hook_running {
-                    ui.colored_label(
-                        theme::SUCCESS,
-                        "Replace: hook nền đang chạy và tự khởi động cùng Windows.",
-                    );
-                } else {
+            section(ui, "Windows: Hook-only");
+            ui.label(
+                "ViFastKey dùng keyboard hook toàn cục. Windows nên để input source English (US); \
+                 khi chọn Vietnamese/Japanese, hook tự nhường cho bộ gõ Windows.",
+            );
+            if self.hook_running {
+                ui.colored_label(theme::SUCCESS, "Hook nền đang chạy và tự khởi động cùng Windows.");
+            } else {
+                ui.colored_label(theme::WARNING, "Hook nền chưa chạy; bấm Kiểm tra/khởi động lại.");
+            }
+            if let Some(state) = &self.hook_state {
+                let mode = match state.mode {
+                    HookMode::Vietnamese => "Tiếng Việt",
+                    HookMode::English => "English",
+                    HookMode::External => "Đang nhường bộ gõ Windows",
+                };
+                ui.label(format!("Trạng thái: {mode} · Input: {}", state.input.label()));
+                if state.input != InputSource::EnUs {
                     ui.colored_label(
                         theme::WARNING,
-                        "Replace: hook nền chưa chạy; bấm Kiểm tra/khởi động lại.",
+                        "Windows đang không ở English (US). Thêm English (United States) và chọn ENG để ViFastKey xử lý.",
                     );
                 }
-                if ui.button("Kiểm tra hook").clicked() {
-                    if let Err(err) = platform::ensure_replace_mode() {
-                        self.error = Some(err);
-                    }
-                    self.hook_running = platform::hook_running();
+            }
+            if ui.button("Kiểm tra hook").clicked() {
+                if let Err(err) = platform::ensure_hook_service() {
+                    self.error = Some(err);
                 }
-            } else {
-                ui.colored_label(theme::SUCCESS, "Preedit (TSF) là mặc định và an toàn cho đa số app.");
+                self.hook_running = platform::hook_running();
             }
             ui.label(
                 egui::RichText::new(
-                    "Preedit hợp với Office/trình duyệt/terminal; Replace dùng cho app hoặc game không nhận TSF. Đổi chế độ có hiệu lực trong khoảng 0,5 giây; nếu đang có preedit dở, bấm ra ngoài một lần.",
+                    "Chỉ xử lý khi input source là English US. Vietnamese/Japanese/ngôn ngữ khác được pass-through; \
+                     Alt+, chỉ đổi Việt/Anh khi hook sở hữu English US.",
                 )
                 .small()
                 .color(theme::MUTED),
@@ -1808,6 +1879,8 @@ impl SettingsApp {
                 self.toast(format!("Đã khôi phục nhóm ({} thay đổi)", changes));
             }
             Confirm::Close | Confirm::Quit => {
+                // Đóng hẳn UI cũng dừng hook con để không còn process mồ côi.
+                platform::stop_hook();
                 self.persist_prefs();
                 self.allow_close = true;
                 ctx.send_viewport_cmd(egui::ViewportCommand::Close);

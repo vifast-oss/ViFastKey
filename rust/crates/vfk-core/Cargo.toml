@@ -6,11 +6,17 @@ edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 
+[features]
+default = ["std", "charset", "emoji"]
+std = ["vi-syllable/std", "unicode-normalization/std"]
+charset = ["std", "dep:serde_json"]
+emoji = ["std", "charset"]
+
 [dependencies]
-vi-syllable = { workspace = true }
+vi-syllable = { workspace = true, default-features = false }
 arrayvec = { workspace = true }
-serde_json = { workspace = true }
-unicode-normalization = { workspace = true }
+serde_json = { workspace = true, optional = true }
+unicode-normalization = { workspace = true, default-features = false }
 
 [dev-dependencies]
 serde_json = { workspace = true }

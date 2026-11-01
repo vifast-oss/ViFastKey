@@ -14,6 +14,9 @@ public final class NativeEngine {
 
     public static native String setConfig(long handle, String configJson);
 
+    /** 1 = preedit có gạch chân, 2 = replace/commit không gạch chân. */
+    public static native String setOutputMode(long handle, int mode);
+
     public static native String process(long handle, String key, boolean ctrl,
                                         boolean alt, boolean meta);
 
@@ -26,6 +29,9 @@ public final class NativeEngine {
     public static native String display(long handle);
 
     public static native String suggest(long handle, String prefix);
+
+    /** Trả về từ đã sửa nếu chắc chắn, hoặc chuỗi rỗng. */
+    public static native String autocorrect(String word);
 
     public static native void setSurrounding(long handle, String text);
 

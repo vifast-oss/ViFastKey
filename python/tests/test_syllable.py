@@ -82,3 +82,12 @@ def test_coda_k_still_stop_coda(word, tone):
 def test_coda_k_off_by_default():
     assert vs.check("đăk", 1) is Status.INVALID
     assert vs.check("lăk", 5) is Status.INVALID
+
+
+def test_check_final_stop_coda_requires_tone():
+    assert vs.check_final("dat", 0) is Status.INVALID
+    assert vs.check_final("dat", 1) is Status.VALID
+    assert vs.check_final("mô", 0) is Status.VALID
+    assert vs.check_final("lat", 1) is Status.VALID
+    assert vs.check_final("đăk", 1, allow_coda_k=True) is Status.VALID
+    assert vs.check_final("đăk", 0, allow_coda_k=True) is Status.INVALID

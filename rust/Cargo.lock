@@ -2871,6 +2871,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "spin"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0134f9043ed38b087ac4f7d4af44c79e2c9e5094421fe3164f435ce585953b10"
+
+[[package]]
 name = "spirv"
 version = "0.3.0+sdk-1.3.268.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3412,6 +3418,7 @@ name = "vi-syllable"
 version = "0.1.0"
 dependencies = [
  "serde",
+ "spin",
  "unicode-normalization",
 ]
 
@@ -3428,8 +3435,11 @@ dependencies = [
  "serde_json",
  "tempfile",
  "tray-icon",
+ "vfk-adapter-core",
  "vfk-config",
  "vfk-engine",
+ "vi-syllable",
+ "windows-sys 0.61.2",
  "winres",
 ]
 

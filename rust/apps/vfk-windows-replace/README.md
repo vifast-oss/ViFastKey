@@ -4,7 +4,7 @@ Binary phát hành: **`vifastkey-replace.exe`** (crate/package nội bộ: `vfk-
 
 Adapter Windows dùng **WH_KEYBOARD_LL + SendInput Unicode**. Engine là
 `vfk-engine` (Rust), không phụ thuộc Python. Đây là backend **không có preedit**:
-dùng cho app/game không hỗ trợ TSF, hoặc khi người dùng chọn `backend: hook`.
+dùng cho app/game không hỗ trợ TSF, Windows Terminal/console, hoặc khi người dùng chọn `backend: hook`.
 
 Preedit thật nằm ở [`windows/tsf`](../../windows/tsf/README.md) (TSF text service).
 Hai backend dùng chung engine; TSF ghi named mapping `Local\ViFastKeyTsfState`,
@@ -39,18 +39,19 @@ Yêu cầu Windows 10/11 x64, Rust stable. Chạy exe trong desktop session; hoo
 { "backend": "tsf" }
 ```
 
-- `tsf` (mặc định): hook luôn pass-through; chỉ TSF preedit.
-- `hook`: chỉ hook xử lý; TSF không ăn phím.
+- `tsf` (mặc định): TSF xử lý app thường; hook tự cài keyboard hook khi foreground là terminal/console.
+- `hook`: hook xử lý toàn cục; TSF không ăn phím.
 
 UI `vifastkey-settings` → **Nâng cao** → **Windows: Preedit / Replace** là cách
-chọn an toàn: chọn Replace sẽ chạy hook nền + thêm Run key; chọn lại Preedit sẽ
-dừng hook + xoá Run key. Giá trị `auto` cũ chỉ còn để tương thích file cũ và được
+chọn an toàn: hook chạy nền và có Run key ở cả hai chế độ; chọn Replace đổi phạm
+vi hook sang toàn cục, chọn Preedit quay lại terminal-only. Giá trị `auto` cũ chỉ còn để tương thích file cũ và được
 UI đọc như `tsf`.
 
 ## Giới hạn / roadmap
 
 - Không có TSF composition; đây là backend Replace.
-- Chưa có tray icon riêng; UI quản lý chạy/Run key của hook khi chọn Replace.
+- Chưa có tray icon riêng; UI quản lý chạy/Run key của hook ở cả hai backend
+  (terminal-only khi Preedit, toàn cục khi Replace).
 - Chưa có auto-update, app exclusion runtime.
 - Hook có thể bị một số app/game/anti-cheat chặn.
 - Chưa test trên Windows thật trong môi trường macOS; cross-check bằng

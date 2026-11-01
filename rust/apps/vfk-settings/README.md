@@ -25,12 +25,16 @@ cargo run -p vifastkey-settings -- --no-tray   # tắt tray
 6 tab rồi thoát, dùng cho CI. `--screenshots` chụp framebuffer của cửa sổ ra
 `overview.png`, `typing.png`… không cần `screencapture`/X11 screenshot tool.
 
-## Windows: Preedit / Replace
+## Windows: Hook-only
 
-- Mặc định **Preedit (TSF)**; hook nền không chạy.
-- Chọn **Replace (Hook)** trong tab **Nâng cao** sẽ chạy `vifastkey-replace.exe` và thêm
-  Run key cho user hiện tại; chọn lại **Preedit (TSF)** sẽ dừng hook và xoá Run key.
-- `auto` cũ không còn trong UI; file cũ được đọc như Preedit.
+- Một binary `vifastkey-settings.exe` chứa cả UI, tray và hook nền
+  (`vifastkey-settings.exe --hook`).
+- Hook chỉ xử lý khi input source foreground là **English US (HKL 0x0409)**;
+  Vietnamese/Japanese/ngôn ngữ khác được pass-through.
+- `Alt+,` đổi Việt/Anh; tray đổi Logo/E; logo mờ khi nhường IME Windows.
+- `Windows Terminal`, Notepad, Edge, Chrome dùng chung hook; không cài TSF.
+- `--hidden` chạy UI ẩn vào tray và tự khởi động cùng Windows.
+- TSF cũ trong `windows/tsf/` chỉ còn là source tham khảo/legacy, không đóng gói.
 
 ## Tray
 
@@ -84,8 +88,7 @@ Tray không cần thêm thư viện hệ thống (D-Bus có sẵn trên desktop 
 - Khôi phục mặc định **từng nhóm**: kiểu gõ, tuỳ chọn macro, ứng dụng, nâng cao.
 - Tìm app theo tên; sửa app profile được áp dụng vào bản nháp ngay.
 - Tray + ẩn xuống tray khi đóng; lưu theme/tab/tray/bật-ẩn vào `settings-ui.json`.
-- Tab Windows backend (`windows.json`).
-- macOS IMK, Windows hook/TSF, Fcitx5 và IBus poll mtime để reload config.
+- macOS IMK, Windows hook, Fcitx5 và IBus poll mtime để reload config.
 - `--screenshots` cho kiểm thử giao diện trên CI/desktop headless.
 
 ## Giới hạn hiện tại
