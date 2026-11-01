@@ -39,6 +39,7 @@ func printStatus() {
         print("\(sourceID(src)): enabled=\(enabled) selected=\(selected)")
     }
     print("prefs AppleEnabledInputSources: \(InputSourceRegistrar.isEnabled())")
+    print("output_mode: \(ConfigFile.outputMode)")
 }
 
 func maintenance() -> Bool {

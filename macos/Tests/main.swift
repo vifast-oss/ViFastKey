@@ -92,6 +92,34 @@ do {
     else { failures += 1; print("FAIL app-profile chrome: \(p)") }
 }
 
+// Output mode: Replace không tạo marked text (không gạch chân).
+do {
+    let engine = VfkEngine(configJSON: nil, mode: 1)
+    let client = FakeTextClient()
+    let applier = ActionApplier()
+    for ch in "vieejt" {
+        let action = engine.processKey(String(ch))
+        let result = applier.apply(action, to: client)
+        // PassThrough: app thật tự chèn ký tự; fake client phải mô phỏng.
+        if !result.handled {
+            client.insertText(String(ch), replacementRange: NSRange(location: NSNotFound, length: 0))
+        }
+    }
+    check("replace-mode-preedit", client.preedit, "")
+    finalize(engine, client)
+    check("replace-mode-text", client.text, "việt")
+}
+
+// Preedit vẫn tạo marked text khi bật.
+do {
+    let engine = VfkEngine(configJSON: nil, mode: 0)
+    let client = FakeTextClient()
+    type(engine, "vieejt", client)
+    check("preedit-mode-marked", client.preedit, "việt")
+    finalize(engine, client)
+    check("preedit-mode-text", client.text, "việt")
+}
+
 // Replace committed text (preedit edit-previous-word).
 do {
     let client = FakeTextClient()
