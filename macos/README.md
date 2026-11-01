@@ -46,6 +46,9 @@ Build gồm:
 # -> macos/build/ViFastKey-macos-universal.zip
 ```
 
+ZIP tự chứa `ViFastKey.app` + `install.sh` + `uninstall.sh` + `README.md` để người
+dùng cuối chỉ cần giải nén và chạy installer.
+
 Build cả arm64 + x86_64, lipo app, ký ad-hoc. Ký/notarize bản phát hành:
 
 ```bash
@@ -60,8 +63,10 @@ NOTARY_PROFILE="vifastkey-notary" \
 ./macos/install.sh
 ```
 
-Script copy app vào `~/Library/Input Methods/ViFastKey.app`, mở app, đăng ký input source
-bằng `TISRegisterInputSource`, rồi ghi entry vào `AppleEnabledInputSources` của HIToolbox.
+Script copy app vào `~/Library/Input Methods/ViFastKey.app` và đăng ký input source
+bằng `TISRegisterInputSource`. Script **không** tự bật input source: trên macOS mới,
+việc bật một input method bên thứ ba phải do người dùng làm trong System Settings
+(hộp thoại Allow). Runtime cũng không gọi `TISEnableInputSource` mỗi lần khởi động.
 
 Sau đó:
 
@@ -81,7 +86,58 @@ Kiểm tra:
 
 ```bash
 ./macos/doctor.sh
+
+# Trạng thái thật theo TIS (entry trong prefs có thể sai lệch)
+"$HOME/Library/Input Methods/ViFastKey.app/Contents/MacOS/ViFastKeyIM" --status
 ```
+
+### Sự cố: macOS hỏi "Allow ViFastKey to enable ViFastKey?" nhiều lần
+
+Đây là hộp thoại **của macOS** cho mọi input method bên thứ ba (Squirrel, GõViệt...
+cũng gặp), không phải lỗi logic của engine. macOS hỏi khi input source được bật
+lần đầu; câu trả lời được gắn với **danh tính chữ ký code** của app, không phải
+tên app.
+
+Hộp thoại lặp lại khi:
+
+- app được build/cài lại — chữ ký ad-hoc có CDHash đổi mỗi lần build, macOS coi
+  là app mới và hỏi lại;
+- còn nhiều bản `ViFastKey.app` (repo `macos/build/`, `~/Downloads`, `/Applications`);
+- chưa đăng xuất/đăng nhập sau khi cài — session đang chạy vẫn giữ đăng ký cũ;
+- bản `install.sh` cũ ký lại sau khi copy và chạy đăng ký 3 lần mỗi lần cài;
+- bản cũ gọi `TISRegisterInputSource` + `TISEnableInputSource` ở **mỗi lần app
+  khởi động** — mỗi lần IMK khởi động lại app có thể là một lần macOS hỏi lại.
+
+Cách xử lý một lần:
+
+```bash
+pkill -x ViFastKeyIM 2>/dev/null || true
+rm -rf "$HOME/Library/Input Methods/ViFastKey.app"
+```
+
+1. Xoá ViFastKey khỏi **System Settings → Keyboard → Text Input → Edit** (nếu còn).
+2. Cài lại đúng một lần: `./macos/install.sh`.
+3. **Đăng xuất rồi đăng nhập** (hoặc restart). Đây là bước quyết định — macOS chỉ
+   ghi nhận input source mới sau khi session được tạo lại.
+4. Thêm ViFastKey trong Input Sources và bấm **Allow** đúng một lần.
+
+Nếu vẫn lặp lại, kiểm tra app có crash không (crash → IMK khởi động lại app):
+
+```bash
+ls -t ~/Library/Logs/DiagnosticReports/ViFastKeyIM* 2>/dev/null | head
+log show --last 30m --predicate 'process == "ViFastKeyIM"' --style compact
+```
+
+Khi phát triển (build lại liên tục), ký bằng **một identity cố định** thay vì
+ad-hoc để macOS giữ quyền qua các lần build:
+
+```bash
+security find-identity -v -p codesigning          # xem identity có sẵn
+VFK_CODESIGN_IDENTITY="Apple Development: Tên (TEAMID)" ./macos/build.sh
+```
+
+`build.sh` tự dùng Apple Development/Developer ID nếu máy có; ad-hoc chỉ là
+fallback. Bản phát hành vẫn phải ký Developer ID + notarize (`package.sh`).
 
 ## Dùng
 

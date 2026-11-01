@@ -21,7 +21,7 @@ final class PreferencesWindowController: NSWindowController {
     ]
     private static let boolKeys = [
         "spell_check", "w_as_u", "bracket_keys", "quick_telex", "allow_coda_k",
-        "auto_restore_english", "macro_enabled", "macro_digits", "macro_undo",
+        "macro_enabled", "macro_digits", "macro_undo",
         "macro_in_off_mode", "auto_capitalize", "smart_caps", "edit_previous_word",
         "default_vietnamese", "restore_after_space",
     ]
@@ -134,7 +134,7 @@ final class PreferencesWindowController: NSWindowController {
 
     private static func defaultBool(for key: String) -> Bool {
         switch key {
-        case "spell_check", "w_as_u", "auto_restore_english", "macro_enabled",
+        case "spell_check", "w_as_u", "macro_enabled",
              "macro_undo", "default_vietnamese", "edit_previous_word", "restore_after_space":
             return true
         default:
@@ -149,7 +149,6 @@ final class PreferencesWindowController: NSWindowController {
         case "bracket_keys": return "[ ] → ơ ư"
         case "quick_telex": return "Quick Telex"
         case "allow_coda_k": return "Âm cuối k (Đắk Lắk)"
-        case "auto_restore_english": return "Tự khôi phục tiếng Anh"
         case "macro_enabled": return "Bật macro"
         case "macro_digits": return "Macro có số (mp3, k8s)"
         case "macro_undo": return "Backspace hoàn tác macro"

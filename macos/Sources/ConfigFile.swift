@@ -48,7 +48,6 @@ struct ConfigFile {
               "bracket_keys": false,
               "quick_telex": false,
               "allow_coda_k": false,
-              "auto_restore_english": true,
               "macro_enabled": true,
               "macro_digits": false,
               "macro_undo": true,

@@ -26,9 +26,26 @@ swiftc -O -target "$TARGET" \
   "$HERE"/Sources/*.swift \
   -o "$APP/Contents/MacOS/ViFastKeyIM"
 
-# Ad-hoc signing đủ để chạy local. Muốn TCC ổn định khi phát hành:
-#   codesign --force --deep --options runtime --sign "Developer ID Application: ..."
-codesign --force --deep --sign - "$APP" >/dev/null 2>&1 || true
+# Ký app. Ad-hoc đủ để chạy local nhưng CDHash đổi sau mỗi lần build, nên macOS
+# coi mỗi bản là app mới và hỏi lại "Allow ViFastKey to enable ViFastKey?".
+# Nếu máy có Apple Development/Developer ID, tự dùng identity đó để quyền được
+# giữ nguyên qua các lần build. Chỉ định thủ công:
+#   VFK_CODESIGN_IDENTITY="Apple Development: ..." ./macos/build.sh
+# Bản phát hành vẫn dùng package.sh (Developer ID + hardened runtime + notarize).
+SIGN_ID="${VFK_CODESIGN_IDENTITY:-}"
+if [ -z "$SIGN_ID" ]; then
+  SIGN_ID="$(security find-identity -v -p codesigning 2>/dev/null \
+    | sed -n 's/.*"\(.*\)"/\1/p' \
+    | grep -E '^(Apple Development|Developer ID Application|Mac Developer)' \
+    | head -1 || true)"
+fi
+if [ -n "$SIGN_ID" ]; then
+  echo "==> Ký với identity: $SIGN_ID"
+  codesign --force --deep --sign "$SIGN_ID" "$APP"
+else
+  echo "==> Ký ad-hoc (không thấy identity ký code; macOS sẽ hỏi lại quyền sau mỗi build)"
+  codesign --force --deep --sign - "$APP" >/dev/null 2>&1 || true
+fi
 
 echo "==> Self-test adapter (headless)"
 swiftc -O -import-objc-header "$HERE/Sources/Bridging.h" -framework Foundation \

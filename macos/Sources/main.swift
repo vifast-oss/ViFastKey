@@ -4,6 +4,43 @@ import Carbon
 
 ConfigFile.ensureExists()
 
+private let inputSourcePrefix = "app.vifastkey.inputmethod"
+
+func strProperty(_ src: TISInputSource, _ key: CFString) -> String? {
+    guard let valuep = TISGetInputSourceProperty(src, key) else { return nil }
+    return Unmanaged<CFString>.fromOpaque(valuep).takeUnretainedValue() as String
+}
+
+func boolProperty(_ src: TISInputSource, _ key: CFString) -> Bool {
+    guard let valuep = TISGetInputSourceProperty(src, key) else { return false }
+    return CFBooleanGetValue(Unmanaged<CFBoolean>.fromOpaque(valuep).takeUnretainedValue())
+}
+
+/// Các input source ViFastKey đã đăng ký với HIToolbox.
+func viFastKeySources() -> [TISInputSource] {
+    let all = TISCreateInputSourceList(nil, true)?.takeRetainedValue() as? [TISInputSource] ?? []
+    return all.filter { src in
+        (strProperty(src, kTISPropertyInputSourceID) ?? "").hasPrefix(inputSourcePrefix)
+    }
+}
+
+func sourceID(_ src: TISInputSource) -> String {
+    strProperty(src, kTISPropertyInputSourceID) ?? "?"
+}
+
+func printStatus() {
+    let sources = viFastKeySources()
+    if sources.isEmpty {
+        print("ViFastKey: chưa đăng ký input source")
+    }
+    for src in sources {
+        let enabled = boolProperty(src, kTISPropertyInputSourceIsEnabled)
+        let selected = boolProperty(src, kTISPropertyInputSourceIsSelected)
+        print("\(sourceID(src)): enabled=\(enabled) selected=\(selected)")
+    }
+    print("prefs AppleEnabledInputSources: \(InputSourceRegistrar.isEnabled())")
+}
+
 func maintenance() -> Bool {
     let args = CommandLine.arguments
     if args.contains("--preferences") {
@@ -13,23 +50,38 @@ func maintenance() -> Bool {
         app.run()
         return true
     }
-    guard args.contains("--register-input-source") ||
-          args.contains("--enable-input-source") ||
-          args.contains("--repair-input-source") else {
+
+    let wantsRegister = args.contains("--register-input-source")
+    let wantsEnable = args.contains("--enable-input-source")
+    let wantsRepair = args.contains("--repair-input-source")
+    let wantsSelect = args.contains("--select-input-source")
+    let wantsStatus = args.contains("--status")
+    guard wantsRegister || wantsEnable || wantsRepair || wantsSelect || wantsStatus else {
         return false
     }
-    let bundleURL = Bundle.main.bundleURL
-    let status = TISRegisterInputSource(bundleURL as CFURL)
-    print("register status: \(status)")
-    print("prefs enabled: \(InputSourceRegistrar.ensureEnabled())")
-    let all = TISCreateInputSourceList(nil, true)?.takeRetainedValue() as? [TISInputSource] ?? []
-    for src in all {
-        guard let idp = TISGetInputSourceProperty(src, kTISPropertyInputSourceID) else { continue }
-        let id = Unmanaged<CFString>.fromOpaque(idp).takeUnretainedValue() as String
-        guard id.contains("app.vifastkey.inputmethod") else { continue }
-        print("enable \(id): \(TISEnableInputSource(src))")
-        if args.contains("--select-input-source") {
-            print("select \(id): \(TISSelectInputSource(src))")
+
+    if wantsStatus {
+        printStatus()
+    }
+    if wantsRegister || wantsRepair {
+        let status = TISRegisterInputSource(Bundle.main.bundleURL as CFURL)
+        print("register status: \(status)")
+    }
+    if wantsEnable || wantsRepair {
+        for src in viFastKeySources()
+        where !boolProperty(src, kTISPropertyInputSourceIsEnabled) {
+            print("enable \(sourceID(src)): \(TISEnableInputSource(src))")
+        }
+    }
+    if wantsRepair {
+        // Fallback cũ cho máy không lưu trạng thái enable sau logout. Chỉ chạy
+        // khi người dùng chủ động sửa, vì ghi thẳng prefs có thể tạo entry
+        // "enabled" trong khi TIS vẫn coi là chưa bật.
+        print("prefs fallback: \(InputSourceRegistrar.ensureEnabled())")
+    }
+    if wantsSelect {
+        for src in viFastKeySources() {
+            print("select \(sourceID(src)): \(TISSelectInputSource(src))")
         }
     }
     return true
@@ -39,19 +91,13 @@ if maintenance() {
     exit(0)
 }
 
-// Tự đăng ký/bật input source khi IMK khởi động app.
-_ = TISRegisterInputSource(Bundle.main.bundleURL as CFURL)
-_ = InputSourceRegistrar.ensureEnabled()
-do {
-    let all = TISCreateInputSourceList(nil, true)?.takeRetainedValue() as? [TISInputSource] ?? []
-    for src in all {
-        guard let idp = TISGetInputSourceProperty(src, kTISPropertyInputSourceID) else { continue }
-        let id = Unmanaged<CFString>.fromOpaque(idp).takeUnretainedValue() as String
-        if id.contains("app.vifastkey.inputmethod") {
-            _ = TISEnableInputSource(src)
-        }
-    }
-}
+// Không đăng ký/bật input source ở đây.
+//
+// IMK chỉ khởi động app khi input source đã được người dùng bật trong
+// System Settings. Gọi TISRegisterInputSource/TISEnableInputSource ở mỗi lần
+// chạy có thể khiến macOS coi như vừa thêm input source mới và hỏi lại
+// "Allow ViFastKey to enable ViFastKey?" sau mỗi lần khởi động/chuyển app.
+// Đăng ký là việc của installer (--register-input-source).
 
 let connectionName = "ViFastKey_Connection"
 let bundleIdentifier = Bundle.main.bundleIdentifier ?? "app.vifastkey.inputmethod"

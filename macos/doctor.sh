@@ -17,6 +17,24 @@ echo "config: $HOME/Library/Application Support/ViFastKey/config.json"
 echo "input sources:"
 defaults read com.apple.HIToolbox AppleEnabledInputSources 2>/dev/null | grep -A3 -B1 -i vifastkey || echo "  chưa thấy ViFastKey trong AppleEnabledInputSources"
 defaults read com.apple.HIToolbox AppleSelectedInputSources 2>/dev/null | grep -A3 -B1 -i vifastkey || echo "  chưa chọn ViFastKey làm input source"
+entries="$(defaults read com.apple.HIToolbox AppleEnabledInputSources 2>/dev/null | grep -c 'app.vifastkey.inputmethod' || true)"
+if [ "${entries:-0}" -gt 1 ]; then
+  echo "  CẢNH BÁO: $entries entry ViFastKey (nên là 1) — xoá bớt trong Input Sources"
+fi
+
+echo "signature:"
+codesign -dv "$APP" 2>&1 | grep -E '^(Identifier|Signature|CDHash|TeamIdentifier)=' | sed 's/^/  /' || true
+codesign -dr - "$APP" 2>&1 | sed 's/^/  /' || true
+
+echo "copies:"
+for p in "$ROOT/macos/build/ViFastKey.app" "$HOME/Downloads/ViFastKey.app" \
+         "/Applications/ViFastKey.app" "/Library/Input Methods/ViFastKey.app"; do
+  [ -d "$p" ] && echo "  $p"
+done
+[ -d "$ROOT/macos/build/ViFastKey.app" ] && echo "  (bản trong repo chỉ để build, đừng mở/đăng ký nó)"
+
+echo "crash reports:"
+ls -t "$HOME/Library/Logs/DiagnosticReports"/ViFastKeyIM* 2>/dev/null | head -3 || echo "  không có"
 echo
 echo "Nếu chưa gõ được: đăng xuất/đăng nhập, kiểm tra Input Sources, xem Console/log:"
 echo "  log stream --predicate 'process == \"ViFastKeyIM\"' --level debug"

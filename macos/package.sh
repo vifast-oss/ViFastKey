@@ -51,13 +51,29 @@ else
 fi
 
 ZIP="$BUILD/ViFastKey-macos-universal.zip"
-ditto -c -k --keepParent "$APP" "$ZIP"
+PKG="$BUILD/macos-package"
+
+# ZIP tự chứa: ViFastKey.app + install.sh + uninstall.sh + README.
+make_zip() {
+  rm -rf "$PKG"
+  mkdir -p "$PKG"
+  cp -R "$APP" "$PKG/"
+  cp "$HERE/package-install.sh" "$PKG/install.sh"
+  cp "$HERE/uninstall.sh" "$PKG/uninstall.sh"
+  cp "$HERE/package-README.md" "$PKG/README.md"
+  chmod +x "$PKG/install.sh" "$PKG/uninstall.sh"
+  rm -f "$ZIP"
+  # Không đóng gói AppleDouble (._*) từ xattr của máy build.
+  ditto -c -k --norsrc --noextattr --noacl "$PKG" "$ZIP"
+}
+
+make_zip
 echo "==> $ZIP"
 
 if [ -n "${NOTARY_PROFILE:-}" ] && [ -n "$SIGN_ID" ]; then
   echo "==> Notarize"
   xcrun notarytool submit "$ZIP" --keychain-profile "$NOTARY_PROFILE" --wait
   xcrun stapler staple "$APP"
-  ditto -c -k --keepParent "$APP" "$ZIP"
+  make_zip
   echo "==> Notarized: $ZIP"
 fi
