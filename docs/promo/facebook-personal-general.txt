@@ -1,0 +1,20 @@
+Mình vừa hoàn thiện bản đầu tiên của ViFastKey — một bộ gõ tiếng Việt nhỏ, nhẹ, dành cho máy tính và điện thoại. Mình chia sẻ ở đây để mọi người dùng thử và góp ý.
+
+Nếu bạn đang tìm một bộ gõ:
+• Gõ quen tay với Telex, Simple Telex, VNI, VIQR.
+• Chạy trên Windows, macOS, Linux, Android; có thêm Chrome/Edge và bản web.
+• Có gõ tắt, sửa từ đã gõ, hạn chế gõ đôi; chuyển bảng mã cho văn bản cũ.
+• Miễn phí, không quảng cáo, không cần tạo tài khoản.
+• Bản cài trên máy xử lý ngay trên máy, không gửi nội dung gõ lên server.
+• Có bản web để thử trước khi cài.
+
+Mình làm dự án này với mong muốn có một bộ gõ nhẹ, dễ dùng và ổn định cho người Việt mình. Bản đầu tiên vẫn đang trong giai đoạn hoàn thiện, nên rất mong mọi người dùng thử và góp ý, nhất là lỗi gõ trên từng ứng dụng.
+
+Tải và xem hướng dẫn cài:
+https://vifastkey.hoctuthien.com/#tai-ve
+
+P.S. Tài khoản GitHub của mình đang bị khoá nên mã nguồn chưa public. Khi được mở khoá, mình sẽ để mã nguồn mở theo giấy phép MIT. Việc này không ảnh hưởng đến bản cài và sử dụng hiện tại.
+
+Cảm ơn mọi người đã ghé đọc 🍀
+
+#ViFastKey #BoGoTiengViet #GoTiengViet

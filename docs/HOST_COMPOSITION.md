@@ -226,6 +226,11 @@ WASM export tương đương để web/extension dùng chung contract.
 - Nếu outer owns thì phải tắt inner IME, nếu không sẽ double.
 - Nếu cả hai đầu là ViFastKey và kiểm soát được cả hai, có thể thêm handshake
   (named pipe/DBus/shared marker) để báo inner active; generic webtop không có.
+- **Thực tế với Webtop/noVNC qua browser:** chỉ bật IME ở **một đầu**. Khi dùng
+  ViFastKey trong Linux, để Windows ở English/raw; nếu bật Microsoft Vietnamese
+  IME trên Windows, browser chỉ gửi keydown của ký tự gốc, composition/Unicode
+  commit không đi qua kênh bàn phím Webtop, nên Linux nhận `G th c v...` thay vì
+  `Gõ thử có vẻ...`. Inner IME không thể khôi phục ký tự chưa từng được gửi.
 - Dedup sau commit chỉ là safety net:
   - host commit trùng inner display → reset;
   - khác → resync;

@@ -24,7 +24,6 @@ const BOOL_KEYS = [
   "w_as_u",
   "bracket_keys",
   "quick_telex",
-  "auto_restore_english",
   "auto_capitalize",
   "smart_caps",
   "macro_enabled",
@@ -42,7 +41,6 @@ const DEFAULT_CONFIG = {
   w_as_u: false,
   bracket_keys: false,
   quick_telex: false,
-  auto_restore_english: true,
   auto_capitalize: false,
   smart_caps: false,
   macro_enabled: true,
@@ -756,7 +754,7 @@ function setupEvents() {
 async function boot() {
   state.config = loadConfig();
   try {
-    await init("./pkg/vfk_wasm_bg.wasm?v=20261031h");
+    await init("./pkg/vfk_wasm_bg.wasm?v=20261101c");
     createSession();
     state.ready = true;
     syncControls();

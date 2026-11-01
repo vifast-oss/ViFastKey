@@ -5,8 +5,11 @@ Website giới thiệu + playground + API Python cho ViFastKey.
 - `app.py` — FastAPI: phục vụ landing page, API chuyển chữ bằng engine Python,
   chuyển bảng mã, thống kê ẩn danh, góp ý và `/admin`.
 - `static/` — bản sao `web/` lúc build (landing page, WASM, brand, font).
+- `downloads/` — mirror asset release (`downloads/<version>/...`), được mount vào
+  `/app/downloads:ro`; nội dung binary bị gitignore.
 - `Dockerfile` / `docker-compose.yml` — image Python 3.12, chạy uvicorn cổng 8000.
 - `stage.sh` — tạo build context phẳng (vì Dockerfile cần `python/` + `static/`).
+- `sync-downloads.sh` — copy asset từ `dist/` và sinh `sha256sums.txt`.
 
 ## API công khai
 
@@ -49,6 +52,16 @@ Basic Auth (user `admin`).
 
 ## Deploy
 
+### Cách nhanh
+
+```bash
+./deploy/vifastkey_web/deploy-jp.sh
+```
+
+Script tự build UEFI, sync downloads, stage, rsync sang `root@jp`, giải nén vào
+LXD `hoctuthien-vps`, `docker compose up -d --build`, rồi kiểm tra healthcheck +
+file UEFI + SHA. Chi tiết/rollback: [`AGENTS.md`](../../AGENTS.md).
+
 ### Cách đang dùng: LXD `hoctuthien-vps` (Traefik của Coolify)
 
 `hoctuthien.com` và toàn bộ subdomain đang được Traefik trên `jp` passthrough
@@ -56,6 +69,10 @@ TLS vào container LXD `hoctuthien-vps`; app `vifasttts` cũng chạy trong LXD 
 Vì vậy ViFastKey được đặt cạnh `vifasttts`:
 
 ```bash
+# 0) Đóng gói UEFI + đồng bộ mirror tải xuống (asset binary bị gitignore)
+./uefi/package.sh
+./deploy/vifastkey_web/sync-downloads.sh 0.1.0
+
 # 1) Trên máy local: tạo build context
 ./deploy/vifastkey_web/stage.sh /private/tmp/vifastkey-stage
 

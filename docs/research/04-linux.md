@@ -583,7 +583,6 @@ with explicit enums is enough; adapters read it through the existing `Config`/FF
   "input_method": "telex",
   "tone_style": "old",
   "spell_check": true,
-  "auto_restore_english": true,
   "w_as_u": "non_start",
   "bracket_keys": "disabled",
   "free_marking": true,
@@ -710,8 +709,8 @@ fix the letter loss at the core.
 | `mongoo` | `mongo` | `mongo` | pass |
 | `mongooo` | `mongoo` | `mongoo` | pass |
 | `tepe` / `tepee` / `tepeee` | `têp` / `tepe` / `tepee` | same | pass |
-| `data` without dictionary | `dât` | `data` via dictionary | core conversion is by design; dictionary decides |
-| `data` with bundled dictionary | `data` | `data` | pass |
+| `data` (word end) | `data` | `data` | `check_final`: âm cuối tắc cần sắc/nặng |
+| `mix` | `mĩ` | `mix` via Telex escape `mixx` | từ Việt hợp lệ luôn thắng |
 | `boss` with bundled dictionary | `boss` | `boss` | pass; without dictionary `bos` (Telebit also `bos`) |
 | `kiss` without dictionary | `kis` | `kis` in Telebit | known limitation, not a regression |
 | `hello. aw␠` with auto-cap | `hello. Aw␠` | `hello. Ă␠` | auto-cap uppercases the raw `a`, but final restore turns `Ă` back to `Aw` |

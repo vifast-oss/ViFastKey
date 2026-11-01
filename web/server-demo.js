@@ -279,8 +279,62 @@ function setupFeedback() {
   if (location.hash === "#gop-y") byId("feedback-message")?.focus();
 }
 
+function setupPlatformTabs() {
+  const tabs = Array.from(document.querySelectorAll(".platform-tab"));
+  const panels = Array.from(document.querySelectorAll(".platform-panel"));
+  if (!tabs.length || !panels.length) return;
+
+  const selectPlatform = (name, focus = false) => {
+    for (const tab of tabs) {
+      const active = tab.dataset.platform === name;
+      tab.setAttribute("aria-selected", active ? "true" : "false");
+      tab.tabIndex = active ? 0 : -1;
+      if (active && focus) tab.focus();
+    }
+    for (const panel of panels) {
+      panel.hidden = panel.id !== `panel-${name}`;
+    }
+  };
+
+  for (const tab of tabs) {
+    tab.addEventListener("click", () => selectPlatform(tab.dataset.platform));
+    tab.addEventListener("keydown", (event) => {
+      const index = tabs.indexOf(tab);
+      let next = null;
+      if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+      if (event.key === "ArrowLeft") next = (index - 1 + tabs.length) % tabs.length;
+      if (event.key === "Home") next = 0;
+      if (event.key === "End") next = tabs.length - 1;
+      if (next === null) return;
+      event.preventDefault();
+      selectPlatform(tabs[next].dataset.platform, true);
+    });
+  }
+
+  const detectPlatform = () => {
+    const ua = navigator.userAgent;
+    if (/Android/i.test(ua)) return "android";
+    if (/iPhone|iPad|iPod/i.test(ua)) return "ios";
+    if (/Macintosh|Mac OS X/i.test(ua)) return "macos";
+    if (/Linux/i.test(ua)) return "linux";
+    return "windows";
+  };
+
+  const openFromHash = () => {
+    const match = location.hash.match(/^#panel-(windows|macos|linux|android|ios|extension|uefi|cli)$/);
+    if (!match) return;
+    selectPlatform(match[1]);
+    document.getElementById(`panel-${match[1]}`)?.scrollIntoView({ block: "start" });
+  };
+
+  selectPlatform(detectPlatform());
+  openFromHash();
+  window.addEventListener("hashchange", openFromHash);
+}
+
 setupServerDemo();
 setupFeedback();
+setupPlatformTabs();
 setupDownloads();
 loadMeta();
 loadStats();

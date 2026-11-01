@@ -37,7 +37,7 @@ cộng FastAPI/uvicorn. `/admin` mở công khai nếu chưa đặt `ADMIN_PASSW
 
 | File | Vai trò |
 |---|---|
-| `index.html` | landing page + playground + server demo |
+| `index.html` | landing page + playground + server demo + tab hướng dẫn cài đặt từng nền tảng (gồm UEFI) |
 | `style.css` | theme theo `design/tokens.json`, font Be Vietnam Pro |
 | `app.js` | adapter REPLACE + PREEDIT, macro, chuyển bảng mã, caret/selection/paste |
 | `server-demo.js` | gọi `/api/type`, `/api/stats`, `/api/visit`, gửi góp ý |
@@ -52,13 +52,15 @@ Phần FastAPI/Docker nằm ở [`../deploy/vifastkey_web/`](../deploy/vifastkey
 - `replace`, `preedit`, `commit`, `pass`; `pass_key` cho dấu cách/Enter.
 - Backspace xoá đúng ký tự hiển thị; Delete, Esc, chuyển caret bằng chuột/phím.
 - Surrounding text để sửa từ vừa gõ (`tiêng` + `s` → `tiếng`).
-- Khôi phục tiếng Anh, macro (kể cả macro có số `mp3`, `k8s`), Việt/Anh theo app.
+- Gõ tiếng Anh bằng escape Telex, macro (kể cả macro có số `mp3`, `k8s`), Việt/Anh theo app.
 - Tùy chọn chính tả, `w` → `ư`, `[` `]`, Quick Telex, viết hoa đầu câu, smart caps,
   âm cuối `k` (`Đắk Lắk`), NFC/NFD.
 - Ô macro trong “Tùy chọn nâng cao” lưu cấu hình vào `localStorage`.
 - Công cụ chuyển bảng mã ngay trong playground (Unicode, TCVN3, VNI-Windows, VISCII,
   VIQR, CP1258, NCR, C string...), hiển thị cả hex cho bảng một byte.
 - API Python: chuyển chuỗi phím thô, chuyển bảng mã, thống kê ẩn danh, góp ý.
+- Tab **UEFI** trên landing + gói `vifastkey-uefi-x86_64.zip`: demo editor chạy
+  trước OS (Telex/VNI, GOP + font nhúng), không phải IME toàn hệ thống.
 
 ## Giới hạn
 

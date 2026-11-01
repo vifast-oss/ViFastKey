@@ -1,0 +1,21 @@
+Chào mọi người, mình muốn chia sẻ một chút về cách mình dùng OpenCode/AI Agent để làm và kiểm thử tự động một dự án thật: ViFastKey — bộ gõ tiếng Việt cho desktop, Android, web và UEFI.
+
+Mình không nghĩ AI Agent thay mình làm sản phẩm. Mình dùng nó như một pair-programmer tốc độ cao, nhưng mọi thứ phải có "cửa chặn":
+- Spec rõ: Python là oracle, Rust port phải qua conformance; UEFI không dùng std.
+- Test tự động: cargo test, 13k+ case conformance, 15 case UEFI self-test trong QEMU/OVMF, UI smoke + screenshot, QR decode.
+- Deploy + verify: SSH → LXD/Docker, kiểm tra health, link tải và SHA; không báo xong khi test/link chưa pass.
+- Con người review: UX, an toàn, lỗi thực tế và quyết định hướng đi.
+
+Mình ghi runbook + tiêu chí vào AGENTS.md để agent nào làm cũng theo cùng quy trình, không tự báo "xong" khi test/link chưa pass.
+
+Bài học lớn nhất của mình: AI Agent giúp đi nhanh hơn rất nhiều, nhưng nếu spec mơ hồ và không có test tự động thì nó cũng "ảo" rất nhanh. Càng làm mình càng thấy phần khó không phải là gõ code, mà là đặt đúng bài toán và kiểm chứng kết quả.
+
+Tài khoản GitHub của mình đang bị khoá nên mã nguồn chưa public; khi mở khoá mình sẽ để MIT.
+
+Ảnh bên dưới có workflow và QR; mình không để link trong bài để tránh bị group lọc. Mọi người xem ảnh giúp mình nhé.
+
+Mọi người đang dùng agent nào, có mẹo gì để agent không tự báo "xong" khi test chưa pass? Mình rất muốn học thêm.
+
+Nếu bài không phù hợp quy định nhóm, mình xin phép gỡ. Cảm ơn mọi người 🍀
+
+#OpenCode #AIAgent #AutomatedTesting #Rust #UEFI

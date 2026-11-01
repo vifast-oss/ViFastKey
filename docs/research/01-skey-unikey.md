@@ -843,7 +843,7 @@ Notes:
 | `bracket_keys` | SKey `BracketUO`; Bamboo `BracketMode` | ViFastKey boolean = everywhere; missing shifted `{ }` and non-start mode. |
 | `quick_telex` | OpenKey convention | No direct UniKey equivalent. |
 | `allow_coda_k` | Bamboo final-`k` relaxation | ViFastKey good. |
-| `auto_restore_english` | UniKey `AutoRestoreNonVn`; SKey `AutoRestore`; Bamboo `auto_correct` | ViFastKey uses dictionary; SKey has rule/dict modes; UniKey word-end only. |
+| `auto_restore_english` | UniKey `AutoRestoreNonVn`; SKey `AutoRestore`; Bamboo `auto_correct` | ViFastKey bỏ dictionary mode; chỉ core trả raw khi từ không hợp lệ, còn gõ Anh bằng escape Telex. |
 | `macro_enabled`/`macros` | UniKey `MacroFile`; SKey macro table | Add suffix/off-mode/bypass. |
 | `macro_digits` | No standard | ViFastKey-specific; keep. |
 | `auto_capitalize` | No standard | ViFastKey-specific; keep. |

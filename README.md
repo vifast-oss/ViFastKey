@@ -4,12 +4,12 @@
 
 # ViFastKey
 
-Bộ gõ tiếng Việt gọn, thuần logic: chuỗi phím thô → chữ tiếng Việt (Telex, Simple Telex, VNI, VIQR), kèm tầng engine cho IME (preedit/replace, macro, khôi phục tiếng Anh, hồ sơ ứng dụng).
+Bộ gõ tiếng Việt gọn, thuần logic: chuỗi phím thô → chữ tiếng Việt (Telex, Simple Telex, VNI, VIQR), kèm tầng engine cho IME (preedit/replace, macro, gõ tiếng Anh bằng escape Telex, hồ sơ ứng dụng).
 
 Tính năng nổi bật: `allow_coda_k` (Đắk Lắk), `macro_digits` (mp3, k8s), macro nhiều từ, macro undo một phím,
 `đ` viết tắt (`vcdd`), 16 bảng mã (TCVN3, VNI-Windows, VISCII, VIQR, CP1258, NCR... cùng Unicode),
 app profile ghi đè kiểu gõ/kiểu dấu, preedit sửa từ đã gõ, macro nhiều từ, gợi ý từ/emoji local,
-FFI C/Python/WASM, macOS IMK universal2, Windows hook + TSF preedit, Android IME, iOS keyboard extension,
+FFI C/Python/WASM, macOS IMK universal2, Windows hook-only portable, Android IME, iOS keyboard extension,
 playground Preedit + macro + bảng mã, UI cấu hình desktop egui (Windows/Linux) có tray,
 import preview diff và chụp ảnh giao diện bằng `--screenshots`.
 
@@ -55,10 +55,11 @@ ViFastKey/
 │   ├── apps/vfk-charset/       # chuyển bảng mã
 │   ├── apps/vfk-suggest/       # gợi ý từ
 │   ├── apps/vfk-settings/      # UI cấu hình desktop (egui, Windows/Linux)
-│   ├── apps/vfk-windows-replace/ # adapter Windows hook (binary vifastkey-replace.exe)
+│   ├── apps/vfk-settings/src/hook.rs # Windows hook trong cùng binary Settings
+│   ├── apps/vfk-windows-replace/ # legacy adapter hook (không đóng gói)
 ├── windows/
-│   ├── tsf/                    # TSF text service (preedit, C++ + C ABI)
-│   ├── installer/              # đăng ký/gỡ TSF per-user
+│   ├── tsf/                    # TSF legacy/reference, không build/đóng gói mặc định
+│   ├── installer/              # cài hook-only một binary
 │   └── README.md               # tổng quan component Windows
 ├── linux/
 │   ├── ibus/                   # adapter IBus (engine Python)
@@ -81,6 +82,7 @@ ViFastKey/
 Ngoài hai bản engine, repo còn có:
 
 - `web/` — landing page + playground gõ thử chạy WASM trong trình duyệt.
+- `uefi/` — demo app UEFI x86_64 (Telex/VNI, GOP + font nhúng); xem `uefi/README.md`, test bằng `make uefi-test`.
 - `resources/brand/` — logo, favicon, OG; `resources/fonts/` — Be Vietnam Pro (OFL).
 - `design/tokens.json` — màu/font/spacing dùng chung cho desktop, web, extension, mobile.
 
@@ -197,6 +199,12 @@ PYTHON=python3 tools/sync_conformance.sh ../python
 cargo test --workspace
 ```
 
+## Tải và cài đặt
+
+Bản Windows hiện tại là **hook-only một binary**, không cần ký:
+`vifastkey-windows-hook-0.1.0.zip` trên <https://vifastkey.hoctuthien.com/#tai-ve>.
+Hướng dẫn mọi nền tảng: [`docs/INSTALL.md`](docs/INSTALL.md).
+
 ## Tài liệu
 
 - `python/README.md` — đặc tả hành vi, mô hình tính toán, danh sách bất biến.
@@ -217,10 +225,11 @@ cargo test --workspace
 - `docs/DESKTOP_UI.md` — UI cấu hình desktop (egui), hợp đồng ghi config và tích hợp adapter.
 - `docs/IME_TEST_VECTORS.md` — bộ ví dụ hành vi dùng để port/regression.
 - `macos/README.md` — build/cài/test adapter macOS IMK.
-- `windows/tsf/README.md` — build/cài/test TSF Windows, `windows.json`, backend Preedit (TSF)/Replace (hook).
+- `docs/INSTALL.md` — cài đặt Windows hook-only, macOS, Linux, Android, iOS, extension, WASM.
+- `windows/tsf/README.md` — TSF legacy/reference; không đóng gói mặc định.
 - `docs/PLATFORMS.md` — trạng thái adapter từng nền tảng và hợp đồng tối thiểu.
 - `packaging/` — script đóng gói Windows/Linux và README cài đặt/giới thiệu tính năng cho người dùng.
 - `THIRD_PARTY_NOTICES.md` — ghi công bảng mã bamboo-core MIT.
 - `CONTRIBUTING.md` — quy trình sửa hành vi, chạy test, đồng bộ conformance.
 - `CHANGELOG.md` — thay đổi theo phiên bản.
-- `ROADMAP.md` — việc còn lại: test runtime Windows TSF, test Wayland desktop/app thật, preedit trên nhiều app thật, ký/notarize...
+- `ROADMAP.md` — việc còn lại: test tương tác tray/toast Windows, game/anti-cheat, Wayland desktop/app thật, ký/notarize...

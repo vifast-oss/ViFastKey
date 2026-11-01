@@ -6,7 +6,7 @@
 #   make settings    mở UI cấu hình desktop (egui)
 PYTHON ?= python3
 
-.PHONY: test test-python test-rust check conformance web settings macos clean
+.PHONY: test test-python test-rust check conformance web settings macos uefi uefi-package uefi-test deploy-web clean
 
 test: test-python test-rust
 
@@ -38,6 +38,19 @@ settings:
 
 macos:
 	./macos/build.sh
+
+uefi:
+	./uefi/tools/build.sh
+
+uefi-package:
+	./uefi/package.sh
+
+uefi-test:
+	./uefi/tools/test.sh
+	./uefi/tools/test-ui.sh
+
+deploy-web:
+	./deploy/vifastkey_web/deploy-jp.sh
 
 clean:
 	cd python && rm -rf .pytest_cache __pycache__ */__pycache__ *.egg-info build dist

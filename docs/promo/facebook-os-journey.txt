@@ -1,0 +1,20 @@
+Chào các bác,
+
+Hôm qua mình có đăng một bài hỏi về việc tìm hiểu để làm một hệ điều hành hướng tới người dùng Việt. Sau bài đó mình bắt tay tìm hiểu UEFI và mới nhận ra: phần firmware/boot gần với thế giới hệ thống nhúng hơn mình tưởng. Thế là mình thử dùng kiến thức embedded + Rust để viết một demo nhỏ: bộ gõ tiếng Việt chạy ngay trong môi trường UEFI, trước khi hệ điều hành khởi động.
+
+Nghe thì to tát, nhưng thật ra nó chỉ là một app UEFI nhỏ: đọc phím, giữ buffer, xử lý Telex/VNI, vẽ chữ bằng framebuffer và font nhúng. Mình biết nó còn ấu trĩ so với một hệ điều hành thật. Nhưng qua đó mình hiểu hơn một chút về x86_64, firmware, cách máy tính bắt đầu, memory, input/output... và quan trọng nhất là bớt sợ những thứ "ở dưới thấp".
+
+Mình không nghĩ mình sẽ viết lại kernel Linux trong một sớm một chiều. Hướng đi mình muốn học tiếp là:
+- hiểu UEFI/bootloader đủ để tự tin đọc và sửa;
+- học Linux sâu hơn, xem một hệ điều hành vận hành ra sao;
+- nếu đủ sức và đủ kiên nhẫn, mới tính tới những phần sâu hơn.
+
+Trong kỷ nguyên AI, mình thấy AI giúp viết code và tra cứu nhanh hơn rất nhiều. Nhưng càng làm mình càng thấy mấy câu hỏi "vì sao nó chạy được" thì AI không trả lời thay mình được. Phải tự đọc, tự thử, tự làm hỏng rồi sửa. Có những lúc sửa một lỗi font hay một dòng lệnh boot mà mất cả buổi, nhưng lúc nó chạy được thì vui lắm.
+
+Mình chia sẻ ở đây không phải để khoe, mà để nói với các bác đang muốn bắt đầu một thứ gì đó lớn: cứ bắt đầu từ một bài toán nhỏ, làm cho nó chạy được đã. Không cần chờ giỏi mới làm. Làm rồi sẽ thấy mình còn thiếu gì, và đó là lúc học nhanh nhất.
+
+Cảm ơn các bác đã góp ý cho bài trước. Bác nào đi trước mình xin góp ý thêm về hướng học UEFI/bootloader/Linux; bác nào mới bắt đầu thì cứ mạnh dạn thử, biết đâu lại tìm được niềm vui.
+
+Ảnh bên dưới có thông tin và QR; mình không để link trong bài để tránh bị group lọc. Nếu bài không phù hợp quy định nhóm, mình xin phép gỡ ạ.
+
+#ViFastKey #UEFI #Rust #Linux #HocLapTrinh

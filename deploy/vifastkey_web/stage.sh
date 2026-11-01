@@ -20,5 +20,10 @@ rsync -a --exclude '__pycache__' --exclude '.pytest_cache' \
 rsync -a --exclude '.DS_Store' --exclude '._*' \
   "$ROOT/web/" "$OUT/static/"
 
+if [ -d "$ROOT/deploy/vifastkey_web/downloads" ]; then
+  rsync -a --exclude '.gitignore' --exclude '.DS_Store' --exclude '._*' \
+    "$ROOT/deploy/vifastkey_web/downloads/" "$OUT/downloads/"
+fi
+
 echo "Staging: $OUT"
 du -sh "$OUT"

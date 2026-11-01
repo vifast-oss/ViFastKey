@@ -4,14 +4,54 @@
 
 ### Core & engine
 
-- Thêm `tô` vào từ điển tiếng Việt thông dụng: gõ Telex `too` + dấu cách
-  ra `tô ` thay vì bị khôi phục thành từ tiếng Anh `too`.
+- **Bỏ cơ chế dictionary auto-restore tiếng Anh** (`auto_restore_english`): từ Việt hợp lệ
+  luôn thắng (`mix` → `mĩ`, `too` → `tô`, `this` → `thí`); gõ tiếng Anh bằng escape Telex
+  (`mixx` → `mix`, `thiss` → `this`, `lasst` → `last`) hoặc chuyển chế độ Anh. Config cũ
+  còn khoá này vẫn đọc được, khoá đó bị bỏ qua.
+- Kiểm tra cuối từ chặt hơn: âm cuối tắc (`c`, `ch`, `p`, `t`, `k`) phải có thanh sắc/nặng.
+  `data`/`boot`/`meet` trả raw thay vì `dât`/`bôt`/`mêt`; `last` vẫn ra `lát`.
+- Thêm `tô` vào danh sách từ Việt thông dụng (dùng cho backspace/gợi ý).
+- Backspace sau khi gõ thừa ký tự vào từ Việt khôi phục lại từ đúng:
+  `nhưng` + `l` → `nhuwngl`, Backspace → `nhưng` (trước đây ra `nhuwng`).
 
 ### Desktop
+
+- **Windows hook-only hoàn thiện**: một binary UI + hook; HKL guard EN-US, VI/JP pass-through;
+  icon Logo/E/mờ, toast, click tray toggle, double-click mở UI, single-instance UI, watchdog hook;
+  X ẩn xuống tray, Quit dừng hook; installer gỡ TSF legacy. Đã rebuild package Windows/Linux/macOS,
+  Android, iOS simulator, IBus, Fcitx5, WASM, Chrome extension và CLI; cập nhật website/INSTALL.
+- **Windows chuyển sang hook-only**: TSF không còn build/đóng gói mặc định; hook chạy
+  trong cùng `vifastkey-settings.exe` (`--hook`), chỉ xử lý khi input source foreground
+  là English US (HKL 0x0409). Vietnamese/Japanese/ngôn ngữ khác pass-through để tránh
+  gõ đôi. Tray đổi Logo/E/logo mờ; toast khi đổi chế độ hoặc nhường IME Windows;
+  `Alt+,` chỉ hoạt động khi hook sở hữu English US. Thêm `docs/INSTALL.md` cho mọi nền tảng.
 
 - **Hotkey Việt/Anh mặc định `Alt+,`** trên Windows TSF/Replace, macOS IMK,
   Fcitx5 và IBus; tránh `Ctrl+Shift+F` (tìm kiếm toàn project trong IDE) và
   `Ctrl+Space` (chuyển input method của hệ điều hành).
+- **macOS IMK**: không còn gọi `TISRegisterInputSource`/`TISEnableInputSource` ở mỗi lần
+  app khởi động — một nguyên nhân hộp thoại “Allow ViFastKey to enable ViFastKey?”
+  hiện lặp lại. `install.sh` chỉ đăng ký một lần, không ký ad-hoc lại sau khi copy và
+  kill process cũ; `build.sh` tự dùng Apple Development/Developer ID nếu có; thêm
+  `--status` và kiểm tra chữ ký/crash report trong `doctor.sh`. ZIP phát hành giờ
+  tự chứa `install.sh`/`uninstall.sh`/README; sửa hướng dẫn web/docs (đường dẫn
+  `~/Library/Input Methods`, hộp thoại Allow, không cài lại nhiều lần).
+- **Sửa lặp từ Preedit khi sửa từ đã commit**: commit bằng dấu cách, xoá dấu cách
+  và ký tự cuối, gõ lại rồi xoá tiếp từng ra `ViFastKeyViFastKe`; giờ giữ đúng
+  `ViFastKe` và vẫn dùng Replace khi chỉnh từ đã commit.
+- **Title bar Settings** dùng ASCII `ViFastKey Settings` để không bị ô vuông khi
+  font titlebar thiếu glyph `ấ`; chữ tiếng Việt trong app vẫn dùng Be Vietnam Pro.
+- **IBus/Xwayland**: installer đồng bộ `IBUS_ADDRESS` X11 cũ sang daemon Wayland
+  đang chạy, tránh app X11 đọc address của daemon đã chết và mất gõ tiếng Việt.
+- **Windows Terminal**: TSF per-user không được Windows Terminal nạp; hook Replace
+  tự bật khi foreground là terminal/console, còn app thường vẫn dùng Preedit/TSF.
+  Hook giữ đúng Shift/Caps Lock: `OS`/`Os` không bị thành `os`, `DD` ra `Đ`.
+- **Settings**: nút X ẩn xuống tray mặc định (có thể tắt trong Nâng cao để X thoát);
+  title bar dùng ASCII `ViFastKey Settings` để tránh lỗi font `ấ` trên một số desktop Linux.
+- **Settings Windows**: ẩn cửa sổ console của `tasklist`/`taskkill`/`reg` khi khởi
+  động, không còn nháy console trước khi giao diện hiện lên.
+- **Webtop/RDP**: tài liệu hoá quy tắc chỉ bật IME ở một đầu; Windows IME đang bật
+  sẽ nuốt composition trước khi browser gửi phím sang Linux.
 - Thêm UI cấu hình `vifastkey-settings` (egui) cho Windows/Linux, kèm `vfk-config`
   đọc/merge/validate/atomic save, `--self-test`/`--check`/`--import`/`--export`.
 - **Windows Preedit/Replace**: mặc định `tsf` (Preedit); UI chỉ còn Preedit/Replace.
@@ -51,6 +91,17 @@
 - Web playground mặc định **Preedit**; Windows TSF mặc định `backend: "tsf"` (preedit),
   `auto`/`hook` vẫn chọn được trong UI.
 - Backspace trong từ literal thử khôi phục nhiều lần: `nhuwnggg` + 2 Backspace → `nhưng`.
+
+### UEFI
+
+- **Bản demo UEFI x86_64 đầu tiên**: app `no_std` chạy trước OS, dùng lại
+  `vfk-core`/`vi-syllable`; editor Telex/VNI, English escape, preedit, GOP +
+  font tiếng Việt nhúng; logo + URL trang chủ ở header, QR trong `F1`;
+  `F2` Việt/Anh, `F3` Telex/VNI, `F10` thoát.
+- Đóng gói `vifastkey-uefi-x86_64.zip` (giải nén vào USB FAT32), thêm vào release
+  CI, self-test 15 case trong QEMU/OVMF và UI smoke test.
+- Trang tải có tab hướng dẫn cài chi tiết cho từng nền tảng, gồm UEFI; mirror
+  `downloads/0.1.0/` và mapping thống kê lượt tải UEFI.
 
 ## 0.1.0 — 2026-10-31
 
@@ -190,8 +241,87 @@
 
 ### Android full keyboard
 
-- QWERTY đầy đủ, số, shift/caps, symbols, emoji, long-press dấu tiếng Việt.
-- Suggestion bar local qua JNI `vfk-suggest`; settings đầy đủ + SharedPreferences → engine JSON.
+- QWERTY đầy đủ, shift/caps, symbols, emoji, long-press dấu tiếng Việt; hàng số nằm
+  trong trang `?123` thay vì chiếm một hàng riêng.
+- Kích thước bàn phím theo Gboard: phím chữ ~35dp x 47dp, gap ngang ~5,3dp,
+  gap dọc ~11,8dp, home-row căn giữa, chữ 24sp; phím space hiển thị `ViFastKey`.
+- 3 layout theo Gboard: chữ; bàn phím số (+, -, *, /, %, 0, =) và trang ký tự
+  (số + ký tự, phím `=\\` / `12/34`, Backspace). Hàng qwerty có số nhỏ
+  `1..0` ở góc trên phải; giữ phím ra số ngay.
+- Nhớ panel gần nhất: chữ → `?123` mở lại panel vừa dùng (mặc định ký tự đặc biệt);
+  `12/34` / `!?#` chuyển giữa bàn phím số và ký tự.
+- **Bảng nhớ tạm**: lịch sử 20 clip local, menu bo góc; dán, chọn tất cả,
+  sao chép, cắt, xoá lịch sử. Chỉ đọc clipboard khi mở menu. Thêm nút ✕,
+  đóng khi chạm ra ngoài hoặc chạm lại nút 📋.
+- Phím phẩy giữ cỡ chữ 20sp (emoji nhỏ phía trên) và nhích lên trên; menu clipboard
+  nằm dưới thanh trên để không che icon, đóng bằng ✕/chạm ngoài/chạm lại 📋.
+- Emoji chuyển sang GridView lazy, chỉ render ô nhìn thấy và hiện 3,5 hàng
+  (lộ nửa hàng kế tiếp) để biết còn cuộn.
+- Long-press nguyên âm mở popup biến thể bo góc: mặc định là số (`e` → `3`),
+  kéo ngang để chọn dấu (`ê/é/...`), thả tay lấy mục highlight.
+- Gõ xong ký tự đặc biệt tự quay về layout chữ; số vẫn giữ bàn phím số.
+- **VNI**: layout chữ tự thêm hàng số `1–0` khi chọn VNI để gõ dấu/âm VNI ngay.
+- **Settings**: thanh Lưu cấu hình cố định ở đáy màn hình, nút cam luôn thấy,
+  kèm ghi chú cấu hình áp dụng ngay sau khi lưu.
+- **Emoji hay dùng**: hàng “Hay dùng” ở đầu bảng emoji, xếp theo tần suất và lần
+  dùng gần nhất, lưu local; nhãn bên trái, các icon gợi ý bên phải.
+- **Tab emoji**: bỏ hàng gợi ý trống, hàng “Hay dùng” sát thanh trên; lưới luôn
+  lộ một phần hàng kế tiếp kèm scrollbar.
+- **Emoji**: chỉ rung/âm thanh khi thực sự chọn emoji; chạm/kéo để cuộn không rung.
+- **Emoji**: mở rộng lên 1.121 biểu tượng (mặt, người, động vật, thiên nhiên,
+  đồ ăn, du lịch, hoạt động, đồ vật, biểu tượng, cờ).
+- **App ghi chú tự chốt composing text**: IME chỉ `finishComposingText()` và
+  không commit lại preedit; sửa lỗi `Nguyễn` bị nhân đôi thành `NguyễnNguyễn`.
+- **Độ cao tab emoji**: khớp chiều cao layout chữ/ký tự/số đang dùng, kể cả VNI;
+  hàng “Hay dùng” co lại và lưới tự bù, không còn giật khi chuyển tab.
+- **Settings Android**: thêm logo ViFastKey và dòng “Phiên bản 0.1.0 · build”;
+  tùy chọn nâng cao “Tự về bàn phím chữ sau ký tự đặc biệt” mặc định tắt, ai quen
+  quay về chữ có thể bật.
+- **Hàng số Android**: thêm tùy chọn “Hiện hàng số 1–0 trên bàn phím chữ”.
+  Telex/Simple Telex/VIQR mặc định tắt và có thể bật; VNI luôn bật, khóa tắt để
+  không mất hàng số khi gõ dấu/âm VNI.
+- **Chiều cao bàn phím Android**: thêm mức 100/115/130/145% trong Settings →
+  Bàn phím; áp dụng cho chữ, ký tự, số, emoji và hàng số.
+- **Cài đặt nhanh trong bàn phím**: nút 4 ô mở panel đổi nhanh chiều cao, bật/tắt
+  hàng số và mở Cài đặt đầy đủ.
+- **Build Android**: `android/build.sh` build lại `vfk-jni` từ core trước khi đóng
+  APK, tránh dùng `.so` cũ trong `jniLibs` sau khi sửa engine/core.
+- **Core Backspace**: gõ `thoảng`, thêm `e`, xoá `e` quay lại `thoảng`; khôi phục
+  theo âm tiết Việt hợp lệ thay vì chỉ từ điển common. Áp dụng mọi adapter.
+- **Android gạch chân**: mặc định dùng Replace/commit (không gạch chân); tùy chọn
+  “Hiện gạch chân chữ đang gõ” trong Nâng cao để quay lại preedit.
+- **Android Replace**: gộp xoá + commit trong `beginBatchEdit/endBatchEdit`, bỏ
+  composing rỗng ở chế độ không gạch chân; suggestion/autocorrect cũng batch để
+  giảm nháy khi gõ nhanh.
+- **Android layout theo field**: vào app/field mới tự reset về bàn phím chữ
+  (hoặc bàn phím số nếu field số), không giữ nhầm tab ký tự đặc biệt như trước;
+  quay lại cùng field vẫn giữ layout đang dùng.
+- Phím phẩy giữ nguyên vị trí nút, chỉ nhích dấu phẩy bên trong lên; xoá highlight
+  của phím sau khi chọn số/dấu từ popup.
+- Nút phẩy có emoji; giữ phím phẩy mở emoji. Bỏ nút VI ở hàng dưới, dùng globe
+  giống Gboard (VI vẫn ở thanh trên).
+- Emoji tăng lên 240, cuộn dọc thay vì lật trang; chọn emoji xong về layout chữ.
+- Chọn dấu long-press xong cũng về layout chữ; chọn số giữ nguyên bàn phím số.
+- Vẽ lại icon vector cho Shift, Backspace, Enter; icon đổi màu theo theme và trạng thái shift/caps.
+- Touch target phủ kín gap giữa các phím (nền vẽ inset): gõ nhanh/chạm giữa hai phím
+  chọn phím gần nhất thay vì mất phím; vẫn là tap-only, chưa có glide/swipe typing.
+- Backspace xoá được vùng text bôi đen; giữ Backspace lặp nhanh dần 65ms → 22ms.
+- Sửa Backspace ký tự cuối bị "khựng": preedit rỗng phải xoá composing region
+  (`setComposingText("")`) thay vì `finishComposingText()` commit lại chữ vừa xoá.
+- Shift và Backspace có rung + âm thanh như phím chữ; giữ Backspace vẫn lặp xoá.
+- Rung + âm thanh phát ngay khi chạm phím; cập nhật shift/labels và suggestion bar
+  theo kiểu tái sử dụng view để giảm giật khi gõ nhanh.
+- Tự bật shift ở đầu field/câu hoặc sau `.` `!` `?` `…` + khoảng trắng.
+- Suggestion bar local qua JNI `vfk-suggest`; settings đầy đủ + SharedPreferences → engine JSON;
+  thêm sửa lỗi gần đúng (edit distance 1–2 trên từ thông dụng) khi không có gợi ý theo tiền tố.
+- Tự sửa lỗi gõ nhầm phím (mặc định bật, tắt trong Settings): chỉ commit khi từ không
+  hợp lệ và có đúng một ứng viên tiếng Việt thông dụng, giữ chữ hoa đầu từ;
+  ví dụ `tieengd` + space → `tiếng `.
+- Chọn gợi ý tự thêm dấu cách; gõ dấu câu sát nghĩa (`. , ! ? : ; … ) ] }`) tự xoá
+  dấu cách vừa thêm.
+- Android mặc định `w` → `ư`, khớp trạng thái checkbox trong Settings.
+- Khi app gửi tin nhắn/xoá field lúc còn preedit, IME xoá composition thay vì commit
+  lại thành chữ sót (ví dụ `:v`).
 - Hardware keyboard, cursor guard, numeric/password handling, app icon.
 
 ### Android / iOS

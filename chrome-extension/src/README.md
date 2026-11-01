@@ -20,5 +20,5 @@ Mở `chrome://extensions` → Developer mode → Load unpacked → chọn `dist
 - Chỉ trang web; không address bar, native app, password field, một số editor canvas.
 - Context menu dùng `activeTab` + inject khi người dùng bấm, không content script thường trú.
 - `contenteditable`/React controlled input có thể cần xử lý thêm; bản MVP dùng `setRangeText`/`execCommand`.
-- WASM normalize từ lexicon 20k từ tiếng Anh để tránh `data` → `dât`; vẫn có thể sai với từ lạ.
+- WASM normalize giữ từ tiếng Anh đã biết trong lexicon 20k; vẫn có thể sai với từ lạ.
 - Chưa phát hành Chrome Web Store.

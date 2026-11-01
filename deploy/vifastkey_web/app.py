@@ -108,9 +108,151 @@ FEEDBACK_CATEGORIES = {
 }
 FEEDBACK_STATUS = {"new": "Chờ xem", "read": "Đã đọc", "resolved": "Đã xử lý"}
 
+# Nhật ký lỗi đã sửa, hiển thị công khai ở /#da-sua và trong /admin.
+ISSUE_FIXES = [
+    (
+        "Build 22",
+        "Mở bàn phím ở Facebook/app mới lại hiện tab ký tự đặc biệt thay vì chữ",
+        "Vào field/app mới tự reset về layout chữ (hoặc bàn phím số nếu field số); "
+        "chỉ giữ layout đang dùng khi quay lại cùng field.",
+    ),
+    (
+        "Build 21",
+        "Gõ chế độ Replace hơi nháy do xoá rồi commit từng phím",
+        "Gộp delete + commit vào batch edit, bỏ setComposingText/finish rỗng ở "
+        "chế độ không gạch chân; suggestion/autocorrect cũng dùng batch.",
+    ),
+    (
+        "Build 20",
+        "Gõ “thoảng” rồi thêm e, xoá e không quay lại “thoảng”",
+        "Sửa trong engine/core: khôi phục khi phần còn lại là âm tiết Việt hợp lệ, "
+        "không chỉ khi có trong từ điển common; áp dụng cho mọi UI.",
+    ),
+    (
+        "Build 20",
+        "Muốn mặc định không có gạch chân preedit như Gboard",
+        "Mặc định dùng Replace/commit (không gạch chân); bật “Hiện gạch chân chữ "
+        "đang gõ” trong Cài đặt → Nâng cao nếu muốn preedit.",
+    ),
+    (
+        "Build 19",
+        "APK Android có thể dùng JNI cũ sau khi sửa core; gõ vẫn gặp lỗi cũ",
+        "Build Android chạy lại vfk-jni từ core trước khi đóng APK; build 19 dùng "
+        "native library mới thay vì .so cũ trong jniLibs.",
+    ),
+    (
+        "Build 19",
+        "Chiều cao bàn phím cố định, không chỉnh cao hơn được",
+        "Thêm chiều cao 100/115/130/145% trong Settings → Bàn phím; áp dụng cho "
+        "layout chữ, ký tự, số, emoji và cả hàng số.",
+    ),
+    (
+        "Build 19",
+        "Muốn cài đặt nhanh ngay trong bàn phím như Gboard",
+        "Thêm nút 4 ô ở thanh trên: đổi nhanh chiều cao, bật/tắt hàng số và mở "
+        "Cài đặt đầy đủ; VNI vẫn khóa hàng số.",
+    ),
+    (
+        "Build 18",
+        "Gõ ký tự đặc biệt xong tự nhảy về bàn phím chữ; người quen ở lại bàn phím ký tự",
+        "Đưa tùy chọn vào Cài đặt → Nâng cao, mặc định tắt: gõ ký tự đặc biệt xong "
+        "vẫn ở bàn phím hiện tại; bật nếu muốn tự quay về bàn phím chữ.",
+    ),
+    (
+        "Build 18",
+        "Telex không có hàng số 1–0; VNI thì không có cách bật/tắt rõ ràng",
+        "Thêm tùy chọn “Hiện hàng số 1–0 trên bàn phím chữ”: Telex mặc định tắt, "
+        "có thể bật; VNI luôn bật và khóa tắt vì cần số để gõ dấu/âm.",
+    ),
+    (
+        "Build 18",
+        "Khó phân biệt các bản build Android vì chỉ thấy 0.1.0",
+        "Settings hiển thị “Phiên bản 0.1.0 · build 18”; versionCode vẫn là định danh "
+        "chính thức, versionName giữ 0.1.0.",
+    ),
+    (
+        "Build 17",
+        "Chiều cao tab emoji cao hơn layout khác, bàn phím bị giật khi chuyển tab",
+        "Tab emoji cao bằng layout hiện tại (chữ/ký tự/số, kể cả VNI); hàng Hay dùng "
+        "co lại, lưới tự bù và vẫn lộ một phần hàng kế tiếp.",
+    ),
+    (
+        "Build 16",
+        "Gõ “Nguyễn” trong app ghi chú rồi để nguyên, một lúc sau thành “NguyễnNguyễn”",
+        "Khi app tự chốt vùng soạn thảo, IME chỉ finishComposingText và không chèn lại "
+        "preedit; hết nhân đôi chữ.",
+    ),
+    (
+        "Build 16",
+        "Danh sách emoji còn ít",
+        "Mở rộng lên 1.121 emoji: mặt, người, động vật, thiên nhiên, đồ ăn, du lịch, "
+        "hoạt động, đồ vật, biểu tượng và cờ; vẫn lazy + hàng Hay dùng.",
+    ),
+    (
+        "Build 16",
+        "Tab emoji bị cách một hàng trống; lưới khớp đúng hàng cuối nên khó thấy còn cuộn",
+        "Bỏ hàng gợi ý trống khi ở tab emoji, hàng Hay dùng sát thanh trên; "
+        "lưới luôn lộ một phần hàng kế tiếp kèm scrollbar.",
+    ),
+    (
+        "Build 16",
+        "Chạm/kéo để cuộn tab emoji vẫn rung dù chưa chọn icon",
+        "Chỉ rung và phát âm thanh khi thực sự chọn emoji; cuộn không rung.",
+    ),
+    (
+        "Build 15",
+        "Nút Lưu cấu hình nằm cuối trang, dễ bị bỏ sót",
+        "Thanh Lưu cố định ở đáy màn hình, nút cam luôn hiển thị kèm ghi chú áp dụng ngay.",
+    ),
+    (
+        "Build 15",
+        "Muốn gợi ý emoji/icon theo thói quen, icon hay dùng nằm bên phải nhãn",
+        "Thêm hàng Hay dùng ở đầu bảng emoji, xếp theo tần suất/lần dùng gần nhất, "
+        "lưu local; nhãn bên trái, các icon gợi ý bên phải.",
+    ),
+    (
+        "Build 14",
+        "Chế độ VNI không có số nên không gõ được",
+        "Tự thêm hàng số 1–0 vào layout chữ khi chọn VNI.",
+    ),
+    (
+        "Build 14",
+        "Giữ phím chọn số xong phím còn sáng; dấu phẩy sát đáy",
+        "Popup biến thể mặc định số, kéo ngang chọn dấu; bỏ highlight sau khi chọn; "
+        "giữ nguyên vị trí nút phẩy, chỉ nhích dấu bên trong lên.",
+    ),
+    (
+        "Build 13",
+        "Bảng nhớ tạm không có nút đóng, chạm lại icon không tắt, che icon clipboard",
+        "Thêm nút ✕, đóng khi chạm ngoài hoặc chạm lại 📋; panel nằm dưới thanh trên.",
+    ),
+    (
+        "Build 13",
+        "Emoji render hết một lần nên giật lag; khớp 3 hàng khó biết còn icon",
+        "GridView lazy chỉ render ô nhìn thấy; hiện 3,5 hàng + scrollbar.",
+    ),
+    (
+        "Build 12",
+        "Backspace ký tự cuối bị khựng, phải bấm lần nữa",
+        "Xoá composing region thay vì commit lại preedit rỗng; xoá được selection.",
+    ),
+    (
+        "Build 7",
+        "Bôi đen xoá không được; giữ phím xoá tốc độ đều",
+        "Backspace xoá selection; giữ Backspace nhanh dần 65ms → 22ms.",
+    ),
+    (
+        "Build 3/4",
+        "Gửi tin nhắn lúc còn preedit thì sót chữ",
+        "Phát hiện host đã xoá field thì xoá composition, không commit lại preedit.",
+    ),
+]
+
 # Tên file trong GitHub Release → nền tảng; server tự map để client không gửi
 # chuỗi tùy ý vào thống kê.
 DOWNLOAD_PLATFORMS = {
+    "vifastkey-windows-hook.zip": "windows",
+    "vifastkey-windows-hook-0.1.0.zip": "windows",
     "vifastkey-windows-tsf.zip": "windows",
     "vifastkey-cli-windows-x64.zip": "windows",
     "vifastkey-macos-imk-universal.zip": "macos",
@@ -124,6 +266,7 @@ DOWNLOAD_PLATFORMS = {
     "vifastkey-android-release.apk": "android",
     "vifastkey-android-release.aab": "android",
     "vifastkey-ios-simulator.zip": "ios",
+    "vifastkey-uefi-x86_64.zip": "uefi",
     "vifastkey-wasm.zip": "web",
     "vifastkey-chrome-extension.zip": "extension",
 }
@@ -133,6 +276,7 @@ DOWNLOAD_LABELS = {
     "linux": "Linux",
     "android": "Android",
     "ios": "iOS Simulator",
+    "uefi": "UEFI x86_64",
     "extension": "Chrome/Edge",
     "web": "WASM",
 }
@@ -498,7 +642,6 @@ def _type_text(
     spell_check: bool,
     allow_coda_k: bool,
     macro_digits: bool,
-    auto_restore_english: bool,
     unicode_form: str,
     macros: dict[str, str],
     trace: bool = False,
@@ -515,7 +658,6 @@ def _type_text(
         spell_check=spell_check,
         allow_coda_k=allow_coda_k,
         macro_digits=macro_digits,
-        auto_restore_english=auto_restore_english,
         unicode_form=unicode_form,
         macros={**DEFAULT_MACROS, **macros},
     )
@@ -613,6 +755,11 @@ def _admin_html(stats: dict) -> str:
         if ADMIN_PASSWORD
         else "Đang mở công khai, chưa đặt ADMIN_PASSWORD."
     )
+    fix_items = "".join(
+        f"<li><b>{html.escape(build)}</b> — {html.escape(issue)}<br>"
+        f"<span style='color:#15803d;font-weight:700'>Đã sửa:</span> {html.escape(fix)}</li>"
+        for build, issue, fix in ISSUE_FIXES
+    )
     return f"""<!doctype html><html lang="vi"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="refresh" content="60">
@@ -656,6 +803,9 @@ th{{background:#FDF0EB;color:#9B2C20}} a{{color:#C6281E}}
 </div>
 <h2 style="margin:24px 0 4px">Lượt bấm tải theo nền tảng</h2>
 <p class="sub">{download_summary}</p>
+<h2 style="margin:24px 0 4px">Đã sửa gần đây</h2>
+<div class="note"><ul style="margin:8px 0 0;padding-left:18px;line-height:1.55">{fix_items}</ul>
+<p style="margin:8px 0 0"><a href="/#da-sua">Xem chi tiết trên trang chủ ↗</a></p></div>
 <h2 style="margin:24px 0 4px">Góp ý &amp; báo lỗi</h2>
 <p class="sub">{auth_note} · <a href="/admin/feedback.csv">Tải CSV</a></p>
 <table><thead><tr><th>Thời điểm</th><th>Loại</th><th>Nội dung</th><th>Liên hệ</th><th>Ẩn danh</th><th>Trạng thái</th><th>Cập nhật</th></tr></thead>
@@ -743,7 +893,6 @@ class TypeRequest(BaseModel):
     spell_check: bool = True
     allow_coda_k: bool = False
     macro_digits: bool = False
-    auto_restore_english: bool = True
     unicode_form: Literal["NFC", "NFD"] = "NFC"
     macros: dict[str, str] | None = None
     visitor_id: str | None = None
@@ -849,7 +998,6 @@ def api_type(payload: TypeRequest, request: Request) -> dict:
                 payload.spell_check,
                 payload.allow_coda_k,
                 payload.macro_digits,
-                payload.auto_restore_english,
                 payload.unicode_form,
                 macros,
                 payload.trace,

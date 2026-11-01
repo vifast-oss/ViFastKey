@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<style>
+  @font-face {
+    font-family: "Be Vietnam Pro";
+    src: url("../../resources/fonts/BeVietnamPro-Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-display: block;
+  }
+  :root {
+    --bg: #fbf6ee;
+    --ink: #1f2430;
+    --muted: #5f6673;
+    --accent: #d42a22;
+    --accent-dark: #b3140f;
+    --gold: #ffb800;
+    --cream: #fff8ec;
+    --border: #e8ddd0;
+    --success: #15803d;
+    --mono: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    width: 1080px; height: 1350px; margin: 0; overflow: hidden;
+    background: var(--bg); color: var(--ink);
+    font-family: "Be Vietnam Pro", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .poster {
+    position: relative; width: 1080px; height: 1350px; padding: 54px 64px 0;
+    background:
+      radial-gradient(700px 450px at 96% -8%, rgba(255, 184, 0, 0.20), transparent 68%),
+      radial-gradient(600px 430px at -8% 40%, rgba(212, 42, 34, 0.09), transparent 70%),
+      linear-gradient(180deg, #fffaf2 0%, var(--bg) 58%, #fff7ea 100%);
+  }
+  .poster::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(31, 36, 48, 0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(31, 36, 48, 0.035) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: linear-gradient(180deg, #000, transparent 72%);
+  }
+  .topline {
+    position: absolute; top: 0; left: 0; right: 0; height: 9px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent) 63%, var(--gold) 63%, var(--gold) 100%);
+  }
+  .head {
+    position: relative; z-index: 1; display: flex; align-items: flex-start;
+    justify-content: space-between; gap: 24px; height: 104px;
+  }
+  .logo { width: 360px; height: auto; display: block; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px;
+    border: 1px solid #e9c3b7; border-radius: 999px;
+    background: rgba(255, 248, 243, 0.9); color: var(--accent-dark);
+    font-size: 11px; font-weight: 700; letter-spacing: 1px;
+    text-transform: uppercase; white-space: nowrap;
+  }
+  .badge i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .hero { position: relative; z-index: 1; margin-top: 18px; }
+  .eyebrow {
+    margin: 0; color: var(--accent); font-size: 12px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+  }
+  h1 {
+    margin: 13px 0 0; font-size: 67px; line-height: 1.01;
+    letter-spacing: -3.6px; font-weight: 700;
+  }
+  h1 span { color: var(--accent); }
+  .sub {
+    margin: 18px 0 0; color: var(--ink); font-size: 20px;
+    line-height: 1.4; letter-spacing: -0.4px;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+  .chips span {
+    padding: 7px 11px; border: 1px solid #e9d7c3; border-radius: 999px;
+    background: rgba(255, 252, 247, 0.82); color: #6b3a2a;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.3px;
+  }
+  .flow {
+    position: relative; z-index: 1; display: grid;
+    grid-template-columns: repeat(5, 1fr); gap: 9px;
+    width: 952px; margin: 20px auto 0;
+  }
+  .flow-card {
+    min-width: 0; padding: 14px 12px; border: 1px solid #e9d7c3;
+    border-radius: 14px; background: rgba(255, 253, 249, 0.85);
+    box-shadow: 0 12px 28px -24px rgba(90, 45, 25, 0.5);
+  }
+  .flow-card small {
+    display: block; color: var(--accent); font-size: 10px;
+    font-weight: 800; letter-spacing: 1.2px;
+  }
+  .flow-card strong {
+    display: block; margin-top: 6px; font-size: 14px;
+    line-height: 1.2; letter-spacing: -0.25px;
+  }
+  .flow-card p {
+    margin: 6px 0 0; color: var(--muted); font-size: 10.5px;
+    line-height: 1.35;
+  }
+  .proof {
+    position: relative; z-index: 1; display: flex; gap: 14px;
+    width: 952px; min-height: 258px; margin: 18px auto 0;
+  }
+  .terminal {
+    flex: 1.45; min-width: 0; padding: 18px 19px; border-radius: 16px;
+    background: #221e1b; box-shadow: 0 22px 42px -30px rgba(0, 0, 0, 0.7);
+    color: #f4e7d9; font: 400 11.5px/1.65 var(--mono);
+    border: 1px solid #3a302a;
+  }
+  .terminal .t-head {
+    display: flex; align-items: center; gap: 7px; margin-bottom: 8px;
+    color: #bca797; font: 700 10px/1.2 "Be Vietnam Pro", sans-serif;
+    letter-spacing: 0.7px; text-transform: uppercase;
+  }
+  .terminal .dot { width: 7px; height: 7px; border-radius: 50%; background: #d42a22; }
+  .terminal .ok { color: #8ee0a5; }
+  .terminal .dim { color: #9f8b7e; }
+  .shot {
+    flex: 0.75; min-width: 0; padding: 7px; border: 1px solid #dcc9b5;
+    border-radius: 16px; background: rgba(255, 255, 255, 0.7);
+    box-shadow: 0 22px 42px -30px rgba(90, 45, 25, 0.5);
+  }
+  .shot img {
+    display: block; width: 100%; height: 100%; object-fit: cover;
+    object-position: top; border-radius: 11px;
+  }
+  .results {
+    position: relative; z-index: 1; display: grid;
+    grid-template-columns: repeat(4, 1fr); gap: 10px;
+    width: 952px; margin: 18px auto 0;
+  }
+  .result {
+    padding: 13px 14px 12px; border: 1px solid #e9d7c3; border-radius: 14px;
+    background: rgba(255, 253, 249, 0.86);
+  }
+  .result strong {
+    display: block; color: var(--accent); font-size: 27px;
+    line-height: 1; letter-spacing: -1px;
+  }
+  .result span {
+    display: block; margin-top: 5px; color: var(--muted);
+    font-size: 10.5px; line-height: 1.3;
+  }
+  .quote {
+    position: relative; z-index: 1; width: 952px; margin: 16px auto 0;
+    padding: 15px 20px; border-left: 4px solid var(--accent);
+    border-radius: 0 13px 13px 0; background: rgba(255, 250, 240, 0.8);
+    color: #5d4638; font-size: 16px; line-height: 1.45;
+  }
+  .quote b { color: var(--ink); }
+  .lesson {
+    position: relative; z-index: 1; width: 952px; margin: 15px auto 0;
+    padding: 13px 18px; border: 1px solid #e9d7c3; border-radius: 13px;
+    background: rgba(255, 253, 249, 0.86); color: #5d4638;
+    font-size: 13.5px; line-height: 1.45;
+  }
+  .lesson b { color: var(--accent-dark); }
+  .cta {
+    position: relative; z-index: 1; display: flex; align-items: center; gap: 26px;
+    width: 952px; min-height: 150px; margin: 18px auto 0;
+    padding: 19px 27px; border: 1px solid #7d1713; border-radius: 20px;
+    background: linear-gradient(145deg, #2a1b18 0%, #3a1c17 62%, #6c1d17 100%);
+    box-shadow: 0 24px 52px -30px rgba(90, 20, 15, 0.7); color: var(--cream);
+  }
+  .cta::before {
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    border-radius: 20px 20px 0 0;
+    background: linear-gradient(90deg, var(--accent), var(--gold));
+  }
+  .cta-copy { flex: 1; min-width: 0; }
+  .cta-copy p {
+    margin: 0; color: #f4caa7; font-size: 12px; font-weight: 700;
+    letter-spacing: 1.7px; text-transform: uppercase;
+  }
+  .cta-copy strong {
+    display: block; margin-top: 6px; color: #fff8ec; font-size: 32px;
+    line-height: 1.1; letter-spacing: -1px; overflow-wrap: anywhere;
+  }
+  .cta-copy small {
+    display: block; margin-top: 7px; color: #e4b9a4; font-size: 12px;
+    line-height: 1.4;
+  }
+  .qr-box {
+    flex: 0 0 134px; width: 134px; padding: 8px; border-radius: 13px;
+    background: #fff; box-shadow: 0 12px 26px -16px rgba(0, 0, 0, 0.6);
+  }
+  .qr-box img { display: block; width: 118px; height: 118px; }
+  .footer {
+    position: relative; z-index: 1; display: flex; justify-content: space-between;
+    gap: 18px; width: 952px; margin: 15px auto 0;
+    color: #7a5a42; font-size: 10.5px; line-height: 1.45;
+  }
+  .footer b { color: var(--ink); }
+  .footer .right { text-align: right; }
+</style>
+</head>
+<body>
+  <div class="poster">
+    <div class="topline"></div>
+
+    <header class="head">
+      <img class="logo" src="../../resources/brand/vifastkey-lockup.png" alt="ViFastKey">
+      <span class="badge"><i></i> OpenCode · AI Agent</span>
+    </header>
+
+    <section class="hero">
+      <p class="eyebrow">AI Agent · automated testing · real product</p>
+      <h1>Từ ý tưởng đến sản phẩm,<br><span>cùng AI Agent.</span></h1>
+      <p class="sub">ViFastKey — bộ gõ tiếng Việt cho desktop, mobile, web và UEFI.</p>
+      <div class="chips">
+        <span>OpenCode</span>
+        <span>Rust</span>
+        <span>QEMU/OVMF</span>
+        <span>Test tự động</span>
+        <span>Deploy &amp; verify</span>
+      </div>
+    </section>
+
+    <section class="flow" aria-label="Quy trình phát triển với AI Agent">
+      <div class="flow-card"><small>01 · BÀI TOÁN</small><strong>Spec &amp; ràng buộc</strong><p>Oracle, conformance, yêu cầu không dùng std trên UEFI.</p></div>
+      <div class="flow-card"><small>02 · OPENCODE</small><strong>Agent viết code</strong><p>Đọc repo, port core, làm renderer, font, QR, sửa lỗi.</p></div>
+      <div class="flow-card"><small>03 · KIỂM THỬ</small><strong>Test tự động</strong><p>Rust tests, QEMU self-test, UI smoke, QR decode.</p></div>
+      <div class="flow-card"><small>04 · PHÁT HÀNH</small><strong>Deploy &amp; verify</strong><p>SSH → LXD/Docker; kiểm tra live, link tải, SHA.</p></div>
+      <div class="flow-card"><small>05 · CON NGƯỜI</small><strong>Review &amp; quyết định</strong><p>UX, an toàn, lỗi thực tế, hướng đi tiếp theo.</p></div>
+    </section>
+
+    <section class="proof">
+      <div class="terminal">
+        <div class="t-head"><span class="dot"></span> make uefi-test</div>
+        <div><span class="dim">$</span> cargo test --workspace</div>
+        <div><span class="ok">PASS</span> telex-active · vni-active · backspace</div>
+        <div><span class="dim">$</span> qemu-system-x86_64 -bios OVMF.fd ...</div>
+        <div><span class="ok">PASS</span> SELFTEST (15 case)</div>
+        <div><span class="ok">PASS</span> UI OK: 1280×800</div>
+        <div><span class="ok">PASS</span> deploy: link 200 · SHA khớp</div>
+      </div>
+      <div class="shot"><img src="../../uefi/docs/screenshot-main.png" alt="ViFastKey UEFI"></div>
+    </section>
+
+    <section class="results" aria-label="Kết quả kiểm thử">
+      <div class="result"><strong>15</strong><span>self-test UEFI trong QEMU/OVMF</span></div>
+      <div class="result"><strong>13k+</strong><span>case conformance của engine</span></div>
+      <div class="result"><strong>4</strong><span>nền tảng đã build và kiểm tra</span></div>
+      <div class="result"><strong>100%</strong><span>link live đã kiểm tra sau deploy</span></div>
+    </section>
+
+    <section class="quote">
+      <b>Không phải AI thay mình làm sản phẩm.</b> AI giúp mình đi nhanh hơn trên con đường mình phải tự hiểu.
+    </section>
+
+    <section class="lesson">
+      <b>Bài học:</b> test tự động là thứ biến AI Agent từ “viết nhanh” thành “viết đáng tin”.
+    </section>
+
+    <section class="cta">
+      <div class="cta-copy">
+        <p>Sản phẩm &amp; câu chuyện đầy đủ</p>
+        <strong>vifastkey.hoctuthien.com</strong>
+        <small>Quét QR để mở trang chủ. Mã nguồn MIT khi GitHub mở khoá.</small>
+      </div>
+      <div class="qr-box"><img src="qr.svg" alt="QR trang chủ ViFastKey"></div>
+    </section>
+
+    <footer class="footer">
+      <div><b>AI tăng tốc vòng lặp.</b> Con người giữ bài toán, tiêu chuẩn và trách nhiệm.</div>
+      <div class="right">ViFastKey · OpenCode · Rust · UEFI</div>
+    </footer>
+  </div>
+</body>
+</html>

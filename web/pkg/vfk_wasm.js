@@ -336,7 +336,7 @@ export function charset_list() {
 /**
  * Chuẩn hoá một đoạn văn bản: chuyển Telex/VNI thô thành chữ Việt và
  * chuẩn hoá các từ đã có dấu. Giữ nguyên dấu câu/khoảng trắng.
- * Từ tiếng Anh đã biết trong lexicon được giữ nguyên để tránh `data` -> `dât`.
+ * Từ tiếng Anh đã biết trong lexicon được giữ nguyên thay vì bẻ dấu thành tiếng Việt.
  * @param {string} text
  * @param {string} method
  * @param {string} tone_style

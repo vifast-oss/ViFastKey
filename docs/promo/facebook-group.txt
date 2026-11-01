@@ -1,0 +1,17 @@
+Chào mọi người, mình vừa làm xong bản demo UEFI đầu tiên cho ViFastKey — dự án bộ gõ tiếng Việt nhỏ, chạy local, viết bằng Rust.
+
+Mình chia sẻ để xin góp ý, không phải spam:
+- Telex, Simple Telex, VNI, VIQR; 16 bảng mã.
+- Windows hook-only, macOS IMK, Linux IBus/Fcitx5, Android, iOS Simulator, Chrome/Edge, WASM.
+- UEFI x86_64: editor Telex/VNI chạy trước khi OS boot; có logo, URL và QR trang chủ trong app.
+- English escape, macro, preedit, sửa từ đã gõ; engine desktop chạy local.
+
+UEFI hiện là demo app tự chứa, chưa gõ được vào BIOS/UEFI Setup hay UEFI Shell.
+
+Tài khoản GitHub của mình đang bị khoá nên mã nguồn chưa public. Khi được mở khoá, mình sẽ open source theo giấy phép MIT.
+
+Ảnh bên dưới có thông tin, link tải và QR; mình không để link trong bài để tránh bị group lọc. Mọi người xem ảnh giúp mình nhé.
+
+Nếu bài không phù hợp quy định group, mình xin phép gỡ. Cảm ơn mọi người!
+
+#ViFastKey #BoGoTiengViet #UEFI #Rust

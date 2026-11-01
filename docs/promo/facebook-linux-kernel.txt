@@ -1,0 +1,36 @@
+Chào mọi người,
+
+Mình là người ngoài kernel, đang học cách máy tính x86_64 khởi động. Mình làm một demo nhỏ trên UEFI: một editor gõ tiếng Việt chạy trước khi OS boot, viết bằng Rust no_std. Mình chia sẻ vài thứ học được, mong các bác đi trước góp ý.
+
+1. UEFI không phải bootloader
+UEFI là firmware cung cấp Boot Services/Runtime Services. Bootloader chỉ là một UEFI application dùng các protocol như Simple File System, Loaded Image, GOP, memory map... rồi gọi LoadImage/StartImage hoặc tự load kernel. Điều này làm mình hiểu lại cách GRUB, systemd-boot và Linux EFI stub vận hành.
+
+2. Input/output
+- ConIn (EFI_SIMPLE_TEXT_INPUT_PROTOCOL) trả EFI_INPUT_KEY gồm UnicodeChar UCS-2 + ScanCode, dùng WaitForKey để chờ phím. Không có key-up, không có modifier state qua protocol đơn giản, và không có IME/composition protocol.
+- Vì vậy IME phải sống trong app: tự giữ buffer, state Telex/VNI, tự vẽ preedit. Hook ConIn toàn cục rất dễ vỡ.
+- ConOut chỉ in UCS-2; font của firmware thường thiếu glyph tiếng Việt. Mình phải nhúng bitmap font và vẽ qua GOP/Blt; đây là bài học lớn về output.
+
+3. no_std Rust
+- Target x86_64-unknown-uefi, PE/COFF, Windows x64 ABI; dùng uefi-rs, alloc + global allocator, panic handler; không libc.
+- Demo chỉ dùng Boot Services (ConIn, GOP, pool), không ExitBootServices vì vẫn cần protocol sau đó. Nếu viết bootloader/kernel thì phải lấy memory map, ExitBootServices, rồi tự lo paging/interrupts/drivers.
+- Memory map, ACPI và GOP handoff là phần mình muốn học tiếp.
+
+4. Test
+- QEMU + OVMF (pflash code/vars), sendkey/screendump, debugcon self-test.
+- Self-test 15 case ngay trong UEFI, UI smoke test, QR decode, deploy verify.
+- Secure Boot và máy thật khác QEMU khá nhiều.
+
+5. Bài học
+- UEFI protocol nhỏ nhưng nhiều cạm bẫy: UCS-2, không key-up, font, GOP mode, memory type.
+- Demo nhỏ nhưng giúp mình đọc spec và hiểu boot flow hơn nhiều so với chỉ đọc tài liệu.
+- Mình chưa dám gọi là bootloader; mới là app UEFI. Bước tiếp mình muốn thử bootloader tối giản → Linux boot protocol/EFI stub → kernel.
+
+Mình muốn hỏi các bác:
+- Nên đọc phần nào của UEFI spec trước khi viết bootloader?
+- Bootloader tối giản cần những protocol nào, và khi nào nên dùng Linux EFI stub thay vì tự load kernel?
+- ExitBootServices, memory map, ACPI cần chú ý gì?
+- Debug bootloader trên QEMU/OVMF: serial, gdb hay cách nào hiệu quả?
+
+Ảnh bên dưới là demo nhỏ; có QR nếu muốn xem thêm. Mình không để link trong bài để tránh bị group lọc. Cảm ơn mọi người!
+
+#UEFI #LinuxKernel #Bootloader #Rust #ViFastKey

@@ -1,0 +1,19 @@
+Mình vừa dùng OpenCode (AI Agent) để phát triển và kiểm thử tự động một dự án thật: ViFastKey — bộ gõ tiếng Việt cho desktop, Android, web và UEFI.
+
+Mình không chỉ prompt "viết cho tôi cái bộ gõ" rồi chờ. Cách mình làm:
+1. Mình đặt bài toán + ràng buộc: Python là oracle, Rust port phải qua conformance; UEFI không dùng std; test trên QEMU/OVMF.
+2. OpenCode đọc repo, đề xuất kiến trúc, viết/sửa Rust, port core sang no_std, làm GOP renderer, font tiếng Việt, logo và QR.
+3. Mỗi thay đổi chạy test tự động: cargo test, 13k+ case conformance, 15 case UEFI self-test, UI smoke + screenshot, QR decode.
+4. Deploy web qua SSH → LXD/Docker; agent kiểm tra health, link tải và SHA, không báo xong nếu chưa verify.
+5. Mình review UX, an toàn, lỗi thực tế và quyết định hướng đi.
+
+Mình cũng ghi runbook + tiêu chí vào AGENTS.md để agent nào làm cũng theo cùng một quy trình, không tự báo "xong" khi test hoặc link chưa pass.
+
+Điều mình học: AI Agent rất giỏi tăng tốc vòng lặp code/test, nhưng chất lượng đến từ spec rõ + test tự động + người kiểm chứng. Agent viết rất nhanh, nhưng nếu không có "cửa chặn" thì cũng sai rất nhanh.
+
+Dự án hiện có bản Windows, macOS, Linux, Android, web/WASM và demo UEFI. Mã nguồn dự kiến MIT khi GitHub mở khoá.
+
+Tải và dùng thử:
+https://vifastkey.hoctuthien.com/#tai-ve
+
+#OpenCode #AIAgent #AutomatedTesting #Rust #UEFI #ViFastKey

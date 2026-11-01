@@ -32,17 +32,11 @@ jobs:
       - name: Build release binaries
         run: |
           cargo build --release -p vfk-cli -p vfk-charset -p vfk-suggest-cli -p vfk-ffi -p vifastkey-settings
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            cargo build --release -p vfk-windows-replace
-          fi
       - name: Package
         run: |
           mkdir -p dist
-          cp target/release/vfk-cli* target/release/vfk-charset* target/release/vfk-suggest* \
+          cp target/release/vfk target/release/vfk-charset target/release/vfk-suggest \
              target/release/vifastkey-settings* dist/ 2>/dev/null || true
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            cp target/release/vifastkey-replace.exe dist/ 2>/dev/null || true
-          fi
           if [ "${{ runner.os }}" = "Linux" ]; then
             cp ../linux/vifastkey-settings.desktop dist/
             cp ../resources/brand/vifastkey-icon-192.png dist/vifastkey.png
@@ -57,14 +51,6 @@ jobs:
             macOS) tar -czf ../vifastkey-cli-macos.tar.gz -C dist . ;;
             Linux) tar -czf ../vifastkey-cli-linux-x86_64.tar.gz -C dist . ;;
           esac
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            mkdir -p settings-package
-            cp target/release/vifastkey-settings.exe settings-package/
-            cp ../packaging/windows/settings-only-README.md settings-package/README.md
-            cp apps/vfk-settings/README.md settings-package/DEVELOPER.md
-            cp ../LICENSE ../THIRD_PARTY_NOTICES.md settings-package/
-            (cd settings-package && 7z a ../vifastkey-settings-windows-x64.zip .)
-          fi
           if [ "${{ runner.os }}" = "Linux" ]; then
             mkdir -p settings-package
             cp target/release/vifastkey-settings settings-package/
@@ -85,49 +71,28 @@ jobs:
             rust/vifastkey-*.zip
           if-no-files-found: error
 
-  windows-tsf:
-    name: Windows TSF package (x64 + x86)
+  windows-hook:
+    name: Windows hook-only package
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v7
       - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: i686-pc-windows-msvc
-      - name: Build Rust artifacts
+      - name: Build Settings + hook
         run: |
           cd rust
-          cargo build --release -p vfk-ffi -p vfk-windows-replace -p vifastkey-settings
-          cargo build --release -p vfk-ffi --target i686-pc-windows-msvc
-      - name: Build TSF DLLs
-        run: |
-          cmake -S windows/tsf -B build/tsf-x64 -A x64 -DVFK_RUST_PROFILE=release
-          cmake --build build/tsf-x64 --config Release
-          cmake -S windows/tsf -B build/tsf-x86 -A Win32 `
-            -DVFK_RUST_PROFILE=release `
-            -DVFK_FFI_LIB_DIR="$PWD/rust/target/i686-pc-windows-msvc/release"
-          cmake --build build/tsf-x86 --config Release
+          cargo build --release -p vifastkey-settings
       - name: Package
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path windows-package\x64, windows-package\x86 | Out-Null
-          Copy-Item build/tsf-x64/Release/vifastkey_tsf.dll windows-package\x64
-          Copy-Item build/tsf-x64/Release/vifastkey.dll windows-package\x64
-          Copy-Item build/tsf-x86/Release/vifastkey_tsf.dll windows-package\x86
-          Copy-Item build/tsf-x86/Release/vifastkey.dll windows-package\x86
-          Copy-Item rust/target/release/vifastkey-replace.exe windows-package
-          Copy-Item rust/target/release/vifastkey-settings.exe windows-package
-          Copy-Item packaging/windows/README.md windows-package\README.md
-          Copy-Item windows/tsf/README.md windows-package\DEVELOPER.md
-          Copy-Item windows/tsf/windows.example.json windows-package
-          Copy-Item windows/installer/install.ps1 windows-package
-          Copy-Item windows/installer/uninstall.ps1 windows-package
-          Copy-Item LICENSE windows-package
-          Copy-Item THIRD_PARTY_NOTICES.md windows-package
-          Compress-Archive -Path windows-package\* -DestinationPath vifastkey-windows-tsf.zip
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          powershell -NoProfile -ExecutionPolicy Bypass -File packaging\package-windows.ps1 -OutDir dist
+          Copy-Item dist\vifastkey-windows-hook-*.zip dist\vifastkey-windows-hook.zip
       - uses: actions/upload-artifact@v7
         with:
-          name: vifastkey-windows-tsf
-          path: vifastkey-windows-tsf.zip
+          name: vifastkey-windows-hook
+          path: |
+            dist/vifastkey-windows-hook-*.zip
+            dist/vifastkey-windows-hook.zip
           if-no-files-found: error
 
   wasm:
@@ -157,6 +122,22 @@ jobs:
           path: |
             vifastkey-wasm.zip
             vifastkey-chrome-extension.zip
+          if-no-files-found: error
+
+  uefi:
+    name: UEFI x86_64 demo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-uefi
+      - name: Build package
+        run: OUT_DIR="$PWD" ./uefi/package.sh
+      - uses: actions/upload-artifact@v7
+        with:
+          name: vifastkey-uefi
+          path: vifastkey-uefi-x86_64.zip
           if-no-files-found: error
 
   macos-app:
@@ -327,7 +308,7 @@ jobs:
   publish:
     name: Publish GitHub Release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [cli, windows-tsf, wasm, macos-app, fcitx5, linux-ibus, android-apk, ios-app]
+    needs: [cli, windows-hook, wasm, uefi, macos-app, fcitx5, linux-ibus, android-apk, ios-app]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -361,12 +342,14 @@ jobs:
           body: |
             ViFastKey ${{ github.ref_name }} — bộ gõ tiếng Việt Telex, Simple Telex, VNI, VIQR.
 
-            **Windows:** tải `vifastkey-windows-tsf.zip`, giải nén và chạy `install.ps1`;
-            gói có kèm `vifastkey-settings.exe`.
+            **Windows:** tải `vifastkey-windows-hook.zip`, giải nén và chạy `install.ps1`;
+            một binary hook-only, không cần TSF/ký. Chọn English (US) trong input source.
             **Linux:** `vifastkey-ibus-linux.tar.gz` (IBus), `vifastkey-fcitx5-linux-x86_64.tar.gz` (Fcitx5),
             `vifastkey-settings-linux-x86_64.tar.gz` (UI cấu hình).
             **Web/WASM:** `vifastkey-wasm.zip`.
             **macOS:** `vifastkey-macos-imk-universal.zip`.
+            **UEFI x86_64:** `vifastkey-uefi-x86_64.zip` — demo editor Telex/VNI chạy trước khi OS boot;
+            giải nén vào USB FAT32, tắt Secure Boot, boot `\EFI\BOOT\BOOTX64.EFI`.
             **Android/iOS/extension:** xem các asset còn lại.
 
             Kiểm tra file bằng `sha256sums.txt` trước khi cài.

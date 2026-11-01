@@ -109,6 +109,29 @@ jobs:
         if: runner.os == 'Linux'
         run: python3 tools/bench_guard.py
 
+  uefi:
+    name: UEFI x86_64 build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-uefi
+      - name: Core no_std check
+        run: |
+          cd rust
+          cargo test -p vi-syllable --no-default-features
+          cargo test -p vfk-core --no-default-features
+          cargo check -p vi-syllable --no-default-features --target x86_64-unknown-uefi
+          cargo check -p vfk-core --no-default-features --target x86_64-unknown-uefi
+      - name: Build UEFI app
+        run: cd uefi && cargo build --release
+      - name: Package UEFI release
+        run: |
+          OUT_DIR="$RUNNER_TEMP" ./uefi/package.sh
+          test -f "$RUNNER_TEMP/vifastkey-uefi-x86_64.zip"
+          unzip -l "$RUNNER_TEMP/vifastkey-uefi-x86_64.zip" | grep 'EFI/BOOT/BOOTX64.EFI'
+
   windows-tsf-adapter:
     name: Windows TSF adapter (build x64 + x86)
     runs-on: windows-latest
