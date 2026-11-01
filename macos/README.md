@@ -128,6 +128,22 @@ ls -t ~/Library/Logs/DiagnosticReports/ViFastKeyIM* 2>/dev/null | head
 log show --last 30m --predicate 'process == "ViFastKeyIM"' --style compact
 ```
 
+### Một app không hiện chữ khi gõ
+
+- Kiểm tra input source đang chọn đúng ViFastKey trong app đó; bật
+  **Automatically switch to a document's input source** có thể làm macOS đổi
+  input source theo cửa sổ.
+- App rich text (Notes, NSTextView) cần buffer preedit dạng `NSAttributedString`;
+  truyền `String` làm buffer bị nuốt ở một số client. `ImkTextClient` đã chuyển
+  sang attributed string.
+- App Electron (OpenCode, VS Code, Claude Desktop…) có lỗi composition riêng của
+  Electron trên macOS. Thử click ra ngoài rồi vào lại ô nhập, hoặc kiểm tra IME
+  trong Terminal/iTerm để phân biệt lỗi app với lỗi bộ gõ.
+- Gửi kèm log khi báo lỗi:
+  ```bash
+  log show --last 10m --predicate 'process == "ViFastKeyIM"' --style compact
+  ```
+
 Khi phát triển (build lại liên tục), ký bằng **một identity cố định** thay vì
 ad-hoc để macOS giữ quyền qua các lần build:
 

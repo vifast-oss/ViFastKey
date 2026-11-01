@@ -11,7 +11,12 @@ final class ImkTextClient: EngineTextClient {
 
     func setMarkedText(_ text: String, selectedRange: NSRange, replacementRange: NSRange) {
         guard let c = client as? IMKTextInput else { return }
-        c.setMarkedText(text, selectionRange: selectedRange, replacementRange: replacementRange)
+        // Protocol khai báo `Any`, nhưng một số client (Notes, NSTextView rich text)
+        // chỉ nhận NSAttributedString; truyền String làm buffer preedit không hiện
+        // và các phím biến đổi bị nuốt. Squirrel cũng truyền attributed string.
+        c.setMarkedText(NSAttributedString(string: text),
+                        selectionRange: selectedRange,
+                        replacementRange: replacementRange)
     }
 
     func insertText(_ text: String, replacementRange: NSRange) {
@@ -32,6 +37,11 @@ final class ImkTextClient: EngineTextClient {
     func replaceText(_ text: String, deleteBeforeUTF16 count: Int) {
         guard let c = client as? IMKTextInput else { return }
         let selected = c.selectedRange()
+        guard selected.location != NSNotFound else {
+            // Không biết vị trí con trỏ: chèn tại chỗ, đừng xoá mù.
+            c.insertText(text, replacementRange: NSRange(location: NSNotFound, length: 0))
+            return
+        }
         let location = max(0, selected.location - max(0, count))
         let length = min(max(0, count), selected.location)
         c.insertText(text, replacementRange: NSRange(location: location, length: length))

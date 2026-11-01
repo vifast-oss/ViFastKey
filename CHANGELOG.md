@@ -33,9 +33,11 @@
   app khởi động — một nguyên nhân hộp thoại “Allow ViFastKey to enable ViFastKey?”
   hiện lặp lại. `install.sh` chỉ đăng ký một lần, không ký ad-hoc lại sau khi copy và
   kill process cũ; `build.sh` tự dùng Apple Development/Developer ID nếu có; thêm
-  `--status` và kiểm tra chữ ký/crash report trong `doctor.sh`. ZIP phát hành giờ
-  tự chứa `install.sh`/`uninstall.sh`/README; sửa hướng dẫn web/docs (đường dẫn
-  `~/Library/Input Methods`, hộp thoại Allow, không cài lại nhiều lần).
+  `--status` và kiểm tra chữ ký/crash report trong `doctor.sh`. Buffer preedit
+  chuyển sang `NSAttributedString` để Notes/NSTextView rich text hiện chữ.
+  ZIP phát hành giờ tự chứa `install.sh`/`uninstall.sh`/README; sửa hướng dẫn
+  web/docs (đường dẫn `~/Library/Input Methods`, hộp thoại Allow, không cài lại
+  nhiều lần).
 - **Sửa lặp từ Preedit khi sửa từ đã commit**: commit bằng dấu cách, xoá dấu cách
   và ký tự cuối, gõ lại rồi xoá tiếp từng ra `ViFastKeyViFastKe`; giờ giữ đúng
   `ViFastKe` và vẫn dùng Replace khi chỉnh từ đã commit.
@@ -296,6 +298,11 @@
 - **Android layout theo field**: vào app/field mới tự reset về bàn phím chữ
   (hoặc bàn phím số nếu field số), không giữ nhầm tab ký tự đặc biệt như trước;
   quay lại cùng field vẫn giữ layout đang dùng.
+- **Android Replace atomic**: API 34+ dùng `InputConnection.replaceText()` để thay
+  cả range trong một lệnh; fallback batch delete+commit cho API cũ hoặc field dài
+  hơn 4096 ký tự.
+- **Android mở lại bàn phím**: mỗi lần input view hiện lại đều về layout chữ
+  (hoặc bàn phím số cho field số), không giữ trang ký tự đặc biệt của phiên trước.
 - Phím phẩy giữ nguyên vị trí nút, chỉ nhích dấu phẩy bên trong lên; xoá highlight
   của phím sau khi chọn số/dấu từ popup.
 - Nút phẩy có emoji; giữ phím phẩy mở emoji. Bỏ nút VI ở hàng dưới, dùng globe
