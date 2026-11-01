@@ -490,6 +490,60 @@ void testReplaceCountsCodepointsForAstralCharacters() {
     }
 }
 
+void testFailSafeCommitsPreedit() {
+    fcitx::EventLoop loop;
+    fcitx::InputContextManager manager;
+    TestInputContext context(manager);
+    context.setCapabilityFlags(fcitx::CapabilityFlag::Preedit);
+
+    auto config = makeConfig();
+    fcitx::VifastkeyState state(loop, &context, config);
+    state.activate("test");
+
+    typeAscii(context, state, "a");
+    CHECK(context.inputPanel().clientPreedit().toString() == "a");
+
+    // Replace không có surrounding: planner fail-safe. Adapter phải commit
+    // "a" đang nằm trong preedit thay vì xoá mất.
+    VfkAction action = {};
+    action.kind = VFK_REPLACE;
+    action.delete_utf16 = 1;
+    action.text = "á";
+    state.applyAction(action, nullptr, "a");
+
+    CHECK(context.deletes.empty());
+    CHECK(context.commits.size() == 1);
+    if (context.commits.size() == 1) {
+        CHECK(context.commits.front() == "a");
+    }
+    CHECK(context.inputPanel().clientPreedit().empty());
+    CHECK(!state.busy());
+}
+
+void testFailSafeLetsEventThrough() {
+    fcitx::EventLoop loop;
+    fcitx::InputContextManager manager;
+    TestInputContext context(manager);
+    context.setCapabilityFlags(fcitx::CapabilityFlag::Preedit);
+
+    auto config = makeConfig();
+    fcitx::VifastkeyState state(loop, &context, config);
+    state.activate("test");
+
+    typeAscii(context, state, "a");
+
+    VfkAction action = {};
+    action.kind = VFK_REPLACE;
+    action.delete_utf16 = 1;
+    action.text = "á";
+    auto event = keyEvent(context, FcitxKey_s);
+    state.applyAction(action, &event, "a");
+
+    CHECK(context.commits.size() == 1);
+    CHECK(context.commits.front() == "a");
+    CHECK(!event.filtered()); // phím gốc vẫn tới app
+}
+
 void testQueuedKeyIsForwardedWhenReplaceIsBusy() {
     fcitx::EventLoop loop;
     fcitx::InputContextManager manager;
@@ -540,6 +594,8 @@ int main() {
     testReplaceRejectsSelection();
     testReplaceCountsCodepointsForAstralCharacters();
     testQueuedKeyIsForwardedWhenReplaceIsBusy();
+    testFailSafeCommitsPreedit();
+    testFailSafeLetsEventThrough();
 
     if (failures != 0) {
         std::cerr << failures << " test(s) failed\n";

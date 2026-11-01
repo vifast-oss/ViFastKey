@@ -109,6 +109,21 @@ jobs:
         if: runner.os == 'Linux'
         run: python3 tools/bench_guard.py
 
+  wayland-e2e:
+    name: Wayland E2E (Sway headless)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Wayland test deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbcommon-dev sway wtype python3-gi gir1.2-gtk-4.0
+      - name: Unit + E2E
+        run: |
+          (cd rust && cargo test -p vifastkey-wayland && cargo build --release -p vifastkey-wayland)
+          ./linux/wayland/runtime_test.sh
+
   uefi:
     name: UEFI x86_64 build
     runs-on: ubuntu-latest

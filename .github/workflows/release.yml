@@ -193,6 +193,31 @@ jobs:
           path: vifastkey-fcitx5-linux-x86_64.tar.gz
           if-no-files-found: error
 
+  linux-wayland:
+    name: Linux Wayland package
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbcommon-dev
+      - name: Build and test
+        run: |
+          (cd rust && cargo test -p vifastkey-wayland && cargo build --release -p vifastkey-wayland)
+          rm -rf wayland-package
+          mkdir -p wayland-package
+          cp rust/target/release/vifastkey-wayland wayland-package/
+          cp linux/wayland/vifastkey-wayland.service linux/wayland/install.sh \
+             linux/wayland/README.md wayland-package/
+          tar -czf vifastkey-wayland-linux-x86_64.tar.gz -C wayland-package .
+      - uses: actions/upload-artifact@v7
+        with:
+          name: vifastkey-wayland
+          path: vifastkey-wayland-linux-x86_64.tar.gz
+          if-no-files-found: error
+
   linux-ibus:
     name: Linux IBus package
     runs-on: ubuntu-latest

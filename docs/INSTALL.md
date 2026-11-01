@@ -124,6 +124,42 @@ hộp thoại Allow lặp lại: xoá input source, chạy lại installer **m�
 
 Adapter dùng IMK preedit, menu Telex/Simple Telex/VNI, macro và app profile.
 
+## Linux — Wayland standalone (Sway / Hyprland / niri)
+
+Adapter này không cần Fcitx5/IBus; nó dùng `zwp_input_method_v2` +
+`zwp_virtual_keyboard_v1`. Đã test trên Sway; compositor khác (Hyprland/niri)
+phải kiểm tra `--probe` trước. GNOME/KDE dùng Fcitx5 hoặc IBus bên dưới.
+
+```bash
+# Ubuntu/Debian
+sudo apt install libxkbcommon-dev
+
+cd rust
+cargo build --release -p vifastkey-wayland
+./target/release/vifastkey-wayland --probe
+./target/release/vifastkey-wayland --debug   # chạy thử
+```
+
+Nếu `--probe` báo thiếu `zwp_input_method_manager_v2`, compositor không hỗ trợ.
+
+Cài vào `~/.local` + systemd user service:
+
+```bash
+./linux/wayland/install.sh
+systemctl --user enable --now vifastkey-wayland.service
+journalctl --user -u vifastkey-wayland -f
+```
+
+Cấu hình dùng chung `~/.config/vifastkey/config.json`. Test E2E:
+
+```bash
+sudo apt install sway wtype python3-gi gir1.2-gtk-4.0
+./linux/wayland/runtime_test.sh
+```
+
+Giới hạn: chưa có app_id (không áp AppProfile theo app), không popup candidate;
+app XWayland/legacy không dùng `text-input-v3` có thể không nhận preedit.
+
 ## Linux — IBus
 
 ```bash

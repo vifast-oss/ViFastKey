@@ -558,10 +558,19 @@ void VifastkeyState::applyCommit(const std::string &text, bool passKey,
 void VifastkeyState::failSafe(KeyEvent *event,
                              const std::optional<Key> &queuedKey) {
     FCITX_WARN() << "vifastkey: plan fail-safe, not touching surrounding text";
+    // Không xoá mù. Nếu đang PREEDIT, chữ người dùng đã gõ chỉ nằm trong
+    // composition; commit nó trước khi reset để không mất từ. Ở REPLACE,
+    // chữ đã nằm trên màn hình nên không commit lại (tránh nhân đôi).
+    const std::string text = displayText();
+    if (!text.empty() && mode_ == VFK_MODE_PREEDIT && ic_) {
+        ic_->commitString(text);
+        updateSurroundingAfterCommit(text);
+    }
     if (session_) {
         vfk_reset(session_);
     }
     clearPreedit();
+    // Event đang xử lý không bị filter: phím gốc vẫn tới app sau khi chốt từ.
     if (!event && queuedKey) {
         forwardQueuedKey(*queuedKey);
     }

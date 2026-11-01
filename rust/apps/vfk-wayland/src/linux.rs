@@ -3,18 +3,17 @@
 //! Không chứa logic tiếng Việt. Mọi quyết định nằm ở [`crate::controller`].
 
 use std::error::Error;
-use std::os::fd::OwnedFd;
+use std::os::fd::{AsFd, OwnedFd};
 use std::path::PathBuf;
 
 use wayland_client::globals::{registry_queue_init, GlobalListContents};
 use wayland_client::protocol::{wl_keyboard, wl_registry, wl_seat};
 use wayland_client::{Connection, Dispatch, QueueHandle, WEnum};
-use wayland_protocols_misc::zwp_input_method_v2::client::{
-    ZwpInputMethodKeyboardGrabV2, ZwpInputMethodManagerV2, ZwpInputMethodV2,
-};
-use wayland_protocols_misc::zwp_virtual_keyboard_v1::client::{
-    ZwpVirtualKeyboardManagerV1, ZwpVirtualKeyboardV1,
-};
+use wayland_protocols_misc::zwp_input_method_v2::client::zwp_input_method_keyboard_grab_v2::ZwpInputMethodKeyboardGrabV2;
+use wayland_protocols_misc::zwp_input_method_v2::client::zwp_input_method_manager_v2::ZwpInputMethodManagerV2;
+use wayland_protocols_misc::zwp_input_method_v2::client::zwp_input_method_v2::ZwpInputMethodV2;
+use wayland_protocols_misc::zwp_virtual_keyboard_v1::client::zwp_virtual_keyboard_manager_v1::ZwpVirtualKeyboardManagerV1;
+use wayland_protocols_misc::zwp_virtual_keyboard_v1::client::zwp_virtual_keyboard_v1::ZwpVirtualKeyboardV1;
 use xkbcommon::xkb;
 
 use crate::controller::{default_config_path, Backend, Controller, ForwardKey, KeyInput};
@@ -58,15 +57,13 @@ impl Backend for WaylandBackend {
         vk.modifiers(key.depressed, key.latched, key.locked, key.group);
         let state =
             if key.pressed { wl_keyboard::KeyState::Pressed } else { wl_keyboard::KeyState::Released };
-        vk.key(key.time, key.keycode, state);
+        vk.key(key.time, key.keycode, state.into());
     }
 }
 
 struct App {
     conn: Connection,
-    qh: QueueHandle<App>,
     controller: Controller<WaylandBackend>,
-    im: ZwpInputMethodV2,
     vk: Option<ZwpVirtualKeyboardV1>,
     keyboard: Option<ZwpInputMethodKeyboardGrabV2>,
     xkb_context: xkb::Context,
@@ -103,7 +100,7 @@ impl App {
             Ok(Some(keymap)) => {
                 self.xkb_state = Some(xkb::State::new(&keymap));
                 if let Some(vk) = self.vk.as_ref() {
-                    vk.keymap(format, fd, size);
+                    vk.keymap(format.into(), fd.as_fd(), size);
                 }
                 log::debug!("đã nạp keymap {} byte", size);
             }
@@ -115,11 +112,11 @@ impl App {
     fn translate_key(&self, keycode: u32, time: u32, pressed: bool) -> Option<KeyInput> {
         let state = self.xkb_state.as_ref()?;
         let code = keycode + 8;
-        let sym = state.key_get_one_sym(code);
+        let sym = state.key_get_one_sym(code.into());
         let key = if let Some(key) = special_key(sym) {
             key
         } else {
-            let text = state.key_get_utf8(code);
+            let text = state.key_get_utf8(code.into());
             let mut chars = text.chars();
             match (chars.next(), chars.next()) {
                 (Some(c), None) if !c.is_control() => Key::Char(c),
@@ -230,7 +227,9 @@ impl Dispatch<ZwpInputMethodV2, ()> for App {
             Event::Activate => {
                 log::debug!("input method activate");
                 state.controller.on_activate();
-                state.keyboard = Some(proxy.grab_keyboard(qh, ()));
+                if state.keyboard.is_none() {
+                    state.keyboard = Some(proxy.grab_keyboard(qh, ()));
+                }
             }
             Event::Deactivate => {
                 log::debug!("input method deactivate");
@@ -240,8 +239,12 @@ impl Dispatch<ZwpInputMethodV2, ()> for App {
             Event::SurroundingText { text, cursor, anchor } => {
                 state.controller.on_surrounding(text, cursor, anchor);
             }
-            Event::ContentType { purpose, .. } => {
-                state.controller.on_content_type(purpose);
+            Event::ContentType { hint, purpose } => {
+                // text-input-v3 hint bit 7 = sensitive; coi như password.
+                let hint: u32 = hint.into();
+                let purpose: u32 = purpose.into();
+                let sensitive = hint & (1 << 7) != 0;
+                state.controller.on_content_type(if sensitive { 8 } else { purpose });
             }
             Event::Done => state.controller.on_done(),
             Event::Unavailable => {
@@ -265,14 +268,14 @@ impl Dispatch<ZwpInputMethodKeyboardGrabV2, ()> for App {
         use wayland_protocols_misc::zwp_input_method_v2::client::zwp_input_method_keyboard_grab_v2::Event;
         match event {
             Event::Keymap { format, fd, size } => state.set_keymap(format, fd, size),
-            Event::Modifiers { mods_depressed, mods_latched, mods_locked, group } => {
+            Event::Modifiers { mods_depressed, mods_latched, mods_locked, group, .. } => {
                 state.controller.on_modifiers(mods_depressed, mods_latched, mods_locked, group);
                 if let Some(xkb_state) = state.xkb_state.as_mut() {
                     xkb_state.update_mask(mods_depressed, mods_latched, mods_locked, 0, 0, group);
                 }
             }
             Event::Key { time, key, state: key_state, .. } => {
-                let pressed = key_state.into_result() == Ok(wl_keyboard::KeyState::Pressed);
+                let pressed = matches!(key_state, WEnum::Value(wl_keyboard::KeyState::Pressed));
                 state.handle_key(key, time, pressed);
             }
             Event::RepeatInfo { .. } => {}
@@ -281,9 +284,10 @@ impl Dispatch<ZwpInputMethodKeyboardGrabV2, ()> for App {
     }
 }
 
+#[allow(non_upper_case_globals)]
 fn special_key(sym: xkb::Keysym) -> Option<Key> {
     use xkb::keysyms::*;
-    Some(match sym {
+    Some(match sym.raw() {
         KEY_BackSpace => Key::Backspace,
         KEY_Return | KEY_KP_Enter => Key::Enter,
         KEY_Escape => Key::Escape,
@@ -439,9 +443,7 @@ fn run_inner(config: PathBuf, debug: bool) -> Result<(), Box<dyn Error>> {
 
     let mut app = App {
         conn: conn.clone(),
-        qh,
         controller,
-        im,
         vk,
         keyboard: None,
         xkb_context: xkb::Context::new(xkb::CONTEXT_NO_DEFAULT_INCLUDES),

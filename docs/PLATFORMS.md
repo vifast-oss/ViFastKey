@@ -4,8 +4,9 @@
 |---|---|---|---|
 | macOS | `macos/` IMK + `package.sh` universal2 | macOS 12+, Swift/Xcode, đã build arm64/x86_64 + self-test; installer ghi AppleEnabledInputSources | ✅ dùng được; cần logout/login một lần; Developer ID/notarize cần chứng chỉ |
 | Windows | `vifastkey-settings.exe` hook-only + tray (hook nền cùng binary); TSF trong `windows/tsf/` chỉ legacy/reference | Windows 11 build/self-test; hook HKL EN-US, VI/JP pass-through; tray Logo/E/mờ + toast; package một binary | ✅ Hook-only, không cần ký; 🟡 test game/anti-cheat và tương tác tray thật |
-| Linux (IBus) | `linux/ibus/` engine Python | core test + runtime smoke test Ubuntu 24.04/IBus 1.5.29 + GTK3 Xvfb: `tieengs` → `tiếng` | ✅ X11 preedit; 🟡 cần test Wayland desktop và app thật |
-| Linux (Fcitx5) | `linux/fcitx5/` C++ addon | CI build + CTest adapter ✅; runtime test Ubuntu 24.04/Fcitx5 5.1.7 và Ubuntu 26.04/Fcitx5 5.1.19 trong Xvfb: `tieengs` → `tiếng` | ✅ X11 + preedit/surrounding/guard/barrier; 🟡 cần test Wayland desktop và app thật |
+| Linux (IBus) | `linux/ibus/` engine Python | 682 pytest (gồm 6 test `_apply` với fake IBus); runtime Ubuntu 24.04/IBus 1.5.29 + Ubuntu 26.04 + GTK3 Xvfb: `tieengs` → `tiếng` | ✅ X11 preedit; 🟡 cần test app thật |
+| Linux (Fcitx5) | `linux/fcitx5/` C++ addon | CI build + CTest adapter ✅ (gồm fail-safe giữ preedit); runtime Ubuntu 24.04/Fcitx5 5.1.7 và Ubuntu 26.04/Fcitx5 5.1.19 trong Xvfb: `tieengs` → `tiếng` | ✅ X11 + preedit/surrounding/guard/barrier/fail-safe; 🟡 cần test app thật |
+| Linux (Wayland standalone) | `linux/wayland/` Rust (`zwp_input_method_v2` + `zwp_virtual_keyboard_v1`) | 8 unit test controller; E2E Sway headless + GTK4 + wtype trên Ubuntu 24.04 aarch64 (Lima) và Ubuntu 26.04 x86_64 (`ps`, Sway 1.11): telex, dấu, Escape, toggle, replace từ trước, pass-through | ✅ Sway/wlroots; 🟡 GNOME/KDE dùng IBus/Fcitx5; chưa có app_id/popup |
 | Android | `android/` IME Java + JNI | SDK/NDK + Gradle, APK arm64/x86_64; CI build + test emulator; release signing qua env | ✅ QWERTY full, suggestions, settings, emoji, long-press; 🟡 chưa Play Store/device matrix |
 | iOS | `ios/` host + keyboard extension | Xcode 27.1, simulator; CI build + engine unit test | ✅ build/test; 🟡 chưa test bật extension/device signing |
 | Chrome/Edge | `chrome-extension/` MV3 + WASM | build + Playwright E2E (popup normalize) | ✅ MVP; 🟡 context menu/selected text cần test thêm; chưa Web Store |
@@ -53,6 +54,9 @@ và chạy chung bộ scenario [`adapter-conformance/`](../adapter-conformance/R
 # Linux X11/Xvfb: IBus
 ./linux/ibus/install.sh
 ./linux/ibus/runtime_test.sh
+
+# Linux Wayland standalone: Sway headless + GTK4 + wtype
+./linux/wayland/runtime_test.sh
 
 # Windows: build settings hook-only rồi cài per-user
 cd rust; cargo build --release -p vifastkey-settings; cd ..

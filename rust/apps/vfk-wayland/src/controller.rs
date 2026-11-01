@@ -129,6 +129,7 @@ pub struct Controller<B: Backend> {
     group: u32,
 }
 
+#[allow(dead_code)]
 impl<B: Backend> Controller<B> {
     /// Tạo controller với file config (có thể chưa tồn tại).
     pub fn new(backend: B, config_path: impl AsRef<Path>) -> Self {
@@ -366,7 +367,11 @@ impl<B: Backend> Controller<B> {
                     self.backend.commit(&text, self.serial);
                     self.update_after_commit(&text);
                     self.session.reset();
-                    self.mark_input(input);
+                    // Phím gốc chưa được áp: chốt từ rồi vẫn chuyển phím cho
+                    // app (giống Fcitx5/IBus fail-safe).
+                    if let Some(input) = input {
+                        self.forward(input);
+                    }
                 } else {
                     self.session.reset();
                     self.backend.clear_preedit(self.serial);
@@ -618,6 +623,32 @@ mod tests {
         let (text, bytes) = replaced.expect("expected Replace");
         assert_eq!(text, "áo");
         assert_eq!(bytes, "ào".len() as u32);
+    }
+
+    #[test]
+    fn fail_safe_commits_and_forwards_key() {
+        let mut c = ctrl();
+        c.on_activate();
+        press(&mut c, 'a', 30);
+        let input = KeyInput {
+            key: Key::Char('s'),
+            keycode: 31,
+            time: 2,
+            pressed: true,
+            ctrl: false,
+            alt: false,
+            meta: false,
+        };
+        // Replace không có surrounding -> fail-safe: chốt "a", vẫn gửi 's'
+        // cho app thay vì nuốt phím.
+        c.apply_action(
+            Action::Replace { delete_before: 1, insert: "á".into(), pass_key: false },
+            "a",
+            Some(&input),
+        );
+        assert!(c.backend.events.iter().any(|e| matches!(e, Ev::Commit(t, _) if t == "a")));
+        assert!(c.backend.events.iter().any(|e| matches!(e, Ev::Forward(31, true))));
+        assert!(c.session.display().is_empty());
     }
 
     #[test]

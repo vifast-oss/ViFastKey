@@ -43,6 +43,15 @@ are a filtered subset of [dwyl/english-words](https://github.com/dwyl/english-wo
 (`words_alpha.txt`), released under the Unlicense/public domain. The Vietnamese syllable list
 is generated from ViFastKey's own grammar, not copied from a dictionary.
 
+## Wayland adapter dependencies
+
+`vifastkey-wayland` dùng các crate sau (giấy phép theo metadata crates.io):
+
+- **wayland-client**, **wayland-backend**, **wayland-protocols** — MIT.
+- **wayland-protocols-misc** — MIT; chứa định nghĩa `zwp_input_method_v2` và
+  `zwp_virtual_keyboard_v1` (giao thức Wayland, không phải code engine).
+- **xkbcommon** / **xkeysym** — MIT; xử lý keymap/modifier qua libxkbcommon.
+
 ## Fonts
 
 - **Be Vietnam Pro** — SIL Open Font License 1.1; see

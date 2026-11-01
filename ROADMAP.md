@@ -21,7 +21,8 @@ Các mục dưới đây là phần còn thiếu để thành sản phẩm dùng
     ✅ cài x64/x86 + switch chế độ + close-to-tray trên Windows 11; còn test gõ thật
     trong game/app anti-cheat và signing.
   - Linux: ✅ IBus engine Python (`linux/ibus/`), ✅ Fcitx5 C++ addon (`linux/fcitx5/`),
-    đã test runtime IBus + Fcitx5 trên Xvfb; còn test Wayland desktop và app thật.
+    ✅ Wayland standalone (`linux/wayland/`, `zwp_input_method_v2`), đã test runtime
+    IBus + Fcitx5 trên Xvfb và Wayland trên Sway headless; còn test app thật/desktop đa dạng.
   - Android: ✅ IME Java + JNI full keyboard, suggestions, settings, emoji; đã test emulator;
     ✅ cấu hình release signing qua env; còn Play Store listing/theme và test máy thật.
   - iOS: ✅ host + keyboard extension Swift, build simulator + engine test; còn test bật extension/device signing.

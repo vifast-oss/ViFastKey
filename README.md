@@ -9,7 +9,8 @@ Bộ gõ tiếng Việt gọn, thuần logic: chuỗi phím thô → chữ tiế
 Tính năng nổi bật: `allow_coda_k` (Đắk Lắk), `macro_digits` (mp3, k8s), macro nhiều từ, macro undo một phím,
 `đ` viết tắt (`vcdd`), 16 bảng mã (TCVN3, VNI-Windows, VISCII, VIQR, CP1258, NCR... cùng Unicode),
 app profile ghi đè kiểu gõ/kiểu dấu, preedit sửa từ đã gõ, macro nhiều từ, gợi ý từ/emoji local,
-FFI C/Python/WASM, macOS IMK universal2, Windows hook-only portable, Android IME, iOS keyboard extension,
+FFI C/Python/WASM, macOS IMK universal2, Windows hook-only portable, Linux IBus/Fcitx5 và
+**Wayland standalone** (`zwp_input_method_v2`), Android IME, iOS keyboard extension,
 playground Preedit + macro + bảng mã, UI cấu hình desktop egui (Windows/Linux) có tray,
 import preview diff và chụp ảnh giao diện bằng `--screenshots`.
 
@@ -56,6 +57,7 @@ ViFastKey/
 │   ├── apps/vfk-suggest/       # gợi ý từ
 │   ├── apps/vfk-settings/      # UI cấu hình desktop (egui, Windows/Linux)
 │   ├── apps/vfk-settings/src/hook.rs # Windows hook trong cùng binary Settings
+│   ├── apps/vfk-wayland/       # adapter Wayland standalone (zwp_input_method_v2)
 │   ├── apps/vfk-windows-replace/ # legacy adapter hook (không đóng gói)
 ├── windows/
 │   ├── tsf/                    # TSF legacy/reference, không build/đóng gói mặc định
@@ -63,7 +65,8 @@ ViFastKey/
 │   └── README.md               # tổng quan component Windows
 ├── linux/
 │   ├── ibus/                   # adapter IBus (engine Python)
-│   └── fcitx5/                 # adapter Fcitx5 (C++ + C ABI)
+│   ├── fcitx5/                 # adapter Fcitx5 (C++ + C ABI)
+│   └── wayland/                # adapter Wayland standalone (Rust + protocol)
 ├── android/                    # IME Android (Java + JNI/Rust)
 ├── ios/                        # host app + keyboard extension (Swift + C ABI)
 ├── chrome-extension/           # tiện ích web (MV3 + WASM)

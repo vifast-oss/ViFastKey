@@ -16,6 +16,15 @@
 
 ### Desktop
 
+- **Adapter Wayland standalone (`linux/wayland/`)**: `zwp_input_method_v2` +
+  `zwp_virtual_keyboard_v1`, preedit/commit/delete surrounding, field policy
+  (password/URL/email/number/terminal), pass-through phím qua virtual keyboard,
+  config reload, `--probe`/`--check`, systemd user service. Test unit 8 case và
+  E2E Sway headless + GTK4 + `wtype` trên Ubuntu 24.04 aarch64 và Ubuntu 26.04
+  x86_64 (Sway 1.11): telex, dấu, Escape, toggle, replace từ trước, pass-through.
+- **Fcitx5/IBus fail-safe giữ từ**: khi `Replace` không có surrounding hoặc app
+  không nhận `delete_surrounding_text`, adapter commit chữ đang soạn thay vì
+  reset làm mất từ; thêm test CTest và test `_apply` với IBus giả lập.
 - **Windows hook-only hoàn thiện**: một binary UI + hook; HKL guard EN-US, VI/JP pass-through;
   icon Logo/E/mờ, toast, click tray toggle, double-click mở UI, single-instance UI, watchdog hook;
   X ẩn xuống tray, Quit dừng hook; installer gỡ TSF legacy. Đã rebuild package Windows/Linux/macOS,

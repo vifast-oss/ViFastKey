@@ -61,7 +61,7 @@ codepoint (Fcitx5/IBus); `plan.delete_utf16` dùng cho API UTF-16
 Scenario dùng chung nằm ở [`adapter-conformance/`](../adapter-conformance/README.md).
 Port không nên tự quyết định xoá bao nhiêu ký tự hoặc có được xoá không.
 
-Fcitx5, macOS IMK, iOS, Android và Windows đã dùng planner này. IBus Python dùng
+Fcitx5, Wayland standalone, macOS IMK, iOS, Android và Windows đã dùng planner này. IBus Python dùng
 `python/vfk_adapter_core.py` — bản port cùng contract — và chạy chung
 `adapter-conformance`; có thể chuyển sang C ABI khi đóng gói extension nhị phân.
 
@@ -72,7 +72,7 @@ riêng trong adapter-core; xem [`HOST_COMPOSITION.md`](HOST_COMPOSITION.md).
 
 | Mode | Dùng khi | Cách áp |
 |---|---|---|
-| `PREEDIT` | TSF/IMK/Fcitx5/IBus, terminal, trình duyệt có composition | Đặt vùng preedit = `Action::Preedit.text`, con trỏ `cursor`; commit khi `Commit` |
+| `PREEDIT` | TSF/IMK/Fcitx5/IBus/Wayland, terminal, trình duyệt có composition | Đặt vùng preedit = `Action::Preedit.text`, con trỏ `cursor`; commit khi `Commit` |
 | `REPLACE` | Hook bàn phím, app không có composition, macOS event tap | Xoá `delete_before` code unit (UTF-16 ở FFI) rồi chèn `insert`; nếu `pass_key` gửi tiếp phím gốc |
 | `AUTO` (adapter) | Không chắc | Ưu tiên preedit; fallback surrounding/replace; thử lại preedit nếu app nuốt backspace |
 

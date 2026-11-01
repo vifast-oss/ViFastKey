@@ -1,0 +1,15 @@
+[Unit]
+Description=ViFastKey Wayland input method
+Documentation=https://github.com/dvchd/ViFastKey
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/vifastkey-wayland
+Restart=on-failure
+RestartSec=2
+Environment=RUST_LOG=info
+
+[Install]
+WantedBy=graphical-session.target

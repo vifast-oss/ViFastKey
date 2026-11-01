@@ -87,6 +87,12 @@ class ViFastKeyEngine(IBus.Engine):
         before = self.core.display
         self._apply(self.core.focus_out(), before)
 
+    def do_set_cursor_location(self, x, y, width, height):
+        # IBus gọi khi caret đổi chỗ. Nếu đang soạn, đây có thể chỉ là caret
+        # trong preedit; không được flush. Khi rỗng, tắt adopt từ cũ.
+        if not self.core.display:
+            self.core.cursor_moved()
+
     def do_reset(self):
         self.core.reset()
         self.hide_preedit_text()
@@ -145,14 +151,21 @@ class ViFastKeyEngine(IBus.Engine):
             self.core.surrounding_snapshot,
             self.core.profile,
         )
-        if plan.kind in (PlanKind.PASS, PlanKind.FAIL_SAFE):
-            if plan.kind == PlanKind.FAIL_SAFE:
-                self.core.reset()
-                self.hide_preedit_text()
-            elif self.core.field_kind in (
+        if plan.kind == PlanKind.PASS:
+            if self.core.field_kind in (
                     FieldKind.PASSWORD, FieldKind.NUMBER,
                     FieldKind.EMAIL, FieldKind.URL):
                 self.hide_preedit_text()
+            return False
+        if plan.kind == PlanKind.FAIL_SAFE:
+            # Không xoá mù: chốt chữ đang soạn trước khi reset. Trong PREEDIT
+            # chữ chỉ nằm ở composition; bỏ đi là mất từ của người dùng.
+            text = self.core.display
+            if text:
+                self.commit_text(IBus.Text.new_from_string(text))
+            self.core.reset()
+            self.hide_preedit_text()
+            # Phím gốc chưa được áp; để app xử lý tiếp (giống Fcitx5 fail-safe).
             return False
         if plan.kind == PlanKind.PREEDIT:
             if plan.text:
@@ -172,6 +185,11 @@ class ViFastKeyEngine(IBus.Engine):
                 try:
                     self.delete_surrounding_text(-plan.delete_chars, plan.delete_chars)
                 except Exception:
+                    # App không xoá được surrounding: giữ chữ đang soạn thay vì
+                    # reset làm mất từ.
+                    text = self.core.display
+                    if text:
+                        self.commit_text(IBus.Text.new_from_string(text))
                     self.core.reset()
                     self.hide_preedit_text()
                     return False
