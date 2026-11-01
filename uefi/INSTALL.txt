@@ -1,0 +1,50 @@
+ViFastKey UEFI x86_64 — bản demo v0.1.0
+========================================
+
+Đây là ứng dụng UEFI tự chứa, chạy trước khi hệ điều hành boot. Nó KHÔNG phải
+bộ gõ toàn hệ thống: không gõ được vào UEFI Setup, UEFI Shell hay app UEFI khác.
+
+Yêu cầu
+-------
+- Máy x86_64 UEFI (không hỗ trợ firmware IA32).
+- USB FAT32.
+- Secure Boot tắt, hoặc ký BOOTX64.EFI bằng key riêng và enroll cert.
+- Bàn phím layout US (Telex/VNI nhận ký tự firmware trả về).
+
+Cài lên USB
+-----------
+1. Giải nén ZIP vào thư mục gốc của USB FAT32; giữ nguyên thư mục EFI/BOOT.
+   Kết quả đúng: \EFI\BOOT\BOOTX64.EFI
+2. Tắt Secure Boot trong firmware, hoặc ký file trước khi boot.
+3. Cắm USB, mở boot menu của máy (thường F12/F11/F8/Esc) và chọn USB.
+4. App mở editor. Gõ thử:
+      Tieengs Vieejt   ->   Tiếng Việt
+      thuowng           ->   thương
+      dd                ->   đ
+5. Phím tắt:
+      F1  trợ giúp + mã QR trang chủ (F1 lần nữa hoặc Esc để đóng)
+      F2  Việt / Anh
+      F3  Telex / VNI
+      F10 thoát về boot menu
+      Backspace xoá phím thô cuối
+      Enter xuống dòng; mũi tên/Home/End di chuyển
+
+Trang chủ: https://vifastkey.hoctuthien.com/
+Mở F1 rồi quét QR bằng điện thoại nếu muốn xem trang tải/cài đặt.
+
+Giới hạn của bản demo
+---------------------
+- Chỉ có editor + Telex/VNI + font tiếng Việt nhúng.
+- Chưa có macro, gợi ý từ, charset legacy, file cấu hình hoặc replace mode.
+- Chưa ký Secure Boot; chưa test rộng trên firmware thật.
+- Không ghi NVRAM, không sửa ổ đĩa.
+
+Xử lý sự cố
+-----------
+- USB không hiện trong boot menu: kiểm tra FAT32, tắt Fast Boot/CSM, đảm bảo
+  đúng đường dẫn \EFI\BOOT\BOOTX64.EFI; thử cổng USB 2.0.
+- Secure Boot violation: tắt Secure Boot hoặc ký file.
+- Không có màn hình/graphics: firmware không cung cấp GOP; app báo lỗi và thoát.
+- F10 quay về boot menu là bình thường; rút USB rồi khởi động lại máy.
+
+Mã nguồn và giấy phép: MIT. Font Be Vietnam Pro dùng SIL OFL 1.1.

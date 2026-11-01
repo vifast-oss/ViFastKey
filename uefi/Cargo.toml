@@ -1,0 +1,35 @@
+[workspace]
+
+[package]
+name = "vfk-uefi"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "MIT"
+
+[features]
+default = []
+selftest = []
+
+[dependencies]
+uefi = { version = "0.41.0", default-features = false, features = [
+    "alloc",
+    "global_allocator",
+    "panic_handler",
+] }
+vfk-core = { path = "../rust/crates/vfk-core", default-features = false }
+
+[build-dependencies]
+fontdue = "=0.9.5"
+image = { version = "0.25.10", default-features = false, features = ["png"] }
+qrcodegen = "1.8.0"
+
+[[bin]]
+name = "vfk-uefi"
+path = "src/main.rs"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
