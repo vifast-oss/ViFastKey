@@ -21,7 +21,7 @@
   <meta name="twitter:title" content="ViFastKey — Bộ gõ tiếng Việt">
   <meta name="twitter:description" content="Bộ gõ tiếng Việt nhỏ, nhanh, thuần logic. Gõ thử WASM và gọi API Python.">
   <meta name="twitter:image" content="https://vifastkey.hoctuthien.com/brand/og-image.png">
-  <link rel="stylesheet" href="style.css?v=20261101aj">
+  <link rel="stylesheet" href="style.css?v=20261101al">
   <noscript><style>
     /* Không có JS: hiện đủ hướng dẫn thay vì chỉ panel đầu. */
     .platform-panel[hidden] { display: block !important; margin-bottom: 16px; }
@@ -516,11 +516,11 @@ cd vifastkey-fcitx5
           <div class="platform-title">
             <div>
               <h3>Android 8.0+ · arm64 / x86_64</h3>
-              <p>IME Android đầy đủ, chạy local; bản APK debug chưa phát hành trên CH Play. Bản cập nhật 01/11/2026 (build 22): vào field/app mới tự mở bàn phím chữ, không còn nhớ nhầm tab ký tự đặc biệt (ví dụ Facebook); vẫn giữ layout khi quay lại cùng field. Kèm tối ưu Replace batch edit, mặc định không gạch chân, chiều cao 100–145%, cài đặt nhanh, 1.121 emoji, hàng số Telex/VNI và bản vá core `thoảng` + `e`.</p>
+              <p>IME Android đầy đủ, chạy local; bản APK debug chưa phát hành trên CH Play. Bản cập nhật 01/11/2026 (build 24): ẩn rồi mở lại bàn phím sẽ về trang chữ (hoặc bàn phím số), không còn giữ trang ký tự đặc biệt. Vẫn có `replaceText()` trên Android 14+, fallback batch cho máy cũ/field dài, reset layout khi vào app mới, mặc định không gạch chân, chiều cao 100–145%, cài đặt nhanh, 1.121 emoji, hàng số Telex/VNI và bản vá core `thoảng` + `e`.</p>
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="/downloads/0.1.0/vifastkey-android-debug.apk?v=22" target="_blank" rel="noopener" data-download="vifastkey-android-debug.apk">Tải APK <span>APK</span></a>
+            <a class="dl-btn primary" href="/downloads/0.1.0/vifastkey-android-debug.apk?v=24" target="_blank" rel="noopener" data-download="vifastkey-android-debug.apk">Tải APK <span>APK</span></a>
           </div>
         </div>
         <div class="platform-body">
@@ -784,6 +784,16 @@ cd vifastkey-fcitx5
       </div>
       <div class="fix-log">
         <article class="fix-item">
+          <div class="fix-top"><span class="fix-build">Build 24 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
+          <h3>“Ẩn rồi mở lại bàn phím vẫn ở trang ký tự đặc biệt.”</h3>
+          <p><strong>Đã sửa:</strong> mỗi lần input view được mở lại đều reset về layout chữ (hoặc bàn phím số nếu field số), không giữ trang ký tự của phiên trước.</p>
+        </article>
+        <article class="fix-item">
+          <div class="fix-top"><span class="fix-build">Build 23 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
+          <h3>“Replace trên Messenger/Facebook bị nháy do xoá rồi commit.”</h3>
+          <p><strong>Đã sửa:</strong> Android 14+ dùng <code>InputConnection.replaceText()</code> thay cả range trong một lệnh; Android cũ hoặc field dài hơn 4096 ký tự fallback batch delete + commit.</p>
+        </article>
+        <article class="fix-item">
           <div class="fix-top"><span class="fix-build">Build 22 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
           <h3>“Mở bàn phím ở Facebook/app mới lại hiện tab ký tự đặc biệt thay vì chữ.”</h3>
           <p><strong>Đã sửa:</strong> vào field/app mới tự reset về layout chữ (hoặc bàn phím số nếu field số); chỉ giữ layout đang dùng khi quay lại cùng field.</p>
@@ -959,7 +969,7 @@ cd vifastkey-fcitx5
     </div>
   </footer>
 
-  <script type="module" src="app.js?v=20261101aj"></script>
-  <script type="module" src="server-demo.js?v=20261101aj"></script>
+  <script type="module" src="app.js?v=20261101al"></script>
+  <script type="module" src="server-demo.js?v=20261101al"></script>
 </body>
 </html>

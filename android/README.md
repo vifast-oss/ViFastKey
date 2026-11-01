@@ -35,6 +35,10 @@ Bàn phím Android dùng engine Rust qua JNI, không dùng mạng.
   khi gõ nhanh, suggestion/autocorrect cũng dùng batch.
 - Vào app/field mới tự mở layout chữ (hoặc bàn phím số cho field số), không giữ
   nhầm tab ký tự đặc biệt; quay lại cùng field giữ layout hiện tại.
+- Android 14+ dùng `InputConnection.replaceText()` để thay range trong một lệnh;
+  Android cũ/field dài fallback batch delete + commit.
+- Mỗi lần ẩn rồi mở lại bàn phím đều về layout chữ (hoặc bàn phím số), không giữ
+  trang ký tự đặc biệt.
 - Chọn dấu (long-press) xong cũng về layout chữ; chọn số thì giữ nguyên bàn phím số.
 - Số gợi ý `1..0` nhỏ ở góc trên phải hàng qwerty; giữ phím ra số ngay.
 - Nhớ panel đang dùng: từ chữ mở lại panel gần nhất (mặc định là ký tự đặc biệt);

@@ -5,6 +5,7 @@ import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.inputmethodservice.InputMethodService;
+import android.os.Build;
 import android.os.SystemClock;
 import android.text.InputType;
 import android.view.KeyEvent;
@@ -110,6 +111,12 @@ public final class ViFastKeyService extends InputMethodService {
     public void onStartInputView(EditorInfo info, boolean restarting) {
         super.onStartInputView(info, restarting);
         syncKeyboardState();
+        if (keyboard != null) {
+            // Mỗi lần mở lại bàn phím đều về trang chữ (hoặc số), không giữ
+            // nhầm trang ký tự đặc biệt của phiên trước.
+            keyboard.resetLayoutForField(fieldKind == 2);
+            keyboard.setSuggestions(null);
+        }
     }
 
     @Override
@@ -488,12 +495,19 @@ public final class ViFastKeyService extends InputMethodService {
         String display = NativeEngine.display(handle);
         NativeEngine.reset(handle);
         applying = true;
-        boolean batching = ic.beginBatchEdit();
+        String output = trailingSpace ? replacement + " " : replacement;
+        boolean atomic = display != null && !display.isEmpty()
+                && composingTextPresent(ic, display)
+                && replaceTextAtomic(ic, display.length(), output);
+        boolean batching = false;
+        if (!atomic) batching = ic.beginBatchEdit();
         try {
-            if (display != null && !display.isEmpty() && composingTextPresent(ic, display)) {
-                ic.deleteSurroundingText(display.length(), 0);
+            if (!atomic) {
+                if (display != null && !display.isEmpty() && composingTextPresent(ic, display)) {
+                    ic.deleteSurroundingText(display.length(), 0);
+                }
+                ic.commitText(output, 1);
             }
-            ic.commitText(trailingSpace ? replacement + " " : replacement, 1);
             smartSpacePending = trailingSpace;
             lastAppliedAt = SystemClock.uptimeMillis();
             return true;
@@ -502,6 +516,26 @@ public final class ViFastKeyService extends InputMethodService {
         } finally {
             if (batching) ic.endBatchEdit();
             applying = false;
+        }
+    }
+
+    /**
+     * Android 14+ có replaceText(): thay cả range trong một lệnh. Chỉ dùng khi
+     * đọc được toàn bộ text trước con trỏ trong giới hạn an toàn; field dài hơn
+     * fallback về delete + commit batch.
+     */
+    private boolean replaceTextAtomic(InputConnection ic, int deleteUtf16, String text) {
+        if (Build.VERSION.SDK_INT < 34 || ic == null || deleteUtf16 <= 0) return false;
+        try {
+            CharSequence before = ic.getTextBeforeCursor(4096, 0);
+            if (before == null || before.length() < deleteUtf16 || before.length() >= 4096) {
+                return false;
+            }
+            int end = before.length();
+            int start = end - deleteUtf16;
+            return ic.replaceText(start, end, text, 1, null);
+        } catch (Exception ignored) {
+            return false;
         }
     }
 
@@ -571,7 +605,10 @@ public final class ViFastKeyService extends InputMethodService {
             String kind = plan.optString("kind");
             String text = plan.optString("text", "");
             boolean pass = plan.optBoolean("pass", false);
-            if (!preeditUnderline && "replace".equals(kind)) {
+            int replaceDelete = "replace".equals(kind) ? plan.optInt("delete_utf16", 0) : 0;
+            boolean atomicReplace = !preeditUnderline && replaceDelete > 0
+                    && replaceTextAtomic(ic, replaceDelete, text);
+            if (!atomicReplace && !preeditUnderline && "replace".equals(kind)) {
                 batching = ic.beginBatchEdit();
             }
             switch (kind) {
@@ -591,10 +628,11 @@ public final class ViFastKeyService extends InputMethodService {
                     if (pass) passOriginal(ic, originalKey);
                     break;
                 case "replace": {
-                    int delete = plan.optInt("delete_utf16", 0);
-                    if (delete > 0) ic.deleteSurroundingText(delete, 0);
-                    ic.commitText(text, 1);
-                    if (preeditUnderline) ic.finishComposingText();
+                    if (!atomicReplace) {
+                        if (replaceDelete > 0) ic.deleteSurroundingText(replaceDelete, 0);
+                        ic.commitText(text, 1);
+                        if (preeditUnderline) ic.finishComposingText();
+                    }
                     if (pass) passOriginal(ic, originalKey);
                     break;
                 }

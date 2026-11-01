@@ -111,6 +111,18 @@ FEEDBACK_STATUS = {"new": "Chờ xem", "read": "Đã đọc", "resolved": "Đã 
 # Nhật ký lỗi đã sửa, hiển thị công khai ở /#da-sua và trong /admin.
 ISSUE_FIXES = [
     (
+        "Build 24",
+        "Ẩn rồi mở lại bàn phím vẫn ở trang ký tự đặc biệt",
+        "Mỗi lần input view được mở lại đều reset về layout chữ (hoặc bàn phím số "
+        "nếu field số), không giữ trang ký tự của phiên trước.",
+    ),
+    (
+        "Build 23",
+        "Replace trên Messenger/Facebook bị nháy do xoá rồi commit",
+        "Android 14+ dùng InputConnection.replaceText() thay cả range trong một "
+        "lệnh; Android cũ hoặc field dài hơn 4096 ký tự fallback batch delete + commit.",
+    ),
+    (
         "Build 22",
         "Mở bàn phím ở Facebook/app mới lại hiện tab ký tự đặc biệt thay vì chữ",
         "Vào field/app mới tự reset về layout chữ (hoặc bàn phím số nếu field số); "
