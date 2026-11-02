@@ -167,15 +167,17 @@ fallback. Bản phát hành vẫn phải ký Developer ID + notarize (`package.s
   - Mở Input Sources.
 - Escape trả raw và **không** forward Esc.
 - Backspace xoá ký tự hiển thị, giữ dấu.
-- Mặc định **Preedit** (gạch chân) — ổn định nhất. Có thể bật **Replace**
-  (không gạch chân) trong **Cấu hình → Chữ đang gõ** hoặc
-  `"output_mode": "preedit" | "replace"` trong file JSON.
+- Mặc định **Replace** (không gạch chân) giống Android/Windows; đổi trong
+  **Cấu hình → Chữ đang gõ** hoặc `"output_mode": "replace" | "preedit"` trong
+  file JSON.
 - Replace commit thẳng bằng `insertText(replacementRange:)` (một range UTF-16),
-  không tạo marked text. Hiện là **thử nghiệm**: một số app xử lý replacement
-  range chậm/không ổn định (freeze ~1s, nhả phím ra literal).
-- Terminal/iTerm, Electron (VS Code, Slack, Discord, Notion) và Firefox luôn
-  mặc định Preedit; có thể override từng app bằng `app_profiles`.
-- Preedit được IMK vẽ gạch chân; Enter/dấu cách/click/focus commit đúng.
+  không tạo marked text.
+- Preedit (gạch chân) là opt-in, dùng khi app xử lý replace range không ổn định.
+  Terminal/iTerm, Electron (VS Code, Slack, Discord, Notion) và Firefox mặc định
+  Preedit; có thể override từng app bằng `app_profiles`.
+- Backspace qua từ gõ sai: xoá hết từ mới + dấu cách sẽ khôi phục từ trước để
+  sửa tiếp (cả Replace và Preedit).
+- Preedit (khi bật) được IMK vẽ gạch chân; Enter/dấu cách/click/focus commit đúng.
 - Secure input/password: reset preedit và pass-through, không commit chữ vào field mật khẩu.
 
 ## Cấu hình

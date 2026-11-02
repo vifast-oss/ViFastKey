@@ -2,10 +2,9 @@ import Foundation
 
 struct ConfigFile {
     static let bundleID = "app.vifastkey.inputmethod.ViFastKey"
-    /// `preedit` = marked text có gạch chân của macOS (mặc định, ổn định).
-    /// `replace` = commit thẳng, không gạch chân; opt-in vì một số app xử lý
-    /// replacement range chậm/không ổn định.
-    static let defaultOutputMode = "preedit"
+    /// `replace` = commit thẳng, không gạch chân (mặc định, giống Android/Windows);
+    /// `preedit` = marked text có gạch chân của macOS (opt-in).
+    static let defaultOutputMode = "replace"
 
     static var directory: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -67,7 +66,7 @@ struct ConfigFile {
               "edit_previous_word": true,
               "restore_after_space": true,
               "smart_caps": false,
-              "output_mode": "preedit",
+              "output_mode": "replace",
               "unicode_form": "NFC"
             }
             """

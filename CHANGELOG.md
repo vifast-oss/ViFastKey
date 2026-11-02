@@ -13,6 +13,8 @@
 - Thêm `tô` vào danh sách từ Việt thông dụng (dùng cho backspace/gợi ý).
 - Backspace sau khi gõ thừa ký tự vào từ Việt khôi phục lại từ đúng:
   `nhưng` + `l` → `nhuwngl`, Backspace → `nhưng` (trước đây ra `nhuwng`).
+- Giữ trạng thái soft-reset qua từ mới: gõ sai một từ rồi xoá hết từ đó + dấu cách
+  sẽ khôi phục từ trước để sửa tiếp (áp dụng cho cả Preedit và Replace).
 
 ### Desktop
 
@@ -44,9 +46,9 @@
   kill process cũ; `build.sh` tự dùng Apple Development/Developer ID nếu có; thêm
   `--status` và kiểm tra chữ ký/crash report trong `doctor.sh`. Buffer preedit
   chuyển sang `NSAttributedString` để Notes/NSTextView rich text hiện chữ.
-  Mặc định **Preedit** (gạch chân); **Replace** (không gạch chân) là opt-in
-  trong Cấu hình → “Chữ đang gõ”/`output_mode` vì một số app xử lý replacement
-  range chậm hoặc không ổn định; terminal/Electron/Firefox luôn Preedit.
+  Mặc định **Replace** (không gạch chân) giống Android/Windows; **Preedit**
+  (gạch chân) là opt-in trong Cấu hình → “Chữ đang gõ”/`output_mode` cho app
+  xử lý replacement range không ổn định; terminal/Electron/Firefox luôn Preedit.
   ZIP phát hành giờ tự chứa `install.sh`/`uninstall.sh`/README; sửa hướng dẫn
   web/docs (đường dẫn `~/Library/Input Methods`, hộp thoại Allow, không cài lại
   nhiều lần).
