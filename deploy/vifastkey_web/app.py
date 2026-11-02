@@ -111,6 +111,12 @@ FEEDBACK_STATUS = {"new": "Chờ xem", "read": "Đã đọc", "resolved": "Đã 
 # Nhật ký lỗi đã sửa, hiển thị công khai ở /#da-sua và trong /admin.
 ISSUE_FIXES = [
     (
+        "Build 25",
+        "Gõ sai nhiều ký tự rồi xoá hết, không khôi phục đúng từ trước",
+        "Engine giữ trạng thái soft-reset qua từ mới; xoá hết từ vừa gõ + dấu cách "
+        "sẽ khôi phục từ trước (cả Preedit và Replace) để sửa tiếp.",
+    ),
+    (
         "Build 24",
         "Ẩn rồi mở lại bàn phím vẫn ở trang ký tự đặc biệt",
         "Mỗi lần input view được mở lại đều reset về layout chữ (hoặc bàn phím số "

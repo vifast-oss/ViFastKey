@@ -21,7 +21,7 @@
   <meta name="twitter:title" content="ViFastKey — Bộ gõ tiếng Việt">
   <meta name="twitter:description" content="Bộ gõ tiếng Việt nhỏ, nhanh, thuần logic. Gõ thử WASM và gọi API Python.">
   <meta name="twitter:image" content="https://vifastkey.hoctuthien.com/brand/og-image.png">
-  <link rel="stylesheet" href="style.css?v=20261101al">
+  <link rel="stylesheet" href="style.css?v=20261101am">
   <noscript><style>
     /* Không có JS: hiện đủ hướng dẫn thay vì chỉ panel đầu. */
     .platform-panel[hidden] { display: block !important; margin-bottom: 16px; }
@@ -516,11 +516,11 @@ cd vifastkey-fcitx5
           <div class="platform-title">
             <div>
               <h3>Android 8.0+ · arm64 / x86_64</h3>
-              <p>IME Android đầy đủ, chạy local; bản APK debug chưa phát hành trên CH Play. Bản cập nhật 01/11/2026 (build 24): ẩn rồi mở lại bàn phím sẽ về trang chữ (hoặc bàn phím số), không còn giữ trang ký tự đặc biệt. Vẫn có `replaceText()` trên Android 14+, fallback batch cho máy cũ/field dài, reset layout khi vào app mới, mặc định không gạch chân, chiều cao 100–145%, cài đặt nhanh, 1.121 emoji, hàng số Telex/VNI và bản vá core `thoảng` + `e`.</p>
+              <p>IME Android đầy đủ, chạy local; bản APK debug chưa phát hành trên CH Play. Bản cập nhật 02/11/2026 (build 25): gõ sai rồi xoá hết từ + dấu cách sẽ khôi phục từ trước để sửa tiếp; ẩn rồi mở lại bàn phím về trang chữ (hoặc bàn phím số), không giữ trang ký tự đặc biệt. Vẫn có `replaceText()` trên Android 14+, fallback batch cho máy cũ/field dài, mặc định không gạch chân, chiều cao 100–145%, cài đặt nhanh, 1.121 emoji, hàng số Telex/VNI.</p>
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="/downloads/0.1.0/vifastkey-android-debug.apk?v=24" target="_blank" rel="noopener" data-download="vifastkey-android-debug.apk">Tải APK <span>APK</span></a>
+            <a class="dl-btn primary" href="/downloads/0.1.0/vifastkey-android-debug.apk?v=25" target="_blank" rel="noopener" data-download="vifastkey-android-debug.apk">Tải APK <span>APK</span></a>
           </div>
         </div>
         <div class="platform-body">
@@ -784,6 +784,11 @@ cd vifastkey-fcitx5
       </div>
       <div class="fix-log">
         <article class="fix-item">
+          <div class="fix-top"><span class="fix-build">Build 25 · 02/11/2026</span><span class="fix-status">Đã sửa</span></div>
+          <h3>“Gõ sai nhiều ký tự rồi xoá hết, không khôi phục đúng từ trước.”</h3>
+          <p><strong>Đã sửa:</strong> engine giữ trạng thái soft-reset qua từ mới; xoá hết từ vừa gõ + dấu cách sẽ khôi phục từ trước (cả Preedit và Replace), sửa tiếp dấu/kiểu gõ bình thường.</p>
+        </article>
+        <article class="fix-item">
           <div class="fix-top"><span class="fix-build">Build 24 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
           <h3>“Ẩn rồi mở lại bàn phím vẫn ở trang ký tự đặc biệt.”</h3>
           <p><strong>Đã sửa:</strong> mỗi lần input view được mở lại đều reset về layout chữ (hoặc bàn phím số nếu field số), không giữ trang ký tự của phiên trước.</p>
@@ -969,7 +974,7 @@ cd vifastkey-fcitx5
     </div>
   </footer>
 
-  <script type="module" src="app.js?v=20261101al"></script>
-  <script type="module" src="server-demo.js?v=20261101al"></script>
+  <script type="module" src="app.js?v=20261101am"></script>
+  <script type="module" src="server-demo.js?v=20261101am"></script>
 </body>
 </html>

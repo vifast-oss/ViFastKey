@@ -37,6 +37,8 @@ Bàn phím Android dùng engine Rust qua JNI, không dùng mạng.
   nhầm tab ký tự đặc biệt; quay lại cùng field giữ layout hiện tại.
 - Android 14+ dùng `InputConnection.replaceText()` để thay range trong một lệnh;
   Android cũ/field dài fallback batch delete + commit.
+- Xoá hết từ vừa gõ + dấu cách sẽ khôi phục từ trước (soft-reset) để sửa tiếp,
+  kể cả khi gõ sai nhiều ký tự rồi Backspace.
 - Mỗi lần ẩn rồi mở lại bàn phím đều về layout chữ (hoặc bàn phím số), không giữ
   trang ký tự đặc biệt.
 - Chọn dấu (long-press) xong cũng về layout chữ; chọn số thì giữ nguyên bàn phím số.
