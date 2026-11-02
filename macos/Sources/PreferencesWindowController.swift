@@ -83,7 +83,7 @@ final class PreferencesWindowController: NSWindowController {
         unicodePopup.addItems(withTitles: ["NFC (dựng sẵn)", "NFD (tổ hợp)"])
         stack.addArrangedSubview(unicodeRow)
         let outputRow = row("Chữ đang gõ", outputPopup)
-        outputPopup.addItems(withTitles: ["Không gạch chân (Replace)", "Gạch chân (Preedit)"])
+        outputPopup.addItems(withTitles: ["Gạch chân (Preedit)", "Không gạch chân (Replace, thử nghiệm)"])
         stack.addArrangedSubview(outputRow)
 
         for key in Self.boolKeys {
@@ -175,7 +175,7 @@ final class PreferencesWindowController: NSWindowController {
         }
         tonePopup.selectItem(at: (dict["tone_style"] as? String == "old") ? 0 : 1)
         unicodePopup.selectItem(at: (dict["unicode_form"] as? String == "NFD") ? 1 : 0)
-        outputPopup.selectItem(at: ConfigFile.outputMode == "preedit" ? 1 : 0)
+        outputPopup.selectItem(at: ConfigFile.outputMode == "replace" ? 1 : 0)
         for (key, check) in checks {
             check.state = (dict[key] as? Bool ?? Self.defaultBool(for: key)) ? .on : .off
         }
@@ -188,7 +188,7 @@ final class PreferencesWindowController: NSWindowController {
         dict["input_method"] = Self.methods[methodPopup.indexOfSelectedItem].0
         dict["tone_style"] = tonePopup.indexOfSelectedItem == 1 ? "new" : "old"
         dict["unicode_form"] = unicodePopup.indexOfSelectedItem == 1 ? "NFD" : "NFC"
-        dict["output_mode"] = outputPopup.indexOfSelectedItem == 1 ? "preedit" : "replace"
+        dict["output_mode"] = outputPopup.indexOfSelectedItem == 1 ? "replace" : "preedit"
         for (key, check) in checks {
             dict[key] = check.state == .on
         }
