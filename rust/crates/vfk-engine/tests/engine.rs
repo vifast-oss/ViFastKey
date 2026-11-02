@@ -445,6 +445,32 @@ fn soft_reset_add_tone_after_space() {
 }
 
 #[test]
+fn backspace_right_after_space_restores_previous_word() {
+    for m in MODES {
+        let mut h = make(m);
+        type_mixed(&mut h, &["nawm ", BS]);
+        assert_eq!(h.text(), "năm", "{m:?}");
+        type_mixed(&mut h, &["s"]);
+        assert_eq!(h.text(), "nắm", "{m:?}");
+    }
+}
+
+#[test]
+fn backspace_through_garbage_restores_previous_word() {
+    for m in MODES {
+        let mut h = make(m);
+        // 3 Backspace xoá hết "asdf" (a+s hiển thị "á"), Backspace thứ 4 xoá
+        // dấu cách và khôi phục "năm".
+        type_mixed(&mut h, &["nawm ", "asdf", BS, BS, BS]);
+        assert_eq!(h.text(), "năm ", "{m:?}");
+        type_mixed(&mut h, &[BS]);
+        assert_eq!(h.text(), "năm", "{m:?}");
+        type_mixed(&mut h, &["s"]);
+        assert_eq!(h.text(), "nắm", "{m:?}");
+    }
+}
+
+#[test]
 fn soft_reset_not_after_macro() {
     let mut h =
         make_with(OutputMode::Replace, Config { edit_previous_word: false, macro_undo: false, ..cfg() });

@@ -327,7 +327,8 @@ class ImeSession:
 
     def _letter(self, key: str) -> Action:
         ch = key
-        self.last = None
+        # Giữ `last` khi bắt đầu từ mới: nếu người dùng gõ sai rồi xoá hết
+        # từ mới + dấu cách, Backspace sẽ khôi phục lại từ trước để sửa tiếp.
         if not self.raw:
             if self.cap_next:
                 ch = ch.upper()
@@ -376,10 +377,11 @@ class ImeSession:
                 if before is not None and self._out(before) == inserted:
                     return Replace(len(inserted), restored)
             last, self.last = self.last, None
-            if (last and self.config.restore_after_space and self.mode is OutputMode.REPLACE
-                    and len(last[3]) == 1):
+            if last and self.config.restore_after_space and len(last[3]) == 1:
                 self.raw, self.word, self.literal = list(last[0]), last[1], last[2]
-                self.adopted = None
+                # Preedit: đánh dấu từ đã commit để lần gõ sau dùng Replace,
+                # không vẽ thêm một bản preedit lên chữ đang có trên màn hình.
+                self.adopted = (last[1], len(last[0])) if self.mode is OutputMode.PREEDIT else None
             return PassThrough()                    # OS tự xoá dấu cách
         target = self.word[:-1]
         if not target:

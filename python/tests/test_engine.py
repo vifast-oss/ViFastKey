@@ -232,6 +232,33 @@ def test_backspace_after_invalid_suffix_restores_word(mode):
 
 
 @pytest.mark.parametrize("mode", MODES)
+def test_backspace_right_after_space_restores_previous_word(mode):
+    s, f, _ = make(mode)
+    f.type(s, "nawm ")
+    assert f.text == "năm "
+    f.type(s, [BS])
+    assert f.text == "năm"
+    f.type(s, "s")
+    assert f.text == "nắm"
+
+
+@pytest.mark.parametrize("mode", MODES)
+def test_backspace_through_garbage_restores_previous_word(mode):
+    s, f, _ = make(mode)
+    f.type(s, "nawm ")
+    f.type(s, "asdf")
+    assert f.text == "năm asdf"
+    # 3 Backspace xoá hết "asdf" (a+s hiển thị thành "á"), Backspace thứ 4 xoá
+    # dấu cách và khôi phục "năm" để sửa tiếp.
+    f.type(s, [BS] * 3)
+    assert f.text == "năm "
+    f.type(s, [BS])
+    assert f.text == "năm"
+    f.type(s, "s")
+    assert f.text == "nắm"
+
+
+@pytest.mark.parametrize("mode", MODES)
 def test_backspace_restores_valid_syllable_not_in_dictionary(mode):
     """thoảng là âm tiết hợp lệ nhưng không có trong từ điển common."""
     s, f, _ = make(mode)

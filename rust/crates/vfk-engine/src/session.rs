@@ -616,7 +616,8 @@ impl ImeSession {
 
     fn letter(&mut self, key: char) -> Action {
         let mut ch = key;
-        self.last = None;
+        // Giữ `last` khi bắt đầu từ mới: nếu gõ sai rồi xoá hết từ mới + dấu
+        // cách, Backspace sẽ khôi phục từ trước để sửa tiếp.
         if self.raw.is_empty() {
             if self.cap_next {
                 ch = upper(ch);
@@ -693,14 +694,17 @@ impl ImeSession {
                 }
             }
             if let Some(last) = self.last.take() {
-                if self.config.restore_after_space
-                    && self.mode == OutputMode::Replace
-                    && last.sep.len_utf8() > 0
-                {
+                if self.config.restore_after_space && last.sep.len_utf8() > 0 {
                     self.raw = last.raw;
                     self.word = last.word;
                     self.literal = last.literal;
-                    self.adopted = None;
+                    // Preedit: đánh dấu từ đã commit để lần gõ sau dùng Replace,
+                    // không vẽ thêm một bản preedit lên chữ đang có trên màn hình.
+                    self.adopted = if self.mode == OutputMode::Preedit {
+                        Some((self.word.clone(), self.raw.len()))
+                    } else {
+                        None
+                    };
                 }
             }
             return Action::PassThrough; // OS tự xoá dấu cách
