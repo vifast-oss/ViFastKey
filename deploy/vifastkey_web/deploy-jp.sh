@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Deploy ViFastKey web lên LXD container trên host jp.
 #   ./deploy/vifastkey_web/deploy-jp.sh
-#   JP_HOST=root@jp CONTAINER=hoctuthien-vps VERSION=0.1.0 ./deploy/...
+#   JP_HOST=root@jp CONTAINER=hoctuthien-vps VERSION=0.1.1 ./deploy/...
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"

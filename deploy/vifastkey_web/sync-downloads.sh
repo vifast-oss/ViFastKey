@@ -4,7 +4,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-VERSION="${1:-0.1.0}"
+VERSION="${1:-0.1.1}"
 SRC="${DIST_DIR:-$ROOT/dist}"
 DEST="$ROOT/deploy/vifastkey_web/downloads/$VERSION"
 

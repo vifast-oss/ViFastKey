@@ -71,7 +71,7 @@ Vì vậy ViFastKey được đặt cạnh `vifasttts`:
 ```bash
 # 0) Đóng gói UEFI + đồng bộ mirror tải xuống (asset binary bị gitignore)
 ./uefi/package.sh
-./deploy/vifastkey_web/sync-downloads.sh 0.1.0
+./deploy/vifastkey_web/sync-downloads.sh 0.1.1
 
 # 1) Trên máy local: tạo build context
 ./deploy/vifastkey_web/stage.sh /private/tmp/vifastkey-stage

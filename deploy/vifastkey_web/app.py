@@ -271,6 +271,7 @@ ISSUE_FIXES = [
 DOWNLOAD_PLATFORMS = {
     "vifastkey-windows-hook.zip": "windows",
     "vifastkey-windows-hook-0.1.0.zip": "windows",
+    "vifastkey-windows-hook-0.1.1.zip": "windows",
     "vifastkey-windows-tsf.zip": "windows",
     "vifastkey-cli-windows-x64.zip": "windows",
     "vifastkey-macos-imk-universal.zip": "macos",
@@ -279,6 +280,7 @@ DOWNLOAD_PLATFORMS = {
     "vifastkey-fcitx5-linux-x86_64.tar.gz": "linux",
     "vifastkey-ibus-linux.tar.gz": "linux",
     "vifastkey-settings-linux-x86_64.tar.gz": "linux",
+    "vifastkey-wayland-linux-x86_64.tar.gz": "linux",
     "vifastkey-settings-windows-x64.zip": "windows",
     "vifastkey-android-debug.apk": "android",
     "vifastkey-android-release.apk": "android",

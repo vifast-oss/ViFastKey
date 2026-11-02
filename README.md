@@ -205,7 +205,7 @@ cargo test --workspace
 ## Tải và cài đặt
 
 Bản Windows hiện tại là **hook-only một binary**, không cần ký:
-`vifastkey-windows-hook-0.1.0.zip` trên <https://vifastkey.hoctuthien.com/#tai-ve>.
+`vifastkey-windows-hook-0.1.1.zip` trên <https://vifastkey.hoctuthien.com/#tai-ve>.
 Hướng dẫn mọi nền tảng: [`docs/INSTALL.md`](docs/INSTALL.md).
 
 ## Tài liệu

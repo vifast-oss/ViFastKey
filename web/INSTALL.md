@@ -11,7 +11,7 @@ web/WASM và build từ source ở các mục sau.
 
 Từ bản này Windows dùng **keyboard hook**, không cài TSF, không cần ký.
 
-1. Tải `vifastkey-windows-hook-0.1.0.zip`.
+1. Tải `vifastkey-windows-hook-0.1.1.zip`.
 2. Chuột phải → **Extract All** (đừng chạy trực tiếp trong ZIP).
 3. Mở PowerShell tại thư mục đã giải nén:
 
@@ -123,6 +123,39 @@ hộp thoại Allow lặp lại: xoá input source, chạy lại installer **m�
 đăng xuất/đăng nhập.
 
 Adapter dùng IMK preedit, menu Telex/Simple Telex/VNI, macro và app profile.
+
+## Linux — chọn một adapter
+
+> **Chỉ cài MỘT trong ba:** IBus, Fcitx5 **hoặc** Wayland.
+> Cài nhiều hơn sẽ tranh nhau xử lý phím, gõ đôi hoặc mất chữ.
+
+- **GNOME / IBus** → cài gói IBus.
+- **KDE / Fcitx5** → cài gói Fcitx5.
+- **Sway / Hyprland / niri** (hỗ trợ `zwp_input_method_v2`) → cài Wayland standalone.
+
+Chỉ chọn một dòng theo môi trường đang dùng; không cài cả ba.
+
+## Linux — Wayland standalone (Sway / Hyprland / niri)
+
+Gói `vifastkey-wayland-linux-x86_64.tar.gz` dùng `zwp_input_method_v2` +
+`zwp_virtual_keyboard_v1`, không cần Fcitx5/IBus. GNOME/KDE dùng Fcitx5 hoặc
+IBus bên dưới.
+
+```bash
+tar -xzf vifastkey-wayland-linux-x86_64.tar.gz
+cd vifastkey-wayland
+./install.sh
+systemctl --user enable --now vifastkey-wayland.service
+```
+
+Kiểm tra compositor:
+
+```bash
+vifastkey-wayland --probe
+```
+
+Nếu thiếu `zwp_input_method_manager_v2`, compositor không hỗ trợ. Chi tiết:
+`linux/wayland/README.md`.
 
 ## Linux — IBus
 
@@ -274,7 +307,7 @@ Xcode. TSF cũ nằm trong `windows/tsf/` chỉ để tham khảo/legacy, **khô
 
 | Kênh | Trạng thái |
 |---|---|
-| Website `/downloads/0.1.0/` | Mirror chính khi GitHub tạm khoá |
+| Website `/downloads/0.1.1/` | Mirror chính khi GitHub tạm khoá |
 | GitHub Release | Có asset UEFI `vifastkey-uefi-x86_64.zip` cùng các nền tảng khác |
 | UEFI demo | `vifastkey-uefi-x86_64.zip`, chạy trước OS; chưa ký Secure Boot |
 | Winget/Scoop/Homebrew | Chưa có; cần installer/ký |

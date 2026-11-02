@@ -47,7 +47,7 @@ Traefik bên ngoài route `https://vifastkey.hoctuthien.com/` vào container.
 Script sẽ:
 
 1. build UEFI + đóng gói `dist/vifastkey-uefi-x86_64.zip`;
-2. sync asset vào `deploy/vifastkey_web/downloads/0.1.0/` và sinh `sha256sums.txt`;
+2. sync asset vào `deploy/vifastkey_web/downloads/0.1.1/` và sinh `sha256sums.txt`;
 3. stage `web/` + `python/` + `downloads/` vào `/private/tmp/vifastkey-stage`;
 4. rsync sang `root@jp:/tmp/vifastkey-stage/`;
 5. giải nén vào `/opt/vifastkey` trong LXD;
@@ -57,7 +57,7 @@ Script sẽ:
 Có thể override:
 
 ```bash
-JP_HOST=root@jp CONTAINER=hoctuthien-vps VERSION=0.1.0 \
+JP_HOST=root@jp CONTAINER=hoctuthien-vps VERSION=0.1.1 \
   ./deploy/vifastkey_web/deploy-jp.sh
 ```
 
@@ -66,7 +66,7 @@ JP_HOST=root@jp CONTAINER=hoctuthien-vps VERSION=0.1.0 \
 ```bash
 # 1) Build + stage
 ./uefi/package.sh
-./deploy/vifastkey_web/sync-downloads.sh 0.1.0
+./deploy/vifastkey_web/sync-downloads.sh 0.1.1
 ./deploy/vifastkey_web/stage.sh /private/tmp/vifastkey-stage
 
 # 2) Đưa sang jp
@@ -87,7 +87,7 @@ curl -fsS https://vifastkey.hoctuthien.com/healthz
 curl -fsS https://vifastkey.hoctuthien.com/api/meta
 curl -fsS https://vifastkey.hoctuthien.com/ | grep -F 'vifastkey-uefi-x86_64.zip'
 curl -fsS -o /dev/null -w '%{http_code} %{size_download}\n' \
-  https://vifastkey.hoctuthien.com/downloads/0.1.0/vifastkey-uefi-x86_64.zip
+  https://vifastkey.hoctuthien.com/downloads/0.1.1/vifastkey-uefi-x86_64.zip
 ssh root@jp 'lxc exec hoctuthien-vps -- bash -lc "cd /opt/vifastkey && docker compose logs --tail=80"'
 ```
 

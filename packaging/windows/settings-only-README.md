@@ -1,10 +1,8 @@
-> **Legacy.** Gói này không còn được phát hành. Dùng `vifastkey-windows-hook-0.1.0.zip`.
-
 # ViFastKey Settings (chỉ UI cấu hình)
 
-Gói này **chỉ chứa `vifastkey-settings.exe`**, không chứa TSF/hook.
-Để gõ tiếng Việt trên Windows, hãy dùng gói **`vifastkey-windows-tsf.zip`** —
-gói đó có TSF preedit, hook Replace, installer và hướng dẫn đầy đủ.
+Gói này **chỉ chứa `vifastkey-settings.exe`**, không chứa hook.
+Để gõ tiếng Việt trên Windows, hãy dùng gói **`vifastkey-windows-hook-0.1.1.zip`** —
+gói đó có Settings + hook + installer và hướng dẫn đầy đủ.
 
 ## Tính năng UI
 
@@ -22,7 +20,7 @@ gói đó có TSF preedit, hook Replace, installer và hướng dẫn đầy đ�
 .\vifastkey-settings.exe --check
 ```
 
-Nếu đã cài gói `vifastkey-windows-tsf`, mở từ Start Menu **ViFastKey Settings**.
+Nếu đã cài gói hook, mở từ Start Menu **ViFastKey Settings**.
 Cấu hình nằm tại `%APPDATA%\ViFastKey\config.json`.
 
 Xem `DEVELOPER.md` để build/tùy chỉnh. Mã nguồn MIT; xem `LICENSE` và

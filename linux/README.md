@@ -1,5 +1,8 @@
 # Linux adapters
 
+> **Chỉ cài MỘT trong ba adapter** — IBus, Fcitx5 **hoặc** Wayland.
+> Cài nhiều hơn sẽ tranh nhau xử lý phím, gõ đôi hoặc mất chữ.
+
 - `ibus/` — ✅ engine IBus Python (core test được, cần Linux + PyGObject/IBus để chạy thật).
 - `fcitx5/` — ✅ addon C++ dùng C ABI Rust; build bằng CMake, CI Ubuntu.
 - `wayland/` — ✅ adapter Wayland standalone (`zwp_input_method_v2` +

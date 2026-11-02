@@ -4,7 +4,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT_DIR="${1:-$ROOT/dist}"
-VERSION="${VERSION:-0.1.0}"
+VERSION="${VERSION:-0.1.1}"
 BIN="${VIFASTKEY_SETTINGS_BIN:-$ROOT/rust/target/release/vifastkey-settings}"
 
 if [ ! -x "$BIN" ]; then
