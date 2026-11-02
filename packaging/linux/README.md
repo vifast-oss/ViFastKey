@@ -46,8 +46,8 @@ hãy build từ source (`cargo build --release -p vifastkey-settings`).
 ## Cài đặt
 
 ```bash
-tar -xzf vifastkey-settings-linux-x86_64-0.1.0.tar.gz
-cd vifastkey-settings-linux-x86_64-0.1.0
+tar -xzf vifastkey-settings-linux-x86_64-0.1.1.tar.gz
+cd vifastkey-settings-linux-x86_64-0.1.1
 chmod +x install.sh
 ./install.sh
 ```

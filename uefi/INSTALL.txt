@@ -1,4 +1,4 @@
-ViFastKey UEFI x86_64 — bản demo v0.1.0
+ViFastKey UEFI x86_64 — bản demo v0.1.1
 ========================================
 
 Đây là ứng dụng UEFI tự chứa, chạy trước khi hệ điều hành boot. Nó KHÔNG phải
