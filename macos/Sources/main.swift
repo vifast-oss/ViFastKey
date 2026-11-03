@@ -100,7 +100,10 @@ if maintenance() {
 // "Allow ViFastKey to enable ViFastKey?" sau mỗi lần khởi động/chuyển app.
 // Đăng ký là việc của installer (--register-input-source).
 
-let connectionName = "ViFastKey_Connection"
+// Apple yêu cầu InputMethodConnectionName = "<bundle id>_Connection".
+// Đặt sai tên làm session IMK đầu tiên không kết nối được, vài phím đầu bị
+// app tự xử lý (Safari gõ chữ đầu không ra tiếng Việt).
+let connectionName = "app.vifastkey.inputmethod.ViFastKey_Connection"
 let bundleIdentifier = Bundle.main.bundleIdentifier ?? "app.vifastkey.inputmethod"
 let server = IMKServer(name: connectionName, bundleIdentifier: bundleIdentifier)
 _ = server

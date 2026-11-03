@@ -230,7 +230,7 @@ log stream --predicate 'process == "ViFastKeyIM"' --level debug
 
 - Bundle ID: `app.vifastkey.inputmethod.ViFastKey`.
 - Input source ID: `app.vifastkey.inputmethod.ViFastKey`.
-- Connection: `ViFastKey_Connection`.
+- Connection: `app.vifastkey.inputmethod.ViFastKey_Connection`.
 - Controller: `ViFastKeyInputController`.
 - Hiện ký **ad-hoc** để chạy local. Muốn phát hành:
   1. Ký `Developer ID Application` + hardened runtime.
