@@ -243,6 +243,16 @@ def test_backspace_right_after_space_restores_previous_word(mode):
 
 
 @pytest.mark.parametrize("mode", MODES)
+def test_linux_terminal_disables_soft_reset(mode):
+    s, f, _ = make(mode, app="xterm")
+    f.type(s, "hoa ")
+    f.type(s, [BS])
+    assert f.text == "hoa"
+    f.type(s, "f")
+    assert f.text == "hoaf"          # terminal không replace được -> bắt đầu từ mới
+
+
+@pytest.mark.parametrize("mode", MODES)
 def test_backspace_through_garbage_restores_previous_word(mode):
     s, f, _ = make(mode)
     f.type(s, "nawm ")

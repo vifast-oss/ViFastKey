@@ -95,6 +95,9 @@ class ImeSession:
         self.enabled = True
         self.field = FieldKind.TEXT
         self.last: tuple[list[str], str, bool, str] | None = None   # soft reset: (raw, word, literal, sep)
+        # Adapter có thể tắt soft-reset cho từng lần Backspace (IBus: terminal
+        # không cung cấp surrounding/delete); None = theo profile/config.
+        self.restore_after_space_override: bool | None = None
         self.last_macro: tuple[str, str] | None = None   # (text đã chèn, phím thô cần khôi phục)
         self.history: str = ""            # text đã commit gần đây, cho macro nhiều từ
         self.off_raw: list[str] = []      # phím đang gõ khi tắt tiếng Việt (macro off-mode)
@@ -383,7 +386,12 @@ class ImeSession:
                 if before is not None and self._out(before) == inserted:
                     return Replace(len(inserted), restored)
             last, self.last = self.last, None
-            if last and self.config.restore_after_space and len(last[3]) == 1:
+            restore_after_space = self.restore_after_space_override
+            if restore_after_space is None:
+                restore_after_space = self.profile.restore_after_space
+            if restore_after_space is None:
+                restore_after_space = self.config.restore_after_space
+            if last and restore_after_space and len(last[3]) == 1:
                 self.raw, self.word, self.literal = list(last[0]), last[1], last[2]
                 # Preedit: đánh dấu từ đã commit để lần gõ sau dùng Replace,
                 # không vẽ thêm một bản preedit lên chữ đang có trên màn hình.

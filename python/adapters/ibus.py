@@ -100,6 +100,16 @@ class IbusCore:
     def process(self, key: str, ctrl: bool = False, alt: bool = False,
                 meta: bool = False):
         self._reload_config_if_changed()
+        if key == "Backspace":
+            # Terminal/VTE thường trả surrounding rỗng và bỏ qua
+            # delete_surrounding_text. Không khôi phục từ trước để tránh
+            # append bản sửa ("hoa" + "à" -> "hoaà"); phím sau bắt đầu từ mới.
+            snap = self._surrounding.snapshot()
+            self.session.restore_after_space_override = (
+                False if snap is None or not snap.text else None
+            )
+        else:
+            self.session.restore_after_space_override = None
         return self.session.process_key(KeyEvent(key, ctrl=ctrl, alt=alt, meta=meta))
 
     def focus_in(self, app_id: str | None = None):

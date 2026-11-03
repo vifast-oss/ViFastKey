@@ -42,6 +42,8 @@ pub struct AppProfile {
     /// Chờ app xử lý xong backspace rồi mới chèn.
     pub wait_ack: bool,
     pub edit_previous_word: Option<bool>,
+    /// Ghi đè `Config::restore_after_space`; terminal Linux đặt false.
+    pub restore_after_space: Option<bool>,
     /// Ép bật/tắt (game, ...).
     pub vietnamese: Option<bool>,
     /// Ghi đè kiểu gõ theo app.
@@ -101,6 +103,27 @@ pub fn default_app_profiles() -> HashMap<String, AppProfile> {
         AppProfile { backspace_delay_ms: 5, output_mode: Some(OutputMode::Preedit), ..Default::default() },
     );
     m.insert("minecraft".into(), AppProfile { vietnamese: Some(false), ..Default::default() });
+    // Terminal Linux không hỗ trợ surrounding/delete_surrounding_text: tắt
+    // soft-reset để phím sau bắt đầu từ mới thay vì append bản sửa.
+    let linux_term = AppProfile {
+        output_mode: Some(OutputMode::Preedit),
+        edit_previous_word: Some(false),
+        restore_after_space: Some(false),
+        ..Default::default()
+    };
+    for k in [
+        "gnome-terminal",
+        "ptyxis",
+        "xfce4-terminal",
+        "xterm",
+        "konsole",
+        "urxvt",
+        "rxvt",
+        "tilix",
+        "terminator",
+    ] {
+        m.insert(k.to_string(), linux_term.clone());
+    }
     m
 }
 

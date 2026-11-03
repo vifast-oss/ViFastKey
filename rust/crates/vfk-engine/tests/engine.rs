@@ -26,6 +26,10 @@ fn make_with(mode: OutputMode, config: Config) -> Harness {
     Harness::new(mode, config, "notepad", "")
 }
 
+fn make_app(mode: OutputMode, app: &str) -> Harness {
+    Harness::new(mode, cfg(), app, "")
+}
+
 fn chars(s: &str) -> Vec<String> {
     s.chars().map(|c| c.to_string()).collect()
 }
@@ -442,6 +446,15 @@ fn soft_reset_add_tone_after_space() {
     let mut h = make_with(OutputMode::Replace, Config { edit_previous_word: false, ..cfg() });
     type_mixed(&mut h, &["tieeng ", BS, "s "]);
     assert_eq!(h.text(), "tiếng ");
+}
+
+#[test]
+fn soft_reset_disabled_in_linux_terminal_profile() {
+    for m in MODES {
+        let mut h = make_app(m, "xterm");
+        type_mixed(&mut h, &["hoa ", BS, "f"]);
+        assert_eq!(h.text(), "hoaf", "{m:?}");
+    }
 }
 
 #[test]

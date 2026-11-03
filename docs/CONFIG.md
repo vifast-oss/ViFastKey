@@ -72,6 +72,7 @@ hiện thay thế toàn bộ entry preset cùng app (schema 1).
 | `delay_per_char_ms` | int | Trễ cộng thêm theo số ký tự xoá |
 | `wait_ack` | bool | Chờ app xử lý backspace rồi mới chèn |
 | `edit_previous_word` | bool \| null | Ghi đè quyền sửa từ cũ |
+| `restore_after_space` | bool \| null | Ghi đè soft-reset sau dấu cách; preset terminal Linux = false |
 | `vietnamese` | bool \| null | Ép bật/tắt tiếng Việt |
 | `input_method` | string \| null | Ghi đè kiểu gõ theo app |
 | `tone_style` | `"old" \| "new" \| null` | Ghi đè kiểu đặt dấu |

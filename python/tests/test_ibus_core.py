@@ -40,6 +40,7 @@ def test_cursor_location_keeps_soft_reset():
     core, field = make()
     type_text(core, field, "hoa ")
     assert field.text == "hoa "
+    core.set_surrounding("hoa ", 4, 4)
 
     # IBus gửi cursor-location ngay sau khi commit; không được xoá `last`.
     core.cursor_moved()
@@ -50,6 +51,20 @@ def test_cursor_location_keeps_soft_reset():
     core.set_surrounding("hoa", 3, 3)
     type_text(core, field, "f")
     assert field.text == "hoà"
+
+
+def test_terminal_without_surrounding_disables_soft_reset():
+    field = FakeTextField()
+    core = IbusCore(config_store=MemoryConfigStore(Config()), mode=OutputMode.PREEDIT)
+    type_text(core, field, "hoa ")
+    core.set_surrounding(None)          # terminal/VTE: không có surrounding
+
+    act = core.process("Backspace")
+    field.apply(act, KeyEvent("Backspace"))
+    assert field.text == "hoa"
+
+    type_text(core, field, "f")
+    assert field.text == "hoaf"         # bắt đầu từ mới thay vì "hoaà"
 
 
 def test_focus_out_commits_preedit():

@@ -15,6 +15,9 @@
   `nhưng` + `l` → `nhuwngl`, Backspace → `nhưng` (trước đây ra `nhuwng`).
 - Giữ trạng thái soft-reset qua từ mới: gõ sai một từ rồi xoá hết từ đó + dấu cách
   sẽ khôi phục từ trước để sửa tiếp (áp dụng cho cả Preedit và Replace).
+- **Terminal Linux**: tắt soft-reset sau dấu cách cho xterm/ptyxis/gnome-terminal/
+  konsole... vì terminal bỏ qua `delete_surrounding_text`; gõ sai rồi Backspace +
+  phím mới ra `hoaf` thay vì append `hoaà`.
 
 ### Desktop
 

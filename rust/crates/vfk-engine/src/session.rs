@@ -693,8 +693,10 @@ impl ImeSession {
                     }
                 }
             }
+            let restore_after_space =
+                self.profile.restore_after_space.unwrap_or(self.config.restore_after_space);
             if let Some(last) = self.last.take() {
-                if self.config.restore_after_space && last.sep.len_utf8() > 0 {
+                if restore_after_space && last.sep.len_utf8() > 0 {
                     self.raw = last.raw;
                     self.word = last.word;
                     self.literal = last.literal;

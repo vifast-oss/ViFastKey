@@ -21,6 +21,7 @@ class AppProfile:
     delay_per_char_ms: int = 0           # cộng thêm theo số ký tự bị xoá
     wait_ack: bool = False               # chờ app xử lý xong backspace rồi mới chèn
     edit_previous_word: bool | None = None
+    restore_after_space: bool | None = None  # ghi đè config; terminal Linux = false
     vietnamese: bool | None = None       # ép bật/tắt (game, vim normal mode...)
     # Ghi đè theo app (P1 từ nghiên cứu VnKey/XKey/Bamboo):
     input_method: str | None = None      # telex | simple_telex | vni
@@ -65,6 +66,18 @@ DEFAULT_APP_PROFILES: dict[str, AppProfile] = {
     # game
     "minecraft": AppProfile(vietnamese=False),
 }
+
+# Terminal Linux không hỗ trợ surrounding/delete_surrounding_text; bật soft-reset
+# sẽ append bản sửa vào từ đã commit ("hoa" -> "hoaà"). Tắt để phím sau bắt đầu
+# từ mới ("hoaf") thay vì tạo chữ sai.
+for _name in (
+    "gnome-terminal", "ptyxis", "xfce4-terminal", "xterm", "konsole",
+    "urxvt", "rxvt", "tilix", "terminator",
+):
+    DEFAULT_APP_PROFILES[_name] = AppProfile(
+        output_mode="preedit", edit_previous_word=False, restore_after_space=False,
+    )
+del _name
 
 
 @dataclass
