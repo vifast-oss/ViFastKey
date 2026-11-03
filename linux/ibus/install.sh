@@ -13,7 +13,8 @@ DEST="$PREFIX/share/vifastkey/ibus"
 # Bản phát hành đóng gói kèm wheel; cài wheel trước để engine import được.
 WHEEL="$(find "$HERE" -maxdepth 1 -name 'vifastkey-*.whl' -print -quit 2>/dev/null || true)"
 if [ -n "$WHEEL" ]; then
-    python3 -m pip install --user "$WHEEL"
+    # --force-reinstall: bản hotfix giữ nguyên version nhưng đổi code.
+    python3 -m pip install --user --force-reinstall "$WHEEL"
 fi
 
 mkdir -p "$DEST"

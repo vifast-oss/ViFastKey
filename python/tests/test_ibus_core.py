@@ -36,6 +36,22 @@ def test_edit_previous_word_in_ibus_core():
     assert field.text == "tiếng"
 
 
+def test_cursor_location_keeps_soft_reset():
+    core, field = make()
+    type_text(core, field, "hoa ")
+    assert field.text == "hoa "
+
+    # IBus gửi cursor-location ngay sau khi commit; không được xoá `last`.
+    core.cursor_moved()
+    act = core.process("Backspace")
+    field.apply(act, KeyEvent("Backspace"))
+    assert field.text == "hoa"
+
+    core.set_surrounding("hoa", 3, 3)
+    type_text(core, field, "f")
+    assert field.text == "hoà"
+
+
 def test_focus_out_commits_preedit():
     core, field = make()
     type_text(core, field, "vieejt")

@@ -208,11 +208,16 @@ class ImeSession:
         self.field = kind
         return act
 
-    def cursor_moved(self) -> Action:
-        """Adapter gọi khi người dùng click chuột / con trỏ đổi chỗ (bài học fcitx5-unikey #53, ibus-bamboo #607)."""
+    def cursor_moved(self, keep_last: bool = False) -> Action:
+        """Adapter gọi khi người dùng click chuột / con trỏ đổi chỗ (bài học fcitx5-unikey #53, ibus-bamboo #607).
+
+        ``keep_last=True`` dành cho adapter nhận cursor-location sau mỗi lần
+        commit (IBus): vẫn chốt composition nhưng giữ soft-reset để Backspace
+        sau dấu cách khôi phục được từ trước.
+        """
         self.cap_next = self._pending_end = False
         self.adopt_allowed = False
-        return self._flush()
+        return self._flush(keep_last)
 
     def toggle_vietnamese(self) -> Action:
         act = self._flush()
@@ -223,12 +228,13 @@ class ImeSession:
             self.ports.config.save(self.config)
         return act
 
-    def _flush(self) -> Action:
+    def _flush(self, keep_last: bool = False) -> Action:
         """Chốt từ đang gõ dở trước khi đổi ngữ cảnh (không áp macro/khôi phục)."""
         text = self.display
         adopted = self.adopted is not None
         self.reset()
-        self.last = None
+        if not keep_last:
+            self.last = None
         self.last_macro = None
         self.history = ""
         self.off_raw = []

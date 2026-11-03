@@ -114,7 +114,9 @@ class IbusCore:
         self.session.reset()
 
     def cursor_moved(self):
-        return self.session.cursor_moved()
+        # IBus gửi cursor-location sau mỗi commit; giữ `last` để soft-reset
+        # (Backspace sau dấu cách) còn tác dụng.
+        return self.session.cursor_moved(keep_last=True)
 
     def toggle(self):
         return self.session.toggle_vietnamese()

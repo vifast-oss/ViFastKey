@@ -110,6 +110,7 @@ def _engine(display: str, field: FieldKind = FieldKind.TEXT, surrounding=None):
             )
             self.reset_called = 0
             self.cursor_moved_called = 0
+            self.session = SimpleNamespace(adopted=None)
 
         def reset(self):
             self.reset_called += 1
@@ -182,6 +183,22 @@ def test_password_passes_through():
     assert consumed is False
     assert engine.committed == []
     assert engine.hidden == 1
+
+
+def test_reset_keeps_adopted_word_for_soft_reset():
+    engine = _engine("hoa")
+    engine.core.session.adopted = ("hoa", 3)
+    engine.do_reset()
+
+    assert engine.core.reset_called == 0
+    assert engine.hidden == 1
+
+
+def test_reset_without_adopted_word_resets():
+    engine = _engine("hoa")
+    engine.do_reset()
+
+    assert engine.core.reset_called == 1
 
 
 def test_cursor_location_does_not_flush_composition():

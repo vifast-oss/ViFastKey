@@ -94,6 +94,12 @@ class ViFastKeyEngine(IBus.Engine):
             self.core.cursor_moved()
 
     def do_reset(self):
+        # IBus gửi reset ngay sau Backspace xoá dấu cách. Nếu engine vừa khôi
+        # phục từ trước (adopted) thì giữ trạng thái để phím sau sửa tiếp,
+        # không được reset làm mất từ.
+        if getattr(self.core.session, "adopted", None) is not None:
+            self.hide_preedit_text()
+            return
         self.core.reset()
         self.hide_preedit_text()
 
