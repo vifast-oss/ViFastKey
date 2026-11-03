@@ -288,7 +288,7 @@ impl<B: Backend> Controller<B> {
         let adapter = AdapterAction::from(action);
         let snapshot = self.surrounding.snapshot();
         let profile = self.session.profile().clone();
-        let plan = {
+        let mut plan = {
             let context = PlanContext {
                 field_kind: self.field,
                 before_display,
@@ -301,6 +301,24 @@ impl<B: Backend> Controller<B> {
             };
             plan_action(&adapter, &context, &profile)
         };
+        if plan.kind == PlanKind::FailSafe
+            && snapshot.is_some()
+            && matches!(adapter, AdapterAction::Replace { .. })
+        {
+            // App cập nhật surrounding chậm sau Backspace xoá dấu cách
+            // (soft-reset). Tin before_display thay vì nhả phím literal.
+            let context = PlanContext {
+                field_kind: self.field,
+                before_display,
+                surrounding: snapshot.as_ref().map(|(text, cursor, anchor)| SurroundingSnapshot {
+                    text,
+                    cursor_utf16: *cursor,
+                    anchor_utf16: *anchor,
+                }),
+                allow_unverified_replace: true,
+            };
+            plan = plan_action(&adapter, &context, &profile);
+        }
 
         match plan.kind {
             PlanKind::Pass => {

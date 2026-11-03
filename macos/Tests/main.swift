@@ -18,6 +18,11 @@ final class FakeTextClient: EngineTextClient {
         committed = String(chars.prefix(chars.count - n)) + text
         preedit = ""
     }
+
+    func deleteLastUTF16() {
+        guard !committed.isEmpty else { return }
+        committed.removeLast()
+    }
 }
 
 var failures = 0
@@ -118,6 +123,31 @@ do {
     check("preedit-mode-marked", client.preedit, "việt")
     finalize(engine, client)
     check("preedit-mode-text", client.text, "việt")
+}
+
+// Soft reset: surrounding text còn stale sau khi app xoá dấu cách.
+do {
+    let engine = VfkEngine(configJSON: nil, mode: 1)
+    let client = FakeTextClient()
+    let applier = ActionApplier()
+    func apply(_ key: String) {
+        let action = engine.processKey(key)
+        let result = applier.apply(action, to: client)
+        if !result.handled {
+            if key == "Backspace" { client.deleteLastUTF16() }
+            else { client.insertText(key, replacementRange: NSRange(location: NSNotFound, length: 0)) }
+        }
+    }
+    for ch in "cung " { apply(String(ch)) }
+    apply("Backspace")                       // xoá dấu cách, engine khôi phục "cung"
+    let action = engine.processKey("x")
+    let strict = engine.planAction(action, fieldKind: 0, beforeDisplay: "cung",
+                                   surroundingText: "cung ", cursorUTF16: 5, anchorUTF16: 5)
+    check("soft-reset-strict", String(describing: strict.kind), "failSafe")
+    let fallback = engine.planAction(action, fieldKind: 0, beforeDisplay: "cung",
+                                     surroundingText: "cung ", cursorUTF16: 5, anchorUTF16: 5,
+                                     allowUnverifiedReplace: true)
+    check("soft-reset-fallback", String(describing: fallback.kind), "replace")
 }
 
 // Replace committed text (preedit edit-previous-word).

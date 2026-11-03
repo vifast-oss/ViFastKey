@@ -151,6 +151,16 @@ def test_replace_uses_surrounding():
     assert engine.committed == ["áo"]
 
 
+def test_replace_falls_back_when_surrounding_stale():
+    # Sau khi xoá dấu cách, surrounding còn "cung " (app cập nhật chậm).
+    engine = _engine("cung", surrounding=SurroundingSnapshot("cung ", 5, 5))
+    consumed = engine._apply(Replace(delete_before=1, insert="ũ", pass_key=False), "cung")
+
+    assert consumed is True
+    assert engine.deleted == [(-1, 1)]
+    assert engine.committed == ["ũ"]
+
+
 def test_replace_delete_failure_keeps_composition():
     engine = _engine("Chào", surrounding=SurroundingSnapshot("Chào", 4, 4))
 

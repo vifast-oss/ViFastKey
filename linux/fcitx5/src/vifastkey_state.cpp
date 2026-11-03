@@ -607,9 +607,18 @@ void VifastkeyState::applyAction(const VfkAction &action, KeyEvent *event,
     }
 
     VfkPlan plan = {};
-    if (!vfk_plan_action(session_, &action, fieldKind_, beforeDisplay.c_str(),
-                         hasSnapshot ? surroundingText.c_str() : nullptr,
-                         cursorUtf16, anchorUtf16, false, &plan)) {
+    bool planned = vfk_plan_action(
+        session_, &action, fieldKind_, beforeDisplay.c_str(),
+        hasSnapshot ? surroundingText.c_str() : nullptr,
+        cursorUtf16, anchorUtf16, false, &plan);
+    if (!planned && hasSnapshot && action.kind == VFK_REPLACE) {
+        // App cập nhật surrounding text chậm sau Backspace xoá dấu cách
+        // (soft-reset). Tin vào beforeDisplay thay vì nhả phím literal.
+        planned = vfk_plan_action(
+            session_, &action, fieldKind_, beforeDisplay.c_str(),
+            surroundingText.c_str(), cursorUtf16, anchorUtf16, true, &plan);
+    }
+    if (!planned) {
         failSafe(event, queuedKey);
         return;
     }

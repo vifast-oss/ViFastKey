@@ -20,7 +20,7 @@ except (ImportError, ValueError) as exc:  # pragma: no cover - phụ thuộc Lin
 
 from adapters.ibus import IbusCore  # noqa: E402
 from vfk_adapter_core import PlanKind, plan_action  # noqa: E402
-from vfk_engine import FieldKind  # noqa: E402
+from vfk_engine import FieldKind, Replace  # noqa: E402
 
 
 SPECIAL = {
@@ -151,6 +151,19 @@ class ViFastKeyEngine(IBus.Engine):
             self.core.surrounding_snapshot,
             self.core.profile,
         )
+        if (plan.kind == PlanKind.FAIL_SAFE and isinstance(action, Replace)
+                and self.core.surrounding_snapshot is not None):
+            # IBus/app có thể cập nhật surrounding text chậm sau khi Backspace
+            # xoá dấu cách (soft-reset). Tin vào before_display của engine thay
+            # vì nhả phím ra literal; nếu không "cung" + x sẽ ra "cungx".
+            plan = plan_action(
+                action,
+                self.core.field_kind,
+                before_display,
+                self.core.surrounding_snapshot,
+                self.core.profile,
+                allow_unverified_replace=True,
+            )
         if plan.kind == PlanKind.PASS:
             if self.core.field_kind in (
                     FieldKind.PASSWORD, FieldKind.NUMBER,

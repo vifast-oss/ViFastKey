@@ -13,7 +13,7 @@
   <key>CFBundleShortVersionString</key><string>0.1.1</string>
   <key>CFBundleSignature</key><string>????</string>
   <key>CFBundleSupportedPlatforms</key><array><string>MacOSX</string></array>
-  <key>CFBundleVersion</key><string>2</string>
+  <key>CFBundleVersion</key><string>4</string>
   <key>LSBackgroundOnly</key><true/>
   <key>LSUIElement</key><true/>
   <key>LSMinimumSystemVersion</key><string>12.0</string>
@@ -24,7 +24,7 @@
   <key>TISIconIsTemplate</key><false/>
   <key>tsInputMethodCharacterRepertoireKey</key><array><string>Latn</string></array>
   <key>tsInputMethodIconFileKey</key><string>ViFastKey.tiff</string>
-  <key>InputMethodConnectionName</key><string>ViFastKey_Connection</string>
+  <key>InputMethodConnectionName</key><string>app.vifastkey.inputmethod.ViFastKey_Connection</string>
   <key>InputMethodServerControllerClass</key><string>ViFastKeyInputController</string>
   <key>InputMethodServerDelegateClass</key><string>ViFastKeyInputController</string>
 </dict>
