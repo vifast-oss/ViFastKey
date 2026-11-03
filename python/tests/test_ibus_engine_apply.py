@@ -152,6 +152,17 @@ def test_replace_uses_surrounding():
     assert engine.committed == ["áo"]
 
 
+def test_replace_falls_back_for_adopted_word_without_surrounding():
+    # Terminal không cung cấp surrounding, nhưng engine biết đang sửa từ đã commit.
+    engine = _engine("hoa", surrounding=None)
+    engine.core.session.adopted = ("hoa", 3)
+    consumed = engine._apply(Replace(delete_before=1, insert="à", pass_key=False), "hoa")
+
+    assert consumed is True
+    assert engine.deleted == [(-1, 1)]
+    assert engine.committed == ["à"]
+
+
 def test_replace_falls_back_when_surrounding_stale():
     # Sau khi xoá dấu cách, surrounding còn "cung " (app cập nhật chậm).
     engine = _engine("cung", surrounding=SurroundingSnapshot("cung ", 5, 5))

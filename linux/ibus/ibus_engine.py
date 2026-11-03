@@ -157,11 +157,13 @@ class ViFastKeyEngine(IBus.Engine):
             self.core.surrounding_snapshot,
             self.core.profile,
         )
+        adopted = getattr(self.core.session, "adopted", None) is not None
         if (plan.kind == PlanKind.FAIL_SAFE and isinstance(action, Replace)
-                and self.core.surrounding_snapshot is not None):
+                and (self.core.surrounding_snapshot is not None or adopted)):
             # IBus/app có thể cập nhật surrounding text chậm sau khi Backspace
-            # xoá dấu cách (soft-reset). Tin vào before_display của engine thay
-            # vì nhả phím ra literal; nếu không "cung" + x sẽ ra "cungx".
+            # xoá dấu cách (soft-reset), hoặc terminal không cung cấp
+            # surrounding. Tin vào before_display của engine thay vì nhả phím;
+            # nếu không "cung" + x sẽ ra "cungx".
             plan = plan_action(
                 action,
                 self.core.field_kind,
