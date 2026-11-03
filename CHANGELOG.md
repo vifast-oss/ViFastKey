@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Kiến trúc
+
+- Gom policy thử lại `Replace` khi surrounding cũ vào `vfk-adapter-core`
+  (`plan_action_with_fallback` / `vfk_plan_action_with_fallback`); IBus, Fcitx5,
+  Wayland và macOS IMK không còn tự gọi planner lần hai. Fallback không bỏ qua
+  selection hoặc caret giữa từ.
+- App profile/alias chuyển sang nguồn chung `python/vfk_engine/app_profiles.json`;
+  Python đọc lúc import, Rust `include_str!` lúc compile. Thêm conformance cho
+  profile và terminal soft-reset.
+- Thêm helper C ABI `vfk_char_to_byte_offset` / `vfk_utf16_to_byte_offset` để
+  Fcitx5 không lặp thuật toán UTF-8/UTF-16.
+
 ### Core & engine
 
 - **Bỏ cơ chế dictionary auto-restore tiếng Anh** (`auto_restore_english`): từ Việt hợp lệ

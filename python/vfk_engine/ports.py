@@ -4,7 +4,9 @@ Rust: mỗi Protocol là 1 trait; `Ports` gom các trait object (Box<dyn ...>) h
 """
 from __future__ import annotations
 
+import json
 from dataclasses import asdict, dataclass, field, fields
+from pathlib import Path
 from typing import Protocol
 
 from vi_syllable import ToneStyle
@@ -30,54 +32,26 @@ class AppProfile:
     charset: str | None = None           # gợi ý bảng mã cho adapter
 
 
-APP_ALIASES = {
-    "google-chrome": "chrome",
-    "google-chrome-stable": "chrome",
-    "google-chrome-beta": "chrome",
-    "microsoft-edge": "msedge",
-    "microsoft-edge-stable": "msedge",
-    "vscode": "code",
-    "code-url-handler": "code",
-    "soffice.bin": "libreoffice",
-    "gnome-terminal-server": "gnome-terminal",
-}
+# Dữ liệu profile/alias nằm trong một file chung để Python và Rust cùng đọc.
+# Rust include file này lúc compile; Python đọc lúc import.
+_APP_PROFILES_PATH = Path(__file__).with_name("app_profiles.json")
+_APP_PROFILE_DATA = json.loads(_APP_PROFILES_PATH.read_text(encoding="utf-8"))
+
+APP_ALIASES: dict[str, str] = dict(_APP_PROFILE_DATA["aliases"])
+
+
+def _make_profile(value: dict) -> AppProfile:
+    value = dict(value)
+    if isinstance(value.get("tone_style"), str):
+        value["tone_style"] = ToneStyle(value["tone_style"])
+    return AppProfile(**value)
+
 
 DEFAULT_APP_PROFILES: dict[str, AppProfile] = {
-    # terminal: xoá + chèn tách rời dễ hỏng -> preedit commit nguyên tử
-    "terminal": AppProfile(output_mode="preedit", edit_previous_word=False),
-    "wezterm": AppProfile(output_mode="preedit", edit_previous_word=False),
-    "kitty": AppProfile(output_mode="preedit", edit_previous_word=False),
-    "alacritty": AppProfile(output_mode="preedit", edit_previous_word=False),
-    "iterm2": AppProfile(output_mode="preedit", edit_previous_word=False),
-    "windowsterminal": AppProfile(output_mode="preedit", edit_previous_word=False),
-    # Chromium: cần chờ ack, trễ theo độ dài
-    "chrome": AppProfile(wait_ack=True, delay_per_char_ms=2),
-    "chromium": AppProfile(wait_ack=True, delay_per_char_ms=2),
-    "brave": AppProfile(wait_ack=True, delay_per_char_ms=2),
-    "msedge": AppProfile(wait_ack=True, delay_per_char_ms=2),
-    # Firefox: surrounding text không tin cậy
-    "firefox": AppProfile(backspace_delay_ms=4, edit_previous_word=False,
-                          output_mode="preedit"),
-    # Electron: replace range không ổn định -> giữ preedit
-    "code": AppProfile(backspace_delay_ms=3, output_mode="preedit"),
-    "slack": AppProfile(backspace_delay_ms=3, output_mode="preedit"),
-    "discord": AppProfile(backspace_delay_ms=3, output_mode="preedit"),
-    "notion": AppProfile(backspace_delay_ms=5, output_mode="preedit"),
-    # game
-    "minecraft": AppProfile(vietnamese=False),
+    name: _make_profile(value)
+    for name, value in _APP_PROFILE_DATA["profiles"].items()
 }
-
-# Terminal Linux không hỗ trợ surrounding/delete_surrounding_text; bật soft-reset
-# sẽ append bản sửa vào từ đã commit ("hoa" -> "hoaà"). Tắt để phím sau bắt đầu
-# từ mới ("hoaf") thay vì tạo chữ sai.
-for _name in (
-    "gnome-terminal", "ptyxis", "xfce4-terminal", "xterm", "konsole",
-    "urxvt", "rxvt", "tilix", "terminator",
-):
-    DEFAULT_APP_PROFILES[_name] = AppProfile(
-        output_mode="preedit", edit_previous_word=False, restore_after_space=False,
-    )
-del _name
+del _APP_PROFILE_DATA
 
 
 @dataclass

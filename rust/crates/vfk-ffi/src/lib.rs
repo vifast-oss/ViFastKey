@@ -20,7 +20,8 @@ use std::rc::Rc;
 use std::sync::{Arc, OnceLock};
 
 use vfk_adapter_core::{
-    char_to_utf16_offset, is_word_codepoint, plan_action, AdapterAction, DeleteAmount, PlanContext, PlanKind,
+    char_to_byte_offset, char_to_utf16_offset, is_word_codepoint, plan_action_with_fallback,
+    utf16_to_byte_offset, AdapterAction, DeleteAmount, PlanContext, PlanKind, ReplaceFallback,
     SurroundingSnapshot,
 };
 use vfk_core::charset;
@@ -98,6 +99,10 @@ pub const VFK_PLAN_PREEDIT: u32 = 1;
 pub const VFK_PLAN_COMMIT: u32 = 2;
 pub const VFK_PLAN_REPLACE: u32 = 3;
 pub const VFK_PLAN_FAIL_SAFE: u32 = 4;
+
+pub const VFK_FALLBACK_NONE: u32 = 0;
+pub const VFK_FALLBACK_STALE_SURROUNDING: u32 = 1;
+pub const VFK_FALLBACK_ALWAYS: u32 = 2;
 
 pub const VFK_FIELD_TEXT: u32 = 0;
 pub const VFK_FIELD_PASSWORD: u32 = 1;
@@ -415,6 +420,20 @@ pub unsafe extern "C" fn vfk_char_to_utf16_offset(text: *const c_char, chars: u3
     char_to_utf16_offset(&text, chars).unwrap_or(u32::MAX)
 }
 
+/// Đổi offset codepoint (char) sang byte UTF-8; `UINT32_MAX` nếu sai.
+#[no_mangle]
+pub unsafe extern "C" fn vfk_char_to_byte_offset(text: *const c_char, chars: u32) -> u32 {
+    let Some(text) = opt_str(text) else { return u32::MAX };
+    char_to_byte_offset(&text, chars).map(|v| v as u32).unwrap_or(u32::MAX)
+}
+
+/// Đổi offset UTF-16 code unit sang byte UTF-8; `UINT32_MAX` nếu sai.
+#[no_mangle]
+pub unsafe extern "C" fn vfk_utf16_to_byte_offset(text: *const c_char, units: u32) -> u32 {
+    let Some(text) = opt_str(text) else { return u32::MAX };
+    utf16_to_byte_offset(&text, units).map(|v| v as u32).unwrap_or(u32::MAX)
+}
+
 /// Có phải ký tự thuộc từ (chữ/số/underscore/combining mark) không.
 #[no_mangle]
 pub extern "C" fn vfk_is_word_codepoint(codepoint: u32) -> bool {
@@ -437,6 +456,69 @@ pub unsafe extern "C" fn vfk_plan_action(
     cursor_utf16: u32,
     anchor_utf16: u32,
     allow_unverified_replace: bool,
+    out: *mut VfkPlan,
+) -> bool {
+    plan_action_inner(
+        h,
+        action,
+        field_kind,
+        before_display,
+        surrounding_text,
+        cursor_utf16,
+        anchor_utf16,
+        allow_unverified_replace,
+        ReplaceFallback::None,
+        out,
+    )
+}
+
+/// Như `vfk_plan_action` nhưng có chính sách thử lại `Replace` khi surrounding
+/// cũ. `fallback` nhận `VFK_FALLBACK_NONE`, `VFK_FALLBACK_STALE_SURROUNDING`
+/// hoặc `VFK_FALLBACK_ALWAYS`.
+#[no_mangle]
+pub unsafe extern "C" fn vfk_plan_action_with_fallback(
+    h: *mut VfkSession,
+    action: *const VfkAction,
+    field_kind: u32,
+    before_display: *const c_char,
+    surrounding_text: *const c_char,
+    cursor_utf16: u32,
+    anchor_utf16: u32,
+    allow_unverified_replace: bool,
+    fallback: u32,
+    out: *mut VfkPlan,
+) -> bool {
+    let fallback = match fallback {
+        VFK_FALLBACK_NONE => ReplaceFallback::None,
+        VFK_FALLBACK_STALE_SURROUNDING => ReplaceFallback::StaleSurrounding,
+        VFK_FALLBACK_ALWAYS => ReplaceFallback::Always,
+        _ => return false,
+    };
+    plan_action_inner(
+        h,
+        action,
+        field_kind,
+        before_display,
+        surrounding_text,
+        cursor_utf16,
+        anchor_utf16,
+        allow_unverified_replace,
+        fallback,
+        out,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+unsafe fn plan_action_inner(
+    h: *mut VfkSession,
+    action: *const VfkAction,
+    field_kind: u32,
+    before_display: *const c_char,
+    surrounding_text: *const c_char,
+    cursor_utf16: u32,
+    anchor_utf16: u32,
+    allow_unverified_replace: bool,
+    fallback: ReplaceFallback,
     out: *mut VfkPlan,
 ) -> bool {
     if action.is_null() || out.is_null() {
@@ -468,7 +550,7 @@ pub unsafe extern "C" fn vfk_plan_action(
     };
 
     with_session(h, false, |s| {
-        let plan = plan_action(&adapter_action, &context, s.session.profile());
+        let plan = plan_action_with_fallback(&adapter_action, &context, s.session.profile(), fallback);
         let kind = match plan.kind {
             PlanKind::Pass => VFK_PLAN_PASS,
             PlanKind::Preedit => VFK_PLAN_PREEDIT,
@@ -972,6 +1054,63 @@ mod tests {
                 &mut password,
             ));
             assert_eq!(password.kind, VFK_PLAN_PASS);
+            vfk_session_free(h);
+        }
+    }
+
+    #[test]
+    fn plan_action_fallback_retries_stale_snapshot() {
+        unsafe {
+            let h = vfk_session_new(ptr::null(), VFK_MODE_PREEDIT);
+            assert!(!h.is_null());
+            let before = CString::new("tiếng").unwrap();
+            let surrounding = CString::new("hello").unwrap();
+            let insert = CString::new("ềng").unwrap();
+            let action = VfkAction {
+                kind: VFK_REPLACE,
+                delete_utf16: 3,
+                cursor_utf16: 0,
+                pass_key: false,
+                text: insert.as_ptr(),
+            };
+            let mut plan = VfkPlan {
+                kind: 0,
+                delete_utf16: 0,
+                delete_chars: 0,
+                cursor_utf16: 0,
+                wait_ms: 0,
+                pass_key: false,
+                text: ptr::null(),
+            };
+
+            assert!(vfk_plan_action_with_fallback(
+                h,
+                &action,
+                VFK_FIELD_TEXT,
+                before.as_ptr(),
+                surrounding.as_ptr(),
+                5,
+                5,
+                false,
+                VFK_FALLBACK_NONE,
+                &mut plan,
+            ));
+            assert_eq!(plan.kind, VFK_PLAN_FAIL_SAFE);
+
+            assert!(vfk_plan_action_with_fallback(
+                h,
+                &action,
+                VFK_FIELD_TEXT,
+                before.as_ptr(),
+                surrounding.as_ptr(),
+                5,
+                5,
+                false,
+                VFK_FALLBACK_STALE_SURROUNDING,
+                &mut plan,
+            ));
+            assert_eq!(plan.kind, VFK_PLAN_REPLACE);
+            assert_eq!(plan.delete_chars, 3);
             vfk_session_free(h);
         }
     }

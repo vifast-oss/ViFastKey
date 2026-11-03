@@ -1,0 +1,5 @@
+{"name":"xterm-disables-soft-reset","app":"xterm","mode":"replace","keys":["h","o","a"," ","Backspace","f"],"text":"hoaf"}
+{"name":"ptyxis-disables-soft-reset","app":"ptyxis","mode":"replace","keys":["h","o","a"," ","Backspace","f"],"text":"hoaf"}
+{"name":"gnome-terminal-disables-soft-reset","app":"gnome-terminal","mode":"replace","keys":["h","o","a"," ","Backspace","f"],"text":"hoaf"}
+{"name":"konsole-disables-soft-reset","app":"konsole","mode":"replace","keys":["h","o","a"," ","Backspace","f"],"text":"hoaf"}
+{"name":"normal-app-keeps-soft-reset","app":"notepad","mode":"replace","keys":["h","o","a"," ","Backspace","f"],"text":"hoà"}

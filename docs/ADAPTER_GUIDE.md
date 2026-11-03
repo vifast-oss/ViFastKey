@@ -25,6 +25,7 @@ Các quyết định dễ gây mất chữ được gom vào crate `vfk-adapter-
 - field policy: password/URL/number/email/terminal;
 - surrounding guard: selection, caret giữa từ, snapshot lệch, emoji/NFD;
 - action plan: `pass/preedit/commit/replace/fail_safe`;
+- fallback `Replace` khi surrounding cũ (`vfk_plan_action_with_fallback`);
 - `delete_chars` cho Fcitx5/IBus và `delete_utf16` cho macOS/Android/Windows;
 - timing `wait_ms` từ AppProfile.
 
@@ -32,15 +33,23 @@ Adapter chỉ cần:
 
 1. lấy `before_display = vfk_display_text()`;
 2. lấy surrounding đầy đủ + cursor/anchor UTF-16 (nếu có);
-3. gọi `vfk_plan_action(...)` sau khi engine trả `VfkAction`;
+3. gọi `vfk_plan_action_with_fallback(...)` sau khi engine trả `VfkAction`;
 4. thi hành `VfkPlan`.
+
+`fallback` chỉ nên là `VFK_FALLBACK_STALE_SURROUNDING` khi app có surrounding
+nhưng có thể cập nhật chậm; `VFK_FALLBACK_ALWAYS` chỉ khi adapter thật sự tin
+`before_display` (ví dụ IBus vừa adopt từ đã commit). Planner **không** bỏ qua
+selection hoặc caret giữa từ khi fallback.
 
 ```c
 VfkPlan plan = {0};
-if (!vfk_plan_action(session, &action, field_kind,
-                     before_display, surrounding_text,
-                     cursor_utf16, anchor_utf16,
-                     /*allow_unverified_replace=*/false, &plan)) {
+uint32_t fallback = has_surrounding ? VFK_FALLBACK_STALE_SURROUNDING
+                                    : VFK_FALLBACK_NONE;
+if (!vfk_plan_action_with_fallback(session, &action, field_kind,
+                                   before_display, surrounding_text,
+                                   cursor_utf16, anchor_utf16,
+                                   /*allow_unverified_replace=*/false,
+                                   fallback, &plan)) {
     /* fail-safe: reset engine, để phím gốc đi tiếp */
     return;
 }
@@ -139,6 +148,8 @@ Thứ tự ưu tiên đề xuất (từ cao xuống thấp):
 4. Global config.
 5. Default.
 
+- Dữ liệu preset/alias nằm ở [`python/vfk_engine/app_profiles.json`](../python/vfk_engine/app_profiles.json);
+  Python đọc lúc import, Rust `include_str!` lúc compile. Không hard-code lại danh sách terminal/Electron trong adapter.
 - Chuẩn hoá app id: lowercase, bỏ đường dẫn, `.exe`, `.app`; so khớp không phân biệt hoa thường.
 - Với trình duyệt, có thể dùng domain/thêm rule cho thanh địa chỉ; mặc định preedit cho
   address bar để tránh autocomplete nhân đôi.

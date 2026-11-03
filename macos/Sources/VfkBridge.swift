@@ -103,7 +103,8 @@ final class VfkEngine {
                     surroundingText: String?,
                     cursorUTF16: UInt32,
                     anchorUTF16: UInt32,
-                    allowUnverifiedReplace: Bool = false) -> VfkEnginePlan {
+                    allowUnverifiedReplace: Bool = false,
+                    replaceFallback: UInt32 = 0) -> VfkEnginePlan {
         guard let h = handle else { return .pass }
         var raw = VfkAction()
         raw.kind = action.kind.rawValue
@@ -118,14 +119,16 @@ final class VfkEngine {
                     beforeDisplay.isEmpty ? nil : beforePtr
                 if let surroundingText = surroundingText {
                     return surroundingText.withCString { surroundingPtr in
-                        vfk_plan_action(h, &raw, fieldKind, beforeArg,
-                                        surroundingPtr, cursorUTF16, anchorUTF16,
-                                        allowUnverifiedReplace, &out)
+                        vfk_plan_action_with_fallback(
+                            h, &raw, fieldKind, beforeArg, surroundingPtr,
+                            cursorUTF16, anchorUTF16, allowUnverifiedReplace,
+                            replaceFallback, &out)
                     }
                 }
-                return vfk_plan_action(h, &raw, fieldKind, beforeArg, nil,
-                                       cursorUTF16, anchorUTF16,
-                                       allowUnverifiedReplace, &out)
+                return vfk_plan_action_with_fallback(
+                    h, &raw, fieldKind, beforeArg, nil,
+                    cursorUTF16, anchorUTF16, allowUnverifiedReplace,
+                    replaceFallback, &out)
             }
         }
         guard ok else { return .pass }

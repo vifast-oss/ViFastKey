@@ -37,6 +37,10 @@ extern "C" {
 #define VFK_PLAN_REPLACE 3u
 #define VFK_PLAN_FAIL_SAFE 4u
 
+#define VFK_FALLBACK_NONE 0u
+#define VFK_FALLBACK_STALE_SURROUNDING 1u
+#define VFK_FALLBACK_ALWAYS 2u
+
 typedef struct VfkPlan {
     uint32_t kind;
     uint32_t delete_utf16;
@@ -93,6 +97,10 @@ const char *vfk_display_text(VfkSession *s);
 /* Đổi offset char (codepoint) sang UTF-16 code unit; UINT32_MAX nếu sai. */
 uint32_t vfk_char_to_utf16_offset(const char *text, uint32_t chars);
 
+/* Đổi offset char (codepoint) / UTF-16 code unit sang byte UTF-8; UINT32_MAX nếu sai. */
+uint32_t vfk_char_to_byte_offset(const char *text, uint32_t chars);
+uint32_t vfk_utf16_to_byte_offset(const char *text, uint32_t units);
+
 /* Có phải ký tự thuộc từ (chữ/số/underscore/combining mark) không. */
 bool vfk_is_word_codepoint(uint32_t codepoint);
 
@@ -106,6 +114,14 @@ bool vfk_plan_action(VfkSession *s, const VfkAction *action, uint32_t field_kind
                      const char *before_display, const char *surrounding_text,
                      uint32_t cursor_utf16, uint32_t anchor_utf16,
                      bool allow_unverified_replace, VfkPlan *out);
+
+/* Như vfk_plan_action nhưng có fallback khi Replace fail-safe vì surrounding cũ.
+ * fallback: VFK_FALLBACK_NONE | VFK_FALLBACK_STALE_SURROUNDING | VFK_FALLBACK_ALWAYS. */
+bool vfk_plan_action_with_fallback(VfkSession *s, const VfkAction *action, uint32_t field_kind,
+                                   const char *before_display, const char *surrounding_text,
+                                   uint32_t cursor_utf16, uint32_t anchor_utf16,
+                                   bool allow_unverified_replace, uint32_t fallback,
+                                   VfkPlan *out);
 
 /* Đổi chế độ xuất chữ: VFK_MODE_PREEDIT hoặc VFK_MODE_REPLACE.
  * Có thể trả COMMIT/PASS để adapter chốt composition cũ trước khi đổi. */

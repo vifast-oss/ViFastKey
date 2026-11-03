@@ -149,28 +149,18 @@ final class ViFastKeyInputController: IMKInputController {
 
         guard let client = clientObject(sender) else { return false }
         let textClient = ImkTextClient(client)
-        var plan = engine.planAction(
+        // App có thể chưa cập nhật surrounding text kịp sau khi Backspace xoá
+        // dấu cách (soft-reset). Adapter-core tự thử lại với beforeDisplay khi
+        // có snapshot; Swift chỉ khai báo mức tin cậy.
+        let plan = engine.planAction(
             action,
             fieldKind: 0,
             beforeDisplay: beforeDisplay,
             surroundingText: snapshot?.text,
             cursorUTF16: snapshot?.cursorUTF16 ?? 0,
-            anchorUTF16: snapshot?.anchorUTF16 ?? 0
+            anchorUTF16: snapshot?.anchorUTF16 ?? 0,
+            replaceFallback: snapshot != nil ? 1 : 0
         )
-        if plan.kind == .failSafe && action.kind == .replace && snapshot != nil {
-            // App có thể chưa cập nhật surrounding text kịp sau khi Backspace
-            // xoá dấu cách (soft-reset). Tin vào beforeDisplay của engine thay
-            // vì nhả phím ra literal; nếu không "cung" + x sẽ ra "cungx".
-            plan = engine.planAction(
-                action,
-                fieldKind: 0,
-                beforeDisplay: beforeDisplay,
-                surroundingText: snapshot?.text,
-                cursorUTF16: snapshot?.cursorUTF16 ?? 0,
-                anchorUTF16: snapshot?.anchorUTF16 ?? 0,
-                allowUnverifiedReplace: true
-            )
-        }
         if plan.kind == .failSafe {
             engine.reset()
             textClient.setMarkedText("", selectedRange: NSRange(location: 0, length: 0),

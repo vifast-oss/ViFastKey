@@ -19,7 +19,11 @@ except (ImportError, ValueError) as exc:  # pragma: no cover - phụ thuộc Lin
     raise SystemExit(1)
 
 from adapters.ibus import IbusCore  # noqa: E402
-from vfk_adapter_core import PlanKind, plan_action  # noqa: E402
+from vfk_adapter_core import (  # noqa: E402
+    PlanKind,
+    ReplaceFallback,
+    plan_action_with_fallback,
+)
 from vfk_engine import FieldKind, Replace  # noqa: E402
 
 
@@ -150,28 +154,24 @@ class ViFastKeyEngine(IBus.Engine):
             self.core.set_surrounding(None)
 
     def _apply(self, action, before_display: str) -> bool:
-        plan = plan_action(
+        adopted = getattr(self.core.session, "adopted", None) is not None
+        fallback = ReplaceFallback.NONE
+        if isinstance(action, Replace):
+            if adopted:
+                # IBus vừa khôi phục từ đã commit nhưng terminal không cung
+                # cấp surrounding; before_display là nguồn đáng tin.
+                fallback = ReplaceFallback.ALWAYS
+            elif self.core.surrounding_snapshot is not None:
+                # App có thể cập nhật surrounding chậm sau Backspace xoá dấu cách.
+                fallback = ReplaceFallback.STALE_SURROUNDING
+        plan = plan_action_with_fallback(
             action,
             self.core.field_kind,
             before_display,
             self.core.surrounding_snapshot,
             self.core.profile,
+            fallback=fallback,
         )
-        adopted = getattr(self.core.session, "adopted", None) is not None
-        if (plan.kind == PlanKind.FAIL_SAFE and isinstance(action, Replace)
-                and (self.core.surrounding_snapshot is not None or adopted)):
-            # IBus/app có thể cập nhật surrounding text chậm sau khi Backspace
-            # xoá dấu cách (soft-reset), hoặc terminal không cung cấp
-            # surrounding. Tin vào before_display của engine thay vì nhả phím;
-            # nếu không "cung" + x sẽ ra "cungx".
-            plan = plan_action(
-                action,
-                self.core.field_kind,
-                before_display,
-                self.core.surrounding_snapshot,
-                self.core.profile,
-                allow_unverified_replace=True,
-            )
         if plan.kind == PlanKind.PASS:
             if self.core.field_kind in (
                     FieldKind.PASSWORD, FieldKind.NUMBER,

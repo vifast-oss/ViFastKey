@@ -29,6 +29,7 @@ Mỗi dòng là một JSON object:
   "before": "tiếng",
   "surrounding": { "text": "tiếng", "cursor": 5, "anchor": 5 },
   "allow_unverified_replace": false,
+  "fallback": "none",
   "action": {
     "kind": "replace",
     "delete_utf16": 3,
@@ -51,6 +52,10 @@ Mỗi dòng là một JSON object:
   unit**. `null` nếu app không hỗ trợ.
 - `allow_unverified_replace`: chỉ `true` cho port tự quản lý toàn bộ vùng text
   (Windows hook).
+- `fallback`: `none | stale_surrounding | always` — chính sách thử lại khi
+  `Replace` strict fail-safe. `stale_surrounding` dùng khi app cập nhật
+  surrounding chậm; `always` dùng cho port đã có `before_display` đáng tin
+  (ví dụ IBus vừa adopt từ trước).
 - `action.kind`: `pass | preedit | commit | replace`.
 - `action.delete_utf16`: số UTF-16 code unit cần xoá (với `replace`).
 - `expected.kind`: `pass | preedit | commit | replace | fail_safe`.

@@ -10,8 +10,8 @@ use std::rc::Rc;
 use std::time::SystemTime;
 
 use vfk_adapter_core::{
-    char_suffix, is_disabled, plan_action, utf16_len, utf16_to_byte_offset, AdapterAction, PlanContext,
-    PlanKind, SurroundingSnapshot,
+    char_suffix, is_disabled, plan_action_with_fallback, utf16_len, utf16_to_byte_offset, AdapterAction,
+    PlanContext, PlanKind, ReplaceFallback, SurroundingSnapshot,
 };
 use vfk_engine::testing::{JsonFileConfigStore, StaticAppContext, WordListDictionary};
 use vfk_engine::{
@@ -288,37 +288,22 @@ impl<B: Backend> Controller<B> {
         let adapter = AdapterAction::from(action);
         let snapshot = self.surrounding.snapshot();
         let profile = self.session.profile().clone();
-        let mut plan = {
-            let context = PlanContext {
-                field_kind: self.field,
-                before_display,
-                surrounding: snapshot.as_ref().map(|(text, cursor, anchor)| SurroundingSnapshot {
-                    text,
-                    cursor_utf16: *cursor,
-                    anchor_utf16: *anchor,
-                }),
-                allow_unverified_replace: false,
-            };
-            plan_action(&adapter, &context, &profile)
+        let context = PlanContext {
+            field_kind: self.field,
+            before_display,
+            surrounding: snapshot.as_ref().map(|(text, cursor, anchor)| SurroundingSnapshot {
+                text,
+                cursor_utf16: *cursor,
+                anchor_utf16: *anchor,
+            }),
+            allow_unverified_replace: false,
         };
-        if plan.kind == PlanKind::FailSafe
-            && snapshot.is_some()
-            && matches!(adapter, AdapterAction::Replace { .. })
-        {
-            // App cập nhật surrounding chậm sau Backspace xoá dấu cách
-            // (soft-reset). Tin before_display thay vì nhả phím literal.
-            let context = PlanContext {
-                field_kind: self.field,
-                before_display,
-                surrounding: snapshot.as_ref().map(|(text, cursor, anchor)| SurroundingSnapshot {
-                    text,
-                    cursor_utf16: *cursor,
-                    anchor_utf16: *anchor,
-                }),
-                allow_unverified_replace: true,
-            };
-            plan = plan_action(&adapter, &context, &profile);
-        }
+        // App cập nhật surrounding chậm sau Backspace xoá dấu cách
+        // (soft-reset). Adapter-core chỉ thử lại khi có snapshot và action là
+        // Replace; adapter chỉ khai báo mức tin cậy.
+        let fallback =
+            if snapshot.is_some() { ReplaceFallback::StaleSurrounding } else { ReplaceFallback::None };
+        let plan = plan_action_with_fallback(&adapter, &context, &profile, fallback);
 
         match plan.kind {
             PlanKind::Pass => {
@@ -525,6 +510,7 @@ mod tests {
     use vfk_engine::Config;
 
     #[derive(Debug)]
+    #[allow(dead_code)] // test backend giữ payload để debug khi assertion fail
     enum Ev {
         Preedit(String, i32),
         Clear,
@@ -641,6 +627,32 @@ mod tests {
         let (text, bytes) = replaced.expect("expected Replace");
         assert_eq!(text, "áo");
         assert_eq!(bytes, "ào".len() as u32);
+    }
+
+    #[test]
+    fn stale_surrounding_retries_replace() {
+        let mut c = ctrl();
+        c.on_activate();
+        c.on_surrounding("cung ".into(), 5, 5);
+        let input = KeyInput {
+            key: Key::Char('x'),
+            keycode: 53,
+            time: 2,
+            pressed: true,
+            ctrl: false,
+            alt: false,
+            meta: false,
+        };
+        c.apply_action(
+            Action::Replace { delete_before: 1, insert: "ũ".into(), pass_key: false },
+            "cung",
+            Some(&input),
+        );
+        let replaced = c.backend.events.iter().find_map(|e| match e {
+            Ev::Replace(text, bytes, _) => Some((text.clone(), *bytes)),
+            _ => None,
+        });
+        assert_eq!(replaced, Some(("ũ".into(), 1)));
     }
 
     #[test]

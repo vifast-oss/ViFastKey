@@ -1,0 +1,124 @@
+{
+  "aliases": {
+    "code-url-handler": "code",
+    "gnome-terminal-server": "gnome-terminal",
+    "google-chrome": "chrome",
+    "google-chrome-beta": "chrome",
+    "google-chrome-stable": "chrome",
+    "microsoft-edge": "msedge",
+    "microsoft-edge-stable": "msedge",
+    "soffice.bin": "libreoffice",
+    "vscode": "code"
+  },
+  "profiles": {
+    "alacritty": {
+      "output_mode": "preedit",
+      "edit_previous_word": false
+    },
+    "brave": {
+      "delay_per_char_ms": 2,
+      "wait_ack": true
+    },
+    "chrome": {
+      "delay_per_char_ms": 2,
+      "wait_ack": true
+    },
+    "chromium": {
+      "delay_per_char_ms": 2,
+      "wait_ack": true
+    },
+    "code": {
+      "output_mode": "preedit",
+      "backspace_delay_ms": 3
+    },
+    "discord": {
+      "output_mode": "preedit",
+      "backspace_delay_ms": 3
+    },
+    "firefox": {
+      "output_mode": "preedit",
+      "backspace_delay_ms": 4,
+      "edit_previous_word": false
+    },
+    "gnome-terminal": {
+      "output_mode": "preedit",
+      "edit_previous_word": false,
+      "restore_after_space": false
+    },
+    "iterm2": {
+      "output_mode": "preedit",
+      "edit_previous_word": false
+    },
+    "kitty": {
+      "output_mode": "preedit",
+      "edit_previous_word": false
+    },
+    "konsole": {
+      "output_mode": "preedit",
+      "edit_previous_word": false,
+      "restore_after_space": false
+    },
+    "minecraft": {
+      "vietnamese": false
+    },
+    "msedge": {
+      "delay_per_char_ms": 2,
+      "wait_ack": true
+    },
+    "notion": {
+      "output_mode": "preedit",
+      "backspace_delay_ms": 5
+    },
+    "ptyxis": {
+      "output_mode": "preedit",
+      "edit_previous_word": false,
+      "restore_after_space": false
+    },
+    "rxvt": {
+      "output_mode": "preedit",
+      "edit_previous_word": false,
+      "restore_after_space": false
+    },
+    "slack": {
+      "output_mode": "preedit",
+      "backspace_delay_ms": 3
+    },
+    "terminal": {
+      "output_mode": "preedit",
+      "edit_previous_word": false
+    },
+    "terminator": {
+      "output_mode": "preedit",
+      "edit_previous_word": false,
+      "restore_after_space": false
+    },
+    "tilix": {
+      "output_mode": "preedit",
+      "edit_previous_word": false,
+      "restore_after_space": false
+    },
+    "urxvt": {
+      "output_mode": "preedit",
+      "edit_previous_word": false,
+      "restore_after_space": false
+    },
+    "wezterm": {
+      "output_mode": "preedit",
+      "edit_previous_word": false
+    },
+    "windowsterminal": {
+      "output_mode": "preedit",
+      "edit_previous_word": false
+    },
+    "xfce4-terminal": {
+      "output_mode": "preedit",
+      "edit_previous_word": false,
+      "restore_after_space": false
+    },
+    "xterm": {
+      "output_mode": "preedit",
+      "edit_previous_word": false,
+      "restore_after_space": false
+    }
+  }
+}

@@ -146,7 +146,7 @@ do {
     check("soft-reset-strict", String(describing: strict.kind), "failSafe")
     let fallback = engine.planAction(action, fieldKind: 0, beforeDisplay: "cung",
                                      surroundingText: "cung ", cursorUTF16: 5, anchorUTF16: 5,
-                                     allowUnverifiedReplace: true)
+                                     replaceFallback: 1)
     check("soft-reset-fallback", String(describing: fallback.kind), "replace")
 }
 

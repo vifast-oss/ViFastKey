@@ -1,6 +1,7 @@
 //! Port ra (driven ports) của hexagon + cấu hình. Port của `vfk_engine/ports.py`.
 
 use std::collections::HashMap;
+use std::sync::OnceLock;
 
 use serde::{Deserialize, Serialize};
 use vi_syllable::ToneStyle;
@@ -56,75 +57,31 @@ pub struct AppProfile {
     pub charset: Option<String>,
 }
 
-pub fn app_aliases() -> HashMap<&'static str, &'static str> {
-    HashMap::from([
-        ("google-chrome", "chrome"),
-        ("google-chrome-stable", "chrome"),
-        ("google-chrome-beta", "chrome"),
-        ("microsoft-edge", "msedge"),
-        ("microsoft-edge-stable", "msedge"),
-        ("vscode", "code"),
-        ("code-url-handler", "code"),
-        ("soffice.bin", "libreoffice"),
-        ("gnome-terminal-server", "gnome-terminal"),
-    ])
+/// Nguồn dữ liệu profile chung với bản Python. Rust include lúc compile để
+/// không phải đọc file lúc chạy và để hai port không bị lệch danh sách.
+const APP_PROFILES_JSON: &str = include_str!("../../../../python/vfk_engine/app_profiles.json");
+
+#[derive(Debug, Deserialize)]
+struct AppProfileData {
+    aliases: HashMap<String, String>,
+    profiles: HashMap<String, AppProfile>,
+}
+
+fn app_profile_data() -> &'static AppProfileData {
+    static DATA: OnceLock<AppProfileData> = OnceLock::new();
+    DATA.get_or_init(|| serde_json::from_str(APP_PROFILES_JSON).expect("app_profiles.json không hợp lệ"))
+}
+
+fn app_alias_map() -> &'static HashMap<String, String> {
+    &app_profile_data().aliases
+}
+
+pub fn app_aliases() -> HashMap<String, String> {
+    app_alias_map().clone()
 }
 
 pub fn default_app_profiles() -> HashMap<String, AppProfile> {
-    let term = AppProfile {
-        output_mode: Some(OutputMode::Preedit),
-        edit_previous_word: Some(false),
-        ..Default::default()
-    };
-    let chromium = AppProfile { wait_ack: true, delay_per_char_ms: 2, ..Default::default() };
-    let electron =
-        AppProfile { backspace_delay_ms: 3, output_mode: Some(OutputMode::Preedit), ..Default::default() };
-    let mut m = HashMap::new();
-    for k in ["terminal", "wezterm", "kitty", "alacritty", "iterm2", "windowsterminal"] {
-        m.insert(k.to_string(), term.clone());
-    }
-    for k in ["chrome", "chromium", "brave", "msedge"] {
-        m.insert(k.to_string(), chromium.clone());
-    }
-    m.insert(
-        "firefox".into(),
-        AppProfile {
-            backspace_delay_ms: 4,
-            edit_previous_word: Some(false),
-            output_mode: Some(OutputMode::Preedit),
-            ..Default::default()
-        },
-    );
-    for k in ["code", "slack", "discord"] {
-        m.insert(k.to_string(), electron.clone());
-    }
-    m.insert(
-        "notion".into(),
-        AppProfile { backspace_delay_ms: 5, output_mode: Some(OutputMode::Preedit), ..Default::default() },
-    );
-    m.insert("minecraft".into(), AppProfile { vietnamese: Some(false), ..Default::default() });
-    // Terminal Linux không hỗ trợ surrounding/delete_surrounding_text: tắt
-    // soft-reset để phím sau bắt đầu từ mới thay vì append bản sửa.
-    let linux_term = AppProfile {
-        output_mode: Some(OutputMode::Preedit),
-        edit_previous_word: Some(false),
-        restore_after_space: Some(false),
-        ..Default::default()
-    };
-    for k in [
-        "gnome-terminal",
-        "ptyxis",
-        "xfce4-terminal",
-        "xterm",
-        "konsole",
-        "urxvt",
-        "rxvt",
-        "tilix",
-        "terminator",
-    ] {
-        m.insert(k.to_string(), linux_term.clone());
-    }
-    m
+    app_profile_data().profiles.clone()
 }
 
 /// Cấu hình. Tên trường và giá trị JSON trùng bản Python (dùng chung config.json / conformance).
@@ -273,7 +230,7 @@ pub fn normalize_app_id(app_id: Option<&str>) -> String {
     if matches!(head, "com" | "org" | "io" | "net" | "app") {
         key = key.rsplit('.').next().unwrap_or("").to_string();
     }
-    app_aliases().get(key.as_str()).map(|v| (*v).to_string()).unwrap_or(key)
+    app_alias_map().get(key.as_str()).cloned().unwrap_or(key)
 }
 
 /// So khớp app id đã chuẩn hoá; fallback theo segment cuối của bundle id.

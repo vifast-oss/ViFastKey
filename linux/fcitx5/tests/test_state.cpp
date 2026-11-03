@@ -416,7 +416,7 @@ void testAppProfileReplaceMode() {
     }
 }
 
-void testReplaceRejectsStaleSurrounding() {
+void testReplaceRetriesStaleSurrounding() {
     fcitx::EventLoop loop;
     fcitx::InputContextManager manager;
     TestInputContext context(manager);
@@ -429,7 +429,37 @@ void testReplaceRejectsStaleSurrounding() {
 
     VfkAction action = {};
     action.kind = VFK_REPLACE;
-    action.delete_utf16 = 5; // "tiếng" không khớp "hello"
+    action.delete_utf16 = 3; // "ếng" trong beforeDisplay, surrounding đã cũ
+    action.text = "ềng";
+    state.applyAction(action, nullptr, "tiếng");
+
+    // Surrounding cũ: adapter-core fallback tin beforeDisplay và vẫn Replace.
+    CHECK(context.deletes.size() == 1);
+    if (context.deletes.size() == 1) {
+        CHECK(context.deletes.front().offset == -3);
+        CHECK(context.deletes.front().size == 3);
+    }
+    runLoop(loop);
+    CHECK(context.commits.size() == 1);
+    if (context.commits.size() == 1) {
+        CHECK(context.commits.front() == "ềng");
+    }
+}
+
+void testReplaceFailsSafeWhenFallbackCannotVerify() {
+    fcitx::EventLoop loop;
+    fcitx::InputContextManager manager;
+    TestInputContext context(manager);
+    context.setCapabilityFlags(fcitx::CapabilityFlag::SurroundingText);
+    context.surroundingText().setText("hello", 5, 5);
+
+    auto config = makeConfig();
+    fcitx::VifastkeyState state(loop, &context, config);
+    state.activate("test");
+
+    VfkAction action = {};
+    action.kind = VFK_REPLACE;
+    action.delete_utf16 = 99; // beforeDisplay không đủ dài -> không được xoá mù
     action.text = "tiếng";
     state.applyAction(action, nullptr, "tiếng");
 
@@ -590,7 +620,8 @@ int main() {
     testMidWordCursorDoesNotAdopt();
     testReplacePassKeyIsForwardedAfterCommit();
     testAppProfileReplaceMode();
-    testReplaceRejectsStaleSurrounding();
+    testReplaceRetriesStaleSurrounding();
+    testReplaceFailsSafeWhenFallbackCannotVerify();
     testReplaceRejectsSelection();
     testReplaceCountsCodepointsForAstralCharacters();
     testQueuedKeyIsForwardedWhenReplaceIsBusy();

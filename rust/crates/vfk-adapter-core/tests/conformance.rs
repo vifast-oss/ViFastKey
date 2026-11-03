@@ -5,7 +5,8 @@
 
 use serde_json::Value;
 use vfk_adapter_core::{
-    plan_action, AdapterAction, DeleteAmount, PlanContext, PlanKind, SurroundingSnapshot,
+    plan_action_with_fallback, AdapterAction, DeleteAmount, PlanContext, PlanKind, ReplaceFallback,
+    SurroundingSnapshot,
 };
 use vfk_engine::{AppProfile, FieldKind};
 
@@ -82,7 +83,13 @@ fn shared_adapter_scenarios() {
             surrounding,
             allow_unverified_replace: value["allow_unverified_replace"].as_bool().unwrap_or(false),
         };
-        let plan = plan_action(&action, &context, &AppProfile::default());
+        let fallback = match value["fallback"].as_str().unwrap_or("none") {
+            "none" => ReplaceFallback::None,
+            "stale_surrounding" => ReplaceFallback::StaleSurrounding,
+            "always" => ReplaceFallback::Always,
+            other => panic!("{name}: unknown fallback {other}"),
+        };
+        let plan = plan_action_with_fallback(&action, &context, &AppProfile::default(), fallback);
         let expected = &value["expected"];
         assert_eq!(plan.kind, expected_kind(expected["kind"].as_str().unwrap_or("pass")), "{name}: kind");
         assert_eq!(

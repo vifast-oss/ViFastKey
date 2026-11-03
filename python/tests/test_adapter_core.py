@@ -3,7 +3,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from vfk_adapter_core import ReplaceUtf16, SurroundingSnapshot, plan_action
+from vfk_adapter_core import (
+    ReplaceFallback,
+    ReplaceUtf16,
+    SurroundingSnapshot,
+    plan_action,
+    plan_action_with_fallback,
+)
 from vfk_engine import AppProfile, Commit, FieldKind, PassThrough, Preedit
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -54,13 +60,19 @@ def test_shared_adapter_scenarios():
                 raw_surrounding.get("cursor", 0),
                 raw_surrounding.get("anchor", 0),
             )
-        plan = plan_action(
+        planner = plan_action_with_fallback if "fallback" in case else plan_action
+        kwargs = {
+            "allow_unverified_replace": case.get("allow_unverified_replace", False),
+        }
+        if "fallback" in case:
+            kwargs["fallback"] = ReplaceFallback(case["fallback"])
+        plan = planner(
             _action(case["action"]),
             _field(case.get("field", "text")),
             case.get("before", ""),
             surrounding,
             AppProfile(),
-            case.get("allow_unverified_replace", False),
+            **kwargs,
         )
         expected = case["expected"]
         assert plan.kind.value == expected["kind"], case["name"]

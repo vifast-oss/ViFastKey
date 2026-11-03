@@ -79,6 +79,7 @@ hiện thay thế toàn bộ entry preset cùng app (schema 1).
 | `spell_check` | bool \| null | Ghi đè kiểm tra chính tả |
 | `charset` | string \| null | Gợi ý bảng mã cho adapter |
 
+Nguồn preset/alias dùng chung: [`python/vfk_engine/app_profiles.json`](../python/vfk_engine/app_profiles.json).
 Preset mặc định giữ **Preedit** cho terminal/iTerm, Electron (VS Code, Slack,
 Discord, Notion) và Firefox vì các app này xử lý replace range không ổn định;
 các app còn lại theo `output_mode` toàn cục (mặc định Replace trên macOS,

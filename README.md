@@ -222,8 +222,9 @@ Hướng dẫn mọi nền tảng: [`docs/INSTALL.md`](docs/INSTALL.md).
   trust probe, timing/ACK, app compatibility.
 - `docs/VIFASTTTS_LESSONS.md` — bài học kỹ thuật từ ViFastTts cho adapter macOS.
 - `docs/COMPATIBILITY.md` — hợp đồng hành vi (tone, undo, đ, VNI số, charset, Action).
+- `docs/ARCHITECTURE.md` — ranh giới engine/adapter-core/platform và quy ước chống lặp logic.
 - `docs/ADAPTER_GUIDE.md` — hợp đồng viết adapter macOS/Windows/Linux, dùng
-  `vfk-adapter-core`/`vfk_plan_action`.
+  `vfk-adapter-core`/`vfk_plan_action_with_fallback`.
 - `adapter-conformance/` — scenario JSON dùng chung cho mọi port (surrounding,
   selection, emoji/NFD, pass-key, fail-safe).
 - `docs/CONFIG.md` — toàn bộ trường config và app profile.

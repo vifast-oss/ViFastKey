@@ -6,7 +6,8 @@ use vfk_engine::{Action, AppProfile, FieldKind};
 
 use crate::field;
 use crate::surrounding::{
-    char_suffix_utf16_len, check_replace, utf16_suffix, utf16_to_byte_offset, SurroundingSnapshot,
+    char_suffix_utf16_len, check_replace, is_word_codepoint, next_codepoint, utf16_suffix,
+    utf16_to_byte_offset, SurroundingSnapshot,
 };
 use crate::timing::replace_wait_ms;
 
@@ -44,6 +45,7 @@ impl From<Action> for AdapterAction {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct PlanContext<'a> {
     pub field_kind: FieldKind,
     /// Text engine tin là đang hiển thị trước phím hiện tại.
@@ -53,6 +55,21 @@ pub struct PlanContext<'a> {
     /// Cho phép port tự quản lý vùng text (Windows hook không có surrounding).
     /// Chỉ dùng khi adapter thực sự sở hữu toàn bộ đường nhập.
     pub allow_unverified_replace: bool,
+}
+
+/// Chính sách thử lại khi `Replace` fail-safe vì surrounding cũ.
+///
+/// Adapter không tự gọi planner lần hai; nó chỉ khai báo mức tin cậy của
+/// `before_display`/surrounding mà nó có.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ReplaceFallback {
+    /// Không thử lại; giữ fail-safe.
+    #[default]
+    None,
+    /// Chỉ thử lại khi có snapshot surrounding (app cập nhật chậm).
+    StaleSurrounding,
+    /// Thử lại cả khi không có surrounding, miễn adapter tin `before_display`.
+    Always,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -204,6 +221,46 @@ pub fn plan_action(action: &AdapterAction, context: &PlanContext<'_>, profile: &
     }
 }
 
+/// Planner có fallback cho tình huống app cập nhật surrounding chậm.
+///
+/// Đây là policy dùng chung cho IBus/Fcitx5/Wayland/IMK: strict trước, chỉ khi
+/// `Replace` fail-safe mới tin `before_display` và thử lại. Adapter chỉ chọn
+/// [`ReplaceFallback`] theo khả năng thực tế của nó.
+pub fn plan_action_with_fallback(
+    action: &AdapterAction,
+    context: &PlanContext<'_>,
+    profile: &AppProfile,
+    fallback: ReplaceFallback,
+) -> Plan {
+    let plan = plan_action(action, context, profile);
+    if plan.kind != PlanKind::FailSafe || !matches!(action, AdapterAction::Replace { .. }) {
+        return plan;
+    }
+
+    // Không bao giờ bỏ qua selection hoặc caret đang ở giữa từ: đó là ngữ
+    // cảnh thật sự không an toàn, không phải surrounding cập nhật chậm.
+    if let Some(surrounding) = context.surrounding {
+        if surrounding.cursor_utf16 != surrounding.anchor_utf16 {
+            return plan;
+        }
+        if next_codepoint(surrounding.text, surrounding.cursor_utf16).is_some_and(is_word_codepoint) {
+            return plan;
+        }
+    }
+
+    let eligible = match fallback {
+        ReplaceFallback::None => false,
+        ReplaceFallback::StaleSurrounding => context.surrounding.is_some(),
+        ReplaceFallback::Always => true,
+    };
+    if !eligible {
+        return plan;
+    }
+
+    let trusted = PlanContext { allow_unverified_replace: true, ..*context };
+    plan_action(action, &trusted, profile)
+}
+
 /// Tiện ích cho port cần đổi cursor UTF-16 sang byte offset.
 pub fn utf16_cursor_to_byte(text: &str, cursor_utf16: u32) -> Option<usize> {
     utf16_to_byte_offset(text, cursor_utf16)
@@ -338,5 +395,68 @@ mod tests {
             plan_action(&replace("abc", 0), &ctx(FieldKind::Text, "", None, false), &AppProfile::default());
         assert_eq!(plan.kind, PlanKind::Commit);
         assert_eq!(plan.text, "abc");
+    }
+
+    #[test]
+    fn fallback_retries_only_after_replace_fail_safe() {
+        let snapshot = SurroundingSnapshot { text: "hello", cursor_utf16: 5, anchor_utf16: 5 };
+        let plan = plan_action_with_fallback(
+            &replace("ềng", 3),
+            &ctx(FieldKind::Text, "tiếng", Some(snapshot), false),
+            &AppProfile::default(),
+            ReplaceFallback::StaleSurrounding,
+        );
+        assert_eq!(plan.kind, PlanKind::Replace);
+        assert_eq!(plan.delete_chars, 3);
+        assert_eq!(plan.delete_utf16, 3);
+    }
+
+    #[test]
+    fn fallback_none_keeps_fail_safe() {
+        let snapshot = SurroundingSnapshot { text: "hello", cursor_utf16: 5, anchor_utf16: 5 };
+        let plan = plan_action_with_fallback(
+            &replace("ềng", 3),
+            &ctx(FieldKind::Text, "tiếng", Some(snapshot), false),
+            &AppProfile::default(),
+            ReplaceFallback::None,
+        );
+        assert_eq!(plan.kind, PlanKind::FailSafe);
+    }
+
+    #[test]
+    fn fallback_always_uses_before_display_without_surrounding() {
+        let plan = plan_action_with_fallback(
+            &replace("à", 1),
+            &ctx(FieldKind::Text, "hoa", None, false),
+            &AppProfile::default(),
+            ReplaceFallback::Always,
+        );
+        assert_eq!(plan.kind, PlanKind::Replace);
+        assert_eq!(plan.delete_chars, 1);
+        assert_eq!(plan.delete_utf16, 1);
+    }
+
+    #[test]
+    fn fallback_does_not_bypass_selection() {
+        let snapshot = SurroundingSnapshot { text: "tiếng", cursor_utf16: 5, anchor_utf16: 2 };
+        let plan = plan_action_with_fallback(
+            &replace("ềng", 3),
+            &ctx(FieldKind::Text, "tiếng", Some(snapshot), false),
+            &AppProfile::default(),
+            ReplaceFallback::StaleSurrounding,
+        );
+        assert_eq!(plan.kind, PlanKind::FailSafe);
+    }
+
+    #[test]
+    fn fallback_does_not_bypass_mid_word_caret() {
+        let snapshot = SurroundingSnapshot { text: "tiếng", cursor_utf16: 2, anchor_utf16: 2 };
+        let plan = plan_action_with_fallback(
+            &replace("f", 1),
+            &ctx(FieldKind::Text, "", Some(snapshot), false),
+            &AppProfile::default(),
+            ReplaceFallback::StaleSurrounding,
+        );
+        assert_eq!(plan.kind, PlanKind::FailSafe);
     }
 }

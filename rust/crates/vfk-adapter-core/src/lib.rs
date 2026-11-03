@@ -16,10 +16,13 @@ pub mod surrounding;
 pub mod timing;
 
 pub use field::{is_disabled, is_sensitive, is_terminal};
-pub use plan::{plan_action, utf16_cursor_to_byte, AdapterAction, DeleteAmount, Plan, PlanContext, PlanKind};
+pub use plan::{
+    plan_action, plan_action_with_fallback, utf16_cursor_to_byte, AdapterAction, DeleteAmount, Plan,
+    PlanContext, PlanKind, ReplaceFallback,
+};
 pub use surrounding::{
-    char_suffix, char_suffix_utf16_len, char_to_utf16_offset, check_replace, is_word_codepoint,
-    next_codepoint, utf16_len, utf16_prefix, utf16_suffix, utf16_to_byte_offset, utf16_to_char_offset,
-    ReplaceCheck, SurroundingSnapshot,
+    char_suffix, char_suffix_utf16_len, char_to_byte_offset, char_to_utf16_offset, check_replace,
+    is_word_codepoint, next_codepoint, utf16_len, utf16_prefix, utf16_suffix, utf16_to_byte_offset,
+    utf16_to_char_offset, ReplaceCheck, SurroundingSnapshot,
 };
 pub use timing::{replace_wait_ms, MAX_REPLACE_WAIT_MS, MIN_REPLACE_WAIT_MS, POST_COMMIT_DELAY_MS};

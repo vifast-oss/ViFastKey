@@ -50,6 +50,7 @@ exclude = ["tests*", "conformance*"]
 [tool.setuptools.package-data]
 adapters = ["data/*.txt"]
 vfk_core = ["data/*.json", "data/*.txt"]
+vfk_engine = ["app_profiles.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

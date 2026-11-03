@@ -22,51 +22,20 @@ namespace {
 constexpr uint32_t kPostReplaceCommitDelayMs = 10;
 
 // Cắt `chars` code point đầu tiên của chuỗi UTF-8.
+// Offset được tính bởi adapter-core qua C ABI để C++ không lặp thuật toán.
 std::string utf8Prefix(const std::string &text, unsigned int chars) {
-    std::string out;
-    unsigned int count = 0;
-    for (char c : text) {
-        if (count >= chars) {
-            break;
-        }
-        out.push_back(c);
-        if ((static_cast<unsigned char>(c) & 0xC0) != 0x80) {
-            ++count;
-        }
-    }
-    return out;
+    const uint32_t offset = vfk_char_to_byte_offset(text.c_str(), chars);
+    return text.substr(0, offset == UINT32_MAX ? text.size() : offset);
 }
 
 size_t charOffsetToByte(const std::string &text, unsigned int chars) {
-    size_t offset = 0;
-    unsigned int count = 0;
-    while (offset < text.size() && count < chars) {
-        ++offset;
-        while (offset < text.size() &&
-               (static_cast<unsigned char>(text[offset]) & 0xC0) == 0x80) {
-            ++offset;
-        }
-        ++count;
-    }
-    return offset;
-}
-
-uint32_t utf16Units(uint32_t codepoint) {
-    return codepoint > 0xFFFF ? 2 : 1;
+    const uint32_t offset = vfk_char_to_byte_offset(text.c_str(), chars);
+    return offset == UINT32_MAX ? text.size() : offset;
 }
 
 size_t utf16ToByteOffset(const std::string &text, uint32_t cursorUtf16) {
-    size_t offset = 0;
-    uint32_t units = 0;
-    while (offset < text.size() && units < cursorUtf16) {
-        uint32_t codepoint = 0;
-        auto next = fcitx::utf8::getNextChar(
-            text.begin() + static_cast<std::ptrdiff_t>(offset), text.end(),
-            &codepoint);
-        units += utf16Units(codepoint);
-        offset = static_cast<size_t>(next - text.begin());
-    }
-    return offset;
+    const uint32_t offset = vfk_utf16_to_byte_offset(text.c_str(), cursorUtf16);
+    return offset == UINT32_MAX ? text.size() : offset;
 }
 
 } // namespace
@@ -607,17 +576,12 @@ void VifastkeyState::applyAction(const VfkAction &action, KeyEvent *event,
     }
 
     VfkPlan plan = {};
-    bool planned = vfk_plan_action(
+    const uint32_t fallback = hasSnapshot ? VFK_FALLBACK_STALE_SURROUNDING
+                                          : VFK_FALLBACK_NONE;
+    const bool planned = vfk_plan_action_with_fallback(
         session_, &action, fieldKind_, beforeDisplay.c_str(),
         hasSnapshot ? surroundingText.c_str() : nullptr,
-        cursorUtf16, anchorUtf16, false, &plan);
-    if (!planned && hasSnapshot && action.kind == VFK_REPLACE) {
-        // App cập nhật surrounding text chậm sau Backspace xoá dấu cách
-        // (soft-reset). Tin vào beforeDisplay thay vì nhả phím literal.
-        planned = vfk_plan_action(
-            session_, &action, fieldKind_, beforeDisplay.c_str(),
-            surroundingText.c_str(), cursorUtf16, anchorUtf16, true, &plan);
-    }
+        cursorUtf16, anchorUtf16, false, fallback, &plan);
     if (!planned) {
         failSafe(event, queuedKey);
         return;

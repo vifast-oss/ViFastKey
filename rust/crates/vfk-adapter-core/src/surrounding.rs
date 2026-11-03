@@ -60,6 +60,18 @@ pub fn utf16_to_char_offset(text: &str, units: u32) -> Option<u32> {
     (used == units).then_some(chars)
 }
 
+/// Đổi offset theo codepoint (char) sang byte UTF-8.
+pub fn char_to_byte_offset(text: &str, chars: u32) -> Option<usize> {
+    let mut count = 0u32;
+    for (offset, _) in text.char_indices() {
+        if count == chars {
+            return Some(offset);
+        }
+        count += 1;
+    }
+    (count == chars).then_some(text.len())
+}
+
 pub fn utf16_to_byte_offset(text: &str, units: u32) -> Option<usize> {
     let mut used = 0u32;
     for (offset, ch) in text.char_indices() {
@@ -217,6 +229,9 @@ mod tests {
         assert_eq!(char_suffix("tiếng", 3), Some("ếng"));
         assert_eq!(char_suffix_utf16_len("🙂a", 2), Some(3));
         assert_eq!(char_to_utf16_offset("🙂a", 1), Some(2));
+        assert_eq!(char_to_byte_offset("🙂a", 1), Some(4));
+        assert_eq!(char_to_byte_offset("🙂a", 2), Some(5));
+        assert_eq!(char_to_byte_offset("🙂a", 3), None);
         assert_eq!(utf16_to_char_offset("🙂a", 2), Some(1));
         assert_eq!(utf16_to_char_offset("🙂a", 1), None);
         assert!(is_word_codepoint('ế'));

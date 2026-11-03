@@ -4,7 +4,7 @@ IBus chạy bằng Python nên không thể link trực tiếp crate Rust. Modul
 đúng contract của `adapter-conformance/*.jsonl` và cùng logic với bản Rust:
 field policy, surrounding guard, action plan, timing.
 
-Port khác nên ưu tiên C ABI `vfk_plan_action`; module này chỉ dành cho Python.
+Port khác nên ưu tiên C ABI `vfk_plan_action_with_fallback`; module này chỉ dành cho Python.
 """
 from __future__ import annotations
 
@@ -31,6 +31,13 @@ class PlanKind(str, Enum):
     COMMIT = "commit"
     REPLACE = "replace"
     FAIL_SAFE = "fail_safe"
+
+
+class ReplaceFallback(str, Enum):
+    """Chính sách thử lại khi Replace fail-safe vì surrounding cũ."""
+    NONE = "none"
+    STALE_SURROUNDING = "stale_surrounding"
+    ALWAYS = "always"
 
 
 @dataclass(frozen=True)
@@ -230,11 +237,45 @@ def plan_action(action, field_kind: FieldKind, before_display: str,
                 pass_key=pass_key, reason="replace-verified")
 
 
+def plan_action_with_fallback(
+    action, field_kind: FieldKind, before_display: str,
+    surrounding: SurroundingSnapshot | None, profile,
+    allow_unverified_replace: bool = False,
+    fallback: ReplaceFallback = ReplaceFallback.NONE,
+) -> Plan:
+    """Planner có fallback khi surrounding cũ, dùng chung cho mọi adapter.
+
+    Strict plan trước; chỉ khi ``Replace`` fail-safe mới tin ``before_display``
+    và thử lại. Adapter chỉ chọn ``ReplaceFallback`` theo khả năng thực tế.
+    """
+    if not isinstance(fallback, ReplaceFallback):
+        fallback = ReplaceFallback(fallback)
+    plan = plan_action(action, field_kind, before_display, surrounding,
+                       profile, allow_unverified_replace)
+    if plan.kind != PlanKind.FAIL_SAFE or not isinstance(action, (Replace, ReplaceUtf16)):
+        return plan
+    # Selection hoặc caret giữa từ là ngữ cảnh thật sự không an toàn; không
+    # được "tin before_display" để bỏ qua guard.
+    if surrounding is not None:
+        if surrounding.cursor_utf16 != surrounding.anchor_utf16:
+            return plan
+        nxt = next_codepoint(surrounding.text, surrounding.cursor_utf16)
+        if nxt is not None and is_word_codepoint(nxt):
+            return plan
+    if fallback is ReplaceFallback.STALE_SURROUNDING and surrounding is None:
+        return plan
+    if fallback is ReplaceFallback.NONE:
+        return plan
+    return plan_action(action, field_kind, before_display, surrounding,
+                       profile, allow_unverified_replace=True)
+
+
 __all__ = [
     "MAX_REPLACE_WAIT_MS", "MIN_REPLACE_WAIT_MS", "POST_COMMIT_DELAY_MS",
-    "Plan", "PlanKind", "ReplaceCheck", "ReplaceUtf16", "SurroundingSnapshot",
+    "Plan", "PlanKind", "ReplaceCheck", "ReplaceFallback", "ReplaceUtf16",
+    "SurroundingSnapshot",
     "char_suffix", "char_suffix_utf16_len", "char_to_utf16_offset",
     "check_replace", "is_word_codepoint", "next_codepoint", "plan_action",
-    "replace_wait_ms", "utf16_len", "utf16_prefix", "utf16_suffix",
-    "utf16_to_byte_offset",
+    "plan_action_with_fallback", "replace_wait_ms", "utf16_len", "utf16_prefix",
+    "utf16_suffix", "utf16_to_byte_offset",
 ]
