@@ -120,7 +120,7 @@ impl AppEditor {
             app: app.to_string(),
             has_preset: preset.is_some(),
             inherit_preset: user.is_none() && preset.is_some(),
-            excluded: doc.config().excluded_apps.iter().any(|a| a == app),
+            excluded: doc.config().excluded_apps.iter().any(|a| vfk_engine::normalize_app_id(Some(a)) == app),
             output_mode: profile.output_mode,
             vietnamese: profile.vietnamese,
             edit_previous_word: profile.edit_previous_word,
@@ -183,6 +183,9 @@ pub struct SettingsApp {
     last_hook_liveness: Instant,
     import_preview: Option<(PathBuf, ImportPreview)>,
     app_filter: String,
+    running_apps: Vec<platform::RunningApp>,
+    running_app_index: Option<usize>,
+    running_apps_loaded: bool,
     tray_enabled: bool,
     tray_attempted: bool,
     tray: Option<tray::Tray>,
@@ -254,6 +257,9 @@ impl SettingsApp {
             last_hook_liveness: Instant::now(),
             import_preview: None,
             app_filter: String::new(),
+            running_apps: Vec::new(),
+            running_app_index: None,
+            running_apps_loaded: false,
             tray_enabled: false,
             tray_attempted: false,
             tray: None,
@@ -1119,6 +1125,47 @@ impl SettingsApp {
         });
 
         section(ui, "Chọn app");
+        if !self.running_apps_loaded {
+            self.running_apps = platform::running_apps();
+            self.running_apps_loaded = true;
+        }
+
+        ui.horizontal(|ui| {
+            if ui.button("Quét app đang chạy").clicked() {
+                self.running_apps = platform::running_apps();
+                self.running_app_index = None;
+            }
+            let selected_running = self
+                .running_app_index
+                .and_then(|index| self.running_apps.get(index))
+                .map(|app| app.label.clone())
+                .unwrap_or_else(|| "— chọn app đang chạy —".into());
+            let mut picked = self.running_app_index;
+            egui::ComboBox::from_id_salt("running_app").selected_text(selected_running).width(360.0).show_ui(
+                ui,
+                |ui| {
+                    for (index, app) in self.running_apps.iter().enumerate() {
+                        ui.selectable_value(&mut picked, Some(index), &app.label);
+                    }
+                    if self.running_apps.is_empty() {
+                        ui.label(if cfg!(target_os = "windows") {
+                            "Không thấy app có cửa sổ."
+                        } else {
+                            "Chỉ hỗ trợ quét app trên Windows."
+                        });
+                    }
+                },
+            );
+            if picked != self.running_app_index {
+                self.running_app_index = picked;
+                if let Some(id) =
+                    picked.and_then(|index| self.running_apps.get(index)).map(|app| app.id.clone())
+                {
+                    self.add_app_id(id);
+                }
+            }
+        });
+
         let filter = self.app_filter.trim().to_lowercase();
         let app_ids: Vec<String> =
             self.app_ids.iter().filter(|app| filter.is_empty() || app.contains(&filter)).cloned().collect();
@@ -1154,12 +1201,7 @@ impl SettingsApp {
                     self.error = Some("App id không hợp lệ.".into());
                 } else {
                     self.new_app.clear();
-                    self.app_filter.clear();
-                    if !self.app_ids.contains(&app) {
-                        self.app_ids.push(app.clone());
-                        self.app_ids.sort();
-                    }
-                    self.select_app(app);
+                    self.add_app_id(app);
                 }
             }
         });
@@ -1340,7 +1382,7 @@ impl SettingsApp {
         let Some(app) = &self.selected_app else { return };
         let config = self.doc.effective_config();
         let profile = resolve_profile(&config, Some(app));
-        let excluded = config.excluded_apps.iter().any(|a| a == app);
+        let excluded = config.excluded_apps.iter().any(|a| vfk_engine::normalize_app_id(Some(a)) == *app);
         ui.group(|ui| {
             ui.label(egui::RichText::new("Hiệu lực hiện tại").strong());
             if excluded {
@@ -1678,6 +1720,20 @@ impl SettingsApp {
         }
     }
 
+    fn add_app_id(&mut self, app: String) {
+        let app = vfk_engine::normalize_app_id(Some(&app));
+        if app.is_empty() {
+            self.error = Some("App id không hợp lệ.".into());
+            return;
+        }
+        self.app_filter.clear();
+        if !self.app_ids.contains(&app) {
+            self.app_ids.push(app.clone());
+            self.app_ids.sort();
+        }
+        self.select_app(app);
+    }
+
     fn select_app(&mut self, app: String) {
         self.selected_app = Some(app.clone());
         self.app_editor = Some(AppEditor::from_doc(&self.doc, &app));
@@ -1699,7 +1755,17 @@ impl SettingsApp {
     fn apply_app_editor(&mut self) {
         let Some(editor) = self.app_editor.clone() else { return };
         let app = editor.app.clone();
-        let mut excluded = self.doc.config().excluded_apps.clone();
+        // Chuẩn hoá cả entry cũ (path/.exe/hoa thường) để UI và engine khớp nhau.
+        let mut excluded: Vec<String> = self
+            .doc
+            .config()
+            .excluded_apps
+            .iter()
+            .map(|a| vfk_engine::normalize_app_id(Some(a)))
+            .filter(|a| !a.is_empty())
+            .collect();
+        excluded.sort();
+        excluded.dedup();
         if editor.excluded {
             if !excluded.iter().any(|a| a == &app) {
                 excluded.push(app.clone());

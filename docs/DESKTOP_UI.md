@@ -164,7 +164,7 @@ Không cho sửa trực tiếp để tránh tranh chấp với adapter.
 | Tổng quan | Trạng thái file, kiểu gõ hiệu lực, số macro/app, gõ thử, lỗi |
 | Kiểu gõ | Method, tone, chính tả, Telex nâng cao, từ/câu, ngữ cảnh |
 | Macro | Bật/tắt, macro số/undo/off-mode, bảng key-value, copy JSON |
-| Ứng dụng | Tìm app, preset/user rule, loại trừ, output, delay/ACK, charset, app_modes |
+| Ứng dụng | Quét app đang chạy (process + title), tìm/preset/user rule, loại trừ, output, delay/ACK, charset, app_modes |
 | Nâng cao | Auto restore English, NFC/NFD, path, import/export + xem JSON, reload, reset nhóm, theme, tray, Windows backend |
 | Chẩn đoán | OS/version/path/fingerprint, validate, gõ thử, copy diagnostics |
 

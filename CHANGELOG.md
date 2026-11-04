@@ -36,6 +36,9 @@
 - **Windows tray**: menu “Mở cấu hình” giờ khôi phục cửa sổ Settings đúng khi
   cửa sổ đang thu nhỏ/ẩn. Trước đây đóng xuống tray dùng `Visible(false)` làm
   event loop có thể ngừng render, nên thao tác từ tray không được xử lý.
+- **Windows Settings**: cửa sổ cấu hình không còn chiếm taskbar/Alt+Tab; mở từ
+  tray vẫn hiện bình thường. Tab Ứng dụng thêm picker **app đang chạy** (process
+  + tiêu đề cửa sổ), chuẩn hoá `excluded_apps` để UI/engine khớp nhau.
 - **Adapter Wayland standalone (`linux/wayland/`)**: `zwp_input_method_v2` +
   `zwp_virtual_keyboard_v1`, preedit/commit/delete surrounding, field policy
   (password/URL/email/number/terminal), pass-through phím qua virtual keyboard,

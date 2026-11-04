@@ -51,6 +51,89 @@ pub fn save_windows_backend(config_path: &Path, backend: &str) -> io::Result<()>
     std::fs::write(path, bytes)
 }
 
+/// Một app đang có cửa sổ, dùng cho picker thay vì bắt người dùng gõ id.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct RunningApp {
+    pub id: String,
+    pub label: String,
+}
+
+/// Liệt kê app đang chạy có cửa sổ nhìn thấy. Windows dùng Win32; nền tảng
+/// khác trả rỗng và UI vẫn cho nhập id thủ công.
+#[cfg(target_os = "windows")]
+pub fn running_apps() -> Vec<RunningApp> {
+    use windows_sys::core::BOOL;
+    use windows_sys::Win32::Foundation::{CloseHandle, HWND, LPARAM};
+    use windows_sys::Win32::System::Threading::{
+        OpenProcess, QueryFullProcessImageNameW, PROCESS_QUERY_LIMITED_INFORMATION,
+    };
+    use windows_sys::Win32::UI::WindowsAndMessaging::{
+        EnumWindows, GetWindowLongW, GetWindowTextLengthW, GetWindowTextW, GetWindowThreadProcessId,
+        IsWindowVisible, GWL_EXSTYLE, WS_EX_TOOLWINDOW,
+    };
+
+    unsafe extern "system" fn collect(hwnd: HWND, lparam: LPARAM) -> BOOL {
+        if IsWindowVisible(hwnd) == 0 {
+            return 1;
+        }
+        // Bỏ tool window/overlay; vẫn giữ app thường và game fullscreen.
+        if GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_TOOLWINDOW as i32 != 0 {
+            return 1;
+        }
+        let len = GetWindowTextLengthW(hwnd);
+        if len <= 0 {
+            return 1;
+        }
+        let mut title_buf = vec![0u16; (len + 1) as usize];
+        let copied = GetWindowTextW(hwnd, title_buf.as_mut_ptr(), title_buf.len() as i32);
+        if copied <= 0 {
+            return 1;
+        }
+        let title = String::from_utf16_lossy(&title_buf[..copied as usize]);
+        let mut pid = 0u32;
+        GetWindowThreadProcessId(hwnd, &mut pid);
+        if pid == 0 {
+            return 1;
+        }
+        let handle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, 0, pid);
+        if handle.is_null() {
+            return 1;
+        }
+        let mut path_buf = [0u16; 1024];
+        let mut path_len = path_buf.len() as u32;
+        let ok = QueryFullProcessImageNameW(handle, 0, path_buf.as_mut_ptr(), &mut path_len);
+        CloseHandle(handle);
+        if ok == 0 {
+            return 1;
+        }
+        let path = String::from_utf16_lossy(&path_buf[..path_len as usize]);
+        let name = path.rsplit(['\\', '/']).next().unwrap_or(&path);
+        let id = vfk_engine::normalize_app_id(Some(name));
+        if id.is_empty() {
+            return 1;
+        }
+        let title: String = title.chars().take(100).collect();
+        let label = format!("{id}  ·  {title}");
+        let apps = &mut *(lparam as *mut Vec<RunningApp>);
+        if !apps.iter().any(|app| app.id == id && app.label == label) {
+            apps.push(RunningApp { id, label });
+        }
+        1
+    }
+
+    let mut apps: Vec<RunningApp> = Vec::new();
+    unsafe {
+        EnumWindows(Some(collect), &mut apps as *mut Vec<RunningApp> as LPARAM);
+    }
+    apps.sort_by(|a: &RunningApp, b: &RunningApp| a.id.cmp(&b.id).then(a.label.cmp(&b.label)));
+    apps
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn running_apps() -> Vec<RunningApp> {
+    Vec::new()
+}
+
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
 

@@ -68,6 +68,12 @@ fn run() -> Result<ExitCode, String> {
     if let Some(icon) = tray::icon_data() {
         viewport = viewport.with_icon(icon);
     }
+    // Windows: cửa sổ cấu hình là app tray, không chiếm taskbar/Alt+Tab.
+    // Tray "Mở cấu hình" vẫn ShowWindow/SetForegroundWindow bình thường.
+    #[cfg(target_os = "windows")]
+    {
+        viewport = viewport.with_taskbar(false);
+    }
     let options = eframe::NativeOptions { viewport, ..Default::default() };
 
     let tab = args.tab.clone();

@@ -86,7 +86,9 @@ Tray không cần thêm thư viện hệ thống (D-Bus có sẵn trên desktop 
 - Import có **preview diff** (thay đổi hiệu lực + lỗi/cảnh báo) trước khi nạp.
 - Export JSON hiệu lực, xem trước JSON ngay trong UI.
 - Khôi phục mặc định **từng nhóm**: kiểu gõ, tuỳ chọn macro, ứng dụng, nâng cao.
-- Tìm app theo tên; sửa app profile được áp dụng vào bản nháp ngay.
+- Tìm app theo tên; quét **app đang chạy** trên Windows (process + title) để chọn thay vì gõ id thủ công.
+- Windows: cửa sổ Settings không chiếm taskbar/Alt+Tab; mở từ tray vẫn hoạt động.
+- Sửa app profile được áp dụng vào bản nháp ngay.
 - Tray + ẩn xuống tray khi đóng; lưu theme/tab/tray/bật-ẩn vào `settings-ui.json`.
 - macOS IMK, Windows hook, Fcitx5 và IBus poll mtime để reload config.
 - `--screenshots` cho kiểm thử giao diện trên CI/desktop headless.
