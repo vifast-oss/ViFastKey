@@ -33,6 +33,9 @@
 
 ### Desktop
 
+- **Windows tray**: menu “Mở cấu hình” giờ khôi phục cửa sổ Settings đúng khi
+  cửa sổ đang thu nhỏ/ẩn. Trước đây đóng xuống tray dùng `Visible(false)` làm
+  event loop có thể ngừng render, nên thao tác từ tray không được xử lý.
 - **Adapter Wayland standalone (`linux/wayland/`)**: `zwp_input_method_v2` +
   `zwp_virtual_keyboard_v1`, preedit/commit/delete surrounding, field policy
   (password/URL/email/number/terminal), pass-through phím qua virtual keyboard,

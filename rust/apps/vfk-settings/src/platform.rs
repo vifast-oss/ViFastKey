@@ -70,7 +70,7 @@ pub fn ensure_ui_instance() -> bool {
     if already {
         // Ưu tiên hiện cửa sổ đang tồn tại; nếu process ẩn chưa render, ghi request
         // để UI cũ tự bật khi vòng lặp thức.
-        show_existing_settings_window();
+        show_main_window();
         crate::hook_state::request_show();
         false
     } else {
@@ -79,18 +79,23 @@ pub fn ensure_ui_instance() -> bool {
     }
 }
 
+/// Đánh thức cửa sổ Settings đang chạy. Tìm cả title có dấu `*` khi form dirty.
 #[cfg(target_os = "windows")]
-fn show_existing_settings_window() {
+pub fn show_main_window() {
     use windows_sys::Win32::UI::WindowsAndMessaging::{
         FindWindowW, SetForegroundWindow, ShowWindow, SW_RESTORE, SW_SHOW,
     };
-    let title: Vec<u16> = "ViFastKey Settings\0".encode_utf16().collect();
-    let hwnd = unsafe { FindWindowW(std::ptr::null(), title.as_ptr()) };
-    if !hwnd.is_null() {
-        unsafe {
-            ShowWindow(hwnd, SW_RESTORE);
-            ShowWindow(hwnd, SW_SHOW);
-            SetForegroundWindow(hwnd);
+
+    for title in ["ViFastKey Settings", "ViFastKey Settings *"] {
+        let title: Vec<u16> = title.encode_utf16().chain(std::iter::once(0)).collect();
+        let hwnd = unsafe { FindWindowW(std::ptr::null(), title.as_ptr()) };
+        if !hwnd.is_null() {
+            unsafe {
+                ShowWindow(hwnd, SW_RESTORE);
+                ShowWindow(hwnd, SW_SHOW);
+                SetForegroundWindow(hwnd);
+            }
+            return;
         }
     }
 }

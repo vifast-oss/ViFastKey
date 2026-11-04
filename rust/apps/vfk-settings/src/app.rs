@@ -466,6 +466,10 @@ impl SettingsApp {
         ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
         ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
         ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+        // egui command có thể bị trễ/không áp khi cửa sổ vừa được tray đánh thức.
+        // Trên Windows restore thêm bằng Win32 để chắc chắn cửa sổ hiện lên.
+        #[cfg(target_os = "windows")]
+        crate::platform::show_main_window();
     }
 
     fn update_title(&mut self, ctx: &egui::Context) {
@@ -596,7 +600,10 @@ impl SettingsApp {
         }
         if self.close_to_tray && self.tray.as_ref().is_some_and(tray::Tray::is_available) {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
-            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+            // Không dùng Visible(false): trên Windows eframe/event loop có thể
+            // ngừng render, nên menu tray "Mở cấu hình" không được xử lý.
+            // Minimize giữ event loop sống; show_window() sẽ restore.
+            ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
         } else {
             // Không có tray để ẩn: đóng UI nhưng không để hook mồ côi.
             platform::stop_hook();
