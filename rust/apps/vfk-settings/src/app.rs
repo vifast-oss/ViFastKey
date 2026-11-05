@@ -281,7 +281,7 @@ impl SettingsApp {
             title_dirty: false,
         };
         app.tray_enabled = app.prefs.tray.unwrap_or(default_tray_enabled());
-        app.close_to_tray = resolve_close_to_tray(&app.prefs);
+        app.close_to_tray = app.prefs.close_to_tray.unwrap_or_else(default_close_to_tray);
         app.sync_from_doc();
         if let Some(tab) = initial_tab.as_deref() {
             app.set_tab(tab);
@@ -317,7 +317,6 @@ impl SettingsApp {
         if hidden {
             self.tray_enabled = true;
             self.close_to_tray = true;
-            self.prefs.close_to_tray_explicit = Some(true);
         }
     }
 
@@ -333,7 +332,6 @@ impl SettingsApp {
         self.prefs.last_tab = Some(self.tab.name().to_string());
         self.prefs.tray = Some(self.tray_enabled);
         self.prefs.close_to_tray = Some(self.close_to_tray);
-        self.prefs.close_to_tray_explicit = Some(self.close_to_tray);
         self.prefs.save(self.doc.path());
     }
 
@@ -619,9 +617,12 @@ impl SettingsApp {
         }
         if self.close_to_tray && self.tray.as_ref().is_some_and(tray::Tray::is_available) {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
-            // Không dùng Visible(false): trên Windows eframe/event loop có thể
-            // ngừng render, nên menu tray "Mở cấu hình" không được xử lý.
-            // Minimize giữ event loop sống; show_window() sẽ restore.
+            // Linux: Minimize vẫn để cửa sổ trên dock/taskbar Ubuntu, nên phải
+            // ẩn hẳn để giống Windows. Windows dùng Minimize vì Visible(false)
+            // có thể làm eframe/event loop ngừng render.
+            #[cfg(target_os = "linux")]
+            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+            #[cfg(not(target_os = "linux"))]
             ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
         } else {
             // Không có tray để ẩn: đóng UI nhưng không để hook mồ côi.
@@ -1556,7 +1557,7 @@ impl SettingsApp {
         #[cfg(target_os = "linux")]
         ui.label(
             egui::RichText::new(
-                "Linux mặc định thoát khi bấm X; chỉ bật ẩn xuống khay nếu bạn thấy icon ViFastKey trong khay.",
+                "Linux: bấm X ẩn cửa sổ xuống khay nếu tray khả dụng; thoát hẳn bằng menu tray → Thoát.",
             )
             .small()
             .color(theme::MUTED),
@@ -2289,25 +2290,10 @@ fn default_tray_enabled() -> bool {
     cfg!(any(target_os = "windows", target_os = "linux"))
 }
 
-/// Trên Linux, X phải thoát mặc định. Khay StatusNotifier không phải desktop
-/// nào cũng hiển thị; ẩn xuống khay mặc định sẽ làm người dùng không thấy cửa
-/// sổ và tưởng app không đóng. Người dùng có thể bật ẩn xuống khay trong UI.
+/// Mặc định đóng cửa sổ là ẩn xuống khay trên mọi desktop có tray; nếu tray
+/// không khả dụng, `handle_close_request` sẽ để ứng dụng thoát bình thường.
 fn default_close_to_tray() -> bool {
-    !cfg!(target_os = "linux")
-}
-
-fn resolve_close_to_tray(prefs: &UiPrefs) -> bool {
-    resolve_close_to_tray_for(prefs, cfg!(target_os = "linux"))
-}
-
-fn resolve_close_to_tray_for(prefs: &UiPrefs, linux: bool) -> bool {
-    // Trước 0.1.2 bản Linux lưu `true` do mặc định cũ, làm bấm X chỉ thu nhỏ
-    // và người dùng không thấy cửa sổ. Chỉ tôn trọng `true` nếu người dùng đã
-    // chủ động bật (field explicit có trong file).
-    if linux && prefs.close_to_tray_explicit.is_none() {
-        return false;
-    }
-    prefs.close_to_tray.unwrap_or(!linux)
+    true
 }
 
 fn rows_to_map(rows: &[MacroRow]) -> BTreeMap<String, String> {
@@ -2376,17 +2362,6 @@ mod tests {
         app.apply_app_editor();
         assert_eq!(app.doc.profile("kitty").unwrap().output_mode, Some(OutputMode::Replace));
         render_frames(&ctx, &mut app, 1);
-    }
-
-    #[test]
-    fn linux_legacy_close_to_tray_migrates_and_explicit_choice_is_kept() {
-        let legacy = UiPrefs { close_to_tray: Some(true), ..Default::default() };
-        assert!(!resolve_close_to_tray_for(&legacy, true));
-        assert!(resolve_close_to_tray_for(&legacy, false));
-
-        let explicit =
-            UiPrefs { close_to_tray: Some(true), close_to_tray_explicit: Some(true), ..Default::default() };
-        assert!(resolve_close_to_tray_for(&explicit, true));
     }
 
     #[test]

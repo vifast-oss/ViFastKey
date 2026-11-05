@@ -43,9 +43,9 @@ cargo run -p vifastkey-settings -- --no-tray   # tắt tray
   trong binary. Desktop phải có StatusNotifierWatcher; GNOME cần extension
   **AppIndicator and KStatusNotifierItem Support**.
 - Chuột phải mở menu (mở cấu hình, tải lại, thoát); click trái mở/đưa cửa sổ lên.
-- Windows/macOS: đóng cửa sổ (khi không có thay đổi chưa lưu) ẩn xuống tray
-  thay vì thoát; tắt trong tab **Nâng cao**. Linux mặc định thoát khi bấm X;
-  chỉ bật ẩn xuống khay khi desktop có AppIndicator/StatusNotifier.
+- Đóng cửa sổ (khi không có thay đổi chưa lưu) ẩn xuống tray thay vì thoát;
+  tắt trong tab **Nâng cao**. Trên Linux cửa sổ được ẩn hẳn khỏi dock/taskbar;
+  nếu desktop không có StatusNotifier, app thoát bình thường.
 - macOS mặc định tắt tray; dùng `--tray` khi muốn kiểm thử.
 
 ## Config

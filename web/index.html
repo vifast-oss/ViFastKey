@@ -385,7 +385,7 @@ curl -s https://vifastkey.hoctuthien.com/api/type \
               <li>Chọn app (ví dụ <code>firefox</code>, <code>code</code>) hoặc nhập app id thủ công.</li>
               <li>Bật <strong>Loại trừ hoàn toàn</strong> hoặc chỉnh output/engine rồi <strong>Lưu</strong>.</li>
             </ol>
-            <p class="app-guide-note">Trên Linux, bấm X mặc định <strong>thoát</strong>; chỉ bật ẩn xuống khay khi desktop có AppIndicator/StatusNotifier và bạn thấy icon ViFastKey. App profile/charset nâng cao vẫn dùng JSON.</p>
+            <p class="app-guide-note">Trên Linux, bấm X <strong>ẩn xuống khay</strong> nếu desktop có AppIndicator/StatusNotifier; thoát hẳn bằng menu tray. Nếu không thấy icon khay, tắt tùy chọn này trong Nâng cao. App profile/charset nâng cao vẫn dùng JSON.</p>
           </div>
         </article>
       </div>
@@ -852,7 +852,7 @@ cd vifastkey-wayland
         <article class="fix-item">
           <div class="fix-top"><span class="fix-build">Build 27 · 05/11/2026</span><span class="fix-status">Đã sửa</span></div>
           <h3>“Menu tray mở cấu hình không lên; app chiếm taskbar; chọn app phải gõ id.”</h3>
-          <p><strong>Đã sửa:</strong> Windows Settings ẩn khỏi taskbar/Alt+Tab và mở lại được từ tray; tab Ứng dụng hiển thị danh sách app đã cấu hình, bên dưới là app đang chạy (process + tên cửa sổ) để chọn thay vì gõ id; macOS có picker app đang chạy để thêm vào danh sách loại trừ; Linux có picker app đang chạy, app_id/icon dock khớp file .desktop và bấm X mặc định thoát thay vì ẩn xuống khay; menu bên trái có icon. Bản 0.1.2, Android build 27. Có ảnh minh hoạ trong mục <a href="#cau-hinh-app">Cấu hình theo app</a>.</p>
+          <p><strong>Đã sửa:</strong> Windows Settings ẩn khỏi taskbar/Alt+Tab và mở lại được từ tray; tab Ứng dụng hiển thị danh sách app đã cấu hình, bên dưới là app đang chạy (process + tên cửa sổ) để chọn thay vì gõ id; macOS có picker app đang chạy để thêm vào danh sách loại trừ; Linux có picker app đang chạy, app_id/icon dock khớp file .desktop và bấm X ẩn hẳn xuống khay thay vì kẹt trên dock/taskbar; menu bên trái có icon. Bản 0.1.2, Android build 27. Có ảnh minh hoạ trong mục <a href="#cau-hinh-app">Cấu hình theo app</a>.</p>
         </article>
         <article class="fix-item">
           <div class="fix-top"><span class="fix-build">Build 25 · 02/11/2026</span><span class="fix-status">Đã sửa</span></div>

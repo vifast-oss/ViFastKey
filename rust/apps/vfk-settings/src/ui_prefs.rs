@@ -15,10 +15,6 @@ pub struct UiPrefs {
     pub tray: Option<bool>,
     #[serde(default)]
     pub close_to_tray: Option<bool>,
-    /// Người dùng đã chủ động đổi close-to-tray. File cũ không có field này;
-    /// trên Linux giá trị `true` cũ chỉ là mặc định cũ, không phải lựa chọn.
-    #[serde(default)]
-    pub close_to_tray_explicit: Option<bool>,
 }
 
 impl UiPrefs {
@@ -51,7 +47,6 @@ mod tests {
             last_tab: Some("apps".into()),
             tray: Some(false),
             close_to_tray: Some(true),
-            close_to_tray_explicit: Some(true),
         };
         prefs.save(&config);
         let loaded = UiPrefs::load(&config);
@@ -59,6 +54,5 @@ mod tests {
         assert_eq!(loaded.last_tab.as_deref(), Some("apps"));
         assert_eq!(loaded.tray, Some(false));
         assert_eq!(loaded.close_to_tray, Some(true));
-        assert_eq!(loaded.close_to_tray_explicit, Some(true));
     }
 }
