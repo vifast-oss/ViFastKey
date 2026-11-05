@@ -58,8 +58,8 @@ pub struct RunningApp {
     pub label: String,
 }
 
-/// Liệt kê app đang chạy có cửa sổ nhìn thấy. Windows dùng Win32; nền tảng
-/// khác trả rỗng và UI vẫn cho nhập id thủ công.
+/// Liệt kê app đang chạy có cửa sổ nhìn thấy. Windows dùng Win32; Linux đọc
+/// tiến trình của user hiện tại và đối chiếu với các file `.desktop`.
 #[cfg(target_os = "windows")]
 pub fn running_apps() -> Vec<RunningApp> {
     use windows_sys::core::BOOL;
@@ -129,7 +129,205 @@ pub fn running_apps() -> Vec<RunningApp> {
     apps
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "linux")]
+pub fn running_apps() -> Vec<RunningApp> {
+    use std::collections::BTreeMap;
+    use std::os::unix::fs::MetadataExt;
+
+    // Chỉ lấy tiến trình của user đang chạy Settings, tránh thấy app của user khác.
+    let current_uid = std::fs::metadata("/proc/self").map(|m| m.uid()).unwrap_or(0);
+    let current_exe = std::env::current_exe().ok().and_then(|p| std::fs::canonicalize(p).ok());
+    let desktop_names = linux_desktop_exec_names();
+    let mut found = BTreeMap::<String, RunningApp>::new();
+
+    let Ok(entries) = std::fs::read_dir("/proc") else {
+        return Vec::new();
+    };
+    for entry in entries.flatten() {
+        let Some(pid) = entry.file_name().to_str().and_then(|s| s.parse::<u32>().ok()) else {
+            continue;
+        };
+        let proc_dir = entry.path();
+        if std::fs::metadata(&proc_dir).map(|m| m.uid()).ok() != Some(current_uid) {
+            continue;
+        }
+        let exe_path = std::fs::read_link(proc_dir.join("exe")).ok();
+        if current_exe.is_some() && exe_path == current_exe {
+            continue;
+        }
+        let exe_name = exe_path
+            .as_ref()
+            .and_then(|p| p.file_name())
+            .and_then(|s| s.to_str())
+            .unwrap_or("")
+            .to_ascii_lowercase();
+        let comm = std::fs::read_to_string(proc_dir.join("comm")).unwrap_or_default();
+        let comm = comm.trim().to_ascii_lowercase();
+        let name = if !exe_name.is_empty() { exe_name.as_str() } else { comm.as_str() };
+        if !linux_is_gui_process(name, &desktop_names) {
+            continue;
+        }
+        let id = vfk_engine::normalize_app_id(Some(name));
+        if id.is_empty() || found.contains_key(&id) {
+            continue;
+        }
+        let label =
+            if comm.is_empty() || comm == name { name.to_string() } else { format!("{name}  ·  {comm}") };
+        let _ = pid; // giữ PID trong tương lai nếu cần hiển thị
+        found.insert(id.clone(), RunningApp { id, label });
+    }
+    found.into_values().collect()
+}
+
+#[cfg(target_os = "linux")]
+fn linux_desktop_exec_names() -> std::collections::BTreeSet<String> {
+    use std::collections::BTreeSet;
+    use std::path::{Path, PathBuf};
+
+    let mut dirs: Vec<PathBuf> = vec![
+        PathBuf::from("/usr/share/applications"),
+        PathBuf::from("/usr/local/share/applications"),
+        PathBuf::from("/var/lib/snapd/desktop/applications"),
+    ];
+    if let Ok(data_home) = std::env::var("XDG_DATA_HOME") {
+        dirs.push(Path::new(&data_home).join("applications"));
+    } else if let Ok(home) = std::env::var("HOME") {
+        dirs.push(Path::new(&home).join(".local/share/applications"));
+    }
+    if let Ok(data_dirs) = std::env::var("XDG_DATA_DIRS") {
+        for dir in data_dirs.split(':').filter(|d| !d.is_empty()) {
+            dirs.push(Path::new(dir).join("applications"));
+        }
+    }
+
+    let mut names = BTreeSet::new();
+    for dir in dirs {
+        let Ok(entries) = std::fs::read_dir(dir) else { continue };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|s| s.to_str()) != Some("desktop") {
+                continue;
+            }
+            if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+                names.insert(stem.to_ascii_lowercase());
+            }
+            let Ok(text) = std::fs::read_to_string(&path) else { continue };
+            let mut exec_seen = false;
+            for line in text.lines() {
+                let Some((key, value)) = line.split_once('=') else { continue };
+                match key.trim() {
+                    "Exec" if !exec_seen => {
+                        exec_seen = true;
+                        linux_insert_exec_name(&mut names, value);
+                    }
+                    "StartupWMClass" => {
+                        let value = value.trim().trim_matches(['"', '\'']).to_ascii_lowercase();
+                        if !value.is_empty() {
+                            names.insert(value);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+    names
+}
+
+#[cfg(target_os = "linux")]
+fn linux_insert_exec_name(names: &mut std::collections::BTreeSet<String>, value: &str) {
+    let mut parts = value.split_whitespace();
+    let mut token = parts.next().unwrap_or("");
+    if token == "env" {
+        token = parts.next().unwrap_or("");
+    }
+    let token = token.trim_matches(['"', '\'']);
+    let base = token.rsplit('/').next().unwrap_or(token).to_ascii_lowercase();
+    if !base.is_empty() && !base.starts_with('%') && base != "sh" && base != "bash" && base != "env" {
+        names.insert(base);
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn linux_is_gui_process(name: &str, desktop_names: &std::collections::BTreeSet<String>) -> bool {
+    if name.is_empty() || name.contains(char::is_whitespace) || name.starts_with('.') {
+        return false;
+    }
+    const NOISE: &[&str] = &[
+        "systemd",
+        "dbus-daemon",
+        "dbus-broker",
+        "pipewire",
+        "wireplumber",
+        "gnome-shell",
+        "gnome-session",
+        "gjs",
+        "xwayland",
+        "xorg",
+        "ibus-",
+        "fcitx5",
+        "goa-",
+        "python",
+        "gdm",
+        "sshd",
+        "bash",
+        "sh",
+        "zsh",
+        "fish",
+        "xdg-desktop-portal",
+        "evolution-alarm-notify",
+        "update-notifier",
+        "at-spi",
+        "snapd",
+        "cupsd",
+        "packagekitd",
+        "tracker-miner",
+        "gnome-keyring",
+    ];
+    if NOISE.iter().any(|noise| name.starts_with(noise)) {
+        return false;
+    }
+    if desktop_names.contains(name) {
+        return true;
+    }
+    // Một số app snap/Electron đổi tên binary khỏi Exec trong .desktop.
+    const ALIASES: &[&str] = &[
+        "chrome",
+        "google-chrome",
+        "google-chrome-stable",
+        "chromium",
+        "chromium-browser",
+        "firefox",
+        "firefox-esr",
+        "code",
+        "code-insiders",
+        "codium",
+        "zed",
+        "alacritty",
+        "kitty",
+        "wezterm",
+        "gnome-terminal-server",
+        "konsole",
+        "xterm",
+        "slack",
+        "discord",
+        "telegram-desktop",
+        "thunderbird",
+        "soffice.bin",
+        "gimp",
+        "inkscape",
+        "krita",
+        "obs",
+        "vlc",
+        "mpv",
+        "steam",
+        "lutris",
+        "java",
+    ];
+    ALIASES.contains(&name)
+}
+
+#[cfg(not(any(target_os = "windows", target_os = "linux")))]
 pub fn running_apps() -> Vec<RunningApp> {
     Vec::new()
 }

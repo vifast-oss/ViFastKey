@@ -21,7 +21,7 @@
   <meta name="twitter:title" content="ViFastKey — Bộ gõ tiếng Việt">
   <meta name="twitter:description" content="Bộ gõ tiếng Việt nhỏ, nhanh, thuần logic. Gõ thử WASM và gọi API Python.">
   <meta name="twitter:image" content="https://vifastkey.hoctuthien.com/brand/og-image.png">
-  <link rel="stylesheet" href="style.css?v=20261105a">
+  <link rel="stylesheet" href="style.css?v=20261105c">
   <noscript><style>
     /* Không có JS: hiện đủ hướng dẫn thay vì chỉ panel đầu. */
     .platform-panel[hidden] { display: block !important; margin-bottom: 16px; }
@@ -41,6 +41,7 @@
         <a href="#tinh-nang">Tính năng</a>
         <a href="#kien-truc">Kiến trúc</a>
         <a href="#san-pham">Sản phẩm</a>
+        <a href="#cau-hinh-app">Cấu hình app</a>
         <a href="#api">API Python</a>
         <a href="#gop-y">Góp ý</a>
         <a href="#tai-ve">Tải về</a>
@@ -329,6 +330,66 @@ curl -s https://vifastkey.hoctuthien.com/api/type \
           </div>
         </article>
       </div>
+    </section>
+
+    <section class="section wrap app-guide" id="cau-hinh-app">
+      <div class="section-head compact">
+        <div>
+          <div class="eyebrow">Cấu hình theo app</div>
+          <h2>Mỗi app một cách gõ.<br>Chọn từ app đang chạy.</h2>
+        </div>
+        <p>Windows và Linux có tab <strong>Ứng dụng</strong> với picker app đang chạy; macOS có picker trong Cấu hình. Chọn app, đặt loại trừ hoặc override riêng, rồi lưu — không phải nhớ tên process.</p>
+      </div>
+      <div class="app-guide-grid">
+        <article class="app-guide-card">
+          <div class="app-guide-head">
+            <span class="app-guide-os">Windows</span>
+            <strong>Settings → Ứng dụng</strong>
+          </div>
+          <a class="app-guide-shot windows" href="screenshots/windows-apps.png" target="_blank" rel="noopener" title="Mở ảnh lớn">
+            <img src="screenshots/windows-apps.png" width="1300" height="1000" loading="lazy" alt="Tab Ứng dụng trên Windows: danh sách app đã cấu hình, app đang chạy và ô thêm app thủ công">
+          </a>
+          <ol class="app-guide-steps">
+            <li><strong>Đã cấu hình</strong> — preset/ghi đè hiện có; chọn để sửa.</li>
+            <li><strong>Đang chạy</strong> — app đang mở; bấm để thêm vào cấu hình.</li>
+            <li>Bật <strong>Loại trừ hoàn toàn</strong> hoặc chỉnh output/engine trong “Cấu hình cho …”, rồi <strong>Lưu</strong>.</li>
+          </ol>
+          <p class="app-guide-note">Phù hợp để loại trừ game (Minecraft, Liên Minh…) hoặc app không muốn gõ tiếng Việt.</p>
+        </article>
+        <article class="app-guide-card">
+          <div class="app-guide-head">
+            <span class="app-guide-os">macOS</span>
+            <strong>ViFastKey → Cấu hình…</strong>
+          </div>
+          <a class="app-guide-shot macos" href="screenshots/macos-app-picker.png" target="_blank" rel="noopener" title="Mở ảnh lớn">
+            <img src="screenshots/macos-app-picker.png" width="1226" height="170" loading="lazy" alt="Cửa sổ cấu hình macOS: ô App loại trừ, chọn App đang chạy, nút Quét và Thêm vào loại trừ">
+          </a>
+          <ol class="app-guide-steps">
+            <li>Mở menu ViFastKey → <strong>Cấu hình…</strong>.</li>
+            <li>Ở dòng <strong>App đang chạy</strong>, chọn app rồi bấm <strong>Thêm vào loại trừ</strong>.</li>
+            <li>Bấm <strong>Lưu</strong>. Với app profile/charset nâng cao, dùng <strong>Mở file JSON</strong>.</li>
+          </ol>
+          <p class="app-guide-note">Danh sách app đang chạy được quét lại mỗi lần mở cửa sổ; bấm <strong>Quét</strong> nếu vừa mở thêm app.</p>
+        </article>
+        <article class="app-guide-card app-guide-wide">
+          <div class="app-guide-head">
+            <span class="app-guide-os">Linux</span>
+            <strong>Settings → Ứng dụng</strong>
+          </div>
+          <a class="app-guide-shot linux" href="screenshots/linux-apps.png" target="_blank" rel="noopener" title="Mở ảnh lớn">
+            <img src="screenshots/linux-apps.png" width="1100" height="900" loading="lazy" alt="Tab Ứng dụng trên Linux: danh sách app đã cấu hình, app đang chạy và ô thêm app thủ công">
+          </a>
+          <div class="app-guide-copy">
+            <ol class="app-guide-steps">
+              <li>Mở tab <strong>Ứng dụng</strong>; danh sách đang chạy lấy từ tiến trình GUI của phiên.</li>
+              <li>Chọn app (ví dụ <code>firefox</code>, <code>code</code>) hoặc nhập app id thủ công.</li>
+              <li>Bật <strong>Loại trừ hoàn toàn</strong> hoặc chỉnh output/engine rồi <strong>Lưu</strong>.</li>
+            </ol>
+            <p class="app-guide-note">Trên Linux, bấm X mặc định <strong>thoát</strong>; chỉ bật ẩn xuống khay khi desktop có AppIndicator/StatusNotifier và bạn thấy icon ViFastKey. App profile/charset nâng cao vẫn dùng JSON.</p>
+          </div>
+        </article>
+      </div>
+      <p class="app-guide-caption">Ảnh minh hoạ từ bản 0.1.2; bấm ảnh để mở lớn. Linux lấy app id từ tiến trình, vẫn có thể nhập tay hoặc dùng JSON.</p>
     </section>
 
     <section class="section wrap">
@@ -791,7 +852,7 @@ cd vifastkey-wayland
         <article class="fix-item">
           <div class="fix-top"><span class="fix-build">Build 27 · 05/11/2026</span><span class="fix-status">Đã sửa</span></div>
           <h3>“Menu tray mở cấu hình không lên; app chiếm taskbar; chọn app phải gõ id.”</h3>
-          <p><strong>Đã sửa:</strong> Windows Settings ẩn khỏi taskbar/Alt+Tab và mở lại được từ tray; tab Ứng dụng hiển thị danh sách app đã cấu hình, bên dưới là app đang chạy (process + tên cửa sổ) để chọn thay vì gõ id; macOS có picker app đang chạy để thêm vào danh sách loại trừ; menu bên trái có icon. Bản 0.1.2, Android build 27.</p>
+          <p><strong>Đã sửa:</strong> Windows Settings ẩn khỏi taskbar/Alt+Tab và mở lại được từ tray; tab Ứng dụng hiển thị danh sách app đã cấu hình, bên dưới là app đang chạy (process + tên cửa sổ) để chọn thay vì gõ id; macOS có picker app đang chạy để thêm vào danh sách loại trừ; Linux có picker app đang chạy, app_id/icon dock khớp file .desktop và bấm X mặc định thoát thay vì ẩn xuống khay; menu bên trái có icon. Bản 0.1.2, Android build 27. Có ảnh minh hoạ trong mục <a href="#cau-hinh-app">Cấu hình theo app</a>.</p>
         </article>
         <article class="fix-item">
           <div class="fix-top"><span class="fix-build">Build 25 · 02/11/2026</span><span class="fix-status">Đã sửa</span></div>

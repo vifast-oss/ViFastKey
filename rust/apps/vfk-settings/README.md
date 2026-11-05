@@ -43,8 +43,9 @@ cargo run -p vifastkey-settings -- --no-tray   # tắt tray
   trong binary. Desktop phải có StatusNotifierWatcher; GNOME cần extension
   **AppIndicator and KStatusNotifierItem Support**.
 - Chuột phải mở menu (mở cấu hình, tải lại, thoát); click trái mở/đưa cửa sổ lên.
-- Đóng cửa sổ (khi không có thay đổi chưa lưu) ẩn xuống tray thay vì thoát;
-  tắt trong tab **Nâng cao**.
+- Windows/macOS: đóng cửa sổ (khi không có thay đổi chưa lưu) ẩn xuống tray
+  thay vì thoát; tắt trong tab **Nâng cao**. Linux mặc định thoát khi bấm X;
+  chỉ bật ẩn xuống khay khi desktop có AppIndicator/StatusNotifier.
 - macOS mặc định tắt tray; dùng `--tray` khi muốn kiểm thử.
 
 ## Config
@@ -86,10 +87,11 @@ Tray không cần thêm thư viện hệ thống (D-Bus có sẵn trên desktop 
 - Import có **preview diff** (thay đổi hiệu lực + lỗi/cảnh báo) trước khi nạp.
 - Export JSON hiệu lực, xem trước JSON ngay trong UI.
 - Khôi phục mặc định **từng nhóm**: kiểu gõ, tuỳ chọn macro, ứng dụng, nâng cao.
-- Tìm app theo tên; quét **app đang chạy** trên Windows (process + title) để chọn thay vì gõ id thủ công.
+- Tìm app theo tên; quét **app đang chạy** trên Windows (process + title) và
+  Linux (tiến trình GUI đối chiếu `.desktop`) để chọn thay vì gõ id thủ công.
 - Windows: cửa sổ Settings không chiếm taskbar/Alt+Tab; mở từ tray vẫn hoạt động.
 - Sửa app profile được áp dụng vào bản nháp ngay.
-- Tray + ẩn xuống tray khi đóng; lưu theme/tab/tray/bật-ẩn vào `settings-ui.json`.
+- Tray + tùy chọn ẩn xuống tray khi đóng; lưu theme/tab/tray/bật-ẩn vào `settings-ui.json`.
 - macOS IMK, Windows hook, Fcitx5 và IBus poll mtime để reload config.
 - `--screenshots` cho kiểm thử giao diện trên CI/desktop headless.
 

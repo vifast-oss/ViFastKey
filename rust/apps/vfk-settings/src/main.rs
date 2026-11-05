@@ -68,6 +68,11 @@ fn run() -> Result<ExitCode, String> {
     if let Some(icon) = tray::icon_data() {
         viewport = viewport.with_icon(icon);
     }
+    // Wayland dùng app_id này để ghép cửa sổ với file .desktop và icon dock.
+    #[cfg(target_os = "linux")]
+    {
+        viewport = viewport.with_app_id("vifastkey-settings");
+    }
     // Windows: cửa sổ cấu hình là app tray, không chiếm taskbar/Alt+Tab.
     // Tray "Mở cấu hình" vẫn ShowWindow/SetForegroundWindow bình thường.
     #[cfg(target_os = "windows")]

@@ -77,7 +77,8 @@ Nếu `~/.local/bin` không có trong PATH, dùng đường dẫn đầy đủ h
 - Tab **Chẩn đoán**: OS, đường dẫn, fingerprint, validate, gõ thử, copy diagnostics.
 
 Tray: chuột phải mở menu (mở cấu hình/tải lại/thoát); click trái mở cửa sổ.
-Đóng cửa sổ sẽ ẩn xuống tray nếu không có thay đổi chưa lưu; tắt trong Nâng cao.
+Mặc định bấm **X** là thoát; bật **ẩn xuống khay** trong Nâng cao nếu desktop
+có AppIndicator/StatusNotifier và bạn thấy icon ViFastKey trong khay.
 
 ## Preedit trên Linux
 

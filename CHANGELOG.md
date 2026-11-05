@@ -42,6 +42,10 @@
   để UI/engine khớp nhau. Sidebar có icon cho từng tab.
 - **macOS Preferences**: thêm chọn app đang chạy để đưa vào `excluded_apps`,
   thay vì chỉ nhập tay.
+- **Linux Settings**: tab Ứng dụng có picker tiến trình GUI (đối chiếu `.desktop`),
+  cửa sổ dùng app_id `vifastkey-settings` để khớp icon dock với desktop entry.
+  Bấm X mặc định thoát; file `settings-ui.json` cũ có `close_to_tray: true` do
+  mặc định trước đây được chuyển sang thoát, trừ khi người dùng đã chủ động bật.
 - **Adapter Wayland standalone (`linux/wayland/`)**: `zwp_input_method_v2` +
   `zwp_virtual_keyboard_v1`, preedit/commit/delete surrounding, field policy
   (password/URL/email/number/terminal), pass-through phím qua virtual keyboard,
@@ -86,8 +90,10 @@
 - **Windows Terminal**: TSF per-user không được Windows Terminal nạp; hook Replace
   tự bật khi foreground là terminal/console, còn app thường vẫn dùng Preedit/TSF.
   Hook giữ đúng Shift/Caps Lock: `OS`/`Os` không bị thành `os`, `DD` ra `Đ`.
-- **Settings**: nút X ẩn xuống tray mặc định (có thể tắt trong Nâng cao để X thoát);
-  title bar dùng ASCII `ViFastKey Settings` để tránh lỗi font `ấ` trên một số desktop Linux.
+- **Settings**: trên Windows/macOS nút X ẩn xuống tray mặc định (có thể tắt trong
+  Nâng cao để X thoát); Linux mặc định thoát khi bấm X, chỉ ẩn xuống tray nếu người
+  dùng chủ động bật. Title bar dùng ASCII `ViFastKey Settings` để tránh lỗi font
+  `ấ` trên một số desktop Linux.
 - **Settings Windows**: ẩn cửa sổ console của `tasklist`/`taskkill`/`reg` khi khởi
   động, không còn nháy console trước khi giao diện hiện lên.
 - **Webtop/RDP**: tài liệu hoá quy tắc chỉ bật IME ở một đầu; Windows IME đang bật
@@ -108,7 +114,8 @@
   `DEVELOPER.md`, `LICENSE`, third-party notices; Linux thêm `install.sh`/`uninstall.sh`.
 - **Tray icon**: Windows/macOS dùng `tray-icon`, Linux dùng StatusNotifierItem
   (`ksni`, không cần GTK/AppIndicator trong binary); menu mở cấu hình/tải lại/thoát,
-  click trái mở cửa sổ, đóng cửa sổ ẩn xuống tray (tắt được trong tab Nâng cao).
+  click trái mở cửa sổ. Windows/macOS đóng cửa sổ ẩn xuống tray; Linux mặc định
+  thoát, có thể bật ẩn xuống tray trong tab Nâng cao.
 - **Import preview diff**: so sánh giá trị hiệu lực trước/sau, hiện đường dẫn field,
   số lỗi/cảnh báo và chặn nhập khi có lỗi; giữ nguyên key lạ.
 - **Khôi phục mặc định từng nhóm** (kiểu gõ, tùy chọn macro, ứng dụng, nâng cao);
@@ -155,6 +162,9 @@
 
 ### Web
 
+- Thêm mục **Cấu hình theo app** với ảnh minh hoạ Windows (tab Ứng dụng),
+  macOS (chọn app đang chạy để loại trừ) và Linux (tab Ứng dụng); card Build 27
+  dẫn tới mục này.
 - Thêm mục **Sản phẩm** lớn giới thiệu ViFastKey + ViFastTts.
 - Chuyển **Góp ý** từ popup sang mục hiển thị trên landing.
 - Thêm mục **Thống kê** cuối trang; tăng tương phản chữ phụ và chuẩn hoá nút **Tải về →**.

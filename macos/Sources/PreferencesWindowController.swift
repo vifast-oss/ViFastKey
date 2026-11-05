@@ -107,7 +107,7 @@ final class PreferencesWindowController: NSWindowController {
         runningRow.addArrangedSubview(runningPopup)
         runningRow.addArrangedSubview(refreshRunning)
         runningRow.addArrangedSubview(addRunning)
-        stack.addArrangedSubview(row("Chọn app đang chạy", runningRow))
+        stack.addArrangedSubview(row("App đang chạy", runningRow))
 
         let advanced = NSTextField(labelWithString: "App profile/charset nâng cao: dùng “Mở file JSON”.")
         advanced.font = .systemFont(ofSize: 11)
