@@ -47,13 +47,15 @@ impl Tab {
     }
 
     pub(crate) fn icon(self) -> &'static str {
+        // Chỉ dùng glyph có trong font fallback của egui (NotoEmoji/emoji-icon).
+        // Các ký hiệu như ⌂/≡/⚙ không có trong Be Vietnam Pro nên bị ô vuông.
         match self {
-            Tab::Overview => "⌂",
+            Tab::Overview => "🏠",
             Tab::Typing => "⌨",
-            Tab::Macros => "≡",
-            Tab::Apps => "▦",
-            Tab::Advanced => "⚙",
-            Tab::Diagnostics => "◈",
+            Tab::Macros => "📋",
+            Tab::Apps => "▣",
+            Tab::Advanced => "🔧",
+            Tab::Diagnostics => "🔍",
         }
     }
 
