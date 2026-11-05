@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.2 — 2026-11-05
 
 ### Kiến trúc
 
@@ -37,8 +37,11 @@
   cửa sổ đang thu nhỏ/ẩn. Trước đây đóng xuống tray dùng `Visible(false)` làm
   event loop có thể ngừng render, nên thao tác từ tray không được xử lý.
 - **Windows Settings**: cửa sổ cấu hình không còn chiếm taskbar/Alt+Tab; mở từ
-  tray vẫn hiện bình thường. Tab Ứng dụng thêm picker **app đang chạy** (process
-  + tiêu đề cửa sổ), chuẩn hoá `excluded_apps` để UI/engine khớp nhau.
+  tray vẫn hiện bình thường. Tab Ứng dụng hiển thị danh sách app đã cấu hình và
+  picker **app đang chạy** (process + tiêu đề cửa sổ), chuẩn hoá `excluded_apps`
+  để UI/engine khớp nhau. Sidebar có icon cho từng tab.
+- **macOS Preferences**: thêm chọn app đang chạy để đưa vào `excluded_apps`,
+  thay vì chỉ nhập tay.
 - **Adapter Wayland standalone (`linux/wayland/`)**: `zwp_input_method_v2` +
   `zwp_virtual_keyboard_v1`, preedit/commit/delete surrounding, field policy
   (password/URL/email/number/terminal), pass-through phím qua virtual keyboard,

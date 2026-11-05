@@ -14,6 +14,8 @@ final class PreferencesWindowController: NSWindowController {
     private var unicodePopup = NSPopUpButton()
     private var outputPopup = NSPopUpButton()
     private var excludedField = NSTextField()
+    private var runningPopup = NSPopUpButton()
+    private var runningApps: [NSRunningApplication] = []
     private var checks: [String: NSButton] = [:]
     private var macroView = NSTextView()
 
@@ -92,9 +94,20 @@ final class PreferencesWindowController: NSWindowController {
             stack.addArrangedSubview(check)
         }
 
-        excludedField.placeholderString = "minecraft, game…"
+        excludedField.placeholderString = "minecraft, com.apple.Terminal, game…"
         excludedField.widthAnchor.constraint(equalToConstant: 340).isActive = true
         stack.addArrangedSubview(row("App loại trừ", excludedField))
+
+        let runningRow = NSStackView()
+        runningRow.orientation = .horizontal
+        runningRow.spacing = 8
+        runningPopup.widthAnchor.constraint(equalToConstant: 260).isActive = true
+        let refreshRunning = NSButton(title: "Quét", target: self, action: #selector(refreshRunningApps))
+        let addRunning = NSButton(title: "Thêm vào loại trừ", target: self, action: #selector(addRunningApp))
+        runningRow.addArrangedSubview(runningPopup)
+        runningRow.addArrangedSubview(refreshRunning)
+        runningRow.addArrangedSubview(addRunning)
+        stack.addArrangedSubview(row("Chọn app đang chạy", runningRow))
 
         let advanced = NSTextField(labelWithString: "App profile/charset nâng cao: dùng “Mở file JSON”.")
         advanced.font = .systemFont(ofSize: 11)
@@ -180,8 +193,37 @@ final class PreferencesWindowController: NSWindowController {
             check.state = (dict[key] as? Bool ?? Self.defaultBool(for: key)) ? .on : .off
         }
         excludedField.stringValue = (dict["excluded_apps"] as? [String] ?? []).joined(separator: ", ")
+        refreshRunningApps()
         let macros = dict["macros"] as? [String: String] ?? [:]
         macroView.string = macros.map { "\($0.key)=\($0.value)" }.sorted().joined(separator: "\n")
+    }
+
+    @objc private func refreshRunningApps() {
+        runningApps = NSWorkspace.shared.runningApplications
+            .filter { $0.activationPolicy == .regular && !($0.localizedName ?? "").isEmpty }
+            .sorted { ($0.localizedName ?? "") < ($1.localizedName ?? "") }
+        runningPopup.removeAllItems()
+        for app in runningApps {
+            let name = app.localizedName ?? "?"
+            let id = app.bundleIdentifier ?? "?"
+            runningPopup.addItem(withTitle: "\(name) — \(id)")
+        }
+    }
+
+    @objc private func addRunningApp() {
+        let index = runningPopup.indexOfSelectedItem
+        guard index >= 0, index < runningApps.count else { return }
+        let app = runningApps[index]
+        let id = (app.bundleIdentifier ?? app.localizedName ?? "").lowercased()
+        guard !id.isEmpty else { return }
+        var items = excludedField.stringValue
+            .split(whereSeparator: { $0 == "," || $0 == "\n" })
+            .map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
+            .filter { !$0.isEmpty }
+        if !items.contains(id) {
+            items.append(id)
+        }
+        excludedField.stringValue = items.joined(separator: ", ")
     }
 
     @objc private func save() {

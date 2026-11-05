@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # Copy release assets from dist/ into the downloads mirror used by Docker.
-#   ./deploy/vifastkey_web/sync-downloads.sh 0.1.1
+#   ./deploy/vifastkey_web/sync-downloads.sh 0.1.2
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
-VERSION="${1:-0.1.1}"
+VERSION="${1:-0.1.2}"
 SRC="${DIST_DIR:-$ROOT/dist}"
 DEST="$ROOT/deploy/vifastkey_web/downloads/$VERSION"
 

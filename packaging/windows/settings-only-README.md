@@ -1,7 +1,7 @@
 # ViFastKey Settings (chỉ UI cấu hình)
 
 Gói này **chỉ chứa `vifastkey-settings.exe`**, không chứa hook.
-Để gõ tiếng Việt trên Windows, hãy dùng gói **`vifastkey-windows-hook-0.1.1.zip`** —
+Để gõ tiếng Việt trên Windows, hãy dùng gói **`vifastkey-windows-hook-0.1.2.zip`** —
 gói đó có Settings + hook + installer và hướng dẫn đầy đủ.
 
 ## Tính năng UI

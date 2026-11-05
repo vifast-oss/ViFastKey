@@ -21,7 +21,7 @@
   <meta name="twitter:title" content="ViFastKey — Bộ gõ tiếng Việt">
   <meta name="twitter:description" content="Bộ gõ tiếng Việt nhỏ, nhanh, thuần logic. Gõ thử WASM và gọi API Python.">
   <meta name="twitter:image" content="https://vifastkey.hoctuthien.com/brand/og-image.png">
-  <link rel="stylesheet" href="style.css?v=20261103a">
+  <link rel="stylesheet" href="style.css?v=20261105a">
   <noscript><style>
     /* Không có JS: hiện đủ hướng dẫn thay vì chỉ panel đầu. */
     .platform-panel[hidden] { display: block !important; margin-bottom: 16px; }
@@ -279,7 +279,7 @@
 curl -s https://vifastkey.hoctuthien.com/api/type \
   -H <span class="c-str">'content-type: application/json'</span> \
   -d <span class="c-str">'{"text":"Tieengs Vieejt","method":"telex","tone":"new"}'</span></code></pre>
-            <div class="api-response" id="api-response">{"output":"Tiếng Việt","engine":"python","version":"0.1.1"}</div>
+            <div class="api-response" id="api-response">{"output":"Tiếng Việt","engine":"python","version":"0.1.2"}</div>
           </div>
           <ul class="api-facts">
             <li><strong>Đúng oracle.</strong> Cùng engine Python sinh conformance cho Rust, không phải bản rút gọn.</li>
@@ -334,18 +334,18 @@ curl -s https://vifastkey.hoctuthien.com/api/type \
     <section class="section wrap">
       <div class="section-head compact" id="tai-ve">
         <div>
-          <div class="eyebrow">Tải về · v0.1.1</div>
+          <div class="eyebrow">Tải về · v0.1.2</div>
           <h2>Chọn nền tảng.<br>Cài trong vài phút.</h2>
         </div>
-        <p>Bản phát hành đầu tiên: Windows hook-only, macOS IMK, Linux IBus/Fcitx5, Android, iOS Simulator, Chrome/Edge và <strong>UEFI x86_64 demo</strong>. Mỗi tab có file tải, yêu cầu hệ thống và các bước cài chi tiết.</p>
+        <p>Bản phát hành 0.1.2: Windows hook-only, macOS IMK, Linux IBus/Fcitx5, Android, iOS Simulator, Chrome/Edge và <strong>UEFI x86_64 demo</strong>. Mỗi tab có file tải, yêu cầu hệ thống và các bước cài chi tiết.</p>
       </div>
 
       <div class="release-bar">
-        <strong>v0.1.1</strong>
+        <strong>v0.1.2</strong>
         <span class="dot" aria-hidden="true"></span>
-        <span>02/11/2026 · Bản phát hành chính thức</span>
+        <span>05/11/2026 · Bản phát hành chính thức</span>
         <a href="/INSTALL.md" target="_blank" rel="noopener">Hướng dẫn cài đặt ↗</a>
-        <a href="/downloads/0.1.1/sha256sums.txt" target="_blank" rel="noopener">SHA256SUMS ↗</a>
+        <a href="/downloads/0.1.2/sha256sums.txt" target="_blank" rel="noopener">SHA256SUMS ↗</a>
         <a href="/INSTALL.md" target="_blank" rel="noopener">Hướng dẫn đầy đủ ↗</a>
       </div>
 
@@ -370,8 +370,8 @@ curl -s https://vifastkey.hoctuthien.com/api/type \
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="/downloads/0.1.1/vifastkey-windows-hook-0.1.1.zip" target="_blank" rel="noopener" data-download="vifastkey-windows-hook-0.1.1.zip">Tải ViFastKey Hook <span>ZIP</span></a>
-            <a class="dl-btn" href="/downloads/0.1.1/vifastkey-settings-windows-x64.zip" target="_blank" rel="noopener" data-download="vifastkey-settings-windows-x64.zip">Chỉ Settings <span>ZIP</span></a>
+            <a class="dl-btn primary" href="/downloads/0.1.2/vifastkey-windows-hook-0.1.2.zip" target="_blank" rel="noopener" data-download="vifastkey-windows-hook-0.1.2.zip">Tải ViFastKey Hook <span>ZIP</span></a>
+            <a class="dl-btn" href="/downloads/0.1.2/vifastkey-settings-windows-x64.zip" target="_blank" rel="noopener" data-download="vifastkey-settings-windows-x64.zip">Chỉ Settings <span>ZIP</span></a>
           </div>
         </div>
         <div class="platform-body">
@@ -418,7 +418,7 @@ curl -s https://vifastkey.hoctuthien.com/api/type \
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="/downloads/0.1.1/vifastkey-macos-imk-universal.zip" target="_blank" rel="noopener" data-download="vifastkey-macos-imk-universal.zip">Tải bản macOS <span>ZIP</span></a>
+            <a class="dl-btn primary" href="/downloads/0.1.2/vifastkey-macos-imk-universal.zip" target="_blank" rel="noopener" data-download="vifastkey-macos-imk-universal.zip">Tải bản macOS <span>ZIP</span></a>
           </div>
         </div>
         <div class="platform-body">
@@ -468,10 +468,10 @@ curl -s https://vifastkey.hoctuthien.com/api/type \
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="/downloads/0.1.1/vifastkey-ibus-linux.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-ibus-linux.tar.gz">IBus <span>TAR.GZ</span></a>
-            <a class="dl-btn" href="/downloads/0.1.1/vifastkey-fcitx5-linux-x86_64.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-fcitx5-linux-x86_64.tar.gz">Fcitx5 <span>TAR.GZ</span></a>
-            <a class="dl-btn" href="/downloads/0.1.1/vifastkey-wayland-linux-x86_64.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-wayland-linux-x86_64.tar.gz">Wayland <span>TAR.GZ</span></a>
-            <a class="dl-btn" href="/downloads/0.1.1/vifastkey-settings-linux-x86_64.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-settings-linux-x86_64.tar.gz">Settings UI <span>TAR.GZ</span></a>
+            <a class="dl-btn primary" href="/downloads/0.1.2/vifastkey-ibus-linux.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-ibus-linux.tar.gz">IBus <span>TAR.GZ</span></a>
+            <a class="dl-btn" href="/downloads/0.1.2/vifastkey-fcitx5-linux-x86_64.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-fcitx5-linux-x86_64.tar.gz">Fcitx5 <span>TAR.GZ</span></a>
+            <a class="dl-btn" href="/downloads/0.1.2/vifastkey-wayland-linux-x86_64.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-wayland-linux-x86_64.tar.gz">Wayland <span>TAR.GZ</span></a>
+            <a class="dl-btn" href="/downloads/0.1.2/vifastkey-settings-linux-x86_64.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-settings-linux-x86_64.tar.gz">Settings UI <span>TAR.GZ</span></a>
           </div>
         </div>
         <div class="platform-body">
@@ -521,11 +521,11 @@ cd vifastkey-wayland
           <div class="platform-title">
             <div>
               <h3>Android 8.0+ · arm64 / x86_64</h3>
-              <p>IME Android đầy đủ, chạy local; bản APK debug chưa phát hành trên CH Play. Bản cập nhật 02/11/2026 (build 26): gõ sai rồi xoá hết từ + dấu cách sẽ khôi phục từ trước để sửa tiếp; ẩn rồi mở lại bàn phím về trang chữ (hoặc bàn phím số), không giữ trang ký tự đặc biệt. Vẫn có `replaceText()` trên Android 14+, fallback batch cho máy cũ/field dài, mặc định không gạch chân, chiều cao 100–145%, cài đặt nhanh, 1.121 emoji, hàng số Telex/VNI.</p>
+              <p>IME Android đầy đủ, chạy local; bản APK debug chưa phát hành trên CH Play. Bản cập nhật 05/11/2026 (build 27): gõ sai rồi xoá hết từ + dấu cách sẽ khôi phục từ trước để sửa tiếp; ẩn rồi mở lại bàn phím về trang chữ (hoặc bàn phím số), không giữ trang ký tự đặc biệt. Vẫn có `replaceText()` trên Android 14+, fallback batch cho máy cũ/field dài, mặc định không gạch chân, chiều cao 100–145%, cài đặt nhanh, 1.121 emoji, hàng số Telex/VNI.</p>
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="/downloads/0.1.1/vifastkey-android-debug.apk?v=26" target="_blank" rel="noopener" data-download="vifastkey-android-debug.apk">Tải APK <span>APK</span></a>
+            <a class="dl-btn primary" href="/downloads/0.1.2/vifastkey-android-debug.apk?v=27" target="_blank" rel="noopener" data-download="vifastkey-android-debug.apk">Tải APK <span>APK</span></a>
           </div>
         </div>
         <div class="platform-body">
@@ -571,7 +571,7 @@ cd vifastkey-wayland
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="/downloads/0.1.1/vifastkey-ios-simulator.zip" target="_blank" rel="noopener" data-download="vifastkey-ios-simulator.zip">Tải Simulator <span>ZIP</span></a>
+            <a class="dl-btn primary" href="/downloads/0.1.2/vifastkey-ios-simulator.zip" target="_blank" rel="noopener" data-download="vifastkey-ios-simulator.zip">Tải Simulator <span>ZIP</span></a>
           </div>
         </div>
         <div class="platform-body">
@@ -615,7 +615,7 @@ cd vifastkey-wayland
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="/downloads/0.1.1/vifastkey-chrome-extension.zip" target="_blank" rel="noopener" data-download="vifastkey-chrome-extension.zip">Tải extension <span>ZIP</span></a>
+            <a class="dl-btn primary" href="/downloads/0.1.2/vifastkey-chrome-extension.zip" target="_blank" rel="noopener" data-download="vifastkey-chrome-extension.zip">Tải extension <span>ZIP</span></a>
           </div>
         </div>
         <div class="platform-body">
@@ -655,11 +655,11 @@ cd vifastkey-wayland
           <div class="platform-title">
             <div>
               <h3>UEFI x86_64 · bản demo đầu tiên <span class="badge-new">Mới</span></h3>
-              <p>Phát hành 01/11/2026 · v0.1.1 UEFI demo. Chạy trước khi OS boot: editor Telex/VNI, logo + URL trang chủ, GOP + font tiếng Việt nhúng và QR trong help.</p>
+              <p>Phát hành 05/11/2026 · v0.1.2 UEFI demo. Chạy trước khi OS boot: editor Telex/VNI, logo + URL trang chủ, GOP + font tiếng Việt nhúng và QR trong help.</p>
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="/downloads/0.1.1/vifastkey-uefi-x86_64.zip" target="_blank" rel="noopener" data-download="vifastkey-uefi-x86_64.zip">Tải UEFI demo <span>ZIP</span></a>
+            <a class="dl-btn primary" href="/downloads/0.1.2/vifastkey-uefi-x86_64.zip" target="_blank" rel="noopener" data-download="vifastkey-uefi-x86_64.zip">Tải UEFI demo <span>ZIP</span></a>
             <a class="dl-btn" href="/INSTALL.md" target="_blank" rel="noopener">Hướng dẫn UEFI ↗</a>
           </div>
         </div>
@@ -707,10 +707,10 @@ cd vifastkey-wayland
             </div>
           </div>
           <div class="dl-row">
-            <a class="dl-btn primary" href="/downloads/0.1.1/vifastkey-cli-linux-x86_64.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-cli-linux-x86_64.tar.gz">CLI Linux <span>TAR.GZ</span></a>
-            <a class="dl-btn" href="/downloads/0.1.1/vifastkey-cli-macos.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-cli-macos.tar.gz">CLI macOS <span>TAR.GZ</span></a>
-            <a class="dl-btn" href="/downloads/0.1.1/vifastkey-cli-windows-x64.zip" target="_blank" rel="noopener" data-download="vifastkey-cli-windows-x64.zip">CLI Windows <span>ZIP</span></a>
-            <a class="dl-btn" href="/downloads/0.1.1/vifastkey-wasm.zip" target="_blank" rel="noopener" data-download="vifastkey-wasm.zip">WASM <span>ZIP</span></a>
+            <a class="dl-btn primary" href="/downloads/0.1.2/vifastkey-cli-linux-x86_64.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-cli-linux-x86_64.tar.gz">CLI Linux <span>TAR.GZ</span></a>
+            <a class="dl-btn" href="/downloads/0.1.2/vifastkey-cli-macos.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-cli-macos.tar.gz">CLI macOS <span>TAR.GZ</span></a>
+            <a class="dl-btn" href="/downloads/0.1.2/vifastkey-cli-windows-x64.zip" target="_blank" rel="noopener" data-download="vifastkey-cli-windows-x64.zip">CLI Windows <span>ZIP</span></a>
+            <a class="dl-btn" href="/downloads/0.1.2/vifastkey-wasm.zip" target="_blank" rel="noopener" data-download="vifastkey-wasm.zip">WASM <span>ZIP</span></a>
           </div>
         </div>
         <div class="platform-body">
@@ -743,7 +743,7 @@ cd vifastkey-wayland
         <a href="/INSTALL.md" target="_blank" rel="noopener">Hướng dẫn đầy đủ</a>
         <a href="#go-thu">Gõ thử WASM</a>
         <a href="/INSTALL.md" target="_blank" rel="noopener">Cài đặt</a>
-        <a href="/downloads/0.1.1/sha256sums.txt" target="_blank" rel="noopener">SHA256SUMS</a>
+        <a href="/downloads/0.1.2/sha256sums.txt" target="_blank" rel="noopener">SHA256SUMS</a>
       </div>
     </section>
     <section class="section wrap">
@@ -785,9 +785,14 @@ cd vifastkey-wayland
           <div class="eyebrow">Đã sửa</div>
           <h2>Lỗi đã sửa gần đây.</h2>
         </div>
-        <p>Phản hồi từ người dùng và cách đã xử lý. Build là <code>versionCode</code> của APK Android; <code>versionName</code> vẫn là 0.1.1.</p>
+        <p>Phản hồi từ người dùng và cách đã xử lý. Build là <code>versionCode</code> của APK Android; <code>versionName</code> vẫn là 0.1.2.</p>
       </div>
       <div class="fix-log">
+        <article class="fix-item">
+          <div class="fix-top"><span class="fix-build">Build 27 · 05/11/2026</span><span class="fix-status">Đã sửa</span></div>
+          <h3>“Menu tray mở cấu hình không lên; app chiếm taskbar; chọn app phải gõ id.”</h3>
+          <p><strong>Đã sửa:</strong> Windows Settings ẩn khỏi taskbar/Alt+Tab và mở lại được từ tray; tab Ứng dụng hiển thị danh sách app đã cấu hình, bên dưới là app đang chạy (process + tên cửa sổ) để chọn thay vì gõ id; macOS có picker app đang chạy để thêm vào danh sách loại trừ; menu bên trái có icon. Bản 0.1.2, Android build 27.</p>
+        </article>
         <article class="fix-item">
           <div class="fix-top"><span class="fix-build">Build 25 · 02/11/2026</span><span class="fix-status">Đã sửa</span></div>
           <h3>“Gõ sai nhiều ký tự rồi xoá hết, không khôi phục đúng từ trước.”</h3>
@@ -979,7 +984,7 @@ cd vifastkey-wayland
     </div>
   </footer>
 
-  <script type="module" src="app.js?v=20261103a"></script>
-  <script type="module" src="server-demo.js?v=20261103a"></script>
+  <script type="module" src="app.js?v=20261105a"></script>
+  <script type="module" src="server-demo.js?v=20261105a"></script>
 </body>
 </html>

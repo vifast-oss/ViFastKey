@@ -28,7 +28,7 @@ from vfk_engine import (
     resolve_profile,
 )
 
-VERSION = "0.1.1"
+VERSION = "0.1.2"
 
 
 def utf16_len(s: str) -> int:

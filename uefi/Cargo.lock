@@ -361,7 +361,7 @@ dependencies = [
 
 [[package]]
 name = "vfk-core"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "arrayvec",
  "unicode-normalization",
@@ -370,7 +370,7 @@ dependencies = [
 
 [[package]]
 name = "vfk-uefi"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "fontdue",
  "image",
@@ -381,7 +381,7 @@ dependencies = [
 
 [[package]]
 name = "vi-syllable"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "spin",
  "unicode-normalization",

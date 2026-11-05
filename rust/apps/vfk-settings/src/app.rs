@@ -46,6 +46,17 @@ impl Tab {
         }
     }
 
+    pub(crate) fn icon(self) -> &'static str {
+        match self {
+            Tab::Overview => "⌂",
+            Tab::Typing => "⌨",
+            Tab::Macros => "≡",
+            Tab::Apps => "▦",
+            Tab::Advanced => "⚙",
+            Tab::Diagnostics => "◈",
+        }
+    }
+
     pub(crate) fn name(self) -> &'static str {
         match self {
             Tab::Overview => "overview",
@@ -184,7 +195,6 @@ pub struct SettingsApp {
     import_preview: Option<(PathBuf, ImportPreview)>,
     app_filter: String,
     running_apps: Vec<platform::RunningApp>,
-    running_app_index: Option<usize>,
     running_apps_loaded: bool,
     tray_enabled: bool,
     tray_attempted: bool,
@@ -258,7 +268,6 @@ impl SettingsApp {
             import_preview: None,
             app_filter: String::new(),
             running_apps: Vec::new(),
-            running_app_index: None,
             running_apps_loaded: false,
             tray_enabled: false,
             tray_attempted: false,
@@ -718,7 +727,7 @@ impl SettingsApp {
                 } else {
                     theme::INK
                 };
-                let text = egui::RichText::new(tab.label()).color(color);
+                let text = egui::RichText::new(format!("{}  {}", tab.icon(), tab.label())).color(color);
                 if ui.add_sized([176.0, 32.0], egui::Button::selectable(selected, text)).clicked() {
                     self.tab = tab;
                     self.persist_prefs();
@@ -1124,76 +1133,110 @@ impl SettingsApp {
             });
         });
 
-        section(ui, "Chọn app");
         if !self.running_apps_loaded {
             self.running_apps = platform::running_apps();
             self.running_apps_loaded = true;
         }
 
-        ui.horizontal(|ui| {
-            if ui.button("Quét app đang chạy").clicked() {
-                self.running_apps = platform::running_apps();
-                self.running_app_index = None;
+        section(ui, "Đã cấu hình");
+        let filter = self.app_filter.trim().to_lowercase();
+        let app_ids: Vec<String> =
+            self.app_ids.iter().filter(|app| filter.is_empty() || app.contains(&filter)).cloned().collect();
+        let config = self.doc.config();
+        let rows: Vec<(String, String)> = app_ids
+            .iter()
+            .map(|app| {
+                let source = if self.doc.profile(app).is_some() {
+                    "ghi đè"
+                } else if self.doc.preset(app).is_some() {
+                    "preset"
+                } else {
+                    "mặc định"
+                };
+                let excluded =
+                    config.excluded_apps.iter().any(|a| vfk_engine::normalize_app_id(Some(a)) == *app);
+                let suffix = if excluded { " · loại trừ" } else { "" };
+                (app.clone(), format!("{app}   ·   {source}{suffix}"))
+            })
+            .collect();
+        let mut selected = self.selected_app.clone();
+        egui::Frame::group(ui.style()).show(ui, |ui| {
+            ui.horizontal(|ui| {
+                ui.add(
+                    egui::TextEdit::singleline(&mut self.app_filter)
+                        .hint_text("Tìm app đã cấu hình…")
+                        .desired_width(220.0),
+                );
+                ui.label(egui::RichText::new(format!("{} app", rows.len())).small().color(theme::MUTED));
+            });
+            egui::ScrollArea::vertical()
+                .id_salt("configured_apps")
+                .max_height(190.0)
+                .auto_shrink([false, true])
+                .show(ui, |ui| {
+                    if rows.is_empty() {
+                        ui.label("Không có app khớp.");
+                    }
+                    for (app, label) in &rows {
+                        let current = selected.as_deref() == Some(app.as_str());
+                        if ui.selectable_label(current, label).clicked() {
+                            selected = Some(app.clone());
+                        }
+                    }
+                });
+        });
+        if selected != self.selected_app {
+            if let Some(app) = selected {
+                self.select_app(app);
             }
-            let selected_running = self
-                .running_app_index
-                .and_then(|index| self.running_apps.get(index))
-                .map(|app| app.label.clone())
-                .unwrap_or_else(|| "— chọn app đang chạy —".into());
-            let mut picked = self.running_app_index;
-            egui::ComboBox::from_id_salt("running_app").selected_text(selected_running).width(360.0).show_ui(
-                ui,
-                |ui| {
-                    for (index, app) in self.running_apps.iter().enumerate() {
-                        ui.selectable_value(&mut picked, Some(index), &app.label);
-                    }
-                    if self.running_apps.is_empty() {
-                        ui.label(if cfg!(target_os = "windows") {
-                            "Không thấy app có cửa sổ."
-                        } else {
-                            "Chỉ hỗ trợ quét app trên Windows."
-                        });
-                    }
-                },
+        }
+
+        section(ui, "Đang chạy");
+        ui.horizontal(|ui| {
+            if ui.button("Làm mới danh sách").clicked() {
+                self.running_apps = platform::running_apps();
+            }
+            ui.label(
+                egui::RichText::new("Chọn app đang mở để thêm vào cấu hình hoặc mở editor bên dưới.")
+                    .small()
+                    .color(theme::MUTED),
             );
-            if picked != self.running_app_index {
-                self.running_app_index = picked;
-                if let Some(id) =
-                    picked.and_then(|index| self.running_apps.get(index)).map(|app| app.id.clone())
-                {
+        });
+        egui::Frame::group(ui.style()).show(ui, |ui| {
+            if self.running_apps.is_empty() {
+                ui.label(if cfg!(target_os = "windows") {
+                    "Không thấy app có cửa sổ. Mở app/game rồi bấm Làm mới."
+                } else {
+                    "Quét app đang chạy hiện hỗ trợ trên Windows; vẫn có thể thêm id thủ công bên dưới."
+                });
+            } else {
+                let mut picked = None;
+                egui::ScrollArea::vertical()
+                    .id_salt("running_apps")
+                    .max_height(160.0)
+                    .auto_shrink([false, true])
+                    .show(ui, |ui| {
+                        for app in &self.running_apps {
+                            let configured =
+                                self.doc.profile(&app.id).is_some() || self.doc.preset(&app.id).is_some();
+                            let suffix = if configured { "   ·   đã cấu hình" } else { "" };
+                            if ui.selectable_label(false, format!("{}{suffix}", app.label)).clicked() {
+                                picked = Some(app.id.clone());
+                            }
+                        }
+                    });
+                if let Some(id) = picked {
                     self.add_app_id(id);
                 }
             }
         });
 
-        let filter = self.app_filter.trim().to_lowercase();
-        let app_ids: Vec<String> =
-            self.app_ids.iter().filter(|app| filter.is_empty() || app.contains(&filter)).cloned().collect();
-        let mut selected = self.selected_app.clone();
+        section(ui, "Thêm app thủ công");
         ui.horizontal(|ui| {
             ui.add(
-                egui::TextEdit::singleline(&mut self.app_filter).hint_text("Tìm app…").desired_width(140.0),
-            );
-            egui::ComboBox::from_id_salt("selected_app")
-                .selected_text(selected.clone().unwrap_or_else(|| "— chọn app —".into()))
-                .show_ui(ui, |ui| {
-                    for app in &app_ids {
-                        ui.selectable_value(&mut selected, Some(app.clone()), app);
-                    }
-                    if app_ids.is_empty() {
-                        ui.label("Không có app khớp.");
-                    }
-                });
-            if selected != self.selected_app {
-                if let Some(app) = selected.clone() {
-                    self.select_app(app);
-                }
-            }
-            ui.separator();
-            ui.add(
                 egui::TextEdit::singleline(&mut self.new_app)
-                    .hint_text("app id mới, vd: zed")
-                    .desired_width(150.0),
+                    .hint_text("app id, vd: zed hoặc javaw")
+                    .desired_width(220.0),
             );
             if ui.button("Thêm").clicked() {
                 let app = vfk_engine::normalize_app_id(Some(&self.new_app));

@@ -3505,7 +3505,7 @@ checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
 name = "vfk-adapter-core"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde_json",
  "vfk-engine",
@@ -3513,7 +3513,7 @@ dependencies = [
 
 [[package]]
 name = "vfk-charset"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "vfk-core",
  "winres",
@@ -3521,7 +3521,7 @@ dependencies = [
 
 [[package]]
 name = "vfk-cli"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "vfk-engine",
  "vi-syllable",
@@ -3530,7 +3530,7 @@ dependencies = [
 
 [[package]]
 name = "vfk-config"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "blake3",
  "serde",
@@ -3544,7 +3544,7 @@ dependencies = [
 
 [[package]]
 name = "vfk-core"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "arrayvec",
  "serde_json",
@@ -3554,7 +3554,7 @@ dependencies = [
 
 [[package]]
 name = "vfk-engine"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -3565,7 +3565,7 @@ dependencies = [
 
 [[package]]
 name = "vfk-ffi"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde_json",
  "vfk-adapter-core",
@@ -3575,7 +3575,7 @@ dependencies = [
 
 [[package]]
 name = "vfk-jni"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "jni",
  "serde_json",
@@ -3586,14 +3586,14 @@ dependencies = [
 
 [[package]]
 name = "vfk-suggest"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "unicode-normalization",
 ]
 
 [[package]]
 name = "vfk-suggest-cli"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "vfk-suggest",
  "winres",
@@ -3601,7 +3601,7 @@ dependencies = [
 
 [[package]]
 name = "vfk-wasm"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -3614,7 +3614,7 @@ dependencies = [
 
 [[package]]
 name = "vfk-windows-replace"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -3627,7 +3627,7 @@ dependencies = [
 
 [[package]]
 name = "vi-syllable"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde",
  "spin",
@@ -3636,7 +3636,7 @@ dependencies = [
 
 [[package]]
 name = "vifastkey-settings"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "eframe",
  "egui",
@@ -3657,7 +3657,7 @@ dependencies = [
 
 [[package]]
 name = "vifastkey-wayland"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "env_logger",
  "libc",

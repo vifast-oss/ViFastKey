@@ -11,7 +11,7 @@ build từ source ở các mục sau.
 
 Từ bản này Windows dùng **keyboard hook**, không cài TSF, không cần ký.
 
-1. Tải `vifastkey-windows-hook-0.1.1.zip`.
+1. Tải `vifastkey-windows-hook-0.1.2.zip`.
 2. Chuột phải → **Extract All** (đừng chạy trực tiếp trong ZIP).
 3. Mở PowerShell tại thư mục đã giải nén:
 
@@ -314,7 +314,7 @@ Xcode. TSF cũ nằm trong `windows/tsf/` chỉ để tham khảo/legacy, **khô
 
 | Kênh | Trạng thái |
 |---|---|
-| Website `/downloads/0.1.1/` | Mirror chính khi GitHub tạm khoá |
+| Website `/downloads/0.1.2/` | Mirror chính khi GitHub tạm khoá |
 | GitHub Release | Có asset UEFI `vifastkey-uefi-x86_64.zip` cùng các nền tảng khác |
 | UEFI demo | `vifastkey-uefi-x86_64.zip`, chạy trước OS; chưa ký Secure Boot |
 | Winget/Scoop/Homebrew | Chưa có; cần installer/ký |

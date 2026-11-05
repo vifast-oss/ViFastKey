@@ -18,7 +18,7 @@ Tải + hướng dẫn cài từng nền tảng:
 https://vifastkey.hoctuthien.com/#tai-ve
 
 Bản UEFI tải trực tiếp:
-https://vifastkey.hoctuthien.com/downloads/0.1.1/vifastkey-uefi-x86_64.zip
+https://vifastkey.hoctuthien.com/downloads/0.1.2/vifastkey-uefi-x86_64.zip
 
 Lưu ý: UEFI hiện là demo app tự chứa, chưa gõ được vào BIOS/UEFI Setup hay UEFI Shell.
 

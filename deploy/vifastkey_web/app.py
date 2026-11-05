@@ -271,6 +271,7 @@ ISSUE_FIXES = [
 DOWNLOAD_PLATFORMS = {
     "vifastkey-windows-hook.zip": "windows",
     "vifastkey-windows-hook-0.1.0.zip": "windows",
+    "vifastkey-windows-hook-0.1.2.zip": "windows",
     "vifastkey-windows-hook-0.1.1.zip": "windows",
     "vifastkey-windows-tsf.zip": "windows",
     "vifastkey-cli-windows-x64.zip": "windows",
