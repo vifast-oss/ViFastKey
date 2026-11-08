@@ -1021,7 +1021,56 @@ cd vifastkey-wayland
         <p class="stats-note">“Khách ẩn danh” là ước lượng theo hash visitor/IP; không lưu nội dung gõ thử hay IP thô. Lượt tải chỉ đếm lúc bấm nút trên landing, không phải số file đã tải xong. <a href="/admin">Mở trang admin ↗</a></p>
       </div>
     </section>
-  </main>
+  
+  <!-- bản phát hành công khai: lấy từ GitHub Releases qua /api/releases -->
+  <section id="ban-phat-hanh" class="vf-rel" aria-labelledby="vf-rel-title">
+    <style>
+      .vf-rel{max-width:1080px;margin:0 auto;padding:56px 20px 8px}
+      .vf-rel h2{font-size:clamp(22px,2.4vw,30px);margin:0 0 6px}
+      .vf-rel .vf-rel-sub{margin:0 0 22px;opacity:.75;font-size:15px}
+      .vf-rel-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+      .vf-rel-card{border:1px solid rgba(155,44,32,.18);border-radius:14px;padding:16px 18px;background:rgba(255,252,247,.92)}
+      .vf-rel-tag{display:inline-block;font:600 13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
+        border:1px solid rgba(155,44,32,.35);border-radius:999px;padding:2px 10px;margin-bottom:8px}
+      .vf-rel-name{font-weight:650;margin:0 0 4px}
+      .vf-rel-meta{font-size:13px;opacity:.7;margin:0 0 8px}
+      .vf-rel-sum{font-size:14px;line-height:1.5;margin:0 0 10px;opacity:.9}
+      .vf-rel-card a{font-size:14px}
+      .vf-rel-empty,.vf-rel-load{opacity:.75;font-size:15px;padding:6px 0}
+      @media (prefers-color-scheme: dark){
+        .vf-rel-card{background:rgba(28,20,18,.72);border-color:rgba(229,53,43,.28)}
+        .vf-rel-tag{border-color:rgba(229,53,43,.45)}
+      }
+    </style>
+    <h2 id="vf-rel-title">Bản phát hành</h2>
+    <p class="vf-rel-sub">Tải trực tiếp từ GitHub Releases của <code>vifast-oss/ViFastKey</code>.</p>
+    <div class="vf-rel-grid" id="vf-rel-list" data-api="/api/releases">
+      <p class="vf-rel-load">Đang tải…</p>
+    </div>
+    <p style="margin:18px 0 0"><a href="https://github.com/vifast-oss/ViFastKey/releases" target="_blank" rel="noopener">Xem tất cả bản phát hành trên GitHub →</a></p>
+  </section>
+  <script>
+  (function(){
+    var box=document.getElementById('vf-rel-list'); if(!box) return;
+    var api=box.getAttribute('data-api')||'/api/releases';
+    function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+    function fmt(d){try{return new Date(d).toLocaleDateString('vi-VN',{year:'numeric',month:'2-digit',day:'2-digit'});}catch(e){return '';}}
+    fetch(api,{headers:{'Accept':'application/json'}}).then(function(r){return r.json();}).then(function(d){
+      var items=(d&&d.releases)||[];
+      if(!items.length){box.innerHTML='<p class="vf-rel-empty">Chưa có bản phát hành chính thức — theo dõi repo để nhận bản đầu tiên.</p>';return;}
+      box.innerHTML=items.map(function(r){
+        return '<article class="vf-rel-card">'
+          +'<span class="vf-rel-tag">'+esc(r.tag)+(r.prerelease?' · pre':'')+'</span>'
+          +'<p class="vf-rel-name">'+esc(r.name||r.tag)+'</p>'
+          +'<p class="vf-rel-meta">'+esc(fmt(r.published_at))+'</p>'
+          +(r.summary?'<p class="vf-rel-sum">'+esc(r.summary)+'</p>':'')
+          +'<a href="'+esc(r.url)+'" target="_blank" rel="noopener">Xem bản phát hành →</a>'
+          +'</article>';
+      }).join('');
+    }).catch(function(){box.innerHTML='<p class="vf-rel-empty">Không tải được danh sách bản phát hành.</p>';});
+  })();
+  </script>
+</main>
 
   <footer class="site-footer">
     <div class="wrap footer-inner">
