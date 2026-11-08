@@ -1334,7 +1334,11 @@ def api_releases():
         with _urlopen(req, timeout=6) as resp:
             raw = _json.loads(resp.read().decode("utf-8"))
         for r in raw[:5]:
-            body = (r.get("body") or "").strip().splitlines()
+            body = [
+                ln.strip()
+                for ln in (r.get("body") or "").splitlines()
+                if ln.strip() and not ln.lstrip().startswith("#")
+            ]
             items.append({
                 "tag": r.get("tag_name"),
                 "name": r.get("name") or r.get("tag_name"),
