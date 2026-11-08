@@ -20,7 +20,7 @@ Telex/VNI và hiển thị bằng GOP + font nhúng.
 - Gõ tiếng Anh (escape): gõ `text` rồi cách/Enter sẽ giữ `text`.
 - Preedit gạch chân, con trỏ, Backspace theo phím thô, Enter, mũi tên, Home/End, Delete.
 - `F2` bật/tắt tiếng Việt, `F3` Telex/VNI, `F1` trợ giúp (F1 lần nữa/Esc để đóng), `F10` thoát.
-- Logo ViFastKey ở header, URL `vifastkey.hoctuthien.com`; `F1` có QR trang chủ để quét bằng điện thoại.
+- Logo ViFastKey ở header, URL `key.vifast.org`; `F1` có QR trang chủ để quét bằng điện thoại.
 - Hiển thị bằng GOP + font bitmap sinh từ Be Vietnam Pro; không phụ thuộc font console của firmware.
 - Dùng lại `vfk-core`/`vi-syllable` ở chế độ `no_std + alloc`; không fork engine.
 

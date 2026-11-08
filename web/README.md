@@ -72,7 +72,7 @@ Phần FastAPI/Docker nằm ở [`../deploy/vifastkey_web/`](../deploy/vifastkey
 
 ## Deploy
 
-- Bản đang chạy: <https://vifastkey.hoctuthien.com/>
+- Bản đang chạy: <https://key.vifast.org/>
 - Hướng dẫn Docker/Coolify/LXD: [`../deploy/vifastkey_web/README.md`](../deploy/vifastkey_web/README.md).
 - Trang tĩnh vẫn có thể deploy riêng lên GitHub Pages/Cloudflare Pages/Netlify
   (không có API Python, playground WASM vẫn chạy).

@@ -100,7 +100,7 @@ fn main() {
     println!("cargo:warning=logo: {} bytes", logo_out.len());
 
     // QR trang chủ; có quiet zone 4 module để quét dễ hơn.
-    let qr = QrCode::encode_text("https://vifastkey.hoctuthien.com/", QrCodeEcc::Medium)
+    let qr = QrCode::encode_text("https://key.vifast.org/", QrCodeEcc::Medium)
         .expect("encode homepage QR");
     let quiet = 4usize;
     let qr_size = qr.size() as usize + quiet * 2;

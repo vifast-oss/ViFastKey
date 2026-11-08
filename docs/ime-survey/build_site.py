@@ -153,7 +153,7 @@ TEMPLATE = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title} · ViFastKey</title>
 <meta name="description" content="{desc}">
-<link rel="canonical" href="https://vifastkey.hoctuthien.com/docs/{slug}.html">
+<link rel="canonical" href="https://key.vifast.org/docs/{slug}.html">
 <meta name="theme-color" content="#FFF8EC">
 <link rel="icon" href="/brand/favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
@@ -192,7 +192,7 @@ INDEX_TEMPLATE = """<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tài liệu kỹ thuật · ViFastKey</title>
 <meta name="description" content="Khảo sát 31 bộ gõ tiếng Việt, sổ tay kỹ thuật Areca IME và so sánh với ViFastKey.">
-<link rel="canonical" href="https://vifastkey.hoctuthien.com/docs/">
+<link rel="canonical" href="https://key.vifast.org/docs/">
 <meta name="theme-color" content="#FFF8EC">
 <link rel="icon" href="/brand/favicon.ico" sizes="any">
 <link rel="stylesheet" href="/docs/docs.css">

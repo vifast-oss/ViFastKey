@@ -239,7 +239,7 @@
 - Cấu hình macro bằng textarea, chọn NFC/NFD, bật macro có số, âm cuối k, sửa từ vừa gõ.
 - Ví dụ `Đắk Lắk` tự bật tuỳ chọn cần thiết.
 - Công cụ chuyển bảng mã + hiển thị hex cho bảng một byte.
-- Trang production `https://vifastkey.hoctuthien.com/`: thêm API Python
+- Trang production `https://key.vifast.org/`: thêm API Python
   (`/api/type`, `/api/charset`), thống kê ẩn danh, góp ý/báo lỗi, `/admin`
   mặc định mở công khai (Basic Auth tuỳ chọn) và healthcheck Docker.
 - Playground hỗ trợ bàn phím ảo Android/Gboard qua `beforeinput` + `compositionend`;

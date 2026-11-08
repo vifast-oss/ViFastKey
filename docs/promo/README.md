@@ -13,4 +13,4 @@
 - `facebook-linux-kernel.txt` — bài UEFI/bootloader cho nhóm Linux kernel, không link; dùng `vifastkey-promo.png`.
 - `poster.html` + `qr.svg` — nguồn thiết kế nếu cần chỉnh.
 
-QR trỏ tới: <https://vifastkey.hoctuthien.com/>
+QR trỏ tới: <https://key.vifast.org/>

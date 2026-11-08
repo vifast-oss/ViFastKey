@@ -159,7 +159,7 @@ menu Telex/VNI, macro undo; chưa ký Developer ID/notarize nên bản phát hà
 
 ## Web demo
 
-Bản đang chạy: **<https://vifastkey.hoctuthien.com/>**
+Bản đang chạy: **<https://key.vifast.org/>**
 
 Playground gõ thử chạy engine Rust qua WASM, không cần server API:
 
@@ -205,7 +205,7 @@ cargo test --workspace
 ## Tải và cài đặt
 
 Bản Windows hiện tại là **hook-only một binary**, không cần ký:
-`vifastkey-windows-hook-0.1.2.zip` trên <https://vifastkey.hoctuthien.com/#tai-ve>.
+`vifastkey-windows-hook-0.1.2.zip` trên <https://key.vifast.org/#tai-ve>.
 Hướng dẫn mọi nền tảng: [`docs/INSTALL.md`](docs/INSTALL.md).
 
 ## Tài liệu

@@ -14,6 +14,6 @@ Mình cũng ghi runbook + tiêu chí vào AGENTS.md để agent nào làm cũng 
 Dự án hiện có bản Windows, macOS, Linux, Android, web/WASM và demo UEFI. Mã nguồn dự kiến MIT khi GitHub mở khoá.
 
 Tải và dùng thử:
-https://vifastkey.hoctuthien.com/#tai-ve
+https://key.vifast.org/#tai-ve
 
 #OpenCode #AIAgent #AutomatedTesting #Rust #UEFI #ViFastKey

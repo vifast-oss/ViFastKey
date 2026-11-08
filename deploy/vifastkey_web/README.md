@@ -27,7 +27,7 @@ Website giới thiệu + playground + API Python cho ViFastKey.
 Ví dụ:
 
 ```bash
-curl -s https://vifastkey.hoctuthien.com/api/type \
+curl -s https://key.vifast.org/api/type \
   -H 'content-type: application/json' \
   -d '{"text":"Tieengs Vieejt laf ngoon ngwx","method":"telex","tone":"new"}'
 # {"output":"Tiếng Việt là ngon ngữ", ...}
@@ -58,15 +58,16 @@ Basic Auth (user `admin`).
 ./deploy/vifastkey_web/deploy-jp.sh
 ```
 
-Script tự build UEFI, sync downloads, stage, rsync sang `root@jp`, giải nén vào
-LXD `hoctuthien-vps`, `docker compose up -d --build`, rồi kiểm tra healthcheck +
-file UEFI + SHA. Chi tiết/rollback: [`AGENTS.md`](../../AGENTS.md).
+Script tự build UEFI, sync downloads, stage, rsync sang `root@jp:/opt/vifastkey`,
+`docker compose up -d --build`, rồi kiểm tra healthcheck + file UEFI + SHA.
+Chi tiết/rollback: [`AGENTS.md`](../../AGENTS.md).
 
-### Cách đang dùng: LXD `hoctuthien-vps` (Traefik của Coolify)
+### Cách đang dùng: Docker trực tiếp trên host `jp`
 
-`hoctuthien.com` và toàn bộ subdomain đang được Traefik trên `jp` passthrough
-TLS vào container LXD `hoctuthien-vps`; app `vifasttts` cũng chạy trong LXD này.
-Vì vậy ViFastKey được đặt cạnh `vifasttts`:
+Container chạy trên **host `jp`** (không còn qua LXD), join network ngoài
+`coolify`, Traefik của Coolify cấp TLS cho `https://key.vifast.org/` theo label
+trong `docker-compose.yml`. Thư mục `/opt/vifastkey` giữ `data/` (SQLite) và
+`downloads/` giữa các lần deploy.
 
 ```bash
 # 0) Đóng gói UEFI + đồng bộ mirror tải xuống (asset binary bị gitignore)
@@ -74,32 +75,26 @@ Vì vậy ViFastKey được đặt cạnh `vifasttts`:
 ./deploy/vifastkey_web/sync-downloads.sh 0.1.2
 
 # 1) Trên máy local: tạo build context
-./deploy/vifastkey_web/stage.sh /private/tmp/vifastkey-stage
+./deploy/vifastkey_web/stage.sh /tmp/vifastkey-stage
 
-# 2) Đưa lên jp rồi vào LXD
-rsync -a --delete /private/tmp/vifastkey-stage/ root@jp:/tmp/vifastkey-stage/
-ssh root@jp 'lxc exec hoctuthien-vps -- mkdir -p /opt/vifastkey'
-ssh root@jp 'tar -C /tmp/vifastkey-stage -czf - . | lxc exec hoctuthien-vps -- tar -xzf - -C /opt/vifastkey'
+# 2) Đưa lên jp (giữ data/downloads/.env)
+rsync -a --delete --exclude data --exclude downloads --exclude .env \
+  /tmp/vifastkey-stage/ root@jp:/opt/vifastkey/
 
-# 3) Tạo .env + data, build và chạy
-ssh root@jp 'lxc exec hoctuthien-vps -- bash -lc "
-  cd /opt/vifastkey &&
-  install -d -o 10001 -g 10001 data &&
-  test -f .env || { printf \"STATS_SALT=%s\\n\" \"\$(openssl rand -hex 24)\" > .env; chmod 600 .env; } &&
-  docker compose up -d --build
-"'
+# 3) Build và chạy
+ssh root@jp 'cd /opt/vifastkey && docker compose up -d --build'
 ```
 
 Kiểm tra:
 
 ```bash
-ssh root@jp 'lxc exec hoctuthien-vps -- docker compose -f /opt/vifastkey/docker-compose.yml ps'
-curl -sI https://vifastkey.hoctuthien.com/healthz
-curl -s https://vifastkey.hoctuthien.com/api/meta | head -c 300
+ssh root@jp 'docker compose -f /opt/vifastkey/docker-compose.yml ps'
+curl -sI https://key.vifast.org/healthz
+curl -s https://key.vifast.org/api/meta | head -c 300
 ```
 
-Coolify trên LXD tự phát hiện label Traefik của container trên network `coolify`
-và cấp chứng chỉ Let's Encrypt cho `vifastkey.hoctuthien.com`.
+Traefik của Coolify trên `jp` tự phát hiện label Traefik của container trên network
+`coolify` và cấp chứng chỉ Let's Encrypt cho `key.vifast.org`.
 
 ### Nếu triển khai trực tiếp trên Coolify của `jp`
 
@@ -109,7 +104,7 @@ Dockerfile trong Coolify với:
 - Base directory: `/`
 - Dockerfile: `/deploy/vifastkey_web/Dockerfile`
 - Port: `8000`
-- Domain: `vifastkey.hoctuthien.com`
+- Domain: `key.vifast.org`
 
 Lưu ý: trên `jp`, subdomain `hoctuthien.com` đang được TCP passthrough sang LXD,
 nên nếu muốn phục vụ từ Coolify của `jp` phải sửa router passthrough trước.

@@ -3,7 +3,7 @@
 Ưu tiên **Windows** và **macOS**. Linux, Android, iOS, extension, **UEFI demo**,
 web/WASM và build từ source ở các mục sau.
 
-> Trang tải: <https://vifastkey.hoctuthien.com/#tai-ve>
+> Trang tải: <https://key.vifast.org/#tai-ve>
 > Mirror tải trực tiếp khi GitHub Release tạm gián đoạn.
 > Các gói desktop chưa ký Authenticode/Developer ID; SmartScreen/Gatekeeper có thể cảnh báo.
 
@@ -215,7 +215,7 @@ Phím tắt: `F1` trợ giúp + QR trang chủ (`F1` lần nữa hoặc `Esc` đ
 `F2` Việt/Anh, `F3` Telex/VNI,
 `F10` thoát về boot menu, `Backspace` xoá phím thô cuối, `Enter` xuống dòng,
 mũi tên/Home/End di chuyển. Header có logo và địa chỉ
-`vifastkey.hoctuthien.com`; mở `F1` để quét QR bằng điện thoại.
+`key.vifast.org`; mở `F1` để quét QR bằng điện thoại.
 
 Yêu cầu: máy **x86_64 UEFI** (không hỗ trợ firmware IA32), USB FAT32, bàn phím
 layout US, Secure Boot tắt hoặc tự ký. Không cần OS/Python/Node.
@@ -265,7 +265,7 @@ Extension dùng WASM; không cần server. Chi tiết: `chrome-extension/README.
 
 ## Web/WASM
 
-- Bản online: <https://vifastkey.hoctuthien.com/>
+- Bản online: <https://key.vifast.org/>
 - Playground chạy WASM local trong browser.
 - API Python: `/api/type`, `/api/charset`; xem `deploy/vifastkey_web/README.md`.
 - Gói `vifastkey-wasm.zip` để nhúng hoặc phục vụ static.

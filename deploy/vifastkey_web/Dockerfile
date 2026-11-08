@@ -4,7 +4,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app/python \
     DATA_DIR=/app/data \
-    SITE_URL=https://vifastkey.hoctuthien.com \
+    SITE_URL=https://key.vifast.org \
     TZ=Asia/Ho_Chi_Minh
 
 RUN apt-get update \

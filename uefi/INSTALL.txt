@@ -29,7 +29,7 @@ Cài lên USB
       Backspace xoá phím thô cuối
       Enter xuống dòng; mũi tên/Home/End di chuyển
 
-Trang chủ: https://vifastkey.hoctuthien.com/
+Trang chủ: https://key.vifast.org/
 Mở F1 rồi quét QR bằng điện thoại nếu muốn xem trang tải/cài đặt.
 
 Giới hạn của bản demo

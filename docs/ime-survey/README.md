@@ -12,14 +12,14 @@ Bộ tài liệu này phân tích **31 repository bộ gõ tiếng Việt** tron
 
 ## Link công khai
 
-Đã deploy tại <https://vifastkey.hoctuthien.com/docs/>:
+Đã deploy tại <https://key.vifast.org/docs/>:
 
 | Trang | URL |
 |---|---|
-| Mục lục | <https://vifastkey.hoctuthien.com/docs/> |
-| Sổ tay Areca | <https://vifastkey.hoctuthien.com/docs/areca-ime.html> |
-| Khảo sát 31 IME | <https://vifastkey.hoctuthien.com/docs/survey-all-imes.html> |
-| So sánh ViFastKey | <https://vifastkey.hoctuthien.com/docs/comparison-vifastkey.html> |
+| Mục lục | <https://key.vifast.org/docs/> |
+| Sổ tay Areca | <https://key.vifast.org/docs/areca-ime.html> |
+| Khảo sát 31 IME | <https://key.vifast.org/docs/survey-all-imes.html> |
+| So sánh ViFastKey | <https://key.vifast.org/docs/comparison-vifastkey.html> |
 
 Bản HTML sinh từ Markdown trong `web/docs/`. Sau khi sửa `.md`, chạy:
 

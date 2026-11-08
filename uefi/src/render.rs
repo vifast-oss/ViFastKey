@@ -113,7 +113,7 @@ impl Renderer {
         self.draw_text_right(
             self.cols.saturating_sub(1),
             0,
-            "vifastkey.hoctuthien.com",
+            "key.vifast.org",
             MUTED,
         );
 
@@ -207,7 +207,7 @@ impl Renderer {
             "F1 lần nữa: đóng trợ giúp",
             "Esc: huỷ từ đang gõ",
             "F10: thoát",
-            "Trang chủ: vifastkey.hoctuthien.com",
+            "Trang chủ: key.vifast.org",
         ];
         for (i, line) in lines.iter().enumerate() {
             self.draw_text(

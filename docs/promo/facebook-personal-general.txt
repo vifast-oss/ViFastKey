@@ -11,7 +11,7 @@ Nếu bạn đang tìm một bộ gõ:
 Mình làm dự án này với mong muốn có một bộ gõ nhẹ, dễ dùng và ổn định cho người Việt mình. Bản đầu tiên vẫn đang trong giai đoạn hoàn thiện, nên rất mong mọi người dùng thử và góp ý, nhất là lỗi gõ trên từng ứng dụng.
 
 Tải và xem hướng dẫn cài:
-https://vifastkey.hoctuthien.com/#tai-ve
+https://key.vifast.org/#tai-ve
 
 P.S. Tài khoản GitHub của mình đang bị khoá nên mã nguồn chưa public. Khi được mở khoá, mình sẽ để mã nguồn mở theo giấy phép MIT. Việc này không ảnh hưởng đến bản cài và sử dụng hiện tại.
 

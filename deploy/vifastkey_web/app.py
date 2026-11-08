@@ -83,7 +83,7 @@ DATA_DIR = Path(os.environ.get("DATA_DIR", ROOT / "data"))
 DOWNLOADS_DIR = Path(os.environ.get("DOWNLOADS_DIR", ROOT / "downloads")).resolve()
 DB_PATH = Path(os.environ.get("STATS_DB", DATA_DIR / "stats.sqlite3"))
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "").strip()
-SITE_URL = os.environ.get("SITE_URL", "https://vifastkey.hoctuthien.com").rstrip("/")
+SITE_URL = os.environ.get("SITE_URL", "https://key.vifast.org").rstrip("/")
 MAX_TYPE_CHARS = 500
 MAX_CHARSET_CHARS = 2000
 MAX_FEEDBACK_CHARS = 1000
@@ -862,7 +862,7 @@ hosts = [
     h.strip()
     for h in os.environ.get(
         "ALLOWED_HOSTS",
-        "vifastkey.hoctuthien.com,localhost,127.0.0.1,testserver",
+        "key.vifast.org,localhost,127.0.0.1,testserver",
     ).split(",")
     if h.strip()
 ]
