@@ -2275,3 +2275,11 @@ code {
 a.header-live { text-decoration: none; transition: border-color .15s ease, background .15s ease; }
 a.header-live:hover { border-color: var(--accent); background: #EAF7EF; }
 a.header-live:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Đầu trang mobile: logo — GitHub — nút menu (đúng thứ tự này) ----------- */
+@media (max-width: 980px) {
+  .header-inner { gap: 8px; }
+  .header-inner .brand { order: 1; margin-right: auto; }
+  .header-inner .ghost-btn { order: 2; margin-left: 0; }
+  .header-inner .nav-toggle { order: 3; margin-left: 0; }
+}
