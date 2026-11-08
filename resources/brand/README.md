@@ -17,7 +17,7 @@ Logo chính thức của dự án. Tên hiển thị luôn viết **ViFastKey** 
 | `vifastkey-ios-1024.png` | icon iOS full-bleed (Apple tự bo góc) |
 | `favicon.ico`, `favicon-16.png`, `favicon-32.png`, `favicon-48.png`, `favicon-128.png` | favicon / extension icons |
 | `apple-touch-icon.png` | iOS home screen, nền đỏ full-bleed |
-| `og-image.png` | Open Graph / Twitter card 1200×630 |
+| `og-1200.png` | Open Graph / Twitter card 1200×630 |
 | `site.webmanifest` | manifest PWA |
 
 Web dùng PNG cho lockup để font không bị lệch giữa macOS/Windows/Linux; SVG vẫn là
