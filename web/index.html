@@ -6,6 +6,7 @@
   <title>ViFastKey — Bộ gõ tiếng Việt nhỏ, nhanh, thuần logic</title>
   <meta name="description" content="ViFastKey là bộ gõ tiếng Việt Telex, Simple Telex, VNI và VIQR: lõi Rust nhỏ, chạy local, có C ABI, WASM, API Python và demo UEFI x86_64. Gõ thử ngay trong trình duyệt.">
   <meta name="theme-color" content="#FFF8EC">
+  <meta name="color-scheme" content="light">
   <link rel="canonical" href="https://key.vifast.org/">
   <link rel="icon" href="brand/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="brand/favicon-32.png">
@@ -25,7 +26,7 @@
   <meta name="twitter:title" content="ViFastKey — Bộ gõ tiếng Việt">
   <meta name="twitter:description" content="Bộ gõ tiếng Việt nhỏ, nhanh, thuần logic. Gõ thử WASM và gọi API Python.">
   <meta name="twitter:image" content="https://key.vifast.org/brand/og-1200.png">
-  <link rel="stylesheet" href="style.css?v=20261105c">
+  <link rel="stylesheet" href="style.css?v=20261108c">
   <noscript><style>
     /* Không có JS: hiện đủ hướng dẫn thay vì chỉ panel đầu. */
     .platform-panel[hidden] { display: block !important; margin-bottom: 16px; }
@@ -40,21 +41,22 @@
         <img src="brand/vifastkey-icon-192.png" width="40" height="40" alt="">
         <span class="brand-word"><span class="red">Vi</span><em>Fast</em><span class="red">Key</span></span>
       </a>
-      <nav class="nav" aria-label="Điều hướng chính">
-      <a class="nav-home" href="https://vifast.org" title="Về vifast.org">← ViFast</a>
+      <nav class="nav" id="site-nav" aria-label="Điều hướng chính">
         <a href="#go-thu">Gõ thử</a>
         <a href="#tinh-nang">Tính năng</a>
-        <a href="#kien-truc">Kiến trúc</a>
-        <a href="#san-pham">Sản phẩm</a>
-        <a href="#cau-hinh-app">Cấu hình app</a>
-        <a href="#api">API Python</a>
-        <a href="#gop-y">Góp ý</a>
         <a href="#tai-ve">Tải về</a>
+        <a href="#san-pham">Sản phẩm</a>
+        <a class="nav-home" href="https://vifast.org" title="Về vifast.org">← ViFast</a>
       </nav>
-      <span class="header-live" id="header-live" title="API Python đang chạy">
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Mở menu">
+        <span class="nav-toggle__bars" aria-hidden="true"></span>
+      </button>
+      <a class="header-live" id="header-live" href="#api" title="API Python đang chạy — xem phần API">
         <span class="header-live-dot" aria-hidden="true"></span> API Python
-      </span>
-      <a class="ghost-btn" href="/INSTALL.md" target="_blank" rel="noopener">Tài liệu</a>
+      </a>
+      <a class="ghost-btn" href="https://github.com/vifast-oss/ViFastKey" target="_blank" rel="noopener noreferrer">
+        <svg class="gh-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 1.8a10.2 10.2 0 0 0-3.2 19.9c.5.1.7-.2.7-.5v-1.9c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.6 1.1 1.6 1.1.9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.7-1.4-2.3-.3-4.7-1.1-4.7-5.1 0-1.1.4-2 1.1-2.7-.1-.3-.5-1.3.1-2.7 0 0 .9-.3 2.8 1.1a9.8 9.8 0 0 1 5.2 0c1.9-1.4 2.8-1.1 2.8-1.1.6 1.4.2 2.4.1 2.7.7.7 1.1 1.6 1.1 2.7 0 4-2.4 4.8-4.7 5.1.4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10.2 10.2 0 0 0 12 1.8z"/></svg> GitHub
+      </a>
     </div>
   </header>
 
@@ -831,7 +833,7 @@ cd vifastkey-wayland
         <div class="feedback-copy" id="gop-y">
           <div class="eyebrow">Góp ý</div>
           <h2>Nói cho mình biết.</h2>
-          <p>Báo lỗi, đề xuất tính năng hoặc góp ý nội dung. Nội dung và liên hệ chỉ admin xem, không hiển thị công khai. <a href="#da-sua">Xem các lỗi đã sửa gần đây ↗</a></p>
+          <p>Báo lỗi, đề xuất tính năng hoặc góp ý nội dung. Nội dung và liên hệ chỉ admin xem, không hiển thị công khai.</p>
           <ul>
             <li>Lỗi gõ, lỗi cài đặt hoặc lỗi trên một ứng dụng cụ thể.</li>
             <li>Đề xuất tính năng, kiểu gõ hoặc bảng mã mới.</li>
@@ -858,163 +860,6 @@ cd vifastkey-wayland
       </div>
     </section>
 
-
-    <section class="section wrap" id="da-sua">
-      <div class="section-head compact">
-        <div>
-          <div class="eyebrow">Đã sửa</div>
-          <h2>Lỗi đã sửa gần đây.</h2>
-        </div>
-        <p>Phản hồi từ người dùng và cách đã xử lý. Build là <code>versionCode</code> của APK Android; <code>versionName</code> vẫn là 0.1.2.</p>
-      </div>
-      <div class="fix-log">
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 27 · 05/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Menu tray mở cấu hình không lên; app chiếm taskbar; chọn app phải gõ id.”</h3>
-          <p><strong>Đã sửa:</strong> Windows Settings ẩn khỏi taskbar/Alt+Tab và mở lại được từ tray; tab Ứng dụng hiển thị danh sách app đã cấu hình, bên dưới là app đang chạy (process + tên cửa sổ) để chọn thay vì gõ id; macOS có picker app đang chạy để thêm vào danh sách loại trừ; Linux có picker app đang chạy, app_id/icon dock khớp file .desktop và bấm X ẩn hẳn xuống khay thay vì kẹt trên dock/taskbar; menu bên trái có icon. Bản 0.1.2, Android build 27. Có ảnh minh hoạ trong mục <a href="#cau-hinh-app">Cấu hình theo app</a>.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 25 · 02/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Gõ sai nhiều ký tự rồi xoá hết, không khôi phục đúng từ trước.”</h3>
-          <p><strong>Đã sửa:</strong> engine giữ trạng thái soft-reset qua từ mới; xoá hết từ vừa gõ + dấu cách sẽ khôi phục từ trước (cả Preedit và Replace), sửa tiếp dấu/kiểu gõ bình thường.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 24 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Ẩn rồi mở lại bàn phím vẫn ở trang ký tự đặc biệt.”</h3>
-          <p><strong>Đã sửa:</strong> mỗi lần input view được mở lại đều reset về layout chữ (hoặc bàn phím số nếu field số), không giữ trang ký tự của phiên trước.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 23 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Replace trên Messenger/Facebook bị nháy do xoá rồi commit.”</h3>
-          <p><strong>Đã sửa:</strong> Android 14+ dùng <code>InputConnection.replaceText()</code> thay cả range trong một lệnh; Android cũ hoặc field dài hơn 4096 ký tự fallback batch delete + commit.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 22 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Mở bàn phím ở Facebook/app mới lại hiện tab ký tự đặc biệt thay vì chữ.”</h3>
-          <p><strong>Đã sửa:</strong> vào field/app mới tự reset về layout chữ (hoặc bàn phím số nếu field số); chỉ giữ layout đang dùng khi quay lại cùng field.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 21 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Gõ chế độ Replace hơi nháy do xoá rồi commit từng phím.”</h3>
-          <p><strong>Đã sửa:</strong> gộp delete + commit vào batch edit, bỏ <code>setComposingText</code>/<code>finish</code> rỗng ở chế độ không gạch chân; suggestion/autocorrect cũng dùng batch.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 20 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Gõ ‘thoảng’ rồi thêm e, xoá e không quay lại ‘thoảng’.”</h3>
-          <p><strong>Đã sửa:</strong> sửa trong engine/core: khôi phục khi phần còn lại là âm tiết Việt hợp lệ, không chỉ khi có trong từ điển common; áp dụng cho mọi UI.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 20 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Muốn mặc định không có gạch chân preedit như Gboard.”</h3>
-          <p><strong>Đã sửa:</strong> mặc định dùng Replace/commit, không gạch chân; bật “Hiện gạch chân chữ đang gõ” trong Cài đặt → Nâng cao nếu muốn preedit.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 19 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“APK Android có thể dùng JNI cũ sau khi sửa core; gõ vẫn gặp lỗi cũ.”</h3>
-          <p><strong>Đã sửa:</strong> build Android chạy lại <code>vfk-jni</code> từ core trước khi đóng APK; build 19 dùng native library mới thay vì <code>.so</code> cũ trong <code>jniLibs</code>.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 19 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Chiều cao bàn phím cố định, không chỉnh cao hơn được.”</h3>
-          <p><strong>Đã sửa:</strong> thêm chiều cao 100/115/130/145% trong Settings → Bàn phím; áp dụng cho layout chữ, ký tự, số, emoji và cả hàng số.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 19 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Muốn cài đặt nhanh ngay trong bàn phím như Gboard.”</h3>
-          <p><strong>Đã sửa:</strong> thêm nút 4 ô ở thanh trên: đổi nhanh chiều cao, bật/tắt hàng số và mở Cài đặt đầy đủ; VNI vẫn khóa hàng số.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 18 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Telex không có hàng số 1–0; VNI thì không có cách bật/tắt rõ ràng.”</h3>
-          <p><strong>Đã sửa:</strong> thêm tùy chọn “Hiện hàng số 1–0 trên bàn phím chữ”: Telex mặc định tắt, có thể bật; VNI luôn bật và khóa tắt vì cần số để gõ dấu/âm.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 18 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Gõ ký tự đặc biệt xong tự nhảy về bàn phím chữ; người quen ở lại bàn phím ký tự.”</h3>
-          <p><strong>Đã sửa:</strong> tùy chọn nằm trong Cài đặt → Nâng cao, mặc định tắt; bật nếu muốn tự quay về bàn phím chữ.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 18 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Khó phân biệt các bản build Android vì chỉ thấy 0.1.0.”</h3>
-          <p><strong>Đã sửa:</strong> Settings hiển thị “Phiên bản 0.1.0 · build 18”; <code>versionCode</code> vẫn là định danh chính thức, <code>versionName</code> giữ 0.1.0.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 17 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Chiều cao tab emoji cao hơn layout khác nên bàn phím bị giật khi chuyển tab.”</h3>
-          <p><strong>Đã sửa:</strong> tab emoji cao bằng layout hiện tại (chữ/ký tự/số, kể cả VNI); hàng “Hay dùng” co lại, lưới tự bù và vẫn lộ một phần hàng kế tiếp.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 16 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Gõ ‘Nguyễn’ trong app ghi chú rồi để nguyên, một lúc sau thành ‘NguyễnNguyễn’.”</h3>
-          <p><strong>Đã sửa:</strong> khi app tự chốt vùng soạn thảo, IME chỉ <code>finishComposingText</code> và không chèn lại preedit; hết nhân đôi chữ.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 16 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Danh sách emoji còn ít.”</h3>
-          <p><strong>Đã sửa:</strong> mở rộng lên 1.121 emoji: mặt, người, động vật, thiên nhiên, đồ ăn, du lịch, hoạt động, đồ vật, biểu tượng và cờ; vẫn lazy + hàng “Hay dùng”.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 16 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Tab emoji bị cách một hàng trống; lưới khớp đúng hàng cuối nên khó thấy còn cuộn.”</h3>
-          <p><strong>Đã sửa:</strong> bỏ hàng gợi ý trống khi ở tab emoji, hàng “Hay dùng” sát thanh trên; lưới luôn lộ một phần hàng kế tiếp kèm scrollbar.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 16 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Chạm/kéo để cuộn tab emoji vẫn rung dù chưa chọn icon.”</h3>
-          <p><strong>Đã sửa:</strong> chỉ rung và phát âm thanh khi thực sự chọn emoji; cuộn không rung.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 15 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Muốn gợi ý emoji theo thói quen; icon hay dùng nằm bên phải nhãn.”</h3>
-          <p><strong>Đã sửa:</strong> hàng “Hay dùng” ở đầu bảng emoji, xếp theo tần suất và lần dùng gần nhất, lưu local; nhãn bên trái, các icon gợi ý bên phải.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 15 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Nút Lưu cấu hình nằm cuối trang nên dễ bị bỏ sót.”</h3>
-          <p><strong>Đã sửa:</strong> thanh Lưu cố định ở đáy màn hình, nút cam luôn hiển thị kèm ghi chú “Cấu hình áp dụng ngay sau khi lưu.”</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 14 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Chế độ VNI không có số nên không gõ được.”</h3>
-          <p><strong>Đã sửa:</strong> layout chữ tự thêm hàng số <code>1–0</code> khi chọn VNI để gõ dấu/âm VNI ngay, không cần mở <code>?123</code>.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 14 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Giữ phím chọn số xong phím còn sáng; dấu phẩy sát đáy.”</h3>
-          <p><strong>Đã sửa:</strong> popup biến thể mặc định số, kéo ngang để chọn dấu; phím không còn highlight sau khi chọn. Nút phẩy giữ nguyên vị trí, chỉ nhích dấu phẩy bên trong lên.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 13 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Bảng nhớ tạm không có nút đóng, chạm lại icon không tắt, che icon clipboard.”</h3>
-          <p><strong>Đã sửa:</strong> thêm nút ✕, chạm ra ngoài hoặc chạm lại nút 📋 để đóng; panel nằm dưới thanh trên nên không che icon.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 13 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Emoji render hết một lần nên giật lag, khớp 3 hàng khó biết còn icon bên dưới.”</h3>
-          <p><strong>Đã sửa:</strong> chuyển sang GridView lazy, chỉ render ô đang nhìn thấy; hiện 3,5 hàng và scrollbar để thấy còn cuộn.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 12 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Bấm Backspace ký tự cuối bị khựng, phải bấm lần nữa.”</h3>
-          <p><strong>Đã sửa:</strong> xoá composing region thay vì commit lại preedit rỗng; Backspace cũng xoá được vùng bôi đen và tăng tốc khi giữ.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 7 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Bôi đen xoá không được; giữ phím xoá tốc độ đều.”</h3>
-          <p><strong>Đã sửa:</strong> Backspace xoá selection bằng một lần commit rỗng; giữ Backspace lặp nhanh dần 65ms → 22ms.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 3/4 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Gửi tin nhắn lúc còn preedit thì sót chữ.”</h3>
-          <p><strong>Đã sửa:</strong> phát hiện host đã xoá field thì xoá composition, không commit lại preedit vào ô nhập.</p>
-        </article>
-        <article class="fix-item">
-          <div class="fix-top"><span class="fix-build">Build 2 · 01/11/2026</span><span class="fix-status">Đã sửa</span></div>
-          <h3>“Bàn phím nhỏ, khó gõ; muốn bỏ hàng số; thiếu auto Shift.”</h3>
-          <p><strong>Đã sửa:</strong> phím lớn theo Gboard, bỏ hàng số khỏi layout chữ, tự Shift đầu câu, rung/âm thanh khi chạm phím.</p>
-        </article>
-      </div>
-    </section>
 
     <section class="section wrap">
       <div class="section-head compact" id="thong-ke">
@@ -1059,10 +904,6 @@ cd vifastkey-wayland
       .vf-rel-sum strong{font-weight:650}
       .vf-rel-card a{font-size:14px}
       .vf-rel-empty,.vf-rel-load{opacity:.75;font-size:15px;padding:6px 0}
-      @media (prefers-color-scheme: dark){
-        .vf-rel-card{background:rgba(28,20,18,.72);border-color:rgba(229,53,43,.28)}
-        .vf-rel-tag{border-color:rgba(229,53,43,.45)}
-      }
     </style>
     <h2 id="vf-rel-title">Bản phát hành</h2>
     <p class="vf-rel-sub">Tải trực tiếp từ GitHub Releases của <code>vifast-oss/ViFastKey</code>.</p>
@@ -1071,36 +912,7 @@ cd vifastkey-wayland
     </div>
     <p style="margin:18px 0 0"><a href="https://github.com/vifast-oss/ViFastKey/releases" target="_blank" rel="noopener">Xem tất cả bản phát hành trên GitHub →</a></p>
   </section>
-  <script>
-  (function(){
-    var box=document.getElementById('vf-rel-list'); if(!box) return;
-    var api=box.getAttribute('data-api')||'/api/releases';
-    function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-    function md(s){
-      var t=esc(s);
-      t=t.replace(/^\s*[-*\u2022]\s+/,'');
-      t=t.replace(/`([^`]+)`/g,'<code>$1</code>');
-      t=t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
-      t=t.replace(/(^|[^*])\*([^*\s][^*]*)\*/g,'$1<em>$2</em>');
-      t=t.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
-      return t;
-    }
-    function fmt(d){try{return new Date(d).toLocaleDateString('vi-VN',{year:'numeric',month:'2-digit',day:'2-digit'});}catch(e){return '';}}
-    fetch(api,{headers:{'Accept':'application/json'}}).then(function(r){return r.json();}).then(function(d){
-      var items=(d&&d.releases)||[];
-      if(!items.length){box.innerHTML='<p class="vf-rel-empty">Chưa có bản phát hành chính thức — theo dõi repo để nhận bản đầu tiên.</p>';return;}
-      box.innerHTML=items.map(function(r){
-        return '<article class="vf-rel-card">'
-          +'<span class="vf-rel-tag">'+esc(r.tag)+(r.prerelease?' · pre':'')+'</span>'
-          +'<p class="vf-rel-name">'+esc(r.name||r.tag)+'</p>'
-          +'<p class="vf-rel-meta">'+esc(fmt(r.published_at))+'</p>'
-          +(r.summary?'<p class="vf-rel-sum">'+md(r.summary)+'</p>':'')
-          +'<a href="'+esc(r.url)+'" target="_blank" rel="noopener">Xem bản phát hành →</a>'
-          +'</article>';
-      }).join('');
-    }).catch(function(){box.innerHTML='<p class="vf-rel-empty">Không tải được danh sách bản phát hành.</p>';});
-  })();
-  </script>
+  <script src="releases.js?v=20261108b" defer></script>
 </main>
 
   <footer class="site-footer">
@@ -1128,5 +940,6 @@ cd vifastkey-wayland
 
   <script type="module" src="app.js?v=20261105a"></script>
   <script type="module" src="server-demo.js?v=20261105a"></script>
+  <script src="ui.js?v=20261108" defer></script>
 </body>
 </html>

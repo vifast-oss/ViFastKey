@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ViFastKey — Bộ gõ tiếng Việt nhỏ, nhanh, thuần logic</title>
+  <meta name="description" content="ViFastKey là bộ gõ tiếng Việt Telex, Simple Telex, VNI và VIQR: lõi Rust nhỏ, chạy local, có C ABI, WASM, API Python và demo UEFI x86_64. Gõ thử ngay trong trình duyệt.">
+  <meta name="theme-color" content="#FFF8EC">
+  <link rel="canonical" href="https://key.vifast.org/">
+  <link rel="icon" href="brand/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="brand/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="brand/favicon-16.png">
+  <link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
+  <link rel="manifest" href="brand/site.webmanifest">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://key.vifast.org/">
+  <meta property="og:title" content="ViFastKey — Bộ gõ tiếng Việt">
+  <meta property="og:description" content="Telex, Simple Telex, VNI, VIQR. Lõi Rust nhỏ, chạy local, có C ABI, WASM, API Python và demo UEFI x86_64.">
+  <meta property="og:image" content="https://key.vifast.org/brand/og-1200.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="ViFastKey — bộ gõ tiếng Việt, lõi Rust, chạy local">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="ViFastKey — Bộ gõ tiếng Việt">
+  <meta name="twitter:description" content="Bộ gõ tiếng Việt nhỏ, nhanh, thuần logic. Gõ thử WASM và gọi API Python.">
+  <meta name="twitter:image" content="https://key.vifast.org/brand/og-1200.png">
+  <link rel="stylesheet" href="style.css?v=20261108c">
+  <noscript><style>
+    /* Không có JS: hiện đủ hướng dẫn thay vì chỉ panel đầu. */
+    .platform-panel[hidden] { display: block !important; margin-bottom: 16px; }
+  </style></noscript>
+</head>
+<body>
+  <div class="topline" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="wrap header-inner">
+      <a class="brand" href="#" aria-label="ViFastKey — về đầu trang">
+        <img src="brand/vifastkey-icon-192.png" width="40" height="40" alt="">
+        <span class="brand-word"><span class="red">Vi</span><em>Fast</em><span class="red">Key</span></span>
+      </a>
+      <nav class="nav" id="site-nav" aria-label="Điều hướng chính">
+        <a href="#go-thu">Gõ thử</a>
+        <a href="#tinh-nang">Tính năng</a>
+        <a href="#tai-ve">Tải về</a>
+        <a href="#san-pham">Sản phẩm</a>
+        <a class="nav-home" href="https://vifast.org" title="Về vifast.org">← ViFast</a>
+      </nav>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Mở menu">
+        <span class="nav-toggle__bars" aria-hidden="true"></span>
+      </button>
+      <span class="header-live" id="header-live" title="API Python đang chạy">
+        <span class="header-live-dot" aria-hidden="true"></span> API Python
+      </span>
+      <a class="ghost-btn" href="https://github.com/vifast-oss/ViFastKey" target="_blank" rel="noopener noreferrer">
+        <svg class="gh-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 1.8a10.2 10.2 0 0 0-3.2 19.9c.5.1.7-.2.7-.5v-1.9c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.6 1.1 1.6 1.1.9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.7-1.4-2.3-.3-4.7-1.1-4.7-5.1 0-1.1.4-2 1.1-2.7-.1-.3-.5-1.3.1-2.7 0 0 .9-.3 2.8 1.1a9.8 9.8 0 0 1 5.2 0c1.9-1.4 2.8-1.1 2.8-1.1.6 1.4.2 2.4.1 2.7.7.7 1.1 1.6 1.1 2.7 0 4-2.4 4.8-4.7 5.1.4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10.2 10.2 0 0 0 12 1.8z"/></svg> GitHub
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero wrap">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="spark">★</span> Bộ gõ tiếng Việt · mã nguồn mở</div>
+        <h1>Gõ tiếng Việt,<br><span class="mark">mượt như ý.</span></h1>
+        <p class="lede">Telex, Simple Telex, VNI và VIQR trên một lõi Rust nhỏ, thuần logic. Gõ thử bằng WASM trong trình duyệt, hoặc gọi API Python để tích hợp vào công cụ của bạn.</p>
+        <div class="hero-actions">
+          <a class="primary-btn" href="#go-thu">Gõ thử ngay</a>
+          <a class="text-btn" href="#api">Xem API Python <span aria-hidden="true">→</span></a>
+        </div>
+        <ul class="hero-facts" aria-label="Điểm chính">
+          <li><strong>4</strong> kiểu gõ</li>
+          <li><strong>16</strong> bảng mã</li>
+          <li><strong>0</strong> phụ thuộc runtime</li>
+          <li><strong>WASM</strong> + C ABI</li>
+        </ul>
+      </div>
+
+      <div class="playground" id="go-thu">
+        <div class="pg-head">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span class="pg-title">Gõ thử</span>
+          <span class="pg-mode" id="pg-mode">Telex</span>
+          <button class="vi-toggle" id="toggle-vi" type="button" aria-pressed="true" title="Bật/tắt tiếng Việt">
+            <span class="vi-dot" aria-hidden="true"></span><span id="vi-label">Tiếng Việt</span>
+          </button>
+        </div>
+
+        <div class="pg-screen">
+          <textarea id="pad" rows="4" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off" placeholder="Gõ thử: Tieengs Vieejt laf ngoon nguwx..."></textarea>
+          <div class="pg-meta">
+            <span id="raw-line">Phím thô: —</span>
+            <span id="action-line" class="action-line">sẵn sàng</span>
+          </div>
+        </div>
+
+        <div class="pg-controls">
+          <div class="segmented" role="group" aria-label="Kiểu gõ">
+            <button type="button" data-method="telex" class="active">Telex</button>
+            <button type="button" data-method="simple_telex">Simple Telex</button>
+            <button type="button" data-method="vni">VNI</button>
+            <button type="button" data-method="viqr">VIQR</button>
+          </div>
+          <div class="segmented subtle" role="group" aria-label="Kiểu đặt dấu">
+            <button type="button" data-tone="old">Dấu cũ</button>
+            <button type="button" data-tone="new" class="active">Dấu mới</button>
+          </div>
+          <div class="segmented subtle" role="group" aria-label="Chế độ đầu ra">
+            <button type="button" data-output-mode="replace">Replace</button>
+            <button type="button" data-output-mode="preedit" class="active">Preedit</button>
+          </div>
+        </div>
+
+        <details class="pg-advanced">
+          <summary>Tùy chọn nâng cao</summary>
+          <div class="checks">
+            <label><input type="checkbox" data-opt="spell_check" checked> Kiểm tra chính tả</label>
+            <label><input type="checkbox" data-opt="w_as_u"> <code>w</code> → <code>ư</code></label>
+            <label><input type="checkbox" data-opt="bracket_keys"> <code>[</code> <code>]</code> → <code>ơ</code> <code>ư</code></label>
+            <label><input type="checkbox" data-opt="quick_telex"> Quick Telex</label>
+            <label><input type="checkbox" data-opt="auto_capitalize"> Viết hoa đầu câu</label>
+            <label><input type="checkbox" data-opt="smart_caps"> Bảo vệ chữ HOA</label>
+            <label><input type="checkbox" data-opt="macro_enabled" checked> Bật macro</label>
+            <label><input type="checkbox" data-opt="macro_digits"> Macro có số (<code>mp3</code>, <code>k8s</code>)</label>
+            <label><input type="checkbox" data-opt="allow_coda_k"> Âm cuối <code>k</code> (<code>Đắk Lắk</code>)</label>
+            <label><input type="checkbox" data-opt="edit_previous_word" checked> Sửa từ vừa gõ</label>
+          </div>
+          <label class="field-label" for="macro-text">Macro (mỗi dòng <code>khoá=giá trị</code>)</label>
+          <textarea id="macro-text" class="macro-text" rows="2" spellcheck="false"
+                    placeholder="ko=không&#10;vn=Việt Nam"></textarea>
+          <label class="field-label" for="unicode-form">Dạng Unicode đầu ra</label>
+          <select id="unicode-form" class="select">
+            <option value="NFC">NFC — dựng sẵn (mặc định)</option>
+            <option value="NFD">NFD — tổ hợp</option>
+          </select>
+          <label class="field-label" for="cs-from">Chuyển bảng mã</label>
+          <div class="charset-row">
+            <select id="cs-from" class="select" aria-label="Bảng mã nguồn"></select>
+            <span aria-hidden="true">→</span>
+            <select id="cs-to" class="select" aria-label="Bảng mã đích"></select>
+          </div>
+          <textarea id="cs-text" class="macro-text" rows="2" spellcheck="false">Tiếng Việt</textarea>
+          <div class="charset-actions">
+            <button type="button" id="cs-run" class="mini-btn">Chuyển</button>
+            <span id="cs-out" class="charset-out" aria-live="polite"></span>
+          </div>
+        </details>
+
+        <div class="pg-examples">
+          <span>Thử nhanh</span>
+          <button type="button" data-example="Tieengs Vieejt laf ngoon nguwx raats hay.">Câu mẫu</button>
+          <button type="button" data-example="Nguwowif Vieejt Nam ddi hojc owr truwowngf ddaij hojc">Tên riêng</button>
+          <button type="button" data-example="data boss server this did">Tiếng Anh</button>
+          <button type="button" data-example="Thuowr nhor, xooongj, quyts, khuyur tay">Dấu khó</button>
+          <button type="button" data-example="Ddawsk Lawsk" data-enable="allow_coda_k">Đắk Lắk</button>
+          <button type="button" class="clear-btn" id="clear-pad">Xoá</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section wrap">
+      <div class="section-head" id="tinh-nang">
+        <div>
+          <div class="eyebrow">Vì sao ViFastKey</div>
+          <h2>Đủ thông minh để quên đi.<br>Đủ nhỏ để chạy mọi nơi.</h2>
+        </div>
+        <p>Engine chỉ giữ chuỗi phím thô của từ hiện tại rồi dựng lại từ đầu. Nhờ vậy dấu luôn đúng vị trí, kể cả khi gõ dấu trước hay sau.</p>
+      </div>
+
+      <div class="feature-grid">
+        <article class="feature">
+          <span class="f-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M6 10h.01M9 10h.01M12 10h.01M15 10h.01M18 10h.01M6 14h.01M9 14h.01M12 14h.01M15 14h5"/></svg>
+          </span>
+          <h3>Telex · Simple Telex · VNI · VIQR</h3>
+          <p>Đổi kiểu gõ tức thì. Hỗ trợ Quick Telex, <code>w</code> → <code>ư</code>, phím <code>[</code> <code>]</code> và kiểu đặt dấu cũ/mới.</p>
+        </article>
+        <article class="feature">
+          <span class="f-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 5h8M8 3v2M6 5c0 4 2.5 7 6 8M10 9c-1.5 2-4 3.5-6 4"/><path d="M13 20l3.5-9 3.5 9M14.5 16h4"/></svg>
+          </span>
+          <h3>Ưu tiên tiếng Việt</h3>
+          <p>Từ Việt hợp lệ luôn thắng: <code>mix</code> → <code>mĩ</code>, <code>too</code> → <code>tô</code>. Gõ tiếng Anh bằng escape Telex (<code>mixx</code> → <code>mix</code>) hoặc chuyển chế độ Anh.</p>
+        </article>
+        <article class="feature">
+          <span class="f-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 20l8-16 8 16M7 14h10"/><path d="M18 4l2-2M20 6h2"/></svg>
+          </span>
+          <h3>Macro & viết hoa</h3>
+          <p><code>ko</code> → <code>không</code>, <code>vn</code> → <code>Việt Nam</code>. Giữ đúng kiểu hoa/thường và tự viết hoa đầu câu nếu bật.</p>
+        </article>
+        <article class="feature">
+          <span class="f-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 4v5"/></svg>
+          </span>
+          <h3>Hồ sơ theo ứng dụng</h3>
+          <p>Terminal dùng preedit, Chrome chờ ack, Firefox tắt sửa từ cũ, game tắt bộ gõ. Cùng một engine, hành vi phù hợp từng app.</p>
+        </article>
+        <article class="feature">
+          <span class="f-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 16l4 4 4-4M8 20V4"/><path d="M20 8l-4-4-4 4M16 4v16"/></svg>
+          </span>
+          <h3>Sửa lại từ đã gõ</h3>
+          <p>Gõ thêm dấu vào từ vừa xong: <code>tiêng</code> + <code>s</code> → <code>tiếng</code>. Backspace xoá đúng ký tự hiển thị và giữ dấu phần còn lại.</p>
+        </article>
+        <article class="feature">
+          <span class="f-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M9 3v2M15 3v2M9 19v2M15 19v2M3 9h2M3 15h2M19 9h2M19 15h2"/></svg>
+          </span>
+          <h3>Một lõi, mọi nền tảng</h3>
+          <p>Rust core + C ABI cho Windows hook, IMK, Fcitx5/IBus, WASM cho web, Python làm oracle. Cùng một bộ golden test và conformance.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section wrap">
+      <div class="arch-panel">
+        <div class="arch-copy">
+          <div class="eyebrow light">Kiến trúc</div>
+          <h2 id="kien-truc">Chuỗi phím thô<br>→ một <span class="gold">Action</span>.</h2>
+          <p>Mỗi phím đi qua Composer rồi trả về đúng một hành động: chèn, thay thế, preedit hoặc để hệ điều hành xử lý. Adapter chỉ việc áp Action — không chứa logic tiếng Việt.</p>
+          <ul class="arch-list">
+            <li><strong>13.337</strong> ca core + <strong>3.000</strong> kịch bản engine</li>
+            <li>NFC/NFD ở đầu ra, UTF-16 ở ranh giới FFI</li>
+            <li>MAX_RAW = 24 chặn chi phí xử lý mỗi phím</li>
+          </ul>
+        </div>
+        <div class="arch-code" aria-label="Ví dụ Action JSON">
+          <div class="code-head"><span></span><span></span><span></span><em>action.json</em></div>
+          <pre><code><span class="c-muted">// gõ: t i e e n g s</span>
+{
+  <span class="c-key">"type"</span>: <span class="c-str">"replace"</span>,
+  <span class="c-key">"delete_before"</span>: <span class="c-num">3</span>,
+  <span class="c-key">"insert"</span>: <span class="c-str">"ếng"</span>,
+  <span class="c-key">"pass_key"</span>: <span class="c-bool">false</span>
+}</code></pre>
+          <div class="code-foot"><span class="pulse"></span> chạy local · không gọi mạng</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section wrap">
+      <div class="section-head" id="api">
+        <div>
+          <div class="eyebrow">API Python</div>
+          <h2>Gọi engine bằng<br><span class="accent">một request.</span></h2>
+        </div>
+        <p>Playground chạy WASM ngay trong trình duyệt. API Python chạy bản oracle của dự án — cùng engine dùng để sinh bộ conformance cho bản Rust — nên bạn có thể kiểm tra, tự động hoá hoặc tích hợp mà không cần cài gì.</p>
+      </div>
+
+      <div class="api-panel">
+        <div class="api-demo">
+          <div class="api-demo-head">
+            <span class="api-dot" aria-hidden="true"></span>
+            <strong>POST /api/type</strong>
+            <span class="api-latency" id="api-latency">sẵn sàng</span>
+          </div>
+          <label class="api-label" for="api-raw">Phím thô</label>
+          <textarea id="api-raw" class="api-raw" rows="3" spellcheck="false" autocomplete="off">Tieengs Vieejt laf ngoon nguwx raats hay.</textarea>
+          <div class="api-controls">
+            <select id="api-method" class="select api-select" aria-label="Kiểu gõ">
+              <option value="telex">Telex</option>
+              <option value="simple_telex">Simple Telex</option>
+              <option value="vni">VNI</option>
+              <option value="viqr">VIQR</option>
+            </select>
+            <select id="api-tone" class="select api-select" aria-label="Kiểu đặt dấu">
+              <option value="new">Dấu mới</option>
+              <option value="old">Dấu cũ</option>
+            </select>
+            <button id="api-run" class="api-btn" type="button">Chuyển bằng Python</button>
+          </div>
+          <div class="api-result">
+            <span>Kết quả</span>
+            <output id="api-out" class="api-out" aria-live="polite">Tiếng Việt là ngôn ngữ rất hay.</output>
+            <span id="api-meta" class="api-meta"></span>
+          </div>
+          <p class="api-hint">Hỗ trợ <code>&lt;</code> Backspace, <code>|</code> Enter, <code>~</code> Escape. Không lưu nội dung bạn gõ.</p>
+        </div>
+
+        <div class="api-side">
+          <div class="api-code">
+            <div class="code-head"><span></span><span></span><span></span><em>curl</em></div>
+            <pre><code><span class="c-muted"># chuỗi phím thô → chữ Việt</span>
+curl -s https://key.vifast.org/api/type \
+  -H <span class="c-str">'content-type: application/json'</span> \
+  -d <span class="c-str">'{"text":"Tieengs Vieejt","method":"telex","tone":"new"}'</span></code></pre>
+            <div class="api-response" id="api-response">{"output":"Tiếng Việt","engine":"python","version":"0.1.2"}</div>
+          </div>
+          <ul class="api-facts">
+            <li><strong>Đúng oracle.</strong> Cùng engine Python sinh conformance cho Rust, không phải bản rút gọn.</li>
+            <li><strong>16 bảng mã.</strong> <code>/api/charset</code> chuyển Unicode, TCVN3, VNI-Windows, VISCII, VIQR, CP1258, NCR...</li>
+            <li><strong>Nhẹ.</strong> Không gọi mạng, không model, chạy trong container Python 3.12.</li>
+          </ul>
+          <a class="text-btn" href="/INSTALL.md" target="_blank" rel="noopener">Hướng dẫn &amp; tài liệu <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section wrap">
+      <div class="section-head" id="san-pham">
+        <div>
+          <div class="eyebrow">Sản phẩm</div>
+          <h2>Ba sản phẩm,<br>một hệ sinh thái.</h2>
+        </div>
+        <p>Cùng local-first, cùng giấy phép MIT: một bên gõ thành chữ, một bên đọc thành tiếng, một bên giữ lõi hệ điều hành.</p>
+      </div>
+      <div class="product-grid">
+        <article class="product-card current">
+          <span class="p-tag">Đang xem · Bộ gõ</span>
+          <h3>ViFastKey</h3>
+          <p>Bộ gõ tiếng Việt nhỏ, nhanh, thuần logic trên lõi Rust.</p>
+          <ul class="product-list">
+            <li>Telex, Simple Telex, VNI, VIQR · 16 bảng mã</li>
+            <li>WASM gõ thử trong trình duyệt, C ABI, API Python</li>
+            <li>Windows, macOS, Linux, Android, iOS và demo UEFI</li>
+          </ul>
+          <div class="product-actions">
+            <a class="primary-btn" href="https://key.vifast.org/" target="_blank" rel="noopener">Website <span aria-hidden="true">↗</span></a>
+            <a class="text-btn" href="https://github.com/vifast-oss/ViFastKey" target="_blank" rel="noopener">Mã nguồn GitHub <span aria-hidden="true">↗</span></a>
+          </div>
+        </article>
+        <article class="product-card">
+          <span class="p-tag">Cùng hệ sinh thái · Giọng đọc</span>
+          <h3>ViFastTts</h3>
+          <p>Giọng đọc tiếng Việt chạy CPU trên ONNX, 24 kHz.</p>
+          <ul class="product-list">
+            <li>Model Ngọc Huyền small 6,1M tham số</li>
+            <li>Windows, macOS, Linux, Android, extension</li>
+            <li>API REST/stream, CLI server, Python, ONNX</li>
+          </ul>
+          <div class="product-actions">
+            <a class="primary-btn" href="https://tts.vifast.org/" target="_blank" rel="noopener">Website <span aria-hidden="true">↗</span></a>
+            <a class="text-btn" href="https://github.com/vifast-oss/ViFastTts" target="_blank" rel="noopener">Mã nguồn GitHub <span aria-hidden="true">↗</span></a>
+          </div>
+        </article>
+        <article class="product-card">
+          <span class="p-tag">Cùng hệ sinh thái · Hệ điều hành</span>
+          <h3>ViFastOs</h3>
+          <p>Microkernel viết bằng Rust, capability-based, chạy trên QEMU.</p>
+          <ul class="product-list">
+            <li>Capability, IPC + notification, no_std</li>
+            <li>riscv64, aarch64 và x86_64 (UEFI/OVMF)</li>
+            <li>Đang phát triển — chưa có bản phát hành</li>
+          </ul>
+          <div class="product-actions">
+            <a class="primary-btn" href="https://os.vifast.org/" target="_blank" rel="noopener">Website <span aria-hidden="true">↗</span></a>
+            <a class="text-btn" href="https://github.com/vifast-oss/ViFastOs" target="_blank" rel="noopener">Mã nguồn GitHub <span aria-hidden="true">↗</span></a>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section wrap app-guide" id="cau-hinh-app">
+      <div class="section-head compact">
+        <div>
+          <div class="eyebrow">Cấu hình theo app</div>
+          <h2>Mỗi app một cách gõ.<br>Chọn từ app đang chạy.</h2>
+        </div>
+        <p>Windows và Linux có tab <strong>Ứng dụng</strong> với picker app đang chạy; macOS có picker trong Cấu hình. Chọn app, đặt loại trừ hoặc override riêng, rồi lưu — không phải nhớ tên process.</p>
+      </div>
+      <div class="app-guide-grid">
+        <article class="app-guide-card">
+          <div class="app-guide-head">
+            <span class="app-guide-os">Windows</span>
+            <strong>Settings → Ứng dụng</strong>
+          </div>
+          <a class="app-guide-shot windows" href="screenshots/windows-apps.png" target="_blank" rel="noopener" title="Mở ảnh lớn">
+            <img src="screenshots/windows-apps.png" width="1300" height="1000" loading="lazy" alt="Tab Ứng dụng trên Windows: danh sách app đã cấu hình, app đang chạy và ô thêm app thủ công">
+          </a>
+          <ol class="app-guide-steps">
+            <li><strong>Đã cấu hình</strong> — preset/ghi đè hiện có; chọn để sửa.</li>
+            <li><strong>Đang chạy</strong> — app đang mở; bấm để thêm vào cấu hình.</li>
+            <li>Bật <strong>Loại trừ hoàn toàn</strong> hoặc chỉnh output/engine trong “Cấu hình cho …”, rồi <strong>Lưu</strong>.</li>
+          </ol>
+          <p class="app-guide-note">Phù hợp để loại trừ game (Minecraft, Liên Minh…) hoặc app không muốn gõ tiếng Việt.</p>
+        </article>
+        <article class="app-guide-card">
+          <div class="app-guide-head">
+            <span class="app-guide-os">macOS</span>
+            <strong>ViFastKey → Cấu hình…</strong>
+          </div>
+          <a class="app-guide-shot macos" href="screenshots/macos-app-picker.png" target="_blank" rel="noopener" title="Mở ảnh lớn">
+            <img src="screenshots/macos-app-picker.png" width="1226" height="170" loading="lazy" alt="Cửa sổ cấu hình macOS: ô App loại trừ, chọn App đang chạy, nút Quét và Thêm vào loại trừ">
+          </a>
+          <ol class="app-guide-steps">
+            <li>Mở menu ViFastKey → <strong>Cấu hình…</strong>.</li>
+            <li>Ở dòng <strong>App đang chạy</strong>, chọn app rồi bấm <strong>Thêm vào loại trừ</strong>.</li>
+            <li>Bấm <strong>Lưu</strong>. Với app profile/charset nâng cao, dùng <strong>Mở file JSON</strong>.</li>
+          </ol>
+          <p class="app-guide-note">Danh sách app đang chạy được quét lại mỗi lần mở cửa sổ; bấm <strong>Quét</strong> nếu vừa mở thêm app.</p>
+        </article>
+        <article class="app-guide-card app-guide-wide">
+          <div class="app-guide-head">
+            <span class="app-guide-os">Linux</span>
+            <strong>Settings → Ứng dụng</strong>
+          </div>
+          <a class="app-guide-shot linux" href="screenshots/linux-apps.png" target="_blank" rel="noopener" title="Mở ảnh lớn">
+            <img src="screenshots/linux-apps.png" width="1100" height="900" loading="lazy" alt="Tab Ứng dụng trên Linux: danh sách app đã cấu hình, app đang chạy và ô thêm app thủ công">
+          </a>
+          <div class="app-guide-copy">
+            <ol class="app-guide-steps">
+              <li>Mở tab <strong>Ứng dụng</strong>; danh sách đang chạy lấy từ tiến trình GUI của phiên.</li>
+              <li>Chọn app (ví dụ <code>firefox</code>, <code>code</code>) hoặc nhập app id thủ công.</li>
+              <li>Bật <strong>Loại trừ hoàn toàn</strong> hoặc chỉnh output/engine rồi <strong>Lưu</strong>.</li>
+            </ol>
+            <p class="app-guide-note">Trên Linux, bấm X <strong>ẩn xuống khay</strong> nếu desktop có AppIndicator/StatusNotifier; thoát hẳn bằng menu tray. Nếu không thấy icon khay, tắt tùy chọn này trong Nâng cao. App profile/charset nâng cao vẫn dùng JSON.</p>
+          </div>
+        </article>
+      </div>
+      <p class="app-guide-caption">Ảnh minh hoạ từ bản 0.1.2; bấm ảnh để mở lớn. Linux lấy app id từ tiến trình, vẫn có thể nhập tay hoặc dùng JSON.</p>
+    </section>
+
+    <section class="section wrap">
+      <div class="section-head compact" id="tai-ve">
+        <div>
+          <div class="eyebrow">Tải về · v0.1.2</div>
+          <h2>Chọn nền tảng.<br>Cài trong vài phút.</h2>
+        </div>
+        <p>Bản phát hành 0.1.2: Windows hook-only, macOS IMK, Linux IBus/Fcitx5, Android, iOS Simulator, Chrome/Edge và <strong>UEFI x86_64 demo</strong>. Mỗi tab có file tải, yêu cầu hệ thống và các bước cài chi tiết.</p>
+      </div>
+
+      <div class="release-bar">
+        <strong>v0.1.2</strong>
+        <span class="dot" aria-hidden="true"></span>
+        <span>05/11/2026 · Bản phát hành chính thức</span>
+        <a href="/INSTALL.md" target="_blank" rel="noopener">Hướng dẫn cài đặt ↗</a>
+        <a href="/downloads/0.1.2/sha256sums.txt" target="_blank" rel="noopener">SHA256SUMS ↗</a>
+        <a href="/INSTALL.md" target="_blank" rel="noopener">Hướng dẫn đầy đủ ↗</a>
+      </div>
+
+      <div class="platform-tabs" id="cai-dat" role="tablist" aria-label="Chọn nền tảng">
+        <button class="platform-tab" type="button" role="tab" id="tab-windows" aria-controls="panel-windows" aria-selected="true" data-platform="windows">Windows</button>
+        <button class="platform-tab" type="button" role="tab" id="tab-macos" aria-controls="panel-macos" aria-selected="false" tabindex="-1" data-platform="macos">macOS</button>
+        <button class="platform-tab" type="button" role="tab" id="tab-linux" aria-controls="panel-linux" aria-selected="false" tabindex="-1" data-platform="linux">Linux</button>
+        <button class="platform-tab" type="button" role="tab" id="tab-android" aria-controls="panel-android" aria-selected="false" tabindex="-1" data-platform="android">Android</button>
+        <button class="platform-tab" type="button" role="tab" id="tab-ios" aria-controls="panel-ios" aria-selected="false" tabindex="-1" data-platform="ios">iOS</button>
+        <button class="platform-tab" type="button" role="tab" id="tab-extension" aria-controls="panel-extension" aria-selected="false" tabindex="-1" data-platform="extension">Chrome/Edge</button>
+        <button class="platform-tab" type="button" role="tab" id="tab-uefi" aria-controls="panel-uefi" aria-selected="false" tabindex="-1" data-platform="uefi">UEFI <span class="tab-new">Mới</span></button>
+        <button class="platform-tab" type="button" role="tab" id="tab-cli" aria-controls="panel-cli" aria-selected="false" tabindex="-1" data-platform="cli">CLI / Web</button>
+      </div>
+
+      <!-- Windows -->
+      <section class="platform-panel" role="tabpanel" id="panel-windows" aria-labelledby="tab-windows" tabindex="0">
+        <div class="platform-top">
+          <div class="platform-title">
+            <div>
+              <h3>Windows 10/11 · x64</h3>
+              <p>Hook-only một binary: Settings + tray + hook, không cần TSF, không cần Administrator.</p>
+            </div>
+          </div>
+          <div class="dl-row">
+            <a class="dl-btn primary" href="/downloads/0.1.2/vifastkey-windows-hook-0.1.2.zip" target="_blank" rel="noopener" data-download="vifastkey-windows-hook-0.1.2.zip">Tải ViFastKey Hook <span>ZIP</span></a>
+            <a class="dl-btn" href="/downloads/0.1.2/vifastkey-settings-windows-x64.zip" target="_blank" rel="noopener" data-download="vifastkey-settings-windows-x64.zip">Chỉ Settings <span>ZIP</span></a>
+          </div>
+        </div>
+        <div class="platform-body">
+          <div>
+            <h4>Các bước cài</h4>
+            <ol class="steps">
+              <li><strong>Tải và giải nén</strong><span>Chuột phải file ZIP → <b>Extract All</b>. Đừng chạy trực tiếp trong file nén.</span></li>
+              <li><strong>Chạy installer</strong><span>Mở PowerShell tại thư mục vừa giải nén:</span><pre class="cmd"><code>Set-ExecutionPolicy -Scope Process Bypass
+.\install.ps1</code></pre><span>Installer chép app vào <code>%LOCALAPPDATA%\ViFastKey</code>, thêm autostart và chạy hook nền. Không cần quyền Administrator.</span></li>
+              <li><strong>Chọn English (US)</strong><span>Settings → Time &amp; language → Language &amp; region → thêm <b>English (United States)</b>, rồi <code>Win+Space</code> chọn <b>ENG</b>. ViFastKey chỉ xử lý khi input source là English US; Vietnamese/Japanese sẽ pass-through.</span></li>
+              <li><strong>Kiểm tra</strong><span>Mở Notepad, gõ <code>Tieengs Vieejt</code> → <code>Tiếng Việt</code>. <code>Alt+,</code> đổi Việt/Anh; <code>Ctrl+Shift+,</code> mở Settings.</span></li>
+              <li><strong>Nếu SmartScreen cảnh báo</strong><span>Bản chưa ký số: bấm <b>More info → Run anyway</b>. Chỉ tải từ trang này hoặc GitHub Release chính thức.</span></li>
+            </ol>
+          </div>
+          <aside class="spec">
+            <h4>Yêu cầu &amp; ghi chú</h4>
+            <ul>
+              <li>Windows 10/11 64-bit</li>
+              <li>Không cần Administrator, TSF hay runtime</li>
+              <li>Cấu hình: <code>%APPDATA%\ViFastKey</code></li>
+              <li>Tray: logo Việt · <code>E</code> Anh · logo mờ khi nhường IME</li>
+            </ul>
+            <div class="note">Đang dùng Microsoft Vietnamese/Japanese? Chuyển input source sang <b>ENG</b> để ViFastKey xử lý, hoặc để nguyên để nhường bộ gõ hệ thống.</div>
+            <div class="note">Game/anti-cheat có thể chặn hook. Thêm game vào <b>Ứng dụng → loại trừ</b> hoặc chuyển English trước khi chơi.</div>
+          </aside>
+        </div>
+        <details class="trouble">
+          <summary>Xử lý sự cố Windows</summary>
+          <div class="trouble-body">
+            <p><b>Gõ bị đôi hoặc không gõ được:</b> kiểm tra input source đang là English US (ENG), không phải Vietnamese; mở Settings → kiểm tra trạng thái hook.</p>
+            <p><b>Không thấy tray:</b> chạy lại <code>vifastkey-settings.exe</code> hoặc kiểm tra Task Manager; menu tray → <b>Thoát</b> rồi mở lại.</p>
+            <p><b>Gỡ:</b> chạy <code>.\uninstall.ps1</code>; config/macro trong <code>%APPDATA%\ViFastKey</code> được giữ lại.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- macOS -->
+      <section class="platform-panel" role="tabpanel" id="panel-macos" aria-labelledby="tab-macos" tabindex="0" hidden>
+        <div class="platform-top">
+          <div class="platform-title">
+            <div>
+              <h3>macOS 12+ · IMK</h3>
+              <p>Input method native cho Intel và Apple Silicon; preedit, menu Telex/Simple Telex/VNI, macro và app profile.</p>
+            </div>
+          </div>
+          <div class="dl-row">
+            <a class="dl-btn primary" href="/downloads/0.1.2/vifastkey-macos-imk-universal.zip" target="_blank" rel="noopener" data-download="vifastkey-macos-imk-universal.zip">Tải bản macOS <span>ZIP</span></a>
+          </div>
+        </div>
+        <div class="platform-body">
+          <div>
+            <h4>Các bước cài</h4>
+            <ol class="steps">
+              <li><strong>Tải và giải nén</strong><span>Mở ZIP, chạy <code>./install.sh</code> trong thư mục vừa giải nén. Script copy app vào <code>~/Library/Input Methods</code> và đăng ký input source.</span></li>
+              <li><strong>Đăng xuất/đăng nhập</strong><span>Bắt buộc một lần — macOS chỉ làm mới danh sách input source khi session được tạo lại.</span></li>
+              <li><strong>Thêm input source</strong><span>System Settings → Keyboard → Text Input → <b>Edit</b> → <b>+</b> → Vietnamese → <b>ViFastKey</b>.</span></li>
+              <li><strong>Bấm Allow</strong><span>macOS hỏi <i>“Allow ViFastKey to enable ViFastKey?”</i> → <b>Allow</b> một lần. Đây là hộp thoại bảo mật của macOS cho mọi bộ gõ bên thứ ba.</span></li>
+              <li><strong>Nếu Gatekeeper chặn</strong><span>Bản chưa ký/notarize; mở Terminal và chạy:</span><pre class="cmd"><code>xattr -dr com.apple.quarantine "$HOME/Library/Input Methods/ViFastKey.app"</code></pre></li>
+              <li><strong>Kiểm tra</strong><span>Gõ <code>Tieengs Vieejt</code> → <code>Tiếng Việt</code>. Menu bar có Telex/VNI, Việt/Anh và Settings.</span></li>
+            </ol>
+          </div>
+          <aside class="spec">
+            <h4>Yêu cầu &amp; ghi chú</h4>
+            <ul>
+              <li>macOS 12 trở lên</li>
+              <li>Universal: Intel + Apple Silicon</li>
+              <li>Không cần Python/Node</li>
+              <li>Bản chưa ký Developer ID/notarize</li>
+            </ul>
+            <div class="note">Nếu không thấy input source: logout/login, kiểm tra <code>~/Library/Input Methods</code>, rồi thêm lại. Đừng cài lại nhiều lần.</div>
+            <div class="note">Password field và một số app bảo mật có thể chặn IMK; đây là giới hạn của macOS, không phải lỗi gõ.</div>
+          </aside>
+        </div>
+        <details class="trouble">
+          <summary>Xử lý sự cố macOS</summary>
+          <div class="trouble-body">
+            <p><b>Hỏi “Allow ViFastKey…” nhiều lần:</b> mỗi lần build/cài lại, chữ ký ad-hoc đổi nên macOS coi là app mới. Xoá input source, chạy lại installer một lần, rồi <b>đăng xuất/đăng nhập</b>; sau đó đừng cài lại. Kiểm tra:</p>
+            <pre class="cmd"><code>"$HOME/Library/Input Methods/ViFastKey.app/Contents/MacOS/ViFastKeyIM" --status</code></pre>
+            <p>Phải thấy <code>enabled=true</code>. Nếu có crash report của <code>ViFastKeyIM</code> trong <code>~/Library/Logs/DiagnosticReports</code>, gửi kèm khi báo lỗi.</p>
+            <p><b>“App is damaged” hoặc không mở:</b> chạy lệnh <code>xattr</code> ở trên; hoặc System Settings → Privacy &amp; Security → Open Anyway.</p>
+            <p><b>Không gõ được trong app:</b> kiểm tra input source đang chọn ViFastKey; thử app khác (TextEdit) để loại trừ app đang chặn IMK.</p>
+            <p><b>Gỡ:</b> xoá app trong <code>~/Library/Input Methods</code>, xoá input source và logout/login.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- Linux -->
+      <section class="platform-panel" role="tabpanel" id="panel-linux" aria-labelledby="tab-linux" tabindex="0" hidden>
+        <div class="platform-top">
+          <div class="platform-title">
+            <div>
+              <h3>Linux x86_64 · IBus / Fcitx5 / Wayland</h3>
+              <p><b>Chỉ cài MỘT trong ba</b> — IBus, Fcitx5 hoặc Wayland standalone — theo desktop đang dùng. Cài nhiều hơn sẽ tranh nhau xử lý phím, gõ đôi hoặc mất chữ.</p>
+            </div>
+          </div>
+          <div class="dl-row">
+            <a class="dl-btn primary" href="/downloads/0.1.2/vifastkey-ibus-linux.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-ibus-linux.tar.gz">IBus <span>TAR.GZ</span></a>
+            <a class="dl-btn" href="/downloads/0.1.2/vifastkey-fcitx5-linux-x86_64.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-fcitx5-linux-x86_64.tar.gz">Fcitx5 <span>TAR.GZ</span></a>
+            <a class="dl-btn" href="/downloads/0.1.2/vifastkey-wayland-linux-x86_64.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-wayland-linux-x86_64.tar.gz">Wayland <span>TAR.GZ</span></a>
+            <a class="dl-btn" href="/downloads/0.1.2/vifastkey-settings-linux-x86_64.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-settings-linux-x86_64.tar.gz">Settings UI <span>TAR.GZ</span></a>
+          </div>
+        </div>
+        <div class="platform-body">
+          <div>
+            <h4>Các bước cài</h4>
+            <ol class="steps">
+              <li><strong>Chọn đúng một adapter</strong><span>GNOME/IBus → gói IBus. KDE/Fcitx5 → gói Fcitx5. Sway/Hyprland/niri → Wayland standalone. <b>Không cài nhiều hơn một</b>.</span></li>
+              <li><strong>Cài IBus</strong><span>Giải nén và chạy installer:</span><pre class="cmd"><code>tar -xzf vifastkey-ibus-linux.tar.gz
+cd vifastkey-ibus
+./install.sh</code></pre><span>Cần <code>ibus</code>, <code>python3-gi</code>, <code>gir1.2-ibus-1.0</code> (Ubuntu/Debian).</span></li>
+              <li><strong>Cài Fcitx5</strong><span>Giải nén và chạy installer:</span><pre class="cmd"><code>tar -xzf vifastkey-fcitx5-linux-x86_64.tar.gz
+cd vifastkey-fcitx5
+./install.sh</code></pre><span>Cần <code>fcitx5</code> và frontend GTK/Qt tương ứng.</span></li>
+              <li><strong>Cài Wayland standalone</strong><span>Cho compositor hỗ trợ <code>zwp_input_method_v2</code>:</span><pre class="cmd"><code>tar -xzf vifastkey-wayland-linux-x86_64.tar.gz
+cd vifastkey-wayland
+./install.sh</code></pre><span>Xem <code>linux/wayland/README.md</code> để biết giới hạn và cách chạy.</span></li>
+              <li><strong>Thêm input method</strong><span>IBus: Settings → Keyboard → Input Sources → <b>+</b> → Vietnamese → ViFastKey. Fcitx5: Configuration → Input Method → <b>+</b> → ViFastKey. Wayland: chọn ViFastKey trong input method của compositor.</span></li>
+              <li><strong>Kiểm tra</strong><span>Logout/login nếu cần; mở terminal chạy <code>ibus restart</code> (IBus) rồi gõ thử.</span></li>
+            </ol>
+          </div>
+          <aside class="spec">
+            <h4>Yêu cầu &amp; ghi chú</h4>
+            <ul>
+              <li>Linux x86_64, X11 hoặc Wayland</li>
+              <li>IBus hoặc Fcitx5 đang chạy</li>
+              <li>IBus cần Python 3.10+ và GObject Introspection</li>
+              <li>Settings UI cần X11/Wayland, OpenGL</li>
+            </ul>
+            <div class="note"><b>Chỉ cài 1 trong 3:</b> IBus, Fcitx5 hoặc Wayland. Cài nhiều hơn sẽ tranh nhau xử lý phím và gõ đôi.</div>
+            <div class="note">Kiểm tra môi trường: <code>echo "$GTK_IM_MODULE $QT_IM_MODULE $XMODIFIERS"</code>. Nếu đang trỏ sai engine, sửa trong <code>~/.pam_environment</code> hoặc cấu hình desktop rồi logout/login.</div>
+            <div class="note">Terminal/Electron đôi khi cần preedit khác; xem <code>linux/ibus/README.md</code> hoặc <code>linux/fcitx5/README.md</code>.</div>
+          </aside>
+        </div>
+        <details class="trouble">
+          <summary>Xử lý sự cố Linux</summary>
+          <div class="trouble-body">
+            <p><b>Không thấy ViFastKey:</b> logout/login, chạy <code>ibus restart</code> hoặc khởi động lại Fcitx5; kiểm tra engine đã cài đúng user.</p>
+            <p><b>Gõ được ở app này nhưng không app khác:</b> kiểm tra <code>GTK_IM_MODULE</code>/<code>QT_IM_MODULE</code>; app chạy XWayland có thể cần cấu hình riêng.</p>
+            <p><b>Thiếu thư viện Settings UI:</b> cài <code>libxkbcommon</code>, <code>libwayland</code>, <code>libx11</code>, <code>libgl1</code> theo distro.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- Android -->
+      <section class="platform-panel" role="tabpanel" id="panel-android" aria-labelledby="tab-android" tabindex="0" hidden>
+        <div class="platform-top">
+          <div class="platform-title">
+            <div>
+              <h3>Android 8.0+ · arm64 / x86_64</h3>
+              <p>IME Android đầy đủ, chạy local; bản APK debug chưa phát hành trên CH Play. Bản cập nhật 05/11/2026 (build 27): gõ sai rồi xoá hết từ + dấu cách sẽ khôi phục từ trước để sửa tiếp; ẩn rồi mở lại bàn phím về trang chữ (hoặc bàn phím số), không giữ trang ký tự đặc biệt. Vẫn có `replaceText()` trên Android 14+, fallback batch cho máy cũ/field dài, mặc định không gạch chân, chiều cao 100–145%, cài đặt nhanh, 1.121 emoji, hàng số Telex/VNI.</p>
+            </div>
+          </div>
+          <div class="dl-row">
+            <a class="dl-btn primary" href="/downloads/0.1.2/vifastkey-android-debug.apk?v=27" target="_blank" rel="noopener" data-download="vifastkey-android-debug.apk">Tải APK <span>APK</span></a>
+          </div>
+        </div>
+        <div class="platform-body">
+          <div>
+            <h4>Các bước cài</h4>
+            <ol class="steps">
+              <li><strong>Tải APK</strong><span>Tải trực tiếp từ trang này hoặc GitHub Release chính thức. Bản debug chưa ký Play Store.</span></li>
+              <li><strong>Cho phép cài ngoài store</strong><span>Mở file APK → Settings → <b>Install unknown apps</b> → cho phép trình quản lý file/trình duyệt vừa tải.</span></li>
+              <li><strong>Bật bàn phím</strong><span>Android Settings → System → Languages &amp; input → On-screen keyboard → <b>ViFastKey</b> → bật.</span></li>
+              <li><strong>Chọn bàn phím</strong><span>Trong app bất kỳ, bấm biểu tượng bàn phím → chọn ViFastKey; hoặc giữ phím cách để chuyển IME.</span></li>
+              <li><strong>Gõ thử</strong><span>Gõ <code>Tieengs Vieejt</code> → <code>Tiếng Việt</code>; mở Settings của ViFastKey để đổi Telex/VNI, dấu cũ/mới.</span></li>
+            </ol>
+          </div>
+          <aside class="spec">
+            <h4>Yêu cầu &amp; ghi chú</h4>
+            <ul>
+              <li>Android 8.0+ (minSdk 26)</li>
+              <li>arm64-v8a hoặc x86_64</li>
+              <li>Không cần root</li>
+              <li>Không cần mạng sau khi cài</li>
+            </ul>
+            <div class="note">Nếu chưa thấy ViFastKey trong danh sách bàn phím, mở app ViFastKey một lần rồi quay lại Settings.</div>
+            <div class="note">Bản debug có thể bị Play Protect cảnh báo; chỉ cài từ nguồn chính thức.</div>
+          </aside>
+        </div>
+        <details class="trouble">
+          <summary>Xử lý sự cố Android</summary>
+          <div class="trouble-body">
+            <p><b>“App not installed”:</b> gỡ bản cũ trước, kiểm tra dung lượng; APK hỗ trợ arm64/x86_64.</p>
+            <p><b>Không chuyển được bàn phím:</b> bật ViFastKey trong On-screen keyboard, sau đó giữ phím cách hoặc dùng biểu tượng bàn phím.</p>
+            <p><b>Gõ không ra dấu:</b> kiểm tra kiểu gõ trong Settings (Telex/VNI) và chế độ Việt/Anh.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- iOS -->
+      <section class="platform-panel" role="tabpanel" id="panel-ios" aria-labelledby="tab-ios" tabindex="0" hidden>
+        <div class="platform-top">
+          <div class="platform-title">
+            <div>
+              <h3>iOS · Simulator</h3>
+              <p>Keyboard extension chạy trên iOS Simulator; chưa ký Apple Developer nên chưa cài lên iPhone thật.</p>
+            </div>
+          </div>
+          <div class="dl-row">
+            <a class="dl-btn primary" href="/downloads/0.1.2/vifastkey-ios-simulator.zip" target="_blank" rel="noopener" data-download="vifastkey-ios-simulator.zip">Tải Simulator <span>ZIP</span></a>
+          </div>
+        </div>
+        <div class="platform-body">
+          <div>
+            <h4>Các bước cài</h4>
+            <ol class="steps">
+              <li><strong>Cài Xcode + Simulator</strong><span>Mở App Store → cài Xcode; mở Xcode → Settings → Platforms → tải iOS Simulator runtime.</span></li>
+              <li><strong>Mở Simulator</strong><span>Xcode → Open Developer Tool → Simulator; chọn một thiết bị iPhone.</span></li>
+              <li><strong>Cài app</strong><span>Giải nén ZIP, kéo app vào cửa sổ Simulator.</span></li>
+              <li><strong>Bật keyboard</strong><span>Simulator Settings → General → Keyboard → Keyboards → Add New Keyboard → <b>ViFastKey</b>.</span></li>
+              <li><strong>Gõ thử</strong><span>Mở Notes, chuyển bàn phím sang ViFastKey và gõ Telex/VNI.</span></li>
+            </ol>
+          </div>
+          <aside class="spec">
+            <h4>Yêu cầu &amp; ghi chú</h4>
+            <ul>
+              <li>macOS + Xcode + Simulator runtime</li>
+              <li>Chỉ Simulator, không phải app App Store</li>
+              <li>Thiết bị thật cần Apple Developer + provision profile</li>
+              <li>Build từ source: <code>ios/</code></li>
+            </ul>
+            <div class="note">Đây là bản để thử keyboard extension, không phải bản phát hành App Store.</div>
+          </aside>
+        </div>
+        <details class="trouble">
+          <summary>Xử lý sự cố iOS</summary>
+          <div class="trouble-body">
+            <p><b>Không thấy Simulator:</b> cài runtime trong Xcode → Settings → Platforms; kiểm tra dung lượng ổ đĩa.</p>
+            <p><b>Không thấy bàn phím:</b> Simulator Settings → General → Keyboard → Keyboards → Add New Keyboard; bật Full Keyboard Access nếu cần.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- Chrome/Edge -->
+      <section class="platform-panel" role="tabpanel" id="panel-extension" aria-labelledby="tab-extension" tabindex="0" hidden>
+        <div class="platform-top">
+          <div class="platform-title">
+            <div>
+              <h3>Chrome / Edge · extension</h3>
+              <p>Extension MV3 dùng WASM, gõ tiếng Việt trong trình duyệt; không cần server.</p>
+            </div>
+          </div>
+          <div class="dl-row">
+            <a class="dl-btn primary" href="/downloads/0.1.2/vifastkey-chrome-extension.zip" target="_blank" rel="noopener" data-download="vifastkey-chrome-extension.zip">Tải extension <span>ZIP</span></a>
+          </div>
+        </div>
+        <div class="platform-body">
+          <div>
+            <h4>Các bước cài</h4>
+            <ol class="steps">
+              <li><strong>Tải và giải nén</strong><span>Giải nén ZIP ra một thư mục cố định (đừng xoá sau khi cài).</span></li>
+              <li><strong>Mở trang extension</strong><span>Chrome: <code>chrome://extensions</code>; Edge: <code>edge://extensions</code>.</span></li>
+              <li><strong>Bật Developer mode</strong><span>Bật công tắc <b>Developer mode</b> ở góc phải.</span></li>
+              <li><strong>Load unpacked</strong><span>Bấm <b>Load unpacked</b> → chọn thư mục vừa giải nén.</span></li>
+              <li><strong>Kiểm tra</strong><span>Mở một ô nhập text trên web, gõ <code>Tieengs Vieejt</code>; bấm icon extension để đổi Việt/Anh hoặc Telex/VNI.</span></li>
+            </ol>
+          </div>
+          <aside class="spec">
+            <h4>Yêu cầu &amp; ghi chú</h4>
+            <ul>
+              <li>Chrome/Edge Chromium mới</li>
+              <li>Không cần server/API</li>
+              <li>Dùng WASM local trong extension</li>
+              <li>Không hoạt động trên trang nội bộ trình duyệt</li>
+            </ul>
+            <div class="note">Extension chỉ can thiệp vào ô nhập trên trang web; không gõ được trong address bar hoặc trang <code>chrome://</code>.</div>
+          </aside>
+        </div>
+        <details class="trouble">
+          <summary>Xử lý sự cố extension</summary>
+          <div class="trouble-body">
+            <p><b>Load unpacked lỗi:</b> kiểm tra đã giải nén đúng thư mục có <code>manifest.json</code>, không chọn nhầm thư mục cha.</p>
+            <p><b>Không gõ được trên trang:</b> reload trang sau khi cài; một số trang chặn extension hoặc dùng contenteditable đặc biệt.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- UEFI -->
+      <section class="platform-panel" role="tabpanel" id="panel-uefi" aria-labelledby="tab-uefi" tabindex="0" hidden>
+        <div class="platform-top">
+          <div class="platform-title">
+            <div>
+              <h3>UEFI x86_64 · bản demo đầu tiên <span class="badge-new">Mới</span></h3>
+              <p>Phát hành 05/11/2026 · v0.1.2 UEFI demo. Chạy trước khi OS boot: editor Telex/VNI, logo + URL trang chủ, GOP + font tiếng Việt nhúng và QR trong help.</p>
+            </div>
+          </div>
+          <div class="dl-row">
+            <a class="dl-btn primary" href="/downloads/0.1.2/vifastkey-uefi-x86_64.zip" target="_blank" rel="noopener" data-download="vifastkey-uefi-x86_64.zip">Tải UEFI demo <span>ZIP</span></a>
+            <a class="dl-btn" href="/INSTALL.md" target="_blank" rel="noopener">Hướng dẫn UEFI ↗</a>
+          </div>
+        </div>
+        <div class="platform-body">
+          <div>
+            <h4>Các bước cài</h4>
+            <ol class="steps">
+              <li><strong>Tải và giải nén</strong><span>Giải nén ZIP vào thư mục gốc của USB FAT32; giữ nguyên thư mục <code>EFI/BOOT</code>. Kết quả đúng: <code>\EFI\BOOT\BOOTX64.EFI</code>.</span></li>
+              <li><strong>Chuẩn bị firmware</strong><span>Tắt <b>Secure Boot</b> (hoặc ký <code>BOOTX64.EFI</code> bằng key riêng và enroll cert). Bật USB boot, tắt Fast Boot/CSM nếu USB không hiện.</span></li>
+              <li><strong>Boot từ USB</strong><span>Mở boot menu (F12/F11/F8/Esc tùy máy), chọn USB. App tự mở editor, không cần cài vào ổ cứng.</span></li>
+              <li><strong>Gõ thử</strong><span><code>Tieengs Vieejt</code> → <code>Tiếng Việt</code>; <code>thuowng</code> → <code>thương</code>; <code>dd</code> → <code>đ</code>.</span></li>
+              <li><strong>Phím tắt</strong><span><code>F1</code> trợ giúp + QR trang chủ (<code>F1</code> lần nữa hoặc <code>Esc</code> để đóng) · <code>F2</code> Việt/Anh · <code>F3</code> Telex/VNI · <code>F10</code> thoát về boot menu · Backspace xoá phím thô.</span></li>
+            </ol>
+          </div>
+          <aside class="spec">
+            <h4>Yêu cầu &amp; ghi chú</h4>
+            <ul>
+              <li>Máy x86_64 UEFI (không hỗ trợ IA32)</li>
+              <li>USB FAT32, bàn phím layout US</li>
+              <li>Secure Boot tắt hoặc tự ký</li>
+              <li>Không cần OS/Python/Node</li>
+            </ul>
+            <div class="note"><b>Đây là app tự chứa, không phải IME toàn hệ thống.</b> Nó không gõ được vào UEFI Setup, UEFI Shell hay app UEFI khác; muốn vậy phải hook <code>ConIn</code> và rất dễ vỡ.</div>
+            <div class="note">Bản demo: Telex/VNI, English escape, preedit, font nhúng, F1–F3, F10. Chưa có macro, gợi ý từ, charset legacy, file cấu hình.</div>
+          </aside>
+        </div>
+        <details class="trouble">
+          <summary>Xử lý sự cố UEFI</summary>
+          <div class="trouble-body">
+            <p><b>USB không hiện trong boot menu:</b> kiểm tra FAT32, đúng đường dẫn <code>\EFI\BOOT\BOOTX64.EFI</code>, tắt Fast Boot/CSM, thử cổng USB 2.0.</p>
+            <p><b>Secure Boot violation:</b> tắt Secure Boot hoặc ký file. Không dùng file từ nguồn không rõ.</p>
+            <p><b>Màn hình đen/không có GOP:</b> firmware không cung cấp graphics output; thử máy khác hoặc QEMU/OVMF.</p>
+            <p><b>F10 quay về boot menu:</b> đúng thiết kế; rút USB rồi khởi động lại máy.</p>
+          </div>
+        </details>
+      </section>
+
+      <!-- CLI / Web -->
+      <section class="platform-panel" role="tabpanel" id="panel-cli" aria-labelledby="tab-cli" tabindex="0" hidden>
+        <div class="platform-top">
+          <div class="platform-title">
+            <div>
+              <h3>CLI / Web / WASM</h3>
+              <p>Dùng engine trực tiếp trên desktop hoặc nhúng vào web; phù hợp để tích hợp, test và phát triển.</p>
+            </div>
+          </div>
+          <div class="dl-row">
+            <a class="dl-btn primary" href="/downloads/0.1.2/vifastkey-cli-linux-x86_64.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-cli-linux-x86_64.tar.gz">CLI Linux <span>TAR.GZ</span></a>
+            <a class="dl-btn" href="/downloads/0.1.2/vifastkey-cli-macos.tar.gz" target="_blank" rel="noopener" data-download="vifastkey-cli-macos.tar.gz">CLI macOS <span>TAR.GZ</span></a>
+            <a class="dl-btn" href="/downloads/0.1.2/vifastkey-cli-windows-x64.zip" target="_blank" rel="noopener" data-download="vifastkey-cli-windows-x64.zip">CLI Windows <span>ZIP</span></a>
+            <a class="dl-btn" href="/downloads/0.1.2/vifastkey-wasm.zip" target="_blank" rel="noopener" data-download="vifastkey-wasm.zip">WASM <span>ZIP</span></a>
+          </div>
+        </div>
+        <div class="platform-body">
+          <div>
+            <h4>Các bước dùng</h4>
+            <ol class="steps">
+              <li><strong>CLI desktop</strong><span>Giải nén rồi chạy demo hoặc REPL:</span><pre class="cmd"><code>./vfk --demo
+./vfk
+./vfk --text "Tieengs Vieejt"</code></pre></li>
+              <li><strong>WASM</strong><span>Giải nén <code>vifastkey-wasm.zip</code>, phục vụ bằng HTTP và mở trình duyệt:</span><pre class="cmd"><code>python3 -m http.server 8080 -d vifastkey-wasm</code></pre></li>
+              <li><strong>API Python</strong><span>Dùng <code>python/</code> hoặc deploy FastAPI theo <code>deploy/vifastkey_web/README.md</code>; playground trên trang này gọi engine Python qua <code>/api/type</code>.</span></li>
+              <li><strong>Settings UI</strong><span>Gói Settings Linux/Windows cho phép chỉnh cấu hình, macro và app profile.</span></li>
+            </ol>
+          </div>
+          <aside class="spec">
+            <h4>Yêu cầu &amp; ghi chú</h4>
+            <ul>
+              <li>CLI: Windows/macOS/Linux x86_64</li>
+              <li>WASM: browser hiện đại</li>
+              <li>API Python: Python 3.10+</li>
+              <li>Không cần cài đặt hệ thống</li>
+            </ul>
+            <div class="note">CLI/API phù hợp để tích hợp vào tool khác; bản desktop/mobile mới là bộ gõ dùng hằng ngày.</div>
+          </aside>
+        </div>
+      </section>
+
+      <div class="download-foot">
+        <span>Không chắc chọn bản nào?</span>
+        <a href="/INSTALL.md" target="_blank" rel="noopener">Hướng dẫn đầy đủ</a>
+        <a href="#go-thu">Gõ thử WASM</a>
+        <a href="/INSTALL.md" target="_blank" rel="noopener">Cài đặt</a>
+        <a href="/downloads/0.1.2/sha256sums.txt" target="_blank" rel="noopener">SHA256SUMS</a>
+      </div>
+    </section>
+    <section class="section wrap">
+      <div class="feedback-panel">
+        <div class="feedback-copy" id="gop-y">
+          <div class="eyebrow">Góp ý</div>
+          <h2>Nói cho mình biết.</h2>
+          <p>Báo lỗi, đề xuất tính năng hoặc góp ý nội dung. Nội dung và liên hệ chỉ admin xem, không hiển thị công khai.</p>
+          <ul>
+            <li>Lỗi gõ, lỗi cài đặt hoặc lỗi trên một ứng dụng cụ thể.</li>
+            <li>Đề xuất tính năng, kiểu gõ hoặc bảng mã mới.</li>
+            <li>Góp ý cho ViFastTts? Gửi ở trang ViFastTts.</li>
+          </ul>
+        </div>
+        <form class="feedback-form" id="feedback-form">
+          <label class="feedback-label" for="feedback-category">Loại</label>
+          <select class="select" id="feedback-category" name="category">
+            <option value="gop_y">Góp ý chung</option>
+            <option value="cai_tien">Đề xuất cải tiến</option>
+            <option value="bao_loi">Báo lỗi</option>
+          </select>
+          <label class="feedback-label" for="feedback-message">Nội dung</label>
+          <textarea class="feedback-message" id="feedback-message" name="message" rows="4" minlength="5" maxlength="1000" required placeholder="Ví dụ: gõ “tieengs” trên Firefox ra sai dấu…"></textarea>
+          <label class="feedback-label" for="feedback-contact">Liên hệ (không bắt buộc)</label>
+          <input class="feedback-input" id="feedback-contact" name="contact" type="text" maxlength="120" autocomplete="email" placeholder="Email hoặc cách liên hệ">
+          <input class="feedback-hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="feedback-actions">
+            <span class="feedback-status" id="feedback-status" role="status"></span>
+            <button class="primary-btn" type="submit" id="feedback-submit">Gửi góp ý</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+
+    <section class="section wrap">
+      <div class="section-head compact" id="thong-ke">
+        <div>
+          <div class="eyebrow">Thống kê</div>
+          <h2>Con số ẩn danh.</h2>
+        </div>
+        <p>Số liệu tổng hợp từ API Python, tự làm mới khi tải trang. Không lưu nội dung bạn gõ.</p>
+      </div>
+      <div class="stats-panel">
+        <div class="stats-grid">
+          <div class="stat-card"><strong id="stat-pageviews">—</strong><span>lượt xem trang</span></div>
+          <div class="stat-card"><strong id="stat-demos">—</strong><span>lượt chạy API</span><small id="stat-demos-today"></small></div>
+          <div class="stat-card"><strong id="stat-visitors">—</strong><span>khách ẩn danh</span></div>
+          <div class="stat-card"><strong id="stat-chars">—</strong><span>ký tự đã chuyển</span></div>
+          <div class="stat-card"><strong id="stat-feedback">—</strong><span>góp ý / báo lỗi</span></div>
+          <div class="stat-card"><strong id="stat-downloads">—</strong><span>lượt bấm tải</span><small id="stat-downloads-today"></small></div>
+        </div>
+        <div class="stats-downloads">
+          <h3>Lượt bấm tải theo nền tảng</h3>
+          <div id="download-platforms"><p class="stats-empty">Đang tải…</p></div>
+        </div>
+        <p class="stats-note">“Khách ẩn danh” là ước lượng theo hash visitor/IP; không lưu nội dung gõ thử hay IP thô. Lượt tải chỉ đếm lúc bấm nút trên landing, không phải số file đã tải xong. <a href="/admin">Mở trang admin ↗</a></p>
+      </div>
+    </section>
+  
+  <!-- bản phát hành công khai: lấy từ GitHub Releases qua /api/releases -->
+  <section id="ban-phat-hanh" class="vf-rel" aria-labelledby="vf-rel-title">
+    <style>
+      .vf-rel{max-width:1080px;margin:0 auto;padding:56px 20px 8px}
+      .vf-rel h2{font-size:clamp(22px,2.4vw,30px);margin:0 0 6px}
+      .vf-rel .vf-rel-sub{margin:0 0 22px;opacity:.75;font-size:15px}
+      .vf-rel-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+      .vf-rel-card{border:1px solid rgba(155,44,32,.18);border-radius:14px;padding:16px 18px;background:rgba(255,252,247,.92)}
+      .vf-rel-tag{display:inline-block;font:600 13px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;
+        border:1px solid rgba(155,44,32,.35);border-radius:999px;padding:2px 10px;margin-bottom:8px}
+      .vf-rel-name{font-weight:650;margin:0 0 4px}
+      .vf-rel-meta{font-size:13px;opacity:.7;margin:0 0 8px}
+      .vf-rel-sum{font-size:14px;line-height:1.5;margin:0 0 10px;opacity:.9}
+      .vf-rel-sum code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.92em;
+        background:rgba(155,44,32,.09);border-radius:4px;padding:1px 4px}
+      .vf-rel-sum strong{font-weight:650}
+      .vf-rel-card a{font-size:14px}
+      .vf-rel-empty,.vf-rel-load{opacity:.75;font-size:15px;padding:6px 0}
+      @media (prefers-color-scheme: dark){
+        .vf-rel-card{background:rgba(28,20,18,.72);border-color:rgba(229,53,43,.28)}
+        .vf-rel-tag{border-color:rgba(229,53,43,.45)}
+      }
+    </style>
+    <h2 id="vf-rel-title">Bản phát hành</h2>
+    <p class="vf-rel-sub">Tải trực tiếp từ GitHub Releases của <code>vifast-oss/ViFastKey</code>.</p>
+    <div class="vf-rel-grid" id="vf-rel-list" data-api="/api/releases">
+      <p class="vf-rel-load">Đang tải…</p>
+    </div>
+    <p style="margin:18px 0 0"><a href="https://github.com/vifast-oss/ViFastKey/releases" target="_blank" rel="noopener">Xem tất cả bản phát hành trên GitHub →</a></p>
+  </section>
+  <script src="releases.js?v=20261108b" defer></script>
+</main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <div class="footer-brand">
+        <img src="brand/vifastkey-icon-192.png" width="32" height="32" alt="">
+        <span><strong>ViFastKey</strong> · Bộ gõ tiếng Việt</span>
+      </div>
+      <p>Dự án cá nhân · mã nguồn MIT trên GitHub · Logo do chủ dự án cung cấp</p>
+      <p class="footer-stats" id="footer-stats">Python API · đang tải thống kê…</p>
+      <div class="footer-links">
+        <a href="/">Trang chủ</a>
+        <a href="https://vifast.org">vifast.org</a>
+        <a href="/INSTALL.md" target="_blank" rel="noopener">Cài đặt</a>
+        <a href="https://tts.vifast.org/" target="_blank" rel="noopener">ViFastTts</a>
+        <a href="#san-pham">Sản phẩm</a>
+        <a href="#api">API</a>
+        <a href="#go-thu">Gõ thử</a>
+        <a href="#gop-y">Góp ý</a>
+        <a href="#thong-ke">Số liệu</a>
+        <a href="/admin">Admin</a>
+      </div>
+    </div>
+  </footer>
+
+  <script type="module" src="app.js?v=20261105a"></script>
+  <script type="module" src="server-demo.js?v=20261105a"></script>
+  <script src="ui.js?v=20261108" defer></script>
+<script>window.addEventListener("load",function(){document.getElementById("site-nav").classList.add("is-open");});</script>
+</body>
+</html>
