@@ -22,7 +22,7 @@ env_logger = "0.11"
 wayland-client = "0.31"
 wayland-protocols = { version = "0.32", features = ["client", "unstable"] }
 wayland-protocols-misc = { version = "0.3", features = ["client"] }
-xkbcommon = { version = "0.8", features = ["wayland"] }
+xkbcommon = { version = "0.9", features = ["wayland"] }
 libc = "0.2"
 
 [dev-dependencies]

@@ -18,8 +18,8 @@ vfk-adapter-core = { workspace = true }
 vi-syllable = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-eframe = "0.32.3"
-egui = "0.32.3"
+eframe = "0.37.0"
+egui = "0.37.0"
 rfd = "0.17"
 png = "0.18"
 
@@ -39,7 +39,7 @@ windows-sys = { version = "0.61.2", features = [
 ksni = { version = "0.3.7", features = ["blocking"] }
 
 [target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
-tray-icon = { version = "0.24.2", default-features = false }
+tray-icon = { version = "0.26.1", default-features = false }
 
 [dev-dependencies]
 tempfile = "3"
