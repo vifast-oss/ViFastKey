@@ -1,13 +1,20 @@
+# Production compose for key.vifast.org (ViFastKey web).
+# Runs on the jp host; container joins the external `coolify` network so the
+# Coolify Traefik instance on jp discovers it through docker labels.
+#
+#   docker compose up -d --build
+
 services:
   vifastkey:
     build: .
+    image: vifastkey-web:latest
     container_name: vifastkey
     restart: unless-stopped
     environment:
       DATA_DIR: "/app/data"
       DOWNLOADS_DIR: "/app/downloads"
-      SITE_URL: "https://vifastkey.hoctuthien.com"
-      ALLOWED_HOSTS: "vifastkey.hoctuthien.com,localhost,127.0.0.1"
+      SITE_URL: "https://key.vifast.org"
+      ALLOWED_HOSTS: "key.vifast.org,localhost,127.0.0.1"
       ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
       STATS_SALT: "${STATS_SALT:-}"
     volumes:
@@ -31,11 +38,11 @@ services:
       - "traefik.docker.network=coolify"
       - "traefik.http.middlewares.vifastkey-redirect.redirectscheme.scheme=https"
       - "traefik.http.middlewares.vifastkey-compress.compress=true"
-      - "traefik.http.routers.vifastkey-http.rule=Host(`vifastkey.hoctuthien.com`)"
+      - "traefik.http.routers.vifastkey-http.rule=Host(`key.vifast.org`)"
       - "traefik.http.routers.vifastkey-http.entrypoints=http"
       - "traefik.http.routers.vifastkey-http.middlewares=vifastkey-redirect"
       - "traefik.http.routers.vifastkey-http.service=vifastkey"
-      - "traefik.http.routers.vifastkey-https.rule=Host(`vifastkey.hoctuthien.com`)"
+      - "traefik.http.routers.vifastkey-https.rule=Host(`key.vifast.org`)"
       - "traefik.http.routers.vifastkey-https.entrypoints=https"
       - "traefik.http.routers.vifastkey-https.middlewares=vifastkey-compress"
       - "traefik.http.routers.vifastkey-https.tls=true"
@@ -48,7 +55,6 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
-    stop_grace_period: 10s
 
 networks:
   coolify:
