@@ -6,7 +6,7 @@
   <version>0.1.2</version>
   <author>ViFastKey contributors</author>
   <license>MIT</license>
-  <homepage>https://github.com/dvchd/ViFastKey</homepage>
+  <homepage>https://github.com/vifast-oss/ViFastKey</homepage>
   <textdomain>vifastkey</textdomain>
   <engines>
     <engine>

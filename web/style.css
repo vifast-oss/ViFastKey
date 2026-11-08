@@ -2214,3 +2214,8 @@ code {
 @media (max-width: 700px) {
   .fix-log { grid-template-columns: 1fr; }
 }
+
+/* link tro ve trang chu thuong hieu */
+.nav .nav-home, .site-nav .nav-home { font-weight: 600; opacity: .85; }
+.nav .nav-home:hover, .nav .nav-home:focus-visible,
+.site-nav .nav-home:hover, .site-nav .nav-home:focus-visible { opacity: 1; text-decoration: underline; text-underline-offset: 3px; }

@@ -35,9 +35,9 @@ vfk-suggest = "apps.vfk_suggest:main"
 vfk-emoji = "apps.vfk_emoji:main"
 
 [project.urls]
-Homepage = "https://github.com/dvchd/ViFastKey"
-Repository = "https://github.com/dvchd/ViFastKey"
-Documentation = "https://github.com/dvchd/ViFastKey#readme"
+Homepage = "https://github.com/vifast-oss/ViFastKey"
+Repository = "https://github.com/vifast-oss/ViFastKey"
+Documentation = "https://github.com/vifast-oss/ViFastKey#readme"
 
 [tool.setuptools]
 py-modules = ["vfk_adapter_core"]

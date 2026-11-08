@@ -98,7 +98,7 @@ def og_image(lockup: Image.Image) -> Image.Image:
     f_big = ImageFont.truetype(str(FONTS / "Arial Bold.ttf"), 32)
     f_small = ImageFont.truetype(str(FONTS / "Arial.ttf"), 24)
     d.text((600, 500), "Bộ gõ tiếng Việt · Telex · VNI · chạy local", font=f_big, fill=INK, anchor="mm")
-    d.text((600, 548), "github.com/dvchd/ViFastKey", font=f_small, fill=RED, anchor="mm")
+    d.text((600, 548), "github.com/vifast-oss/ViFastKey", font=f_small, fill=RED, anchor="mm")
     d.text((600, 590), "Nhỏ · nhanh · thuần logic", font=f_small, fill=MUTED, anchor="mm")
     return im
 

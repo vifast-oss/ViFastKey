@@ -23,7 +23,7 @@ version = "0.1.2"
 edition = "2021"
 rust-version = "1.89"
 license = "MIT"
-repository = "https://github.com/dvchd/ViFastKey"
+repository = "https://github.com/vifast-oss/ViFastKey"
 
 [workspace.dependencies]
 vi-syllable = { path = "crates/vi-syllable", default-features = false }

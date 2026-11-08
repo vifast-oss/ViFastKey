@@ -1,6 +1,6 @@
 [Unit]
 Description=ViFastKey Wayland input method
-Documentation=https://github.com/dvchd/ViFastKey
+Documentation=https://github.com/vifast-oss/ViFastKey
 After=graphical-session.target
 PartOf=graphical-session.target
 
