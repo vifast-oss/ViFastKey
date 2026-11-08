@@ -118,7 +118,7 @@ code {
 }
 
 .brand-word {
-  font-size: 25px;
+  font-size: 24px;
   font-weight: 800;
   letter-spacing: -1.1px;
   line-height: 1;
@@ -1606,7 +1606,7 @@ code {
 /* ---------------------------------------------------------------- products */
 .product-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 16px;
 }
 
