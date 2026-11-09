@@ -19,6 +19,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY --chown=app:app app.py /app/app.py
+COPY --chown=app:app admin_portal.py /app/admin_portal.py
 COPY --chown=app:app python /app/python
 COPY --chown=app:app static /app/static
 

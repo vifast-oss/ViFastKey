@@ -10,17 +10,15 @@ API chạy chính engine Python (oracle) và các tiện ích công khai:
 * ``POST /api/download``  — đếm lượt bấm nút tải theo nền tảng
 * ``POST /api/visit``     — đếm lượt xem ẩn danh
 * ``POST /api/feedback``  — góp ý/báo lỗi, chỉ admin xem
-* ``GET  /admin``         — bảng điều khiển (Basic Auth nếu có ADMIN_PASSWORD)
+* ``GET  /admin``         — bảng điều khiển (cần đăng nhập ở /login)
 
 Chỉ dùng thư viện chuẩn của ViFastKey + FastAPI/uvicorn. Không gọi mạng.
 """
 
 from __future__ import annotations
 
-import base64
 import csv
 import hashlib
-import hmac
 import html
 import io
 import logging
@@ -50,8 +48,11 @@ from fastapi.responses import (
     HTMLResponse,
     JSONResponse,
     PlainTextResponse,
+    RedirectResponse,
 )
 from fastapi.staticfiles import StaticFiles
+
+from admin_portal import Portal
 from pydantic import BaseModel, ConfigDict, Field
 from vfk_core.charset import (
     DISPLAY_NAMES as CHARSET_NAMES,
@@ -707,21 +708,12 @@ def _type_text(
 
 # ---------------------------------------------------------------- admin
 def _admin_authorized(request: Request) -> bool:
-    if not ADMIN_PASSWORD:
-        return True
-    header = request.headers.get("authorization", "")
-    expected = "Basic " + base64.b64encode(f"admin:{ADMIN_PASSWORD}".encode()).decode(
-        "ascii"
-    )
-    return hmac.compare_digest(header, expected)
+    """Phiên đăng nhập bằng form (cookie ký HMAC); không dùng HTTP Basic."""
+    return portal.auth_ok(request)
 
 
 def _admin_denied() -> Response:
-    return Response(
-        status_code=401,
-        content="Cần đăng nhập admin.",
-        headers={"WWW-Authenticate": 'Basic realm="vifastkey-admin"'},
-    )
+    return RedirectResponse("/login?next=/admin", status_code=303)
 
 
 def _csv_cell(value: object) -> str:
@@ -772,7 +764,7 @@ def _admin_html(stats: dict) -> str:
         for key, label in DOWNLOAD_LABELS.items()
     )
     auth_note = (
-        "Đã bật Basic Auth."
+        "Đã bật đăng nhập bằng mật khẩu."
         if ADMIN_PASSWORD
         else "Đang mở công khai, chưa đặt ADMIN_PASSWORD."
     )
@@ -805,9 +797,10 @@ th{{background:#FDF0EB;color:#9B2C20}} a{{color:#C6281E}}
 .st-read{{background:#EAF2FF;color:#1D4ED8}} .st-resolved{{background:#E5F5EC;color:#166534}}
 .done{{color:#166534;font-size:.8rem;font-weight:700}}
 @media(max-width:700px){{.grid{{grid-template-columns:repeat(2,1fr)}} table{{display:block;overflow-x:auto}}}}
-</style></head><body><main>
+</style><link rel="stylesheet" href="/admin/portal.css"></head><body><main>
 <h1><img class="mark" src="/brand/vifastkey-icon-192.png" alt=""> ViFastKey · Quản trị</h1>
-<p class="sub">Cập nhật {stats["generated_at"]} ({stats["timezone"]}) · tự làm mới 60 giây · <a href="/">về trang chủ</a></p>
+<p class="sub">Cập nhật {stats["generated_at"]} ({stats["timezone"]}) · <a href="/">về trang chủ</a> · <a href="/logout">Đăng xuất</a></p>
+{portal.panel_html()}
 <div class="grid">
   <div class="card"><b>{stats["page_views"]}</b><span>lượt xem trang</span></div>
   <div class="card"><b>{stats["visitors"]}</b><span>khách ẩn danh (hash)</span></div>
@@ -868,6 +861,11 @@ hosts = [
 ]
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=hosts or ["*"])
 
+# Đăng nhập quản trị bằng form + thống kê truy cập (dùng chung admin_portal.py).
+portal = Portal(site="key.vifast.org", title="ViFastKey", db_path=DB_PATH,
+                accent="#C6281E", log=logger)
+portal.install(app)
+
 
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
@@ -902,6 +900,7 @@ async def security_headers(request: Request, call_next):
         response.headers.setdefault("Cache-Control", "no-store")
     elif path == "/" or path.endswith(".html"):
         response.headers.setdefault("Cache-Control", "no-cache")
+    portal.track(request, response.status_code)
     return response
 
 
@@ -1183,7 +1182,7 @@ def admin(request: Request) -> Response:
 @app.get("/admin.json")
 def admin_json(request: Request) -> Response:
     if not _admin_authorized(request):
-        return _admin_denied()
+        return JSONResponse({"error": "unauthorized"}, status_code=401)
     return JSONResponse(_stats_payload(), headers={"Cache-Control": "no-store"})
 
 

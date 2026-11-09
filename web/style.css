@@ -24,7 +24,8 @@
   --error: #b91c1c;
   --radius: 14px;
   --shadow: 0 24px 70px -30px rgba(90, 45, 25, 0.35);
-  --font: "Be Vietnam Pro", system-ui, Arial, sans-serif;
+  --font: "Be Vietnam Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", "DejaVu Sans", sans-serif;
   --mono: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
 }
 

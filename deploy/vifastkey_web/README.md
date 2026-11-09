@@ -47,8 +47,9 @@ PYTHONPATH=python STATIC_DIR=web \
 # http://127.0.0.1:8091
 ```
 
-`/admin` mở công khai khi `ADMIN_PASSWORD` để trống. Đặt `ADMIN_PASSWORD` để bật
-Basic Auth (user `admin`).
+`/admin` khoá khi `ADMIN_PASSWORD` để trống. Đặt `ADMIN_PASSWORD` rồi mở `/login`
+để đăng nhập bằng **form mật khẩu** (cookie phiên ký HMAC, hạn 12 giờ). Trang quản
+trị có thêm bảng **thống kê truy cập** do `admin_portal.py` dựng.
 
 ## Deploy
 
@@ -113,8 +114,10 @@ nên nếu muốn phục vụ từ Coolify của `jp` phải sửa router passth
 
 - SQLite tại `data/stats.sqlite3`, bind mount `./data:/app/data`.
 - Chỉ lưu hash visitor/IP (salt ngẫu nhiên), số ký tự, kiểu gõ, thời gian xử lý.
-- Không lưu nội dung gõ thử. Nội dung góp ý nằm ở `/admin`; mặc định mở công khai,
-  đặt `ADMIN_PASSWORD` để bật Basic Auth.
+- Không lưu nội dung gõ thử. Nội dung góp ý nằm ở `/admin`; mặc định khoá,
+  đặt `ADMIN_PASSWORD` để bật form đăng nhập ở `/login`.
+- Lượt xem trang cho bảng thống kê nằm ở bảng `hits` cùng file SQLite; không lưu
+  IP thô, chỉ hash có muối đổi mỗi ngày.
 - Lượt bấm tải chỉ lưu `platform`, `asset`, `source`, thời gian và hash visitor;
   không lưu IP thô hay nội dung trang.
 - `/admin/feedback.csv` xuất CSV; `/admin.json` trả JSON thống kê.
