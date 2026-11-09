@@ -578,29 +578,33 @@ def _admin_html(stats: dict) -> str:
         actions = []
         if status_key != "read":
             actions.append(
-                f"<form method='post' action='/admin/feedback/{item['id']}/read' style='display:inline'>"
-                f"<button class='tiny'>Đã đọc</button></form>"
+                f"<form method='post' action='/admin/feedback/{item['id']}/read' class='vf-form-inline'>"
+                f"<button class='vf-tiny'>Đã đọc</button></form>"
             )
         if status_key != "resolved":
             actions.append(
-                f"<form method='post' action='/admin/feedback/{item['id']}/resolved' style='display:inline'>"
-                f"<button class='tiny ok'>Đã xử lý</button></form>"
+                f"<form method='post' action='/admin/feedback/{item['id']}/resolved' class='vf-form-inline'>"
+                f"<button class='vf-tiny vf-tiny-ok'>Đã xử lý</button></form>"
             )
         if not actions:
-            actions.append("<span class='done'>Đã xử lý</span>")
+            actions.append("<span class='vf-muted'>Đã xử lý</span>")
+        pill = {"new": "vf-pill vf-pill-new"}.get(status_key, "vf-pill vf-pill-ok")
         rows.append(
-            f"<tr><td>{item['time']}</td><td><span class='cat'>{category}</span></td>"
-            f"<td class='msg'>{message}</td><td>{contact}</td><td>{html.escape(str(item['visitor']))[:10]}</td>"
-            f"<td><span class='st st-{status_key}'>{status}</span></td><td>{' '.join(actions)}</td></tr>"
+            f"<tr><td class='vf-mono'>{item['time']}</td>"
+            f"<td><span class='vf-pill'>{category}</span></td>"
+            f"<td class='vf-msg'>{message}</td><td>{contact}</td>"
+            f"<td class='vf-mono'>{html.escape(str(item['visitor']))[:10]}</td>"
+            f"<td><span class='{pill}'>{status}</span></td><td>{' '.join(actions)}</td></tr>"
         )
-    feedback_rows = "".join(rows) or "<tr><td colspan='7'>Chưa có góp ý nào.</td></tr>"
+    feedback_rows = "".join(rows) or '<tr><td colspan="7" class="vf-muted">Chưa có góp ý nào.</td></tr>'
     recent_rows = (
         "".join(
-            f"<tr><td>{item['time']}</td><td>{item['chars']}</td><td>{html.escape(str(item['method']))}</td>"
-            f"<td>{html.escape(str(item['tone']))}</td><td>{item['elapsed_ms']:.3f}s</td></tr>"
+            f"<tr><td class='vf-mono'>{item['time']}</td><td class='vf-num'>{item['chars']}</td>"
+            f"<td>{html.escape(str(item['method']))}</td>"
+            f"<td>{html.escape(str(item['tone']))}</td><td class='vf-num'>{item['elapsed_ms']:.3f}s</td></tr>"
             for item in stats["recent"]
         )
-        or "<tr><td colspan='5'>Chưa có lượt chạy API nào.</td></tr>"
+        or '<tr><td colspan="5" class="vf-muted">Chưa có lượt chạy API nào.</td></tr>'
     )
     download_summary = " · ".join(
         f"{label} {int(stats['downloads_by_platform'].get(key, 0))}"
@@ -611,61 +615,55 @@ def _admin_html(stats: dict) -> str:
         if ADMIN_PASSWORD
         else "Đang mở công khai, chưa đặt ADMIN_PASSWORD."
     )
-    return f"""<!doctype html><html lang="vi"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="60">
-<title>ViFastKey · Quản trị</title>
-<link rel="icon" href="/brand/favicon.ico" sizes="any">
-<style>
-body{{font-family:Arial,"Helvetica Neue",Helvetica,sans-serif;background:#FBF6EE;color:#1F2430;margin:0;padding:28px}}
-main{{max-width:1040px;margin:0 auto}} h1{{letter-spacing:-.03em;margin:0 0 4px;display:flex;align-items:center;gap:9px}}
-.mark{{width:38px;height:38px;border-radius:9px;flex:0 0 auto}}
-.sub{{color:#637083;margin:0 0 20px}} .grid{{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}}
-.card{{background:#fff;border:1px solid #dbe3ea;border-radius:12px;padding:14px}}
-.card b{{display:block;font-size:1.55rem;color:#C6281E}} .card span{{color:#637083;font-size:.84rem}}
-table{{width:100%;border-collapse:collapse;background:#fff;border:1px solid #dbe3ea;border-radius:12px;overflow:hidden;margin-top:18px}}
-th,td{{text-align:left;padding:9px 12px;border-bottom:1px solid #edf1f3;font-size:.86rem}}
-th{{background:#FDF0EB;color:#9B2C20}} a{{color:#C6281E}}
-.note{{background:#fff8e8;border:1px solid #f0d49a;padding:10px 12px;border-radius:10px;color:#7a4b00;font-size:.86rem;margin-top:16px}}
-.tiny{{padding:4px 8px;font-size:.78rem;border-radius:7px;border:1px solid #cbd6df;background:#f4f7f8;cursor:pointer}}
-.tiny.ok{{background:#e5f5ec;border-color:#b8e2c8;color:#166534}}
-.msg{{max-width:390px;white-space:normal;line-height:1.45;overflow-wrap:anywhere}}
-.cat,.st{{display:inline-block;padding:2px 7px;border-radius:999px;font-size:.76rem;white-space:nowrap}}
-.cat{{background:#FDF0EB;color:#9B2C20}} .st-new{{background:#FFF4D6;color:#7A4B00}}
-.st-read{{background:#EAF2FF;color:#1D4ED8}} .st-resolved{{background:#E5F5EC;color:#166534}}
-.done{{color:#166534;font-size:.8rem;font-weight:700}}
-@media(max-width:700px){{.grid{{grid-template-columns:repeat(2,1fr)}} table{{display:block;overflow-x:auto}}}}
-</style><link rel="stylesheet" href="/admin/portal.css"></head><body><main>
-<h1><img class="mark" src="/brand/vifastkey-icon-192.png" alt=""> ViFastKey · Quản trị</h1>
-<p class="sub">Cập nhật {stats["generated_at"]} ({stats["timezone"]}) · <a href="/">về trang chủ</a> · <a href="/logout">Đăng xuất</a></p>
+    cards = "".join(
+        f'<div class="vf-card"><span class="vf-card-label">{label}</span>'
+        f'<span class="vf-card-value">{value}</span></div>'
+        for label, value in (
+            ("Lượt xem trang", stats["page_views"]),
+            ("Khách ẩn danh", stats["visitors"]),
+            ("Lượt chạy API", stats["demos"]),
+            ("Lượt chạy hôm nay", stats["demos_today"]),
+            ("Khách hôm nay", stats["visitors_today"]),
+            ("Ký tự đã chuyển", stats["chars_total"]),
+            ("Ký tự / lượt", stats["avg_chars"]),
+            ("Xử lý trung bình", f'{stats["avg_ms"]:.2f} ms'),
+            ("Góp ý / báo lỗi", stats["feedback_total"]),
+            ("Góp ý mới", stats["feedback_new"]),
+            ("Lượt bấm tải", stats["downloads_total"]),
+            ("Tải hôm nay", stats["downloads_today"]),
+        )
+    )
+
+    content = f"""
 {portal.panel_html()}
-<div class="grid">
-  <div class="card"><b>{stats["page_views"]}</b><span>lượt xem trang</span></div>
-  <div class="card"><b>{stats["visitors"]}</b><span>khách ẩn danh (hash)</span></div>
-  <div class="card"><b>{stats["demos"]}</b><span>lượt chạy API Python</span></div>
-  <div class="card"><b>{stats["demos_today"]}</b><span>lượt chạy hôm nay</span></div>
-  <div class="card"><b>{stats["visitors_today"]}</b><span>khách hôm nay</span></div>
-  <div class="card"><b>{stats["chars_total"]}</b><span>ký tự đã chuyển</span></div>
-  <div class="card"><b>{stats["avg_chars"]}</b><span>ký tự / lượt</span></div>
-  <div class="card"><b>{stats["avg_ms"]:.2f} ms</b><span>xử lý trung bình</span></div>
-  <div class="card"><b>{stats["feedback_total"]}</b><span>góp ý / báo lỗi</span></div>
-  <div class="card"><b>{stats["feedback_new"]}</b><span>góp ý mới</span></div>
-  <div class="card"><b>{stats["downloads_total"]}</b><span>lượt bấm tải</span></div>
-  <div class="card"><b>{stats["downloads_today"]}</b><span>lượt bấm tải hôm nay</span></div>
+<h2 class="vf-h2">Tổng quan</h2>
+<div class="vf-cards">{cards}</div>
+
+<h2 class="vf-h2">Lượt bấm tải theo nền tảng</h2>
+<p class="vf-muted">{download_summary}</p>
+
+<h2 class="vf-h2">Góp ý &amp; báo lỗi</h2>
+<p class="vf-muted">{auth_note} · <a class="vf-link" href="/admin/feedback.csv">Tải CSV</a></p>
+<div class="vf-scroll">
+  <table class="vf-table">
+    <thead><tr><th>Thời điểm</th><th>Loại</th><th>Nội dung</th><th>Liên hệ</th><th>Ẩn danh</th><th>Trạng thái</th><th>Cập nhật</th></tr></thead>
+    <tbody>{feedback_rows}</tbody>
+  </table>
 </div>
-<h2 style="margin:24px 0 4px">Lượt bấm tải theo nền tảng</h2>
-<p class="sub">{download_summary}</p>
-<h2 style="margin:24px 0 4px">Góp ý &amp; báo lỗi</h2>
-<p class="sub">{auth_note} · <a href="/admin/feedback.csv">Tải CSV</a></p>
-<table><thead><tr><th>Thời điểm</th><th>Loại</th><th>Nội dung</th><th>Liên hệ</th><th>Ẩn danh</th><th>Trạng thái</th><th>Cập nhật</th></tr></thead>
-<tbody>{feedback_rows}</tbody></table>
-<h2 style="margin:24px 0 4px">Lượt chạy API gần đây</h2>
-<table><thead><tr><th>Thời điểm</th><th>Ký tự</th><th>Kiểu gõ</th><th>Dấu</th><th>Xử lý</th></tr></thead>
-<tbody>{recent_rows}</tbody></table>
-<div class="note">Chỉ lưu hash visitor/IP, số ký tự, thời gian xử lý; không lưu nội dung bạn gõ.
-Nội dung góp ý chỉ admin đã đăng nhập mới xem được. {auth_note}
-Lượt bấm tải chỉ đếm click trên landing, không xác nhận file đã tải xong.</div>
-</main></body></html>"""
+
+<h2 class="vf-h2">Lượt chạy API gần đây</h2>
+<div class="vf-scroll">
+  <table class="vf-table">
+    <thead><tr><th>Thời điểm</th><th>Ký tự</th><th>Kiểu gõ</th><th>Dấu</th><th>Xử lý</th></tr></thead>
+    <tbody>{recent_rows}</tbody>
+  </table>
+</div>
+
+<p class="vf-note">Chỉ lưu hash visitor/IP, số ký tự và thời gian xử lý; không lưu nội dung bạn gõ.
+Nội dung góp ý chỉ người đã đăng nhập mới xem được. {auth_note}
+Lượt bấm tải chỉ đếm click trên trang chủ, không xác nhận file đã tải xong.</p>
+"""
+    return portal.shell(content)
 
 
 # ---------------------------------------------------------------- app
@@ -698,7 +696,8 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=hosts or ["*"])
 
 # Đăng nhập quản trị bằng form + thống kê truy cập (dùng chung admin_portal.py).
 portal = Portal(site="key.vifast.org", title="ViFastKey", db_path=DB_PATH,
-                accent="#C6281E", log=logger)
+                accent="#C6281E", log=logger,
+                favicon="/brand/favicon.ico", admin_key="key")
 portal.install(app)
 
 
