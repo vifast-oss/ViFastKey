@@ -13,7 +13,7 @@ Mình làm dự án này với mong muốn có một bộ gõ nhẹ, dễ dùng 
 Tải và xem hướng dẫn cài:
 https://key.vifast.org/#tai-ve
 
-P.S. Tài khoản GitHub của mình đang bị khoá nên mã nguồn chưa public. Khi được mở khoá, mình sẽ để mã nguồn mở theo giấy phép MIT. Việc này không ảnh hưởng đến bản cài và sử dụng hiện tại.
+P.S. Tài khoản GitHub của mình đang bị khoá nên mã nguồn chưa public. Khi được mở khoá, mình sẽ để mã nguồn mở theo giấy phép MIT hoặc Apache-2.0. Việc này không ảnh hưởng đến bản cài và sử dụng hiện tại.
 
 Cảm ơn mọi người đã ghé đọc 🍀
 

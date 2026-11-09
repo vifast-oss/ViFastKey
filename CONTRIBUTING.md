@@ -77,4 +77,5 @@ Sau đó thêm golden test, chạy `export_conformance`, port sang Rust và cậ
 
 ## Giấy phép
 
-Code là MIT. Logo/wordmark trong `resources/brand/` không thuộc phạm vi MIT.
+Code là MIT hoặc Apache-2.0, tuỳ chọn (`LICENSE-MIT` / `LICENSE-APACHE`). Logo/wordmark trong
+`resources/brand/` không thuộc phạm vi hai giấy phép đó.

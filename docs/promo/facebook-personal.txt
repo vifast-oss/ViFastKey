@@ -22,7 +22,7 @@ https://key.vifast.org/downloads/0.1.2/vifastkey-uefi-x86_64.zip
 
 Lưu ý: UEFI hiện là demo app tự chứa, chưa gõ được vào BIOS/UEFI Setup hay UEFI Shell.
 
-Tài khoản GitHub của mình đang bị khoá nên mã nguồn chưa public. Khi được mở khoá, mình sẽ open source theo giấy phép MIT. Trong lúc chờ, bản cài vẫn tải được từ trang chủ.
+Tài khoản GitHub của mình đang bị khoá nên mã nguồn chưa public. Khi được mở khoá, mình sẽ open source theo giấy phép MIT hoặc Apache-2.0. Trong lúc chờ, bản cài vẫn tải được từ trang chủ.
 
 Dùng thử và góp ý giúp mình nhé, nhất là lỗi gõ trên app thật và trải nghiệm UEFI.
 

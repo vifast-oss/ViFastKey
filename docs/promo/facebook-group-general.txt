@@ -10,7 +10,7 @@ Mình làm bộ gõ này với mong muốn có một lựa chọn đơn giản, 
 
 Bản đầu tiên vẫn đang hoàn thiện, nên mình rất mong mọi người dùng thử và góp ý. Nếu thấy chỗ nào chưa thuận tay, chưa đúng ý, mọi người cứ nói giúp mình nhé.
 
-Tài khoản GitHub của mình đang bị khoá nên mã nguồn chưa public; khi được mở khoá mình sẽ để mã nguồn mở theo giấy phép MIT.
+Tài khoản GitHub của mình đang bị khoá nên mã nguồn chưa public; khi được mở khoá mình sẽ để mã nguồn mở theo giấy phép MIT hoặc Apache-2.0.
 
 Ảnh bên dưới có thông tin và QR; mình không để link trong bài để tránh bị group lọc. Mọi người xem ảnh giúp mình nhé.
 

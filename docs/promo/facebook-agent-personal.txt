@@ -11,7 +11,7 @@ Mình cũng ghi runbook + tiêu chí vào AGENTS.md để agent nào làm cũng 
 
 Điều mình học: AI Agent rất giỏi tăng tốc vòng lặp code/test, nhưng chất lượng đến từ spec rõ + test tự động + người kiểm chứng. Agent viết rất nhanh, nhưng nếu không có "cửa chặn" thì cũng sai rất nhanh.
 
-Dự án hiện có bản Windows, macOS, Linux, Android, web/WASM và demo UEFI. Mã nguồn dự kiến MIT khi GitHub mở khoá.
+Dự án hiện có bản Windows, macOS, Linux, Android, web/WASM và demo UEFI. Mã nguồn dự kiến MIT hoặc Apache-2.0 khi GitHub mở khoá.
 
 Tải và dùng thử:
 https://key.vifast.org/#tai-ve

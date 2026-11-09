@@ -10,7 +10,7 @@
 - UEFI demo: `uefi/` — workspace riêng, dùng lại `vfk-core`; không fork engine.
 - Web + deploy: `web/` (static) và `deploy/vifastkey_web/` (FastAPI).
 - Ảnh/promo: `docs/promo/`.
-- Tài khoản GitHub của chủ dự án đang bị khoá; khi mở khoá sẽ public theo MIT.
+- Tài khoản GitHub của chủ dự án đang bị khoá; khi mở khoá sẽ public theo MIT hoặc Apache-2.0.
   Không tự tạo release GitHub mới nếu chưa được yêu cầu.
 
 ## 2. Kiểm tra trước khi báo xong

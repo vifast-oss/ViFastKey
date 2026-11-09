@@ -47,4 +47,5 @@ Xử lý sự cố
 - Không có màn hình/graphics: firmware không cung cấp GOP; app báo lỗi và thoát.
 - F10 quay về boot menu là bình thường; rút USB rồi khởi động lại máy.
 
-Mã nguồn và giấy phép: MIT. Font Be Vietnam Pro dùng SIL OFL 1.1.
+Mã nguồn và giấy phép: MIT hoặc Apache-2.0 (`LICENSE-MIT` / `LICENSE-APACHE`).
+Font Be Vietnam Pro dùng SIL OFL 1.1.

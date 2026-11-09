@@ -1,6 +1,6 @@
 # Học từ ViFastTts cho adapter macOS
 
-ViFastTts là dự án TTS (MIT code), không phải IME, nhưng có nhiều quyết định kỹ thuật
+ViFastTts là dự án TTS (code MIT hoặc Apache-2.0), không phải IME, nhưng có nhiều quyết định kỹ thuật
 chuyển được sang ViFastKey. Báo cáo đầy đủ: [`research/07-vifasttts.md`](research/07-vifasttts.md).
 
 ## 1. Điều đã áp dụng ngay
@@ -45,7 +45,7 @@ chuyển được sang ViFastKey. Báo cáo đầy đủ: [`research/07-vifasttt
    `normalize_app_id` ở engine + adapter.
 6. **Escape**: commit raw nhưng không forward Esc; đã sửa engine và adapter.
 7. **Signing**: ad-hoc làm TCC/input-source không ổn định; dùng Developer ID.
-8. **Không copy asset/model**: ViFastTts model/data không thuộc MIT; chỉ học pattern.
+8. **Không copy asset/model**: ViFastTts model/data không thuộc giấy phép của code; chỉ học pattern.
 
 ## 4. Quyết định cho macOS adapter
 

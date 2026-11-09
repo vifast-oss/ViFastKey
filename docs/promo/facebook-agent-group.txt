@@ -10,7 +10,7 @@ Mình ghi runbook + tiêu chí vào AGENTS.md để agent nào làm cũng theo c
 
 Bài học lớn nhất của mình: AI Agent giúp đi nhanh hơn rất nhiều, nhưng nếu spec mơ hồ và không có test tự động thì nó cũng "ảo" rất nhanh. Càng làm mình càng thấy phần khó không phải là gõ code, mà là đặt đúng bài toán và kiểm chứng kết quả.
 
-Tài khoản GitHub của mình đang bị khoá nên mã nguồn chưa public; khi mở khoá mình sẽ để MIT.
+Tài khoản GitHub của mình đang bị khoá nên mã nguồn chưa public; khi mở khoá mình sẽ để MIT hoặc Apache-2.0.
 
 Ảnh bên dưới có workflow và QR; mình không để link trong bài để tránh bị group lọc. Mọi người xem ảnh giúp mình nhé.
 

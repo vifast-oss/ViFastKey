@@ -322,4 +322,4 @@ Xcode. TSF cũ nằm trong `windows/tsf/` chỉ để tham khảo/legacy, **khô
 
 ## Giấy phép
 
-Mã nguồn MIT. Xem `LICENSE` và `THIRD_PARTY_NOTICES.md`.
+Mã nguồn MIT hoặc Apache-2.0. Xem `LICENSE-MIT`, `LICENSE-APACHE` và `THIRD_PARTY_NOTICES.md`.

@@ -87,7 +87,7 @@ Ký hiệu: ✅ mạnh · ◐ có nhưng chưa chín/giới hạn · — không 
 | Ký/notarize/auto-update | — | ◐ | ◐ | ◐ | ◐ | ✅ | ✅ | ◐ | ◐ |
 | Test adapter tự động | ✅ | ✅ | ✅ | ✅ | — | — | — | ◐ | — |
 | Conformance corpus | ✅ 16k+ | — | — | — | — | — | — | — | — |
-| License | MIT | MIT | GPL-3.0 | GPL-3.0 | GPL-3.0 | GPL-3.0 | BSD-3 | GPL-3.0 | MIT |
+| License | MIT / Apache-2.0 | MIT | GPL-3.0 | GPL-3.0 | GPL-3.0 | GPL-3.0 | BSD-3 | GPL-3.0 | MIT |
 
 Ghi chú:
 
@@ -240,7 +240,7 @@ trình bày và discoverability.
 | Direct rewrite | Chỉ khi Replace | Mặc định |
 | App compatibility | Capability + preset nhỏ | Danh sách hàng trăm app |
 | Packaging | Chưa | Đầy đủ |
-| License | MIT | MIT |
+| License | MIT / Apache-2.0 | MIT |
 
 **Kết luận:** Areca là **playbook adapter**; ViFastKey là **playbook engine +
 đặc tả**. Hai dự án bổ sung nhau. Nếu ViFastKey muốn vượt Areca trên Linux,
@@ -256,7 +256,7 @@ engine.
 | Test | Engine nặng, adapter vừa | 57 headless, adapter + golden |
 | UX | egui 6 tab | Qt/Python, emoji picker |
 | Engine | Riêng | C++ port bamboo-core |
-| License | MIT | GPL-3.0 |
+| License | MIT / Apache-2.0 | GPL-3.0 |
 
 **Kết luận:** Lotus thắng về trải nghiệm và số mode; ViFastKey thắng về tính
 đúng engine, đặc tả và license. Nếu người dùng Linux muốn "nhiều tính năng",
@@ -272,7 +272,7 @@ tốt hơn nhưng phải hoàn thiện adapter.
 | GUI | egui | Qt6 |
 | Test | 16k+ conformance | 8 file CTest + setup test |
 | Packaging | Chưa | PPA/Fedora/openSUSE/Arch/Nix |
-| License | MIT | GPL-3.0 |
+| License | MIT / Apache-2.0 | GPL-3.0 |
 
 **Kết luận:** SKey là "Areca nhẹ": ít tham vọng hơn nhưng đủ mode và đóng gói
 tốt. ViFastKey hơn về engine/test; thua về mode và phân phối.
@@ -299,7 +299,7 @@ IBus được test kỹ trên Wayland.
 | Windows | Hook-only | Hook + SendInput |
 | Linux | Fcitx5/IBus | Chưa hoàn thiện |
 | Tính năng | Charset/CLI/test | Convert tool, per-app charset |
-| License | MIT | GPL-3.0 |
+| License | MIT / Apache-2.0 | GPL-3.0 |
 
 **Kết luận:** OpenKey thắng tuyệt đối về độ chín macOS. ViFastKey thắng về
 engine/test/đa nền tảng. Trên macOS, người dùng phổ thông nên chọn OpenKey/Gõ
@@ -314,7 +314,7 @@ Nhanh; người cần charset/CLI có thể chọn ViFastKey.
 | macOS UX | IMK cơ bản | Sản phẩm hoàn thiện |
 | Windows/Linux | Hook / Fcitx5+IBus | Beta |
 | Test | 16k+ conformance | Test + CI, ít conformance |
-| License | MIT | BSD-3 |
+| License | MIT / Apache-2.0 | BSD-3 |
 
 **Kết luận:** Gõ Nhanh thắng về trải nghiệm gõ Anh/Việt và macOS; ViFastKey
 thắng về độ phủ tiếng Việt, charset và đa nền tảng. Đây là đối thủ gần nhất
@@ -371,7 +371,7 @@ thấy hình dạng, không để tranh cãi điểm lẻ.
 4. **Đa nền tảng thật**: 8 đích, cùng một engine.
 5. **Adapter-core dùng chung**: field policy, surrounding guard, action plan,
    timing — một lần viết, nhiều port.
-6. **License MIT** trong khi đa số đối thủ GPL.
+6. **License MIT / Apache-2.0** trong khi đa số đối thủ GPL.
 7. **UEFI demo**: duy nhất trong khảo sát.
 
 ### Ngang top
@@ -444,7 +444,7 @@ thấy hình dạng, không để tranh cãi điểm lẻ.
    tốn thời gian và cần test thật.
 3. **Đừng cố thắng mọi trục.** Areca thắng adapter, Lotus thắng tính năng,
    OpenKey/Gõ Nhanh thắng macOS. ViFastKey nên giữ lợi thế **engine đúng +
-   conformance + MIT + đa nền tảng**, rồi chọn 2–3 trục để đuổi:
+   conformance + MIT/Apache-2.0 + đa nền tảng**, rồi chọn 2–3 trục để đuổi:
    Linux fallback, macOS signing, packaging.
 4. **Học Areca ở adapter, không học ở engine.** Engine ViFastKey đã có nhiều
    edge case mà bamboo-core không có (`allow_coda_k`, `đ` viết tắt, VNI literal

@@ -5,7 +5,7 @@ Tài liệu này tổng hợp phân tích 21 dự án IME tiếng Việt công k
 adapter nền tảng, tính năng nào còn để lại trong roadmap.
 
 Mục tiêu: **không sao chép code/dữ liệu GPL**, chỉ học hành vi, kiến trúc, UX và test case;
-mọi phần triển khai trong repo này là MIT và được viết lại từ đặc tả.
+mọi phần triển khai trong repo này là MIT hoặc Apache-2.0 và được viết lại từ đặc tả.
 
 ## 1. Nguồn đã phân tích
 
@@ -188,4 +188,4 @@ Xem `ADAPTER_GUIDE.md` để biết hợp đồng từng bước.
   VKey, VnKey, Bamboo/Lotus, ibus-unikey...), kể cả khi chỉ là bảng dữ liệu lớn.
 - Nếu muốn dùng bảng mã từ dự án GPL, phải sinh lại từ tiêu chuẩn độc lập hoặc dùng nguồn MIT
   (`bamboo-core`) và giữ ghi công.
-- Logo/wordmark không thuộc MIT; xem `resources/brand/README.md`.
+- Logo/wordmark không thuộc phạm vi giấy phép; xem `resources/brand/README.md`.
