@@ -239,3 +239,15 @@ Hướng dẫn mọi nền tảng: [`docs/INSTALL.md`](docs/INSTALL.md).
 - `CONTRIBUTING.md` — quy trình sửa hành vi, chạy test, đồng bộ conformance.
 - `CHANGELOG.md` — thay đổi theo phiên bản.
 - `ROADMAP.md` — việc còn lại: test tương tác tray/toast Windows, game/anti-cheat, Wayland desktop/app thật, ký/notarize...
+
+## Giấy phép
+
+Mã nguồn phát hành theo **giấy phép kép MIT HOẶC Apache-2.0** — người dùng chọn một trong hai:
+
+- [`LICENSE-MIT`](LICENSE-MIT) — bản ngắn gọn, tương thích GPLv2.
+- [`LICENSE-APACHE`](LICENSE-APACHE) — có điều khoản cấp phép bằng sáng chế (§3).
+
+Biểu thức SPDX: `MIT OR Apache-2.0`. Logo, wordmark và tài nguyên thương hiệu **không** thuộc
+phạm vi hai giấy phép trên — xem [`TRADEMARKS.md`](TRADEMARKS.md). Bảng mã lấy từ bamboo-core,
+font Be Vietnam Pro và các dependency vẫn giữ giấy phép gốc — xem
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).

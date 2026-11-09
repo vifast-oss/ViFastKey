@@ -17,7 +17,8 @@ try {
     Copy-Item (Join-Path $repo "windows\installer\uninstall.ps1") $pkg -Force
     Copy-Item (Join-Path $repo "packaging\windows\README.md") (Join-Path $pkg "README.md") -Force
     Copy-Item (Join-Path $repo "docs\INSTALL.md") (Join-Path $pkg "INSTALL.md") -Force
-    Copy-Item (Join-Path $repo "LICENSE") $pkg -Force
+    Copy-Item (Join-Path $repo "LICENSE-MIT") $pkg -Force
+    Copy-Item (Join-Path $repo "LICENSE-APACHE") $pkg -Force
     Copy-Item (Join-Path $repo "THIRD_PARTY_NOTICES.md") $pkg -Force
 
     $zip = Join-Path $OutDir "vifastkey-windows-hook-$Version.zip"

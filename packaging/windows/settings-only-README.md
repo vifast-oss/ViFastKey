@@ -23,5 +23,5 @@ gói đó có Settings + hook + installer và hướng dẫn đầy đủ.
 Nếu đã cài gói hook, mở từ Start Menu **ViFastKey Settings**.
 Cấu hình nằm tại `%APPDATA%\ViFastKey\config.json`.
 
-Xem `DEVELOPER.md` để build/tùy chỉnh. Mã nguồn MIT; xem `LICENSE` và
+Xem `DEVELOPER.md` để build/tùy chỉnh. Mã nguồn MIT hoặc Apache-2.0; xem `LICENSE-MIT`, `LICENSE-APACHE` và
 `THIRD_PARTY_NOTICES.md`.

@@ -56,5 +56,5 @@ Yêu cầu macOS (Quick Look `qlmanage`) + Pillow + scipy:
 python3 resources/brand/build_assets.py
 ```
 
-Logo do chủ dự án cung cấp. Code repo là MIT; nhãn hiệu/logo không tự động thuộc
-phạm vi giấy phép MIT.
+Logo do chủ dự án cung cấp. Code repo là MIT hoặc Apache-2.0 (`LICENSE-MIT` / `LICENSE-APACHE`);
+nhãn hiệu/logo không tự động thuộc phạm vi hai giấy phép đó.

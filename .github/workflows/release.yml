@@ -59,7 +59,7 @@ jobs:
             cp ../packaging/linux/README.md settings-package/README.md
             cp ../packaging/linux/install.sh ../packaging/linux/uninstall.sh settings-package/
             cp apps/vfk-settings/README.md settings-package/DEVELOPER.md
-            cp ../LICENSE ../THIRD_PARTY_NOTICES.md settings-package/
+            cp ../LICENSE-MIT ../LICENSE-APACHE ../THIRD_PARTY_NOTICES.md settings-package/
             tar -czf ../vifastkey-settings-linux-x86_64.tar.gz -C settings-package .
           fi
       - uses: actions/upload-artifact@v7

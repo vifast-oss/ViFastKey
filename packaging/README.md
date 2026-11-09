@@ -21,7 +21,7 @@ Hướng dẫn và script đóng gói cho người dùng cuối:
 ```
 
 Gói có `README.md` hướng dẫn cài đặt/giới thiệu tính năng, `DEVELOPER.md` cho
-build/kỹ thuật, `LICENSE`, `THIRD_PARTY_NOTICES.md`, installer/uninstaller.
+build/kỹ thuật, `LICENSE-MIT`, `LICENSE-APACHE`, `THIRD_PARTY_NOTICES.md`, installer/uninstaller.
 
 ## Linux
 
@@ -31,7 +31,7 @@ cargo build --release -p vifastkey-settings
 ```
 
 Gói có `README.md`, `DEVELOPER.md`, `install.sh`, `uninstall.sh`, desktop entry,
-icon, `LICENSE`, `THIRD_PARTY_NOTICES.md`.
+icon, `LICENSE-MIT`, `LICENSE-APACHE`, `THIRD_PARTY_NOTICES.md`.
 
 Gói Linux **chỉ là UI cấu hình**; engine IBus/Fcitx5 cài theo `linux/ibus/` hoặc
 `linux/fcitx5/`.

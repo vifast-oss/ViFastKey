@@ -124,7 +124,7 @@ không kéo `charset`, `emoji`, `serde_json` hay `std`.
 
 ## Giấy phép
 
-Code trong thư mục này theo MIT (cùng repo). Font Be Vietnam Pro dùng SIL OFL 1.1:
+Code trong thư mục này theo MIT hoặc Apache-2.0, tuỳ chọn (cùng repo, xem `LICENSE-MIT` / `LICENSE-APACHE`). Font Be Vietnam Pro dùng SIL OFL 1.1:
 `../resources/fonts/BeVietnamPro-OFL.txt`. Dependency: `uefi-rs` (MIT/Apache-2.0),
 `fontdue` (MIT/Apache-2.0/Zlib), `spin` (MIT), `image` (MIT/Apache-2.0),
 `qrcodegen` (MIT).

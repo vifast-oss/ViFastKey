@@ -1,7 +1,9 @@
 # Third-party notices
 
-ViFastKey code is MIT (see `LICENSE`). This file lists data/attribution and research sources.
-Logo/wordmark are not MIT; see `resources/brand/README.md`.
+ViFastKey code is MIT OR Apache-2.0 (see `LICENSE-MIT` and `LICENSE-APACHE`). This file lists
+data/attribution and research sources. Components listed below keep their own licenses; the
+dual license above does not relicense them.
+Logo/wordmark are not covered by either license; see `resources/brand/README.md`.
 
 ## bamboo-core (MIT) — charset tables
 
